@@ -1,0 +1,398 @@
+Title: SAFEVPR: Patch-Based Conformal Verification for Safe Cross-Condition Sequence Visual Place Recognition
+
+URL Source: https://arxiv.org/pdf/2605.28048v1
+
+Published Time: Thu, 28 May 2026 00:46:35 GMT
+
+Number of Pages: 8
+
+Markdown Content:
+> 1
+
+# SAFE VPR: Patch-Based Conformal Verification for Safe Cross-Condition Sequence Visual Place Recognition 
+
+Ha Sier , Jiaqiang Zhang , Zhuo Zou , Xianjia Yu , Tomi Westerlund 
+
+Abstract —Sequence-based visual place recognition (VPR) for SLAM and robot relocalization must decide whether the retrieved top-1 candidate is safe to accept. Conformal prediction is a natural framework for this accept/reject decision, but its finite-sample guarantees rely on exchangeability between calibration and deployment (test) data, which is violated under cross-condition deployment. We introduce SAFE VPR, a non-trainable verification-and-calibration pipeline for safe cross-condition sequence VPR. SAFE VPR replaces the standard backbone cosine similarity with a mutual-nearest-neighbour (MNN) patch-matching score computed from frozen DINOv2 ViT features, and replaces flat Learn-Then-Test calibration with Mondrian conformal LTT, fitting separate Bonferroni-corrected thresholds across score bins. Under exchangeability, these thresholds would provide finite-sample false-discovery-rate (FDR) control; under condition shift, we evaluate empirical validity per deployment. Across 23 cross-condition setups from Oxford RobotCar, NCLT, and St Lucia datasets, using three frozen VPR backbones, SAFE VPR is empirically valid on 23/23 setups at target FDR α =0.10 , achieving mean accepted FDR 0.014 and mean true-positive rate (TPR) 0.75. The results show that raw discrimination alone is not sufficient for conformal validity: AnyLoc-VLAD and Super-Point+LightGlue reach comparable area under the receiver op-erating characteristic curve (AUROC) but fail more setups under the same calibration. On textureless repetitive scenery, S AFE VPR safely abstains rather than accepting unreliable matches. Code is available at https://github.com/Hasar12139/SafeVPR. 
+
+Index Terms —Visual place recognition, conformal prediction, false discovery rate, foundation models, calibration under distri-bution shift, robot localization safety, condition-robust retrieval verification 
+
+I. I NTRODUCTION 
+
+# SEquence-based visual place recognition (VPR) is widely used for loop closure, map reuse, and robot relocalization. Retrieval alone is not sufficient: once a top-1 sequence is retrieved, the robot must decide whether to accept it as a localization constraint or reject it as unknown. This decision is asymmetric. An accepted false match can introduce acatastrophic loop-closure error, whereas a rejected true match usually only delays relocalization. The accept/reject problem therefore requires calibrated risk control, not only high re-trieval accuracy.     
+
+> This research is supported by the Research Council of Finland’s Digital Waters (DIWA) flagship (Grant No. 359247) and the DIWA Doctoral Training Pilot project funded by the Ministry of Education and Culture (Finland). Corresponding authors: Ha Sier and Xianjia Yu. The authors Sier Ha, Jiaqiang Zhang, Xianjia Yu, and Tove Westerlund are with Turku Intelligent Embedded and Robotic Systems (TIERS) Lab, Univer-sity of Turku, Turku, Finland. E-mails: {sierha, jiaqiang.zhang, xianjia.yu, tovewe}@utu.fi .Zhuo Zou is with the School of Information Science and Technology, Fudan University, Shanghai, China. E-mail: zhuo@fudan.edu.cn .
+
+Conformal prediction [1] provides a natural framework for this problem. Given a labelled calibration set, Learn-Then-Test (LTT) [2] can select a threshold whose accepted predictions satisfy a user-specified false-discovery-rate (FDR) target with finite-sample confidence, provided that calibration and deployment (test) examples are exchangeable. However, this assumption is fragile in cross-condition VPR. A robot may be calibrated using one traversal condition and then deployed under different lighting, weather, season, or scene appearance. In this case, the calibration and deployment score distributions are no longer exchangeable, and no conformal procedure can provide a formal finite-sample guarantee under arbitrary unseen shift. The practical question is therefore how to design the verification score and the calibration procedure so that empirical FDR validity is recovered across realistic condition changes. The direct baseline thresholds the backbone cosine simi-larity using a single LTT threshold. Empirically, this baseline succeeds when calibration and deployment conditions match, but fails to control FDR on 9/23 cross-condition setups at 
+
+α = 0 .10 in our experiments. We identify two interacting causes for this failure. First, the backbone cosine score is condition-dependent, so its distribution shifts between calibra-tion and deployment. Second, a single global threshold cannot adapt to different score regions: highly confident matches and ambiguous matches are treated identically, even though their reliability differs under condition shift. Any effective solutions must address both factors jointly. Therefore, we propose S AFE VPR , which addresses these two issues with two non-trainable components. First, it re-places the condition-sensitive backbone cosine score with a bounded patch-matching verification score computed from frozen DINOv2 [3] features. The score measures the frac-tion of patches that survive mutual-nearest-neighbour (MNN) matching and a Lowe-ratio test between the query and the retrieved candidate. Second, it replaces the single global LTT threshold with Mondrian conformal LTT [4], which fits separate Bonferroni-corrected thresholds in score bins. The pipeline trains no verifier or re-ranker; only the deployment-specific conformal thresholds are fitted. Across 23 cross-condition setups spanning three datasets (Oxford RobotCar [5], NCLT [6], St Lucia [7], [8]) and three frozen VPR backbones (NetVLAD [9], CosPlace [10], D 2-VPR [11]), S AFE VPR is empirically valid on all 23 setups at α = 0 .10 , achieving mean accepted FDR 0.014 and mean true-positive rate (TPR) 0.75 . The main empirical finding is that raw discrimination alone is not sufficient for conformal validity: AnyLoc-VLAD and SuperPoint +LightGlue can reach comparable area under the receiver operating characteristic 
+
+> arXiv:2605.28048v1 [cs.RO] 27 May 2026 2
+
+curve (AUROC) while failing more setups under the same calibration, and learned cross-attention re-ranking performs worse under condition shift. The contributions of this work are as follows: i). We introduce S AFE VPR, a non-trainable verification-and-calibration pipeline for safe cross-condition sequence VPR, combining frozen DINOv2 patch-MNN verification with Mondrian conformal LTT. ii). We demonstrate empirical FDR validity on 23 /23 cross-condition setups across Oxford RobotCar, NCLT, and St Lucia (NetVLAD, CosPlace, and D2-VPR back-bones), and show it persists under calibration resam-pling, calibration-condition hold-out, leave-one-dataset-out deployment, and direct 5 m metric pose-error targets. iii). We show that retrieval discrimination does not imply conformal validity, using AnyLoc-VLAD, SuperPoint +LightGlue, DINOv2 aggregation variants, and a learned cross-attention re-ranker. iv). We report boundary cases transparently, including repetitive textureless scenery where the verifier becomes uninforma-tive and the conformal procedure safely abstains. II. R ELATED WORK 
+
+A. Foundation-model patches in VPR 
+
+Recent foundation vision models have changed how visual place recognition (VPR) systems use local visual evidence. DINOv2 [3] provides robust self-supervised visual features that transfer well across appearance changes. Building on this property, AnyLoc [12] aggregates frozen DINOv2 patch descriptors with unsupervised VLAD or GeM pooling for uni-versal VPR, while EffoVPR [13] uses DINOv2 self-attention features as a zero-shot re-ranker. SelaVPR [14] further adapts DINOv2 features with lightweight task-specific modules for VPR re-ranking. Patch-level matching itself has also been studied before the foundation-model era. Patch-NetVLAD [15] introduced mutual-nearest-neighbour (MNN) patch matching over re-gional NetVLAD descriptors, showing that local patch cor-respondences can provide a strong retrieval-quality signal. SAFE VPR follows this patch-level verification philosophy, but replaces task-specific regional descriptors with frozen DINOv2 patch tokens. These works demonstrate that foundation-model patches and local matching can improve retrieval and re-ranking under appearance change. They do not, however, address the safety question we consider here: after a top-1 candidate has been retrieved, should it be accepted under an unseen deployment condition? Our contribution is to use patch-level matching not as another retrieval score, but as the calibrated quantity inside a conformal accept/reject procedure. 
+
+B. Conformal prediction for visual retrieval 
+
+Conformal prediction provides distribution-free finite-sample guarantees for predictive uncertainty under exchange-ability [1], [16]. Learn-Then-Test (LTT) [2] extends this idea to risk-controlled selection by choosing thresholds that satisfy a user-specified risk constraint, and Conformal Risk Con-trol [17] generalises the framework to broader bounded losses. Mondrian conformal prediction [4], [18] further conditions the calibration procedure on predefined categories or score regions, allowing separate thresholds for different parts of the data distribution. Direct use of conformal methods in place recognition re-mains limited. Tellex et al. [19] apply conformal prediction to robotic scene recognition with vision–language models, but their setting differs from sequence-based VPR under cross-condition deployment. Importance-weighted conformal predic-tion [20] addresses covariate shift by reweighting calibration examples according to an estimated density ratio; in our setting we find that such reweighting can become highly concentrated under severe condition shift, leading to near-total abstention. SAFE VPR differs from these works in both the score and the deployment setting. To the best of our knowledge, SAFE VPR is the first conformal accept/reject pipeline eval-uated for sequence-based VPR under cross-condition deploy-ment with empirical FDR validity and metric pose-error ver-ification. We do not claim a formal guarantee under arbitrary unseen condition shift, since exchangeability is violated. In-stead, we study how a condition-robust patch-level verification score, combined with Mondrian LTT, can recover empirical FDR validity across realistic cross-condition deployments. 
+
+C. Verification and learned re-rankers 
+
+Two-stage retrieve-and-verify pipelines are widely used in image retrieval and localization. Classical systems often verify candidate matches using local features followed by geomet-ric consistency checks such as RANSAC [21], [22]. Recent learned matchers, including LightGlue [23], provide efficient and accurate local-feature matching and are natural candidates for VPR verification. A strong verification score for retrieval is not necessarily a reliable score for conformal accept/reject decisions. In our experiments, SuperPoint +LightGlue with RANSAC achieves strong discrimination on some datasets, especially NCLT, but its validity degrades under Oxford night and dusk conditions, where keypoint detection and geometric matching become un-stable. Local geometric verification can therefore be accurate without producing a calibration-stable high-confidence tail. Learned re-rankers offer another natural alternative. Cross-attention modules can fuse query and candidate information and improve in-condition retrieval accuracy, but their out-put probabilities can become over-confident under condition shift. We therefore include a learned cross-attention re-ranker as a negative baseline and show that standard mitigation strategies—within-query normalisation, test-time temperature scaling, domain-adversarial training, and importance-weighted conformal calibration—do not recover FDR validity. These methods address retrieval and re-ranking quality, whereas our focus is calibrated accept/reject under deployment shift. This motivates S AFE VPR’s non-trainable foundation-patch verifier: it avoids learning a condition-dependent score while retaining patch-level matching evidence. 3Stage 1 Black -box retrieval Stage 2 Patch verifier (ours) Stage 3 Mondrian calibrator (ours)                                           
+
+> frozen —treated as a black box
+> Frozen backbone
+> + diagonal -DTW matcher
+> NetVLAD / CosPlace / D² -VPR
+> (cosine score s cos discarded)
+> query q(T = 10)
+> query frame qtcandidate ct*verifier score
+> s=1/T∑ρt
+> s∈[0, 1]
+> DINOv2 ViT -L/14 patch tokens
+> mutual -NN match + Lowe ratio (r = 0.9) verifier score s→ quintile bins (B = 5)
+> is s*≥τb(s*) ?
+> test query s*
+> τb= ∞
+> abstain τ1
+> τ2τ3τ4
+> 12345
+> ACCEPT REJECT
+> T = 10 frames ·P = 256 patches/frame ·B = 5 bins ·target FDR α ∈{0.05, 0.10} ·confidence δ = 0.05
+
+Fig. 1: The S AFE VPR pipeline. Stage 1 (grey): a frozen VPR backbone and diagonal-DTW (dynamic time warping) matcher return a top-1
+
+candidate c⋆, treated as a black box (dashed); the cosine score scos is discarded. Stage 2 (orange, ours): a non-trainable DINOv2 patch verifier matches query and candidate patches by mutual nearest neighbour (MNN) with a Lowe-ratio test, yielding a bounded score s ∈ [0 , 1] .
+
+Stage 3 (teal, ours): a Mondrian conformal calibrator bins calibration scores into B = 5 quintiles and fits a per-bin Bonferroni-LTT threshold 
+
+τb; a test query with score s⋆ is routed to its bin b(s⋆) and accepted iff s⋆ ≥ τb(s⋆). Bins with no Bonferroni-feasible τb abstain (τb = + ∞).
+
+III. M ETHODOLOGY 
+
+A. Problem setup and conformal contract 
+
+A query at deployment time is a sequence of T consecutive frames q = ( q1, . . . , q T ). A frozen VPR backbone [9], [10], [11] maps each frame to a global descriptor of dimension D;a frozen sequence matcher scores every T -frame database window by diagonal-mean cosine, re-ranks the top candidates with DTW, and returns the top-1 candidate c⋆ with score 
+
+scos ∈ [0 , 1] . Backbone and matcher are treated as black boxes; we only observe (c⋆, s cos ) and the raw frames. The system must decide whether to accept c⋆ (returning a localization estimate equal to the candidate’s pose) or 
+
+reject (returning “unknown”). Given a labelled calibration set 
+
+{(qi, y i)}ni=1 with yi ∈ { 0, 1} indicating whether the top-1 was correct, we seek a threshold τ on a confidence score s such that, on exchangeable test data, the false-discovery rate 
+
+FDR( τ ) = E
+
+ P  
+
+> i
+
+1{si ≥ τ, y i = 0 }
+
+max( P 
+
+> i
+
+1{si ≥ τ }, 1) 
+
+
+
+(1) satisfies FDR( τ ) ≤ α with probability at least 1 − δ, for user-specified α (target FDR) and δ (confidence). This is the per-setup conformal contract — empty accept sets are treated as vacuously valid. S AFE VPR consists of a non-trainable verifier (the score s, Section III-B) and a non-trainable calibrator (Mondrian conformal LTT, Section III-C). 
+
+B. Verifier: DINOv2 patch-MNN ratio 
+
+Standard practice uses s = scos . Under condition shift its distribution changes and exchangeability fails. We replace it with a frozen foundation-model verifier. For each query frame qt and candidate frame c⋆t we extract DINOv2 ViT-L/14 [3] patch tokens, yielding two matrices 
+
+F tq , F tc ∈ RP ×d with P = 256 patches per frame ( 16 ×16 grid at 224 ×224 input) and d = 1024 . We ℓ2-normalise, compute the patch cosine matrix St = F tq (F tc )⊤, and apply two filters. 
+
+Mutual nearest neighbour (MNN): a patch i in F tq matches 
+
+j = arg max j′ Stij ′ if and only if i is also the argmax of column j.
+
+Lowe ratio: among MNN-surviving patches, keep only those whose top-two cosine values satisfy Stij 2 /S tij 1 < r with r =0.9 — the second-best match must be at most 90% as similar as the best, so small ratios indicate a confident single match. Ties are rejected. The per-frame match ratio ρt is the fraction of query patches that survive both filters. The verification score is the temporal mean 
+
+s = 1
+
+T
+
+> T
+
+X
+
+> t=1
+
+ρt (2) computed over the diagonal frame pairing with T = 10 . The score is bounded in [0 , 1] , requires no training, and depends on the foundation model’s patch representations, not on VPR-specific aggregation. Inputs are bilinearly resized to 224 ×224 ;we use only the spatial patch tokens from the final layer ( L =24 , no CLS token). 
+
+C. Calibrator: Mondrian conformal LTT 
+
+We calibrate τ on {(si, y i)}ni=1 . We adopt δ = 0.05 
+
+throughout (the per-setup statement holds with probability at least 0.95 over the calibration draw) and user-chosen 
+
+α ∈ { 0.05 , 0.10 }. Vanilla LTT [2] searches a grid {τk}Mk=1 of candidate thresholds (the M empirical quantiles of {si} on the cal set) and accepts the largest τk for which the Bonferroni-corrected Clopper–Pearson upper bound on FDR( τk) at con-fidence 1 − δ/M is at most α. We set M = 5 .Mondrian conformal [4] relaxes the one-threshold-fits-all assumption. We bin calibration queries into B = 5 quintiles by s itself, fit a separate Bonferroni-corrected LTT threshold 
+
+τb within each bin (each at confidence 1 − δ/B ), and at deployment route a test query with score s⋆ to its bin b(s⋆)
+
+via the calibration-derived edges. The query is accepted iff 
+
+s⋆ ≥ τb(s⋆). Bins on which no τk satisfies the Bonferroni constraint are assigned τb = + ∞ (the bin abstains). When 
+
+ncal < 5B/α the cal pool is too small to support B-way binning and the recipe falls back to vanilla LTT. 4
+
+D. Pipeline 
+
+Figure 1 summarises the full pipeline. All components except the per-bin thresholds {τb} are frozen. Inference cost is dominated by two DINOv2 forwards per query (over the 
+
+T -frame query and candidate batches); patch matching is 
+
+P × P cosine + argmax and the conformal lookup is two comparisons. IV. E XPERIMENTAL SETUP 
+
+A. Datasets and conditions 
+
+Three driving / mobile-robotic datasets: Oxford Robot-Car [5], NCLT [6], and the St Lucia driving sequence [7], [8]. These span urban night/weather, campus foliage, and time-of-day shifts. Nordland is reserved as a textureless-scenery boundary case (Section VII). 
+
+B. Backbones and protocol 
+
+Three frozen VPR backbones: NetVLAD (ResNet-18, prin-cipal component analysis [PCA] to 256-D), CosPlace (ResNet-18, D = 512 ), and D 2-VPR (DINOv2-small with VPR head, PCA-256), spanning a strength range from R@1 ∼ 0.2
+
+(NetVLAD-Oxford-night) to ∼ 0.97 (D 2-VPR). NetVLAD lacks NCLT-2013-04-05, giving 8 × 3 − 1 = 23 setups. For each held-out condition h we calibrate on the union of the other conditions’ calibration slices (per backbone) and test on the entire held-out condition. Calibration / test queries are split using a buffer-based protocol: each dataset’s database is segmented along arc-length into a [train | buffer | eval | buffer] cycle, with a post-filter that drops eval queries within 50 m of any train query in 2D space. This eliminates the route-loop leakage that naive frame-index splits suffer. 
+
+C. Metrics 
+
+A setup is valid at level α if its empirical accept-set FDR is at most α (empty accept sets count as vacuously valid), and non-trivially valid if it accepts > 5% of test queries. We report mean accepted-FDR and TPR, aggregated over setups with non-empty accept sets. To probe calibration stability we additionally report robust-pass : a setup is robust-pass if at least 95% of its calibration resamples remain valid. We use AUROC to quantify a score’s raw discrimination independent of any threshold. Beyond binary retrieval correctness, we also evaluate a metric variant of validity that replaces the correctness label with |pose error | ≤ τp.
+
+D. Evaluation scheme 
+
+We assess S AFE VPR in five steps, each targeting a distinct claim. (1) Headline cross-condition validity : across all 23 
+
+setups, S AFE VPR versus the cosine +LTT baseline and two intermediate (score-only and calibrator-only) variants, isolat-ing each component. (2) Verifier sweep : with the calibrator fixed, we swap in three patch aggregations and two external verifiers (AnyLoc, LightGlue) on the 20 -setup Oxford +NCLT grid, testing whether discrimination (AUROC) predicts va-lidity. (3) Robustness : three increasingly strict calibration-distribution perturbations — 500 -draw bootstrap, cal-condition hold-out, and leave-one-dataset-out (LODO) — check that validity is not an artefact of one calibration set. (4) Pose-error admissibility : we re-run with the metric label on the densely-GPSed Oxford +NCLT subset. (5) Ablations : we sweep the two hyperparameters and the backbone size, plus a trained cross-attention re-ranker as a negative control. V. R ESULTS 
+
+A. Headline cross-condition result 
+
+Table I reports S AFE VPR against cosine + LTT and the two intermediate variants (Section IV). S AFE VPR achieves 23 /23 
+
+valid setups at α = 0 .10 with every setup providing non-trivial coverage, mean accepted FDR 0.014 , and mean TPR 0.75 .Both axes contribute: swapping cosine → MNN under LTT lifts 14 → 20 valid; swapping LTT → Mondrian under cosine lifts 14 → 22 . The combination yields the full 23 /23 with the highest TPR; the two improvements are not redundant. For deployments without GPU access, cosine +Mondrian is a foundation-model-free fallback that loses only 1/23 in validity and ∼ 14 pp of TPR. The dataset sub-blocks in Table I reveal that the headline 
+
+23 /23 is not evenly hard across datasets. Oxford cosine +LTT already controls FDR (12 /12 valid at both α), but only 
+
+8 − 9 of those 12 setups carry non-trivial coverage, and mean TPR is ∼ 0.4; S AFE VPR recovers 12 /12 Non-tr. at both α and roughly doubles TPR to 0.86 − 0.92 . NCLT is the regime where the calibrator change carries the result: cosine +LTT collapses at α = 0 .10 (0/8 valid, mean FDR 
+
+0.19 ), while cosine +Mondrian and S AFE VPR both recover full validity. St Lucia is a mild morning-vs-noon shift on which cosine +LTT already reaches 2/3; S AFE VPR closes the remaining failure ( st_lucia_netvlad , where the weak backbone leaves no cosine margin). The substantive shift-robustness gain is therefore concentrated on NCLT, with Oxford providing the TPR uplift. 
+
+B. Verifier sweep: discrimination decouples from validity 
+
+Table II compares SAFE VPR’s score against three within-patch aggregations of the same cached DINOv2 patches ( patch_mean , patch_max , patch_top10 ) and two published external verifiers: AnyLoc-VLAD [12] (mean cosine over T = 10 diagonal pairs) and SuperPoint +LightGlue +RANSAC [23] (geometric inlier ratio over the same pairs). Mean cross-condition AUROC is 0.88 for MNN +Lowe and 
+
+0.90 for AnyLoc, with the three patch aggregations lower (0.79 max, 0.76 top-10, 0.73 mean). LightGlue is 0.67 overall but strongly dataset-dependent ( ≈ 0.90 on NCLT, 0.38 –0.66 
+
+on Oxford). Yet conformal validity decouples sharply from AUROC. Only S AFE VPR achieves 20 /20 at α = 0 .10 with non-trivial coverage. AnyLoc reaches 15 /20 under Mondrian at TPR 0.47 (17 /20 under flat LTT); LightGlue +Mondrian reaches 17 /20 at TPR 0.72 and LightGlue +LTT achieves the highest mean TPR of any method ( 0.79 ) but only 16 /20 
+
+valid — trading safety for recall on Oxford. The diagnostic is clean: comparable or higher raw discrimination does not imply conformal validity .5
+
+TABLE I: Cross-condition FDR validity across the 23 setups (Oxford 4 traversals + NCLT 3 sessions + St Lucia, × 3 backbones − 1
+
+missing NCLT-2013-04-05 ×NetVLAD). The held-out condition is never seen in calibration. “Pass” counts setups with empirical FDR ≤ α;“Non-tr.” additionally requires coverage > 5% . Mean FDR is over setups with a non-empty accept set, mean TPR over all setups (empty accept = TPR 0). Bold : per-block best FDR ( ↓) and TPR ( ↑); ties bolded together. Pass / Non-tr. cells are tinted by failure severity: white = perfect (count = N ), red!7 = marginal ( 34 N < count < N ), red!18 = substantial (count ≤ 34 N ), red!32 = catastrophic (count = 0 ). A darker TPR cell flags a bolded-best recall achieved despite failed validity in that block. 
+
+α = 0 .05 α = 0 .10 
+
+Method Pass Non-tr. FDR ↓ TPR ↑ Pass Non-tr. FDR ↓ TPR ↑
+
+Oxford ( 4 traversals ×3 backbones, 12 setups) 
+
+cosine + LTT 12/12 8/12 0.0000 0.380 12/12 9/12 0.0005 0.453 cosine + Mondrian 12/12 7/12 0.0000 0.390 12/12 9/12 0.0000 0.516 DINOv2 MNN + LTT 11/12 10/12 0.0097 0.839 11/12 11/12 0.0508 0.944 SAFE VPR (ours) 12/12 12/12 0.0036 0.857 12/12 12/12 0.0093 0.916 
+
+NCLT ( 3 sessions ×3 backbones −1 missing, 8 setups) 
+
+cosine + LTT 8/8 7/8 0.0105 0.423 0/8 0/8 0.1921 0.800 
+
+cosine + Mondrian 5/8 4/8 0.0331 0.562 8/8 8/8 0.0486 0.646 DINOv2 MNN + LTT 8/8 6/8 0.0079 0.318 6/8 4/8 0.0944 0.480 
+
+SAFE VPR (ours) 7/8 7/8 0.0131 0.402 8/8 8/8 0.0232 0.490 
+
+St Lucia ( 1 day-pair ×3 backbones, 3 setups) 
+
+cosine + LTT 2/3 2/3 0.0873 0.796 2/3 2/3 0.1539 0.964 
+
+cosine + Mondrian 2/3 2/3 0.1193 0.872 2/3 2/3 0.1273 0.890 DINOv2 MNN + LTT 3/3 3/3 0.0015 0.677 3/3 3/3 0.0015 0.677 
+
+SAFE VPR (ours) 3/3 3/3 0.0116 0.658 3/3 3/3 0.0115 0.780 
+
+All ( 23 setups) — headline 
+
+cosine + LTT 22/23 17/23 0.0182 0.449 14/23 11/23 0.0954 0.641 cosine + Mondrian 19/23 13/23 0.0311 0.513 22/23 19/23 0.0350 0.610 DINOv2 MNN + LTT 22/23 19/23 0.0080 0.637 20/23 18/23 0.0595 0.748 
+
+SAFE VPR (ours) 22/23 22/23 0.0080 0.673 23/23 23/23 0.0144 0.750 
+
+TABLE II: Verifier × calibrator sweep on the 20 -setup Oxford +NCLT cross-condition grid (AnyLoc and LightGlue features were not extracted on St Lucia). Columns as in Table I. The italic bottom row is the pure sequence-VPR baseline — accept every top-1 retrieval with no conformal threshold (TPR = 1 by construction).                                                                                                                                                
+
+> α= 0 .05 α= 0 .10
+> Score Calibrator Pass Non-tr. FDR TPR Pass Non-tr. FDR TPR DINOv2 patch MNN+Lowe (ours) LTT 19/20 16/20 0.0090 0.631 17/20 15/20 0.0682 0.758
+> Mondrian 19/20 19/20 0.0074 0.675 20/20 20/20 0.0148 0.745
+> AnyLoc-VLAD [12] ( K= 32 )LTT 15/20 9/20 0.0432 0.321 17/20 15/20 0.0612 0.709 Mondrian 16/20 7/20 0.0230 0.284 15/20 11/20 0.0546 0.468 LightGlue+RANSAC [23] LTT 15/20 15/20 0.0364 0.684 16/20 16/20 0.0979 0.792 Mondrian 16/20 16/20 0.0392 0.589 17/20 17/20 0.0477 0.716 DINOv2 patch max LTT 16/20 11/20 0.0430 0.514 14/20 13/20 0.0968 0.746 Mondrian 18/20 14/20 0.0160 0.424 18/20 17/20 0.0283 0.563 DINOv2 patch top-10 mean LTT 15/20 10/20 0.0460 0.357 13/20 12/20 0.0943 0.679 Mondrian 18/20 10/20 0.0228 0.304 16/20 12/20 0.0580 0.468 DINOv2 patch mean LTT 18/20 0/20 0.3102 0.054 11/20 3/20 0.1780 0.339 Mondrian 17/20 0/20 0.2700 0.052 9/20 4/20 0.1466 0.283 Cosine top-1 LTT 20/20 15/20 0.0052 0.397 12/20 9/20 0.0857 0.592 Mondrian 17/20 11/20 0.0156 0.459 20/20 17/20 0.0205 0.568
+> Pure VPR (no calib., accept top-1) —7/20 7/20 0.2363 1.000 9/20 9/20 0.2363 1.000
+
+Figure 2 pushes the point further: raw cal/test distribution distance, however measured, does not predict validity either. Aggregating the 20 common-grid setups, the mean per-cell global Kolmogorov–Smirnov (KS) distance is 0.41 for cosine, 
+
+0.53 for MNN +Lowe, 0.50 for AnyLoc, and 0.31 for Light-Glue. After Mondrian quintile binning the within-bin per-cell KS shrinks to 0.26 , 0.29 , 0.30 , and 0.20 . By either KS axis our score does not shift less; LightGlue shifts the least. Yet SAFE VPR achieves 20 /20 where LightGlue achieves 17 /20 
+
+and AnyLoc 15 /20 . The reason is that validity depends only on the accept set, and under Mondrian only the top score bin accepts anything. FDR control then needs just one thing: among those high-scoring queries, the fraction of false matches must agree between calibration and test. A whole-distribution shift is irrelevant; only this top-bin error rate must line up. The bounded patch-survival score keeps its top bin populated by genuine matches across conditions, so that rate barely moves — whereas LightGlue, despite the smallest overall shift, leaks Oxford-night false matches into its top bin. The tolerance is narrow: the per-bin Bonferroni slack is only δ/B = 0 .01 
+
+(B = 5 , δ = 0 .05 ). 
+
+C. Robustness: bootstrap, cal-condition hold-out, LODO 
+
+Table III reports the three calibration-perturbation probes (Section IV) in one table. 
+
+Cal-sampling bootstrap. SAFE VPR reaches mean 
+
+P (valid ) = 0.996 at α = 0.10 (0.961 at α = 0.05 )with 22 /23 robust-pass at both levels. Figure 3 shows the per-setup CI: only nclt_2013-04-05_d2vpr has non-negligible bootstrap mass above the α = 0 .05 line, matching 6
+
+Fig. 2: Cal-vs-test score distributions for the four verifiers in Ta-ble II, aggregated over the 20 common-grid setups (per-cell min-max normalised). The lowest-KS score (LightGlue, 0.31 ) is not the most valid: its Oxford-night tail leaks false matches into the accepted top bin. What predicts validity is a stable false-match rate inside that bin (Section V-B), not raw cal/test distance — and that is what MNN +Lowe maintains. 
+
+Fig. 3: Per-configuration bootstrap mean FDR with 95% CI for SAFE VPR, computed by resampling the calibration set 500 times. Dashed lines mark the α = 0 .05 and α = 0 .10 targets. All 23 setups satisfy the α = 0 .10 target. 
+
+the one empirical failure in Table I. This probes cal-slice variability under a fixed deployment, not deployment shift. 
+
+Cal-condition hold-out. Over 154 valid (c, c ′) pairs on the 23 -setup grid, 151 /154 (98 .1% ) remain valid at α = 0.10 ; 20 /23 test setups are fully robust (valid no matter which single cal condition is removed). The three fragile cells are nclt_2013-04-05_d2vpr ,
+
+nclt_2012-10-28_d2vpr , and st_lucia_netvlad 
+
+— the same cells that sat near the conformal boundary in the bootstrap. 
+
+Cross-dataset (LODO). SAFE VPR achieves 20 /23 valid at 
+
+α = 0 .10 with 14 /23 non-trivial, mean FDR 0.046 , mean TPR 
+
+0.61 . The three failures concentrate on nclt_*_d2vpr when calibration is drawn from Oxford +St Lucia. The direction matters: calibrating on St Lucia +NCLT and testing on Oxford passes, but calibrating on Oxford +St Lucia and testing on NCLT does not. The reason is that the DINOv2-MNN score occupies a narrower range on urban-driving scenes than on NCLT’s campus foliage. Quintile edges fit to the urban pool therefore squeeze NCLT’s heavier high-score tail into too few bins for Mondrian to adapt to. 
+
+TABLE III: Three robustness probes of increasing strictness, all on the 23 -setup grid at α = 0.10 unless noted. (a) Bootstrap :
+
+500 calibration resamples per cell; robust-pass counts setups with 
+
+≥ 95% valid resamples. (b) Cal-condition hold-out : drop one cal-pool condition at a time, re-fit Mondrian, re-evaluate ( 154 valid pairs); “pair pass” is the fraction of valid (test , dropped ) pairs, “fully robust” counts test setups valid under every single-condition drop. (c) LODO :calibrate on all datasets except the held-out one and deploy. See Section V-C.                                                  
+
+> Probe (S AFE VPR, α= 0 .10 )Pass / N Mean P(valid) / FDR TPR
+> (a) Cal-sampling bootstrap , per-setup robust-pass ( ≥95% resamples) 22/23 0.996 /0.016 0.734 robust-pass at α= 0 .05 22/23 0.961 /0.008 0.652
+> (b) Cal-condition hold-out , per pair pair pass 151/154 rate 0.981 /0.016 0.734 fully robust test setups 20/23 — / — —pair pass at α= 0 .05 148/154 rate 0.961 /0.006 0.652
+> (c) Leave-one-dataset-out (LODO)
+> empirical validity 20/23 — / 0.046 0.613 non-trivial coverage 14/23 — / — —LODO at α= 0 .05 20/23 — / 0.045 0.551
+
+TABLE IV: Empirical metric pose-error admissibility for S AFE VPR: the binary retrieval label is replaced with |pose error | ≤ τp, so the conformal threshold targets localization error directly. Computed on the 20 -setup Oxford +NCLT subset (St Lucia excluded: its ∼ 5 mGPS subsampling makes sub-25 m metric labels unstable). † trivially valid (no accepts): the in-condition cal pool is below 5B/α , so vanilla LTT abstains and FDR is vacuous.                                                     
+
+> α= 0 .05 α= 0 .10
+> τpSetting Pass FDR TPR Pass FDR TPR 5 m cross-condition 20/20 0.0022 0.307 20/20 0.0052 0.390 5 m in-condition 20/20 †—0.000 20/20 0.0014 0.372 10 m cross-condition 20/20 0.0018 0.449 20/20 0.0080 0.617 10 m in-condition 20/20 †—0.000 20/20 0.0019 0.398 25 m cross-condition 19/20 0.0080 0.683 20/20 0.0180 0.748 25 m in-condition 20/20 †—0.000 20/20 0.0003 0.415
+
+D. Pose-error admissibility 
+
+We instantiate the metric validity variant (Section IV), re-running the conformal pipeline with the |pose error | ≤ τp
+
+label on the Oxford +NCLT subset where dense GPS poses exist ( 20 setups; St Lucia’s ∼ 5 m GPS subsampling places sub-25 m labels on top of the τp thresholds and makes them mechanically unstable). S AFE VPR empirically controls metric FDR at α = 0 .10 across all three thresholds (Table IV): 20 /20 
+
+at τp ∈ { 5, 10 , 25 } m. The conformal recipe transfers cleanly from label correctness to metric localization error wherever the GPS ground truth resolves the chosen τp.VI. A BLATION STUDIES 
+
+A. Hyperparameter and backbone-size sensitivity 
+
+Table V sweeps the two free pipeline parameters (Mondrian bin count B, Lowe ratio r) and the DINOv2 backbone size on the full 23 -setup grid. The headline 23 /23 at α = 0 .10 
+
+is preserved on a plateau ( B ∈ { 5, 8, 10 }, r ∈ { 0.9, 0.95 }). 
+
+B = 3 drops one setup (Bonferroni slack too coarse to absorb residual within-bin shift); higher B values keep 23 /23 at the cost of ∼ 6–10 pp TPR (each extra bin pays a δ/B penalty). On the Lowe axis r = 0 .95 ties the default, r = 0 .8 drops two cells, and the over-strict r = 0 .7 drops to 19 /23 at α = 0 .05 
+
+with ∼ 16 pp lower TPR — the predictable failure of a ratio so strict that almost no patch matches survive. Both knobs sit on robust plateaus around our defaults. 7
+
+TABLE V: Hyperparameter and backbone-size sensitivity of SAFE VPR on the full 23 -setup grid. Top : Mondrian bin count B
+
+(default 5). Middle : Lowe ratio r (default 0.9). Bottom : DINOv2 backbone size (default ViT-L/14). See Section VI-A for analysis.                                                                                                         
+
+> α= 0 .05 α= 0 .10
+> Setting note Valid FDR TPR Valid FDR TPR
+> Mondrian bin count B(Lowe r= 0 .9, ViT-L)
+> B= 3 22/23 0.006 0.674 21/23 0.028 0.786
+> B= 5 (default) 22/23 0.008 0.673 23/23 0.014 0.750
+> B= 8 23/23 0.002 0.618 23/23 0.008 0.684
+> B= 10 22/23 0.003 0.569 23/23 0.005 0.653
+> Lowe ratio r(Mondrian B= 5 , ViT-L)
+> r= 0 .719/23 0.028 0.516 21/23 0.042 0.584
+> r= 0 .821/23 0.012 0.584 21/23 0.024 0.674
+> r= 0 .9(default) 22/23 0.008 0.673 23/23 0.014 0.750
+> r= 0 .95 23/23 0.006 0.637 23/23 0.013 0.746
+> DINOv2 backbone size (Mondrian B= 5 , Lowe r= 0 .9)ViT-S/14 (21 M, d=384 )AUROC 0.869 21/23 0.014 0.522 22/23 0.027 0.599 ViT-B/14 (86 M, d=768 )AUROC 0.916 23/23 0.009 0.594 23/23 0.017 0.687
+> ViT-L/14 (304 M) AUROC 0.938 22/23 0.008 0.673 23/23 0.014 0.750
+
+TABLE VI: Per-query latency of the S AFE VPR verifier + calibrator overhead on top of an external backbone retrieval. RTX 5070 Ti, FP16, PyTorch (no TensorRT). T =10 frames per query, P =256 
+
+patches. Backbone retrieval is dataset-database-size dependent and treated as black-box.                   
+
+> Stage (ViT-L/14, paper default) ms DINOv2 query features ( T=10 batched) 26.1 DINOv2 candidate features ( T=10 batched) 26.1 Patch-MNN +Lowe-ratio match ( Tpairs, P×P)0.9 Mondrian quintile lookup +threshold compare 0.03
+> Total per-query overhead 53.1
+
+The bottom block sweeps the foundation backbone size, relevant for on-device deployment. Replacing ViT-L/14 with ViT-B/14 ( 86 M params, d = 768 ) preserves the 23 /23 validity headline at both α levels — in fact, ViT-B/14 reaches 23 /23 
+
+at α = 0 .05 versus ViT-L’s 22 /23 — at ∼ 2.8× the throughput with a ∼ 6 pp TPR drop. The validity-vs-AUROC decoupling reappears: ViT-B has 2.5 pp lower AUROC than ViT-L yet 
+
+stricter validity at α = 0 .05 . ViT-S/14 ( 21 M params, d = 384 )is another ∼ 2.4× faster and trades one cell at α = 0 .10 .ViT-B/14 is therefore the natural starting point for embedded SAFE VPR. 
+
+B. Negative result: learned re-ranker 
+
+A natural alternative to the frozen verifier is a trained one. We trained a single-head Cross-Attention Re-ranker (CAR, 
+
+118 k parameters) over K = 5 top candidates, with diagonal-prior auxiliary loss and joint training over 7 configurations. CAR achieves competitive in-condition R@1 ( +10 to +20 pp on weak backbones) but its softmax outputs violate FDR cross-condition: on the original 6-setup grid (Oxford-night and NCLT-2012-10-28 × 3 backbones), vanilla LTT on its softmax achieves 1/6 valid at α = 0 .05 with mean FDR 0.137 .Five standard fixes — within-query z-score normalisation, test-time temperature scaling, 8 alternative softmax-derived score functions, domain-adversarial training, and importance-weighted conformal prediction (IWCP) — all remain at 1/6
+
+(Table VII). The IWCP test specifically reveals the underlying problem: cal-vs-test distributions of the learned softmax are so disjoint that any density-ratio reweighting abstains on nearly all queries (the theoretically correct response, but not useful). The diagnosis is uniform: any learned score that sees condition 
+
+TABLE VII: Negative result on a learned re-ranker baseline (CAR, a single-head cross-attention re-ranker over the top-K candidates) on the original 6-setup cross-condition grid (Oxford-night and NCLT-2012-10-28 × 3 backbones). Five standard fixes are listed in Sec-tion VI-B. All learned variants fail to control FDR; SAFE VPR succeeds on the same setups.                                                        
+
+> α= 0 .05 α= 0 .10
+> Method Pass FDR TPR Pass FDR TPR CAR (cross-attention re-ranker,
+> 118 k params) 1/6 0.1366 0.736 1/6 0.2384 0.847 CAR +within-query z-score 1/6 0.1447 0.705 1/6 0.2562 0.862 CAR +test-time temperature scaling 1/6 ——1/6 ——CAR +DANN (gradient reversal) 0/6 ——0/6 ——CAR +IWCP [20] 1/6 ——1/6 ——
+> SAFE VPR (ours) 6/6 0.0039 0.503 6/6 0.0152 0.616
+
+information during training inherits a condition-dependent output distribution; foundation-patch matching avoids this by construction. VII. D ISCUSSION 
+
+A. Why does it work empirically? 
+
+Conformal validity requires exchangeability between cal-ibration and test, which condition shift breaks at the score level. The cosine score’s distribution differs between training and deployment conditions; a learned score that sees condition information during training inherits the same problem (Ta-ble VII). We do not claim DINOv2-MNN’s cal/test distribution is globally more stable — by mean per-cell KS distance it is not (Figure 2). What its bounded [0 , 1] per-patch survival fraction does keep stable is the false-match rate inside the accepted top bin, which is the only quantity Mondrian FDR control depends on (Section V-B). We make no formal ex-changeability claim and document the failures below. 
+
+B. When does it fail? 
+
+Three failure modes characterise the empirical boundary of the pipeline. 
+
+a) Repetitive scenery (Nordland): safe by abstention.: 
+
+Patch matching requires distinguishable local patches. Nord-land, the canonical seasonal-VPR benchmark, consists al-most entirely of forest, snow, and repetitive railway scenery; DINOv2-MNN AUROC on Nordland is ≈ 0.518 across the three backbones, indistinguishable from random. Crucially, this does not make S AFE VPR unsafe on Nordland — it makes it silent . Fitting S AFE VPR on the same 23 -setup cross-condition calibration pool and deploying it on Nordland-winter (all three backbones, 9657 query sequences each) produces 
+
+0/9657 accepts at both α levels: the Bonferroni-LTT search finds no τb controlling FDR on a near-random score, so every bin returns τb = + ∞ and the system abstains entirely. Validity is preserved with TPR = 0 . Four rescue variants (higher-resolution inputs, intermediate-layer features, per-patch IDF re-weighting, and cross-frame MNN) either regressed cross-condition validity ( ∼ 15 pp on the 20 Oxford +NCLT setups) or added a ∼ 9% FDR regression on the 23 -setup grid. We report Nordland as a known but safe boundary: the recipe self-detects uninformativeness and abstains globally. 8
+
+b) Cross-dataset score shift.: Three of 23 LODO setups fail at α = 0 .10 , all NCLT ×D2-VPR cells calibrated from Oxford +St Lucia: the score’s quintile edges fitted on urban-driving data do not match NCLT’s campus-foliage distribution (Section V-C). A small target-domain calibration slice or distribution-aware bin-edge adaptation would fix it. 
+
+c) Tight-margin setups.: The single α = 0 .05 failure (nclt_2013-04-05_d2vpr ) has been the hardest cell in every version of this experiment; its empirical FDR sits just above 0.05 . Slightly larger calibration sets, the addition of a fourth dataset to the calibration pool, or operating at α = 0 .06 
+
+would absorb it. 
+
+C. Implications and limitations a) Deployment.: Replacing the binary retrieval label with a 5 m metric pose-error threshold preserves 20 /20 validity at 
+
+α = 0 .10 on Oxford +NCLT (Table IV): “ 95% of accepted matches are within 5 m of the true position” becomes a de-ployable statement on densely-GPSed datasets. The backbone-size sweep establishes ViT-B/14 as the embedded sweet spot (23 /23 at both α levels, 2.8× ViT-L throughput); on-device profiling on Jetson-class accelerators is left for future work. 
+
+b) Limitations.:  
+
+> •
+
+Textureless scenery. Patch matching alone is insufficient on Nordland-like repetitive scenery; combining with monocu-lar foundation depth models is a natural extension.  
+
+> •
+
+LODO bin-edge adaptation. The 3/23 LODO gap concerns the same cluster of cells; a distribution-aware adaptation on unlabelled target data could close it.  
+
+> •
+
+Multi-objective conformal. Joint control of retrieval cor-rectness and pose error within a single Conformal Risk Control [17] procedure is a direct extension.  
+
+> •
+
+External-verifier coverage. AnyLoc and LightGlue base-lines were extracted only on the Oxford +NCLT grid; run-ning them on St Lucia would extend the verifier sweep to the full 23 -setup grid. VIII. C ONCLUSION 
+
+We presented S AFE VPR, a non-trainable two-stage pipeline that recovers empirical FDR control for sequence VPR under cross-condition deployment by combining a frozen DINOv2 patch-MNN verifier with Mondrian conformal LTT. The cen-tral empirical message is that raw discrimination does not imply conformal validity: stronger scores (AnyLoc, LightGlue) fall short on the same calibrator, and a learned re-ranker is worse still. Validity is recovered because the bounded patch-MNN ratio keeps a stable false-match rate inside its accepted top bin — the only quantity Mondrian FDR control depends on — not because cal/test distance is small in any global sense. The pipeline transfers cleanly from binary retrieval correct-ness to 5 m metric pose error and to a smaller foundation backbone (ViT-B/14) suited for embedded deployment. It is empirical, not formal: where the score distribution shifts beyond Mondrian’s adaptive capacity (three LODO cells; structurally homogeneous scenery like Nordland), the failure is visible and diagnosable, and on uninformative scenes the recipe abstains globally so safety is preserved by silence. Closing the LODO gap via target-side bin-edge adaptation and proving formal guarantees under structured shift are left as future work. REFERENCES [1] V. Vovk, A. Gammerman, and G. Shafer, Algorithmic Learning in a Random World . Springer, 2005. [2] A. N. Angelopoulos, S. Bates, E. J. Candès, M. I. Jordan, and L. Lei, “Learn then test: Calibrating predictive algorithms to achieve risk control,” 2021. [3] M. Oquab, T. Darcet, T. Moutakanni, H. Vo, M. Szafraniec, V. Khalidov, P. Fernandez et al. , “DINOv2: Learning robust visual features without supervision,” Transactions on Machine Learning Research (TMLR) ,2024. [4] V. Vovk, D. Lindsay, I. Nouretdinov, and A. Gammerman, “Mondrian confidence machine,” in Tech. Report , 2003. [5] W. Maddern, G. Pascoe, C. Linegar, and P. Newman, “1 year, 1000 km: The Oxford RobotCar dataset,” The International Journal of Robotics Research , vol. 36, no. 1, pp. 3–15, 2017. [6] N. Carlevaris-Bianco, A. K. Ushani, and R. M. Eustice, “University of Michigan North Campus long-term vision and lidar dataset,” The International Journal of Robotics Research , vol. 35, no. 9, pp. 1023– 1035, 2016. [7] A. J. Glover, W. P. Maddern, M. J. Milford, and G. F. Wyeth, “FAB-MAP + RatSLAM: Appearance-based SLAM for multiple times of day,” in IEEE International Conference on Robotics and Automation (ICRA) ,2010. [8] G. Berton, R. Mereu, G. Trivigno, C. Masone, G. Csurka, T. Sattler, and B. Caputo, “Deep visual geo-localization benchmark,” in IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , 2022. [9] R. Arandjelovi´ c, P. Gronat, A. Torii, T. Pajdla, and J. Sivic, “NetVLAD: CNN architecture for weakly supervised place recognition,” IEEE Trans. Pattern Analysis and Machine Intelligence , vol. 40, no. 6, pp. 1437– 1451, 2018. [10] G. Berton, C. Masone, and B. Caputo, “Rethinking visual geo-localization for large-scale applications,” in IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , 2022. [11] G. Lu et al. , “D 2-VPR: Dual decoupling network for visual place recog-nition,” in IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) , 2024. [12] N. Keetha, A. Mishra, J. Karhade, K. M. Jatavallabhula, S. Scherer, M. Krishna, and S. Garg, “AnyLoc: Towards universal visual place recognition,” in IEEE Robotics and Automation Letters (RA-L) , 2024. [13] S. Tziony, A. Cohen, D. Aiger, and P. Dollár, “EffoVPR: Effective foundation model utilization for visual place recognition,” 2024. [14] F. Lu, L. Zhang, X. Lan, S. Dong, Y. Wang, and C. Yuan, “Towards seamless adaptation of pre-trained models for visual place recognition,” in International Conference on Learning Representations (ICLR) , 2024. [15] S. Hausler, S. Garg, M. Xu, M. Milford, and T. Fischer, “Patch-NetVLAD: Multi-scale fusion of locally-global descriptors for place recognition,” in IEEE/CVF Conference on Computer Vision and Pattern Recognition , 2021, pp. 14 141–14 152. [16] A. N. Angelopoulos and S. Bates, “A gentle introduction to confor-mal prediction and distribution-free uncertainty quantification,” arXiv preprint arXiv:2107.07511 , 2021. [17] A. N. Angelopoulos, S. Bates, A. Fisch, L. Lei, and T. Schuster, “Conformal risk control,” in International Conference on Learning Representations (ICLR) , 2024. [18] H. Boström, H. Linusson, T. Löfström, and U. Johansson, “Mondrian conformal regressors,” Proceedings of Machine Learning Research ,2018. [19] S. Tellex et al. , “Seeing with partial certainty: Conformal prediction for robotic scene recognition in built environments,” 2025. [20] R. J. Tibshirani, R. F. Barber, E. J. Candès, and A. Ramdas, “Conformal prediction under covariate shift,” in Advances in Neural Information Processing Systems (NeurIPS) , 2019. [21] D. G. Lowe, “Distinctive image features from scale-invariant keypoints,” 
+
+International Journal of Computer Vision , vol. 60, no. 2, pp. 91–110, 2004. [22] T. Sattler, M. Havlena, K. Schindler, and M. Pollefeys, “Large-scale location recognition and the geometric burstiness problem,” IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , 2017. [23] P. Lindenberger, P.-E. Sarlin, and M. Pollefeys, “LightGlue: Local feature matching at light speed,” in IEEE/CVF International Conference on Computer Vision (ICCV) , 2023.

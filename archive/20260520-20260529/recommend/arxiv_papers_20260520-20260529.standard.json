@@ -1,16 +1,641 @@
 {
   "mode": "standard",
-  "generated_at": "2026-05-29T07:42:51.789890+00:00",
+  "generated_at": "2026-05-29T08:14:42.341215+00:00",
   "stats": {
     "mode": "standard",
-    "tag_count": 0,
-    "deep_divecandidates": 0,
-    "deep_cap": null,
-    "deep_selected": 0,
-    "quick_candidates": 0,
-    "quick_skim_target": 10,
-    "quick_selected": 0
+    "tag_count": 1,
+    "deep_divecandidates": 11,
+    "deep_cap": 6,
+    "deep_selected": 8,
+    "quick_candidates": 8,
+    "quick_skim_target": 11,
+    "quick_selected": 8
   },
-  "deep_dive": [],
-  "quick_skim": []
+  "deep_dive": [
+    {
+      "id": "2605.25345v1",
+      "source": "arxiv",
+      "title": "Depth Peeling for High-Fidelity Gaussian-Enhanced Surfel Rendering",
+      "abstract": "Novel view synthesis has been significantly advanced by NeRFs and 3D Gaussian Splatting (3DGS), which require ordering volumetric samples or primitives for correct color blending. While the recent Gaussian-Enhanced Surfels (GES) enable high-performance, sort-free rendering, they suffer from aliasing artifacts and suboptimal reconstruction. To address these limitations, we propose DP-GES, a novel representation that augments opaque surfels with semi-transparent boundaries and leverages Depth Peeling to establish accurate per-pixel ordering. This design enables sort-free Gaussian splatting with correct transmittance modulation, effectively eliminating aliasing and popping artifacts while facilitating a fully differentiable joint optimization. Extensive experiments demonstrate that our method achieves superior reconstruction quality and compares favorably against state-of-the-art techniques across a wide range of scenes.",
+      "authors": [
+        "Keyang Ye",
+        "Hongzhi Wu",
+        "Kun Zhou"
+      ],
+      "primary_category": "cs.GR",
+      "categories": [
+        "cs.GR",
+        "cs.CV"
+      ],
+      "published": "2026-05-25T02:03:20+00:00",
+      "link": "https://arxiv.org/pdf/2605.25345v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "Proposes DP-GES, improving Gaussian-enhanced surfel rendering with depth peeling for high-fidelity novel view synthesis using 3D Gaussian Splatting.",
+      "llm_evidence_cn": "提出DP-GES，通过深度剥层改进高斯增强面元渲染，用于基于3D高斯泼溅的高保真新视图合成",
+      "llm_evidence": "提出DP-GES，通过深度剥层改进高斯增强面元渲染，用于基于3D高斯泼溅的高保真新视图合成",
+      "canonical_evidence": "提出DP-GES，通过深度剥层改进高斯增强面元渲染，用于基于3D高斯泼溅的高保真新视图合成",
+      "llm_tldr_en": "DP-GES addresses aliasing and popping artifacts in Gaussian-Enhanced Surfels by introducing semi-transparent boundaries and Depth Peeling for correct per-pixel ordering, enabling sort-free Gaussian splatting with high-fidelity novel view synthesis.",
+      "llm_tldr_cn": "针对高斯增强面元渲染中存在走样和跳变伪影的问题，提出DP-GES表示，通过为不透明面元添加半透明边界并利用深度剥层建立精确的逐像素排序，实现免排序高斯泼溅的正确透射率调制，从而有效消除伪影并支持可微联合优化，显著提升了新视图合成的保真度。",
+      "llm_tldr": "针对高斯增强面元渲染中存在走样和跳变伪影的问题，提出DP-GES表示，通过为不透明面元添加半透明边界并利用深度剥层建立精确的逐像素排序，实现免排序高斯泼溅的正确透射率调制，从而有效消除伪影并支持可微联合优化，显著提升了新视图合成的保真度。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2605.22069v1",
+      "source": "arxiv",
+      "title": "TWINGS: Thin Plate Splines Warp-aligned Initialization for Sparse-View Gaussian Splatting",
+      "abstract": "Novel view synthesis from sparse-view inputs poses a significant challenge in 3D computer vision, particularly for achieving high-quality scene reconstructions with limited viewpoints. We introduce TWINGS, a framework that enhances 3D Gaussian Splatting (3DGS) by directly addressing point sparsity. We employ Thin Plate Splines (TPS), a smooth non-rigid deformation model that minimizes bending energy to estimate a globally coherent warp from control-point correspondences, to align backprojected points from estimated depth with triangulated 3D control points, yielding calibrated backprojected points. By sampling these calibrated points near the control points, TWINGS provides a fast and geometrically accurate initialization for 3DGS, ultimately improving structural detail preservation and color fidelity in reconstructed scenes. Extensive experiments on DTU, LLFF, and Mip-NeRF360 demonstrate that TWINGS consistently outperforms existing methods, delivering detailed and accurate reconstructions under sparse-view scenarios.",
+      "authors": [
+        "Hyeseong Kim",
+        "Geonhui Son",
+        "Deukhee Lee",
+        "Dosik Hwang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.LG"
+      ],
+      "published": "2026-05-21T07:07:37+00:00",
+      "link": "https://arxiv.org/pdf/2605.22069v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "enhances 3D Gaussian Splatting for novel view synthesis from sparse views via warp-aligned initialization",
+      "llm_evidence_cn": "通过翘曲对齐初始化增强稀疏视角下的3D高斯泼溅新视角合成",
+      "llm_evidence": "通过翘曲对齐初始化增强稀疏视角下的3D高斯泼溅新视角合成",
+      "canonical_evidence": "通过翘曲对齐初始化增强稀疏视角下的3D高斯泼溅新视角合成",
+      "llm_tldr_en": "Proposes TWINGS, using Thin Plate Splines to align backprojected points with triangulated control points for a geometrically accurate initialization of 3DGS, improving novel view synthesis from sparse input views.",
+      "llm_tldr_cn": "针对稀疏视角输入下3D高斯泼溅（3DGS）因点云稀疏导致重建质量低的问题，本文提出TWINGS框架。该框架利用薄板样条（TPS）变形模型对齐反投影点与三角化控制点，获得几何精确的初始化点云，进而采样用于3DGS优化。实验表明，TWINGS显著提升了稀疏视角新视角合成的重建质量和速度。",
+      "llm_tldr": "针对稀疏视角输入下3D高斯泼溅（3DGS）因点云稀疏导致重建质量低的问题，本文提出TWINGS框架。该框架利用薄板样条（TPS）变形模型对齐反投影点与三角化控制点，获得几何精确的初始化点云，进而采样用于3DGS优化。实验表明，TWINGS显著提升了稀疏视角新视角合成的重建质量和速度。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2605.22190v1",
+      "source": "arxiv",
+      "title": "No Pose, No Problem in 4D: Feed-Forward Dynamic Gaussians from Unposed Multi-View Videos",
+      "abstract": "Recent feed-forward 3D gaussian splatting methods have made dramatic progress on individual aspects of 3D scene reconstruction, but no existing method jointly addresses dynamic content, multi-view input, and unknown camera poses in a single feed-forward pass. Methods that handle dynamics either require accurate camera poses or accept only monocular input; pose-free multi-view methods address only static scenes; and per-scene optimization methods bridge some of these gaps but at minutes-to-hours cost per scene. We introduce NoPo4D, the first feed-forward system that addresses this empty quadrant. Building on a pretrained geometry backbone and recent 4D Gaussian frameworks, NoPo4D introduces a velocity decomposition that splits Gaussian motion into per-pixel image-plane shifts and depth changes, allowing direct supervision from pseudo ground-truth optical flow on the 2D component. This sidesteps both the differentiable rendering that couples prior posed methods to pose accuracy and the 3D motion ground truth that prior pose-free methods require. The system is rounded out by a bidirectional motion encoder for cross-view and cross-frame feature aggregation, and view-dependent opacity that mitigates cross-view and cross-timestep Gaussian misalignments. On four multi-view dynamic benchmarks, NoPo4D consistently outperforms prior feed-forward baselines, and with an optional post-optimization stage surpasses per-scene optimization methods, while running orders of magnitude faster.",
+      "authors": [
+        "Matteo Balice",
+        "Yanik Kunzi",
+        "Chenyangguang Zhang",
+        "Matteo Matteucci",
+        "Marc Pollefeys",
+        "Sungwhan Hong"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-05-21T08:57:21+00:00",
+      "link": "https://arxiv.org/pdf/2605.22190v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "3D Gaussian splatting for simultaneous scene reconstruction and camera tracking from unposed multi-view videos",
+      "llm_evidence_cn": "利用3D高斯泼溅从无标定多视角视频中同时实现场景重建与相机位姿估计",
+      "llm_evidence": "利用3D高斯泼溅从无标定多视角视频中同时实现场景重建与相机位姿估计",
+      "canonical_evidence": "利用3D高斯泼溅从无标定多视角视频中同时实现场景重建与相机位姿估计",
+      "llm_tldr_en": "NoPo4D is the first feed-forward system to jointly reconstruct dynamic 3D scenes and estimate camera poses from unposed multi-view videos using Gaussian splatting, achieving fast, pose-free 4D reconstruction.",
+      "llm_tldr_cn": "NoPo4D是首个前馈式系统，能从未标定多视角视频中联合恢复动态三维场景与相机位姿，通过分解速度与使用预训练几何骨干，在单次前向传播中实现免位姿四维重建，显著降低每场景耗时。",
+      "llm_tldr": "NoPo4D是首个前馈式系统，能从未标定多视角视频中联合恢复动态三维场景与相机位姿，通过分解速度与使用预训练几何骨干，在单次前向传播中实现免位姿四维重建，显著降低每场景耗时。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Novel view synthesis and camera tracking via Gaussian splatting",
+      "matched_requirement_id": "req-9",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2605.23287v1",
+      "source": "arxiv",
+      "title": "LangFlash: Feed-forward 3D Language Gaussian Splatting from Sparse Unposed Images",
+      "abstract": "We present LangFlash, a feed-forward framework for 3D Language Gaussian Splatting that reconstructs 3D scenes parameterized by Gaussian primitives enriched with language-aligned semantic features from sparse unposed multi-view images. Unlike optimization-based 3D methods, LangFlash directly predicts the geometry and semantics in a single forward pass, enabling low-latency 3D reconstruction and language-consistent scene understanding. To support large-scale training, we enriched the RealEstate10k dataset with coherent and dense semantic information for 3D semantic supervision. Furthermore, we propose a sparse semantic encoding scheme that combines a global semantic dictionary with locally varying per-primitive weights, preserving high-level linguistic information, while reducing representation complexity. Experimental results show that LangFlash achieves superior novel view synthesis and semantic consistency compared with previous methods. This study establishes a new paradigm for pose-free, language-grounded 3D scene reconstruction, advancing generalizable 3D vision and multimodal scene understanding. Demo is available at https://liylo.github.io/langflash.github.io/.",
+      "authors": [
+        "Yilong Liu",
+        "Wanhua Li",
+        "Chen Zhu-Tian",
+        "Hanspeter Pfister"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-05-22T06:59:00+00:00",
+      "link": "https://arxiv.org/pdf/2605.23287v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "feed-forward framework for 3D Language Gaussian Splatting",
+      "llm_evidence_cn": "前馈三维语言高斯泼溅框架",
+      "llm_evidence": "前馈三维语言高斯泼溅框架",
+      "canonical_evidence": "前馈三维语言高斯泼溅框架",
+      "llm_tldr_en": "A feed-forward method reconstructing 3D scenes as language-enriched Gaussian primitives from sparse unposed images for novel view synthesis and scene understanding.",
+      "llm_tldr_cn": "该论文提出LangFlash，一个从稀疏无姿态多视角图像直接预测几何与语义的前馈三维高斯泼溅框架，无需逐场景优化，即可实现低延迟三维重建和语言一致的场景理解，为高效三维场景表示与新颖视图合成提供新途径。",
+      "llm_tldr": "该论文提出LangFlash，一个从稀疏无姿态多视角图像直接预测几何与语义的前馈三维高斯泼溅框架，无需逐场景优化，即可实现低延迟三维重建和语言一致的场景理解，为高效三维场景表示与新颖视图合成提供新途径。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2605.25239v1",
+      "source": "arxiv",
+      "title": "FusionCore: A 23-State Unscented Kalman Filter for IMU, Wheel Encoder, GPS, and Visual SLAM Fusion in ROS 2",
+      "abstract": "We present FusionCore, an open-source ROS 2 sensor fusion package that fuses IMU, wheel encoder odometry, GPS, and Visual SLAM pose into a single 100 Hz odometry stream using a 23-state Unscented Kalman Filter (UKF). The 23rd state is an online estimate of the wheel encoder's systematic yaw rate bias, identified through GPS heading cross-covariance and subtracted during GPS blackouts to reduce heading drift in coast mode. FusionCore also estimates gyroscope and accelerometer biases as explicit filter states, handles GPS natively in ECEF without a separate coordinate projection node, applies per-sensor Mahalanobis chi-squared outlier gating calibrated to measurement degrees of freedom, and adapts sensor noise covariance automatically from the innovation sequence. VSLAM pose fusion enables GPS-denied operation with any visual odometry or SLAM system, including automatic recovery from map reinitialization. We evaluate against robot_localization on twelve full-length sequences (55-92 min each) from the NCLT public dataset. FusionCore achieves lower Absolute Trajectory Error (ATE) on ten of twelve sequences, with improvements ranging from 1.2x to 22.2x on winning sequences. The robot_localization UKF diverges numerically on all twelve sequences. FusionCore is available at https://github.com/manankharwar/fusioncore under the Apache 2.0 license.",
+      "authors": [
+        "Manan Kharwar"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "eess.SP"
+      ],
+      "published": "2026-05-24T19:49:40+00:00",
+      "link": "https://arxiv.org/pdf/2605.25239v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Fuses Visual SLAM pose with IMU, wheel encoders, and GPS for accurate odometry",
+      "llm_evidence_cn": "融合视觉SLAM位姿与IMU、轮式编码器和GPS以获得精确里程计",
+      "llm_evidence": "融合视觉SLAM位姿与IMU、轮式编码器和GPS以获得精确里程计",
+      "canonical_evidence": "融合视觉SLAM位姿与IMU、轮式编码器和GPS以获得精确里程计",
+      "llm_tldr_en": "FusionCore is an open-source sensor fusion framework that combines Visual SLAM with IMU, wheel odometry, and GPS using a 23-state UKF for robust pose estimation.",
+      "llm_tldr_cn": "针对多传感器融合中GPS中断时航向漂移问题，提出FusionCore框架，采用23态无迹卡尔曼滤波在线估计轮式编码器偏置，融合视觉SLAM、IMU与GPS，提供稳健的里程计输出。",
+      "llm_tldr": "针对多传感器融合中GPS中断时航向漂移问题，提出FusionCore框架，采用23态无迹卡尔曼滤波在线估计轮式编码器偏置，融合视觉SLAM、IMU与GPS，提供稳健的里程计输出。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Visual SLAM methods for camera tracking and mapping",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2605.26629v1",
+      "source": "arxiv",
+      "title": "DelowlightSplat: Feed-Forward Gaussian Splatting for Lowlight 3D Scene Reconstruction",
+      "abstract": "Novel-view synthesis and 3D reconstruction from sparse posed images are central to robotics and AR/VR. Yet, feed-forward 3D Gaussian reconstruction fails under lowlight due to noise, color shifts, and unreliable correspondence. We propose DelowlightSplat, a lowlight-aware feed-forward Gaussian splatting framework for clean novel-view rendering. We build a controllable multi-view lowlight benchmark by degrading only context views while keeping target views clean. We introduce a lightweight Lowlight Adapter for residual enhancement to improve matchability, and couple it with cost-volume-based multi-view inference to directly predict clean 3D Gaussians. Experiments show that DelowlightSplat significantly outperforms previous feed-forward method and two-stage pipeline under lowlight conditions.",
+      "authors": [
+        "Fuzhen Jiang",
+        "Zengtian Xie",
+        "Zhuoran Li"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-05-26T07:05:10+00:00",
+      "link": "https://arxiv.org/pdf/2605.26629v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "feed-forward 3D Gaussian splatting for novel-view synthesis from sparse posed images",
+      "llm_evidence_cn": "使用前馈3D高斯泼溅从稀疏姿态图像进行新视角合成",
+      "llm_evidence": "使用前馈3D高斯泼溅从稀疏姿态图像进行新视角合成",
+      "canonical_evidence": "使用前馈3D高斯泼溅从稀疏姿态图像进行新视角合成",
+      "llm_tldr_en": "Proposes DelowlightSplat, a lowlight-aware feed-forward Gaussian splatting framework that enables clean novel-view rendering from lowlight inputs, using a lightweight Lowlight Adapter and cost-volume-based multi-view inference.",
+      "llm_tldr_cn": "针对低光照条件下前馈3D高斯重建因噪声和颜色偏移而失败的问题，本文提出DelowlightSplat框架。该框架通过可控低光照多视角基准测试数据训练，引入轻量级低光适配器进行残差增强以改善可匹配性，并结合代价体多视图推理直接预测干净的3D高斯。实验表明，该方法在低光照新视角合成中显著优于以往前馈方法。",
+      "llm_tldr": "针对低光照条件下前馈3D高斯重建因噪声和颜色偏移而失败的问题，本文提出DelowlightSplat框架。该框架通过可控低光照多视角基准测试数据训练，引入轻量级低光适配器进行残差增强以改善可匹配性，并结合代价体多视图推理直接预测干净的3D高斯。实验表明，该方法在低光照新视角合成中显著优于以往前馈方法。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2605.27952v1",
+      "source": "arxiv",
+      "title": "Con-DSO: Learning Short-Horizon Consistency Priors for RGB-D Direct Sparse Odometry",
+      "abstract": "Visual odometry (VO) is a fundamental component in robotics and augmented reality. RGB-D direct VO benefits from metric depth measurements, but it can degrade in challenging environments, where dynamic objects, occlusions, illumination changes, and unreliable depth violate the short-horizon photometric and depth-geometric consistency assumptions used by direct alignment. Existing approaches mitigate these issues through semantic filtering, explicit occlusion reasoning, illumination adaptation, or hand-crafted geometric criteria, but often rely on external modules or fixed assumptions tailored to individual failure modes, limiting their flexibility and ability to handle diverse challenges in a unified manner. In this work, we propose Con-DSO, a consistency-aware RGB-D direct sparse odometry framework that predicts dense photometric and depth-geometric consistency uncertainty from temporally adjacent RGB-D frame pairs. The consistency network is trained using flow-guided photometric errors and projective depth-consistency errors, allowing consistency violations to be represented as pixel-level uncertainty. These pairwise uncertainty predictions are converted into a host-side quality prior for keyframe-based tracking. The prior is then applied to VO through quality-aware support-pixel selection and decoupled photometric-geometric weighting during pose estimation, enabling continuous attenuation of unreliable observations rather than hard rejection or threshold-based gating. Experiments on five public RGB-D benchmarks show substantial gains over direct RGB-D VO baselines, with over 20\\% absolute trajectory error reduction on ICL-NUIM and 50\\%--80\\% reductions on RGB-D Scenes V2, TUM/Bonn Dynamic, and OpenLORIS sequences.",
+      "authors": [
+        "Haolan Zhang",
+        "Thanh Nguyen Canh",
+        "Chenghao Li",
+        "Ziyan Gao",
+        "Xiongwen Jiang",
+        "Nak Young Chong"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.RO"
+      ],
+      "published": "2026-05-27T04:46:52+00:00",
+      "link": "https://arxiv.org/pdf/2605.27952v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Proposes Con-DSO, a learning-based approach to improve RGB-D direct sparse odometry by predicting consistency priors, directly enhancing camera pose tracking accuracy.",
+      "llm_evidence_cn": "提出Con-DSO，通过学习短时一致性先验提升RGB-D直接稀疏里程计，直接提高相机位姿跟踪精度",
+      "llm_evidence": "提出Con-DSO，通过学习短时一致性先验提升RGB-D直接稀疏里程计，直接提高相机位姿跟踪精度",
+      "canonical_evidence": "提出Con-DSO，通过学习短时一致性先验提升RGB-D直接稀疏里程计，直接提高相机位姿跟踪精度",
+      "llm_tldr_en": "Con-DSO learns short-horizon consistency priors for RGB-D direct sparse odometry, unifying failure case handling (dynamic objects, occlusions, illumination changes) to improve camera tracking robustness and accuracy.",
+      "llm_tldr_cn": "针对RGB-D直接视觉里程计在动态物体、遮挡、光照变化等挑战下易退化的问题，提出Con-DSO方法，通过端到端学习短时一致性先验，统一处理多种失效模式，无需外部模块或手工几何准则，从而提升相机位姿跟踪的鲁棒性和精度。",
+      "llm_tldr": "针对RGB-D直接视觉里程计在动态物体、遮挡、光照变化等挑战下易退化的问题，提出Con-DSO方法，通过端到端学习短时一致性先验，统一处理多种失效模式，无需外部模块或手工几何准则，从而提升相机位姿跟踪的鲁棒性和精度。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "accurate camera pose tracking",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2605.29136v1",
+      "source": "arxiv",
+      "title": "Eulerian Gaussian Splatting using Hashed Probability Pyramids",
+      "abstract": "We introduce a probabilistic splat-based radiance field framework that retains the fast rasterization and test-time efficiency of 3D Gaussian Splatting (3DGS) while replacing heuristic primitive manipulation with gradient-based optimization of a volumetric probability density. Rather than relocating, splitting, or culling Gaussians via hand-tuned densification (e.g., ADC), we treat primitive locations as samples drawn from a persistent, learnable density. We instantiate this density using a novel, memory-efficient multi-scale hierarchical grid that enables end-to-end gradient-based optimization. To stabilize the optimization, we derive an unbiased gradient estimator with control variates that markedly reduces variance. By allowing probability mass to flow to where the loss demands, our framework eliminates brittle priors and naturally explores the volume, achieving state-of-the-art reconstruction quality on mip-NeRF 360 while preserving 3DGS-level rendering speed.",
+      "authors": [
+        "Mia Gaia Polansky",
+        "George Kopanas",
+        "Stephan Garbin",
+        "Todd Zickler",
+        "Dor Verbin"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.LG"
+      ],
+      "published": "2026-05-27T22:01:01+00:00",
+      "link": "https://arxiv.org/pdf/2605.29136v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "introduces 3D Gaussian Splatting framework for novel view synthesis using probabilistic density optimization",
+      "llm_evidence_cn": "提出基于概率密度优化的3D高斯泼溅框架用于新视角合成",
+      "llm_evidence": "提出基于概率密度优化的3D高斯泼溅框架用于新视角合成",
+      "canonical_evidence": "提出基于概率密度优化的3D高斯泼溅框架用于新视角合成",
+      "llm_tldr_en": "Proposes Eulerian Gaussian Splatting, replacing heuristic primitive manipulation with gradient-based optimization of a volumetric probability density, retaining fast rasterization and efficiency of 3DGS for novel view synthesis.",
+      "llm_tldr_cn": "本文针对3D高斯泼溅（3DGS）中启发式原语操作（如分割、裁剪）的局限性，提出一种欧拉高斯泼溅框架。该方法将原语位置视为从可学习概率密度中采样，通过梯度优化多尺度层次网格来直接优化密度，并使用控制变量法推导无偏梯度估计器以稳定训练。在标准新视角合成基准上，该方法在保持实时渲染效率的同时提升了重建质量。",
+      "llm_tldr": "本文针对3D高斯泼溅（3DGS）中启发式原语操作（如分割、裁剪）的局限性，提出一种欧拉高斯泼溅框架。该方法将原语位置视为从可学习概率密度中采样，通过梯度优化多尺度层次网格来直接优化密度，并使用控制变量法推导无偏梯度估计器以稳定训练。在标准新视角合成基准上，该方法在保持实时渲染效率的同时提升了重建质量。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2605.22890v1",
+      "source": "arxiv",
+      "title": "Extending Deep Event Visual Odometry with Sparse Point-Cloud Export",
+      "abstract": "Event cameras are well suited for visual odometry under high-speed motion and challenging lighting conditions due to their low latency, high temporal resolution, and high dynamic range. Deep Event Visual Odometry (DEVO) demonstrated that monocular event-only odometry can achieve strong performance by combining sparse patch tracking, learned patch selection, recurrent correspondence refinement, and differentiable bundle adjustment. In this project, we extend DEVO with a sparse point-cloud export pipeline. Rather than modifying the core odometry formulation, our approach exposes the internal 3D structure already estimated by DEVO and converts it into an explicit point-cloud representation for visualization and further processing. In addition, we implement a practical workflow for data export, format conversion, and point-cloud cleanup. The resulting system preserves the original visual odometry pipeline while enabling sparse geometric scene output. Experiments on the BOARD SLOW sequence show that the exported sparse cloud is locally consistent with EMVS reconstructions, achieving high precision at a 5 cm threshold, while also highlighting the expected limitations in density, completeness, and sensitivity to accumulated odometry noise.",
+      "authors": [
+        "Alireza Safdari",
+        "Sajad Ashraf"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.CV"
+      ],
+      "published": "2026-05-21T10:51:40+00:00",
+      "link": "https://arxiv.org/pdf/2605.22890v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "monocular event-only visual odometry with sparse point-cloud export for camera tracking",
+      "llm_evidence_cn": "单目事件相机视觉里程计与稀疏点云导出，实现相机追踪",
+      "llm_evidence": "单目事件相机视觉里程计与稀疏点云导出，实现相机追踪",
+      "canonical_evidence": "单目事件相机视觉里程计与稀疏点云导出，实现相机追踪",
+      "llm_tldr_en": "Extends DEVO monocular event-based visual odometry with sparse point-cloud export, exposing the 3D structure for visualization and further processing while maintaining strong tracking performance.",
+      "llm_tldr_cn": "在高速运动与挑战光照下，事件相机适合视觉里程计。本文扩展了DEVO单目事件里程计，增加稀疏点云导出模块，将内部估计的3D结构转换为显式点云，便于可视化和下游应用，同时保持原有跟踪性能。",
+      "llm_tldr": "在高速运动与挑战光照下，事件相机适合视觉里程计。本文扩展了DEVO单目事件里程计，增加稀疏点云导出模块，将内部估计的3D结构转换为显式点云，便于可视化和下游应用，同时保持原有跟踪性能。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Monocular visual SLAM using a single camera",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2605.22020v1",
+      "source": "arxiv",
+      "title": "ForeSplat: Optimization-Aware Foresight for Feed-Forward 3D Gaussian Splatting",
+      "abstract": "Feed-forward 3D Gaussian Splatting (3DGS) models offer fast single-pass reconstruction,but scaling them to match per-scene optimization quality is fundamentally hindered by the scarcity of large-scale 3D annotations.A practical compromise is predict-then-refine,where post-prediction optimization compensates for the limited capacity of the feed-forward network.However,standard feed-forward 3DGS is trained solely for zero-step rendering error,ignoring whether its output constitutes a good initialization for the downstream optimizer.We present ForeSplat,an optimization-aware training framework that equips feed-forward 3DGS models to produce initializations explicitly designed for rapid,effective refinement.By offloading part of the scene-modeling burden to the optimizer,ForeSplat substantially reduces the capacity pressure on the feed-forward model,making high-quality reconstruction feasible even with compact networks.At its core is MetaGrad,a lightweight multi-anchor meta-gradient training rule that bypasses costly higher-order differentiation through the 3DGS optimizer.MetaGrad unrolls a short inner-loop refinement trajectory,samples anchor states,and back-propagates aggregated first-order gradients to the prediction head as a surrogate optimization-aware signal.This fine-tuning adds no inference cost and enables high-quality reconstruction within seconds after a few refinement steps.We instantiate ForeSplat on diverse backbones,including AnySplat,Pi3X,and a distilled variant tailored for edge deployment.Across all tested architectures,a ForeSplat-trained initialization converges in fewer refinement steps and reaches a higher peak reconstruction quality than its vanilla counterpart,even fully converged.The framework consistently bridges the gap between amortized prediction and per-scene optimization,establishing a practical path toward lightweight,high-fidelity 3D reconstruction.",
+      "authors": [
+        "Yuke Li",
+        "Weihang Liu",
+        "Cheng Zhang",
+        "Yuefeng Zhang",
+        "Jiadi Cui",
+        "Zixuan Wang",
+        "Junran Ding",
+        "Haoyu Wu",
+        "Yujiao Shi",
+        "Jingyi Yu",
+        "Xin Lou"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-05-21T05:38:47+00:00",
+      "link": "https://arxiv.org/pdf/2605.22020v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Proposes optimization-aware training for feed-forward 3DGS to enable fast and effective scene reconstruction",
+      "llm_evidence_cn": "提出优化感知训练方法提升前馈3DGS的快速有效场景重建",
+      "llm_evidence": "提出优化感知训练方法提升前馈3DGS的快速有效场景重建",
+      "canonical_evidence": "提出优化感知训练方法提升前馈3DGS的快速有效场景重建",
+      "llm_tldr_en": "ForeSplat trains feed-forward 3DGS models to produce initializations that are optimized for rapid, effective refinement, bridging single-pass speed and per-scene quality.",
+      "llm_tldr_cn": "针对前馈3D高斯泼溅模型预测初始化不利于后续优化的问题，提出ForeSplat框架，将部分建模能力卸载至下游优化器，训练网络生成易于快速精细化的初始表示，在保证单次推理速度的同时逼近逐场景优化质量。",
+      "llm_tldr": "针对前馈3D高斯泼溅模型预测初始化不利于后续优化的问题，提出ForeSplat框架，将部分建模能力卸载至下游优化器，训练网络生成易于快速精细化的初始表示，在保证单次推理速度的同时逼近逐场景优化质量。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2605.26447v1",
+      "source": "arxiv",
+      "title": "Underwater360: Reconstructing Underwater Scenes from Panoramic Images with Omnidirectional Gaussian Splatting",
+      "abstract": "Underwater scene reconstruction is essential for immersive exploration of aquatic environments, yet remains challenging due to complex participating-media effects such as absorption and scattering, as well as the limited field of view (FoV) of conventional cameras. Although combining panoramic imaging with 3D Gaussian Splatting (3DGS) offers a promising direction for photorealistic underwater rendering, traditional 3DGS struggles with both spherical projection distortion and underwater medium degradation. In this paper, we propose \\textbf{Underwater360}, a physics-informed omnidirectional 3DGS framework for underwater panoramic scene reconstruction. First, we introduce an Omnidirectional Gaussian Splatting module that performs ray casting directly in spherical camera space instead of relying on 2D projection approximations, thereby reducing geometric distortions under 360$^\\circ$ FoV. Second, we design a physics-based appearance-medium modeling architecture with pose-conditioned appearance embeddings to explicitly decouple intrinsic scene radiance from depth-dependent backscatter and attenuation, enabling physically grounded scene appearance restoration. Finally, we establish a new panoramic underwater benchmark dataset containing both synthetic and real-world scenes. Extensive experiments demonstrate that Underwater360 achieves superior performance in underwater novel view synthesis and scene appearance restoration, delivering improved rendering quality and cross-view consistency in complex underwater environments. The code and datasets are released at https://github.com/SwcK423/Underwater360",
+      "authors": [
+        "Jiangbei Hu",
+        "Weichao Song",
+        "Shibo Yu",
+        "Mohan Wang",
+        "Zihan Yi",
+        "Rui Wu",
+        "Mingkang Xiang",
+        "Na Lei",
+        "Shengfa Wang",
+        "Zhongxuan Luo",
+        "Ying He"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-05-26T02:01:06+00:00",
+      "link": "https://arxiv.org/pdf/2605.26447v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Uses 3D Gaussian Splatting for underwater scene reconstruction and novel view synthesis",
+      "llm_evidence_cn": "使用3D高斯泼溅进行水下场景重建和新视角合成",
+      "llm_evidence": "使用3D高斯泼溅进行水下场景重建和新视角合成",
+      "canonical_evidence": "使用3D高斯泼溅进行水下场景重建和新视角合成",
+      "llm_tldr_en": "Underwater360 proposes an omnidirectional 3DGS framework for underwater panoramic scenes, addressing spherical distortion and medium degradation to enable photorealistic rendering.",
+      "llm_tldr_cn": "针对水下全景重建中球面投影畸变和介质退化问题，提出Underwater360框架，结合物理模型与全向3D高斯泼溅，实现水下场景的高质量重建和新视角合成，为水下探索提供沉浸式体验。",
+      "llm_tldr": "针对水下全景重建中球面投影畸变和介质退化问题，提出Underwater360框架，结合物理模型与全向3D高斯泼溅，实现水下场景的高质量重建和新视角合成，为水下探索提供沉浸式体验。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2605.26103v1",
+      "source": "arxiv",
+      "title": "Global Structure-from-Motion Meets Feedforward Reconstruction",
+      "abstract": "Structure-from-Motion -- the process of simultaneously estimating camera poses and 3D scene structure from a collection of images -- remains a central challenge in computer vision, with many open problems yet to be solved. Recent advances in feedforward 3D reconstruction have made significant strides in overcoming persistent failure cases of classical SfM methods, particularly in scenarios characterized by low texture, limited overlap, and symmetries. However, while feedforward approaches excel in these challenging conditions, they often face limitations regarding scalability, accuracy, or robustness, and typically fall short of classical methods in standard reconstruction settings. In this work, we systematically analyze these limitations and propose a new Structure-from-Motion pipeline by combining the respective strengths of classical and feedforward methods. Extensive experiments across multiple datasets show the benefits of our approach, achieving state-of-the-art results across a wide range of scenarios. We share our system as an open-source implementation at https://github.com/colmap/gluemap.",
+      "authors": [
+        "Linfei Pan",
+        "Johannes Schönberge",
+        "Marc Pollefeys"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-05-25T17:58:03+00:00",
+      "link": "https://arxiv.org/pdf/2605.26103v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "simultaneously estimating camera poses and 3D scene structure",
+      "llm_evidence_cn": "同时估计相机姿态和3D场景结构",
+      "llm_evidence": "同时估计相机姿态和3D场景结构",
+      "canonical_evidence": "同时估计相机姿态和3D场景结构",
+      "llm_tldr_en": "Combines classical Structure-from-Motion with feedforward reconstruction to improve robustness in low-texture and limited-overlap scenarios for joint pose estimation and 3D reconstruction.",
+      "llm_tldr_cn": "针对传统SfM在低纹理、重叠不足等场景易失败的问题，提出将经典增量式SfM与前馈重建模型相融合的新框架。通过系统分析前馈模型的局限，设计混合策略，在标准及困难场景中均实现更鲁棒的相机位姿与3D结构恢复。",
+      "llm_tldr": "针对传统SfM在低纹理、重叠不足等场景易失败的问题，提出将经典增量式SfM与前馈重建模型相融合的新框架。通过系统分析前馈模型的局限，设计混合策略，在标准及困难场景中均实现更鲁棒的相机位姿与3D结构恢复。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Visual SLAM methods for camera tracking and mapping",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2605.23672v1",
+      "source": "arxiv",
+      "title": "RiGS: Rigid-aware 4D Gaussian Splatting from a Single Monocular Video",
+      "abstract": "Reconstructing dynamic 3D scenes from monocular videos is a fundamental yet highly challenging task, as real-world motions often involve both long-term smooth transformations and short-term complex deformations. Existing methods either struggle to maintain temporal consistency or fail to capture high-frequency dynamics due to limited motion modeling capacity. In this work, we present Rigid-aware 4D Gaussian Splatting (RiGS), which simultaneously captures motions across multiple temporal scales. Specifically, RiGS introduces three types of Gaussian primitives: static, rigid, and transient, which represent static backgrounds, long-term low-frequency motions, and short-term high-frequency dynamics, respectively. An object-wise dynamic mask is proposed to aggregate long-range spatiotemporal motion information and guide the decomposition of static and dynamic regions. To jointly model motion across scales, rigid Gaussians are allowed to transition into transient Gaussians based on their temporal duration, and both are optimized under scene flow guidance, providing dense 3D motion supervision. Extensive experiments demonstrate that RiGS achieves state-of-the-art performance on novel view synthesis benchmarks. Code is available at \\hyperlink{https://github.com/ladvu/RiGS}{https://github.com/ladvu/RiGS}.",
+      "authors": [
+        "Chenyu Wu",
+        "Wanhua Li",
+        "Zhu-Tian Chen",
+        "Hanspeter Pfister"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-05-22T14:20:39+00:00",
+      "link": "https://arxiv.org/pdf/2605.23672v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Uses 4D Gaussian Splatting for dynamic scene reconstruction from monocular video",
+      "llm_evidence_cn": "利用4D高斯泼溅从单目视频进行动态场景重建",
+      "llm_evidence": "利用4D高斯泼溅从单目视频进行动态场景重建",
+      "canonical_evidence": "利用4D高斯泼溅从单目视频进行动态场景重建",
+      "llm_tldr_en": "RiGS introduces three types of Gaussian primitives to model static, rigid, and transient motions for reconstructing dynamic 3D scenes from monocular video.",
+      "llm_tldr_cn": "针对单目动态场景重建中时序一致性与高频细节难以兼顾的问题，提出RiGS方法，通过静态、刚体和瞬态三类高斯原语分解运动，在多时间尺度上捕获场景动态，实现高质量重建。",
+      "llm_tldr": "针对单目动态场景重建中时序一致性与高频细节难以兼顾的问题，提出RiGS方法，通过静态、刚体和瞬态三类高斯原语分解运动，在多时间尺度上捕获场景动态，实现高质量重建。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2605.28048v1",
+      "source": "arxiv",
+      "title": "SAFEVPR: Patch-Based Conformal Verification for Safe Cross-Condition Sequence Visual Place Recognition",
+      "abstract": "Sequence-based visual place recognition (VPR) for SLAM and robot relocalization must decide whether the retrieved top-1 candidate is safe to accept. Conformal prediction is a natural framework for this accept/reject decision, but its finite-sample guarantees rely on exchangeability between calibration and deployment (test) data, which is violated under cross-condition deployment. We introduce SAFEVPR, a non-trainable verification-and-calibration pipeline for safe cross-condition sequence VPR. SAFEVPR replaces the standard backbone cosine similarity with a mutual-nearest-neighbour (MNN) patch-matching score computed from frozen DINOv2 ViT features, and replaces flat Learn-Then-Test calibration with Mondrian conformal LTT, fitting separate Bonferroni-corrected thresholds across score bins. Under exchangeability, these thresholds would provide finite-sample false-discovery-rate (FDR) control; under condition shift, we evaluate empirical validity per deployment. Across 23 cross-condition setups from Oxford RobotCar, NCLT, and St Lucia datasets, using three frozen VPR backbones, SAFEVPR is empirically valid on 23/23 setups at target FDR alpha = 0.10, achieving mean accepted FDR 0.014 and mean true-positive rate (TPR) 0.75. The results show that raw discrimination alone is not sufficient for conformal validity: AnyLoc-VLAD and Super-Point+LightGlue reach comparable area under the receiver operating characteristic curve (AUROC) but fail more setups under the same calibration. On textureless repetitive scenery, SAFEVPR safely abstains rather than accepting unreliable matches. Code is available at https://github.com/Hasar12139/SafeVPR.",
+      "authors": [
+        "Ha Sier",
+        "Jiaqiang Zhang",
+        "Zhuo Zou",
+        "Xianjia Yu",
+        "Tomi Westerlund"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-05-27T06:49:04+00:00",
+      "link": "https://arxiv.org/pdf/2605.28048v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Patch-based VPR with conformal prediction for safe SLAM relocalization",
+      "llm_evidence_cn": "基于DINOv2特征与保形预测的视觉地点识别用于SLAM安全重定位",
+      "llm_evidence": "基于DINOv2特征与保形预测的视觉地点识别用于SLAM安全重定位",
+      "canonical_evidence": "基于DINOv2特征与保形预测的视觉地点识别用于SLAM安全重定位",
+      "llm_tldr_en": "SAFEVPR introduces a verification pipeline for cross-condition visual place recognition in SLAM, using patch-matching scores and Mondrian conformal LTT calibration to provide safe accept/reject decisions.",
+      "llm_tldr_cn": "SAFEVPR提出一种非训练的验证与校准流程，针对跨条件序列视觉地点识别，利用互最近邻块匹配分数和Mondrian保形LTT校准，为SLAM重定位提供可保证的接受/拒绝决策，增强安全性。",
+      "llm_tldr": "SAFEVPR提出一种非训练的验证与校准流程，针对跨条件序列视觉地点识别，利用互最近邻块匹配分数和Mondrian保形LTT校准，为SLAM重定位提供可保证的接受/拒绝决策，增强安全性。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Visual SLAM methods for camera tracking and mapping",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2605.28172v1",
+      "source": "arxiv",
+      "title": "Provably Guaranteed Polytopic Uncertainty Quantification for SLAM",
+      "abstract": "In safety-critical robotics applications, guaranteed and practical uncertainty quantification (UQ) in perception is vital. Many existing works either offer no formal containment guarantee, rely on restrictive modeling assumptions, or focus only on pose estimation rather than a complete SLAM pipeline. This paper presents provably guaranteed UQ algorithms for 3D-3D landmark-based SLAM. The algorithms consist of three basic UQ modules: forward UQ for mapping, backward UQ for pose tracking, and pose compound. Each module produces a certified uncertainty set; when the input uncertainty bounds are deterministic, the output sets inherit deterministic guarantees, i.e., they provably contain the true poses and landmarks. Specifically, we use polytopes to represent uncertainty sets, enabling tractable computations and a unified treatment of pose uncertainty. To enhance algorithms' practical usability, we incorporate conformal prediction to calibrate measurement uncertainty from data with prescribed probability. Simulations and experiments demonstrate that the proposed algorithms provide both strong theoretical guarantees and practical usability. The code is open-sourced at https://github.com/LIAS-CUHKSZ/Polytopic-SLAM-Uncertainty-Quantification.",
+      "authors": [
+        "Guangyang Zeng",
+        "Yulong Gao",
+        "Yuan Shen",
+        "Lingpeng Chen",
+        "Haoying Li",
+        "Guodong Shi",
+        "Junfeng Wu"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-05-27T08:53:23+00:00",
+      "link": "https://arxiv.org/pdf/2605.28172v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "SLAM algorithms with provable UQ for pose tracking and mapping",
+      "llm_evidence_cn": "SLAM算法提供可证明的不确定性量化，涵盖位姿跟踪与建图",
+      "llm_evidence": "SLAM算法提供可证明的不确定性量化，涵盖位姿跟踪与建图",
+      "canonical_evidence": "SLAM算法提供可证明的不确定性量化，涵盖位姿跟踪与建图",
+      "llm_tldr_en": "Proposes provably guaranteed UQ algorithms for 3D landmark-based SLAM, using polytopes to produce certified uncertainty sets for mapping, pose tracking, and pose compounding, ensuring deterministic containment of true states.",
+      "llm_tldr_cn": "针对安全关键机器人应用，提出可证明保证的SLAM不确定性量化算法，使用多面体表示不确定性，从确定性输入界生成证明包含真实位姿与地标的集合，增强SLAM的安全可靠性。",
+      "llm_tldr": "针对安全关键机器人应用，提出可证明保证的SLAM不确定性量化算法，使用多面体表示不确定性，从确定性输入界生成证明包含真实位姿与地标的集合，增强SLAM的安全可靠性。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Visual SLAM methods for camera tracking and mapping",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2605.25563v1",
+      "source": "arxiv",
+      "title": "CodecSplat: Ultra-Compact Latent Coding for Feed-Forward 3D Gaussian Splatting",
+      "abstract": "While feed-forward 3D Gaussian splatting reconstructs renderable Gaussian primitives from sparse context views without per-scene optimization, existing pipelines do not provide a compact scene representation for storage or transmission. A natural solution is to apply existing 3DGS compression methods to the generated Gaussian primitives. However, this approach operates on the final irregular 3D representation and is decoupled from the internal feature-to-Gaussian generation process, which limits compression efficiency. To address this, we introduce CodecSplat, an ultra-compact latent coding framework for feed-forward 3D Gaussian splatting. CodecSplat first encodes an intermediate 2D Gaussian-generation feature into an entropy-coded scene bitstream. At the decoder, the latent feature is reconstructed and used to predict depth and Gaussian parameters, which are then mapped to 3D Gaussian primitives. Note that, by integrating compression into the feed-forward Gaussian generation pipeline, CodecSplat avoids inefficient compression over irregular 3D Gaussian primitives and allows the codec to exploit the structured intermediate feature representation. We instantiate CodecSplat on a feed-forward Gaussian splatting backbone with depth-guided multi-view feature refinement and a hierarchical learned feature codec. On DL3DV and RealEstate10K datasets, CodecSplat achieves 23.56-26.36 dB and 24.76-27.05 dB PSNR with only 20.00-107.77 KiB and 3.37-12.51 KiB per scene, respectively. This is roughly one order of magnitude smaller than compressing feed-forward generated Gaussian primitives, while preserving controllable rate-distortion behavior.",
+      "authors": [
+        "Pengpeng Yu",
+        "Runqing Jiang",
+        "Qi Zhang",
+        "Dingquan Li",
+        "Jing Wang",
+        "Yulan Guo"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-05-25T08:17:35+00:00",
+      "link": "https://arxiv.org/pdf/2605.25563v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "ultra-compact latent coding for feed-forward 3D Gaussian splatting",
+      "llm_evidence_cn": "为前馈三维高斯泼溅提供超紧凑潜在编码",
+      "llm_evidence": "为前馈三维高斯泼溅提供超紧凑潜在编码",
+      "canonical_evidence": "为前馈三维高斯泼溅提供超紧凑潜在编码",
+      "llm_tldr_en": "Introduces an ultra-compact latent coding framework for feed-forward 3D Gaussian splatting to achieve efficient storage and transmission of scenes.",
+      "llm_tldr_cn": "该论文针对前馈三维高斯泼溅（3DGS）缺乏紧凑场景表示的问题，提出CodecSplat框架，通过对中间二维高斯生成特征进行熵编码，实现超紧凑的潜在编码，显著提升了3DGS场景表示的存储与传输效率，可赋能高效视觉SLAM。",
+      "llm_tldr": "该论文针对前馈三维高斯泼溅（3DGS）缺乏紧凑场景表示的问题，提出CodecSplat框架，通过对中间二维高斯生成特征进行熵编码，实现超紧凑的潜在编码，显著提升了3DGS场景表示的存储与传输效率，可赋能高效视觉SLAM。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "efficient visual SLAM with 3D Gaussian scene representations",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
 }

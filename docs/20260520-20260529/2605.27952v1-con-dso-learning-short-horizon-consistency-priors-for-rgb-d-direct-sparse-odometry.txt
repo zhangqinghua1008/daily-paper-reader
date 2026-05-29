@@ -1,0 +1,373 @@
+Title: Con-DSO: Learning Short-Horizon Consistency Priors for RGB-D Direct Sparse Odometry
+
+URL Source: https://arxiv.org/pdf/2605.27952v1
+
+Published Time: Thu, 28 May 2026 00:39:18 GMT
+
+Number of Pages: 10
+
+Markdown Content:
+> 1
+
+# Con-DSO: Learning Short-Horizon Consistency Priors for RGB-D Direct Sparse Odometry 
+
+Haolan Zhang , Student member, IEEE , Thanh Nguyen Canh , Graduate Student member, IEEE , Chenghao Li , Member, IEEE , Ziyan Gao , Member, IEEE , Xiongwen Jiang , Nak Young Chong , Senior member, IEEE 
+
+Abstract —Visual odometry (VO) is a fundamental component in robotics and augmented reality. RGB-D direct VO bene-fits from metric depth measurements, but it can degrade in challenging environments, where dynamic objects, occlusions, illumination changes, and unreliable depth violate the short-horizon photometric and depth-geometric consistency assump-tions used by direct alignment. Existing approaches mitigate these issues through semantic filtering, explicit occlusion reasoning, illumination adaptation, or hand-crafted geometric criteria, but often rely on external modules or fixed assumptions tailored to individual failure modes, limiting their flexibility and ability to handle diverse challenges in a unified manner. In this work, we propose Con-DSO, a consistency-aware RGB-D direct sparse odometry framework that predicts dense photometric and depth-geometric consistency uncertainty from temporally adjacent RGB-D frame pairs. The consistency network is trained using flow-guided photometric errors and projective depth-consistency errors, allowing consistency violations to be represented as pixel-level uncertainty. These pairwise uncertainty predictions are con-verted into a host-side quality prior for keyframe-based tracking. The prior is then applied to VO through quality-aware support-pixel selection and decoupled photometric-geometric weighting during pose estimation, enabling continuous attenuation of unre-liable observations rather than hard rejection or threshold-based gating. Experiments on five public RGB-D benchmarks show substantial gains over direct RGB-D VO baselines, with over 20% absolute trajectory error reduction on ICL-NUIM and 50%– 80% reductions on RGB-D Scenes V2, TUM/Bonn Dynamic, and OpenLORIS sequences. 
+
+Index Terms —RGB-D visual odometry, direct sparse odome-try, consistency-aware tracking, uncertainty estimation, quality-aware pixel selection, photometric-geometric weighting. 
+
+I. I NTRODUCTION 
+
+# VISUAL odometry (VO) is a fundamental component of many simultaneous localization and mapping (SLAM) systems and plays an important role in robotics, augmented reality, and many other perception applications [1]–[3]. Owing to the direct availability of metric depth measurements, RGB-D sensing enables accurate 3D reconstruction and alleviates the scale ambiguity inherent in monocular systems. Over the past decade, visual odometry and SLAM systems have evolved from classical geometric formulations, such as Kinect-Fusion [4], robust RGB-D odometry [5], ElasticFusion [6],         
+
+> Haolan Zhang, Thanh Nguyen Canh, Chenghao Li, Ziyan Gao and Nak Young Chong are with the School of Information Science, Japan Advanced Institute of Science and Technology, Nomi 923-1211, Japan (email: {haolan.z; thanhnc; chenghao.li; ziyan-g; nakyoung }@jaist.ac.jp). Xiongwen Jiang is with College of Information Engineering, Shenyang University of Chemical Technology, Shenyang 110142, China (email: jiang@syuct.edu.cn).
+
+and the ORB-SLAM family [7]–[9], to modern learning-based and neural scene representation approaches such as DROID-SLAM [10] and NICE-SLAM [11]. However, most existing methods rely, either explicitly or implicitly, on local photometric and depth-geometric consistency across views. In real-world scenes, this assumption is often violated by dynamic objects, occlusion, illumination variation, low-texture regions, and locally unreliable depth. As a result, visual cor-respondence and alignment become unstable, residual errors increase, and the accuracy and robustness of pose estimation degrade significantly. To improve robustness under such violations, prior work has often introduced explicit processing mechanisms, including semantic dynamic filtering, occlusion handling, illumination adaptation, geometric consistency checking, point-cloud based outlier rejection, and depth-aware tracking [12]–[21]. These methods can suppress unreliable observations under different challenging conditions, but they typically rely on external modules, hand-designed consistency criteria, explicit thresh-olds, or task-specific assumptions. Compared with the above explicit processing strategies, another line of work evaluates the quality of observations and uses the resulting confidence, uncertainty, or informativeness measures to guide the VO/SLAM pipeline. Existing methods estimate point-level static weights or exploit temporal point correlations for dynamic-scene handling [22], [23], evaluate feature quality for robust feature selection [24], [25], evaluate object-level uncertainty [26], estimate environmental uncer-tainty or motion residual prior for adaptive tracking [27], [28], or combine multiple hand-crafted metrics to adjust tracking and optimization [29], [30]. These methods show that qual-ity assessment is useful for improving robustness. However, many existing assessment strategies rely on manually designed scores, multiple thresholds, or independently evaluated cues without explicitly modeling temporal consistency. To address these limitations, we propose Con-DSO, aconsistency-aware RGB-D direct visual odometry framework built around a learned consistency network. Given a pair of temporally adjacent RGB-D frames, the consistency net-work predicts two dense uncertainty maps that characterize photometric inconsistency and depth-geometric inconsistency, respectively. The network is trained with a heteroscedastic pixel-wise uncertainty objective on photometric and depth-geometric prediction errors, thereby assigning high uncertainty to inconsistent observations caused by dynamic objects, oc-clusions, illumination changes, or unreliable depth. Con-DSO then converts these pairwise uncertainty predictions into a 
+
+> arXiv:2605.27952v1 [cs.CV] 27 May 2026 2
+
+host-side quality prior for keyframe-based tracking. This prior captures short-horizon RGB-D consistency and provides a continuous measure of how reliable each pixel is as support for direct tracking. The resulting host-side prior is then applied to the VO pipeline in two stages. First, it biases support-pixel selection toward pixels that are both informative and reliable. Second, it reweights the first-order pose linearization through a decoupled photometric-geometric scheme, selectively attenuating unreli-able photometric and depth-geometric contributions to the pose update. This design addresses the limitations of factor-specific filtering methods by modeling reliability directly at the pixel level. It does not require predefined dynamic categories, task-specific occlusion models, or separate hand-crafted rules for illumination and depth degradation. By separating photometric and depth-geometric weights during pose estimation, Con-DSO avoids applying a shared weight to all residual and linearization terms, thereby allowing unreliable depth support to be suppressed without discarding useful image-gradient information. The main contributions of this work can be summarized as follows: 1) We propose a dual-branch consistency network that jointly predicts pixel-level photometric and depth-geometric uncertainty from adjacent RGB-D frame pairs. The network is trained with a heteroscedastic uncertainty objective based on flow-guided photometric errors and projective depth-consistency errors. 2) We introduce a bidirectional host-side quality prior that converts pairwise uncertainty predictions into a keyframe-centered reliability estimate for RGB-D direct tracking. 3) We integrate the host-side prior into RGB-D direct odometry through quality-aware support-pixel selection and decoupled photometric-geometric weighting during pose estimation. 4) Extensive experiments on five public RGB-D datasets, including ICL-NUIM, RGB-D Scenes V2, TUM RGB-D, BONN, and OpenLORIS, demonstrate consistent improvements over direct RGB-D baselines. The con-sistency network is trained solely on synthetic Tar-tanAir data and applied without fine-tuning, validating its zero-shot generalization across synthetic and real-world scenes. The remainder of the paper is organized as follows. Sec-tion. II reviews related work on visual odometry and SLAM under challenging environments. Section. III presents the Con-DSO framework in detail. Section. IV provides experimental evaluation and analysis. Finally, Section. V concludes the paper and discusses future work. II. R ELATED WORK 
+
+Con-DSO aims to improve RGB-D direct visual odometry by learning a pixel-level consistency-based quality prior and integrating it into support-pixel selection and pose estima-tion. Existing VO/SLAM methods generally rely on stable visual correspondence, photometric consistency, or geometric consistency across views. These assumptions can be violated by dynamic objects, occlusion, illumination changes, and unreliable depth, leading to degraded tracking accuracy and robustness. We therefore review two lines of robustness-related work: explicit robustness processing and observation quality assessment methods in VO/SLAM. 
+
+A. Explicit Robustness Processing in VO/SLAM 
+
+To handle such degradation, many methods introduce ex-plicit robustness processing. Dynamic-scene SLAM meth-ods [12]–[15] suppress moving regions using semantic seg-mentation or multi-view geometry constraints [31]. Beyond dynamic-object handling, prior RGB-D odometry and SLAM studies have improved robustness through degradation-specific or geometry-based strategies, including occlusion-aware depth gating or modeling [17], [18], illumination-adaptive threshold for feature extraction [19], and geometric consistency con-straints in point-cloud registration [20], [21]. Despite their effectiveness in challenging scenarios, these approaches share several limitations. Semantic filtering meth-ods [12]–[15] rely on pretrained semantic modules and pre-defined dynamic categories, and their geometric constraint checks can become unreliable under weak parallax, occlusion, noisy depth, or ambiguous motion. Threshold- or criterion-based methods [18]–[21] depend on hand-crafted rules and parameter settings that limit their adaptability to diverse real-world degradation. 
+
+B. Observation Quality Assessment in VO/SLAM 
+
+Another line of work evaluates the quality of observations and uses the assessment results to guide subsequent VO/SLAM processing, rather than directly handling challenging factors through external modules or explicit removal strategies. In feature-based methods, feature quality is often defined accord-ing to its contribution to pose estimation [24]. A good feature selection method [25] ranks or selects features using observa-tion scores related to motion-estimation accuracy. At the object level, Switching [26] evaluates object quality using feature uncertainty, detection quality, and object prior information, and then decides whether an object should be incorporated into tightly coupled pose estimation or handled in a loosely coupled manner. Scene and motion level assessment has also been explored. Joint VO-SF and StaticFusion [32], [33] estimate static probabilities using K-means clustering to separate reli-able static observations from dynamic components. RigidFu-sion [27] extends this idea by exploiting temporal consistency, using the previous motion segmentation as a prior and evaluat-ing static and dynamic residuals for the current frame. Multi-metric assessment methods further adapt different components of the VO/SLAM pipeline. QualiSLAM [29] evaluates local blocks with multiple quality indicators, such as illumination variation, motion blur, and feature sparsity, to adapt feature weights in optimization. SR-SLAM [30], our prior work ,combines detection quality, depth consistency, feature quality, and motion consistency with historical reference frames to guide dynamic handling, keyframe selection, and optimization 3
+
+weighting. MAC-VO [28] introduces a more unified learning-based uncertainty assessment for stereo VO by learning the pixel-level uncertainty of optical-flow and stereo-disparity predictions produced by a trained estimation network. The learned uncertainty serves as a quality measure for the flow-based correspondences that drive subsequent tracking: high-uncertainty regions are identified as challenging, unreliable matches are removed by a fixed multiplicative threshold, and the remaining matches are reweighted through covariance-based residuals during optimization. Although these methods demonstrate the usefulness of observation assessment, they usually improve robustness by introducing an additional quality model that determines how observations should be selected, weighted, or used in tracking. Feature and scene level assessment methods often rely on fixed clustering procedures or hand-crafted scoring rules [25], [32], [33], making the assessed quality sensitive to manually selected metrics and algorithmic assumptions. Multi-metric as-sessment methods, including SR-SLAM [30] which composes detection, depth, feature and motion residual with the reference frame through threshold-based fusion [26], [29], [30], require careful tuning or depend on external detectors with predefined dynamic categories. Moreover, many of these strategies evalu-ate observations on a per-frame basis using isolated quality cues, which can produce erroneous local assessments that propagate to subsequent tracking decisions. To mitigate this, RigidFusion and SR-SLAM [27], [30] introduce short-term consistency through motion segmentation priors or historical reference frames, but their consistency decisions still rely on fixed rules or thresholds and can become unreliable under different motion patterns. MAC-VO [28] learns uncertainty by leveraging pretrained FlowFormer’s [34] flow-prediction priors, evaluates uncertainty independently on each frame, and applies a fixed multiplicative threshold to hard-reject unreliable keypoints. To address these limitations, we propose Con-DSO, which learns photometric and depth-geometric consistency directly from adjacent RGB-D frame pairs and converts it into a continuous host-side quality prior and integrates this prior through continuous temporal-aware reweighting. In contrast to the methods above, Con-DSO does not rely on external semantic or prior modules, or on predefined assumptions and rules tailored to specific degradation factors. III. METHODS This section presents the proposed Con-DSO framework. Sec. III-A provides an overview of the overall system pipeline. Sec. III-B describes the details of the consistency network for dense photometric and geometric consistency uncertainty pre-diction. Sec. III-C presents the construction of Con-DSO, in-cluding bidirectional absolute host-side keyframe (KF) quality prior inference, quality-aware pixel selection, and decoupled photometric–geometric weighting for coarse tracking between KF and the current frame. Sec. III-D briefly summarizes the standard keyframe-based sliding-window optimization inher-ited from RGBD-DSO [18]. 
+
+A. Overview of the Proposed System 
+
+We build Con-DSO upon RGBD-DSO as our foundation. The overall system is illustrated in Fig. 1. Given two tem-porally adjacent RGB-D frames, our consistency network predicts per-pixel photometric and geometric (depth) con-sistency uncertainty, training with flow-guided warping and depth projection consistency GT error. These predictions are first converted into per-frame precision maps via median normalization, which are then combined through bidirectional temporal fusion to form the absolute host-side quality prior 
+
+Qabs of each pixel on the host KF for direct tracking. In RGBD-DSO, direct tracking is performed by aligning each incoming frame against a reference KF, which serves as the host frame providing reference pixels and depth. Our prior Qabs is therefore stored on each KF and injected into this KF to current frame tracking in two stages: quality-aware pixel selection and decoupled photometric-geometric (depth) weighting for coarse tracking. In the first stage, pixels with higher quality on the KF are preferentially selected as direct-matching support. In the second stage, the photometric and geometric components of Qabs modulate different parts of the coarse tracking Jacobian in a decoupled manner when aligning the current frame to the KF. After these steps, the tracked keyframes are passed to the standard sliding-window optimizer for joint pose and structure refinement. The next subsections present these components in detail: the details of the consistency network (Sec. III-B), the construction of Con-DSO including prior generation, quality-aware pixel selection, and decoupled coarse tracking (Sec. III-C), and the keyframe-based sliding-window optimization (Sec. III-D). 
+
+B. Consistency Network Training 
+
+The consistency network takes two temporally adjacent RGB-D frames (Ij , D j ) and (Ii, D i) as input and predicts two dense per-pixel uncertainty maps, characterizing the pho-tometric and geometric uncertainty of each pixel, respectively. We trained our network red TartanAir dataset [35]. Although TartanAir provides stereo imagery, we use only the left-camera RGB images and the associated left-camera depth maps, treat-ing each frame as a single-view RGB-D observation. Ground-truth (GT) optical flow and GT relative poses are used solely as supervision signals to compute reference consistency errors during training. At the inference stage, the network takes raw RGB-D pair inputs only. 
+
+1) Network & Training: The consistency network is de-signed to reflect the asymmetric roles of photometric and depth-geometric consistency in direct RGB-D tracking. Its architecture separates image-driven photometric uncertainty from depth-aware geometric uncertainty, so that the pre-dicted priors can later be integrated into the decoupled pose-estimation scheme. The upper part of Fig. 2 illustrates the network structure. The network follows a dual-branch encoder-decoder design. A shared image encoder extracts multi-scale features from both frames at 1/2, 1/4, and 1/8 resolution, and a lightweight depth encoder with the same topology but reduced channel width processes the corresponding depth maps. At the coarsest 1/8 level, a RAFT-style local correlation 4 
+
+> Fig. 1. Overview of the Con-DSO framework. Adjacent RGB-D pairs around a host keyframe are processed by the consistency network to predict photometric and geometric uncertainty maps, which are converted into an absolute host-side quality prior QT
+> abs . The prior guides quality-aware pixel selection and decoupled photometric-geometric weighting during direct tracking, after which keyframes are refined in the sliding-window optimization.
+
+volume [36] is constructed between the two image feature maps using a search radius of r=4 , yielding a (2 r+1) 2-channel matching descriptor. This descriptor provides inter-frame matching evidence for identifying regions where photo-metric consistency is violated. The geometric branch concate-nates this descriptor with image and depth features from both frames, while the photometric branch uses only image features. This asymmetric input design prevents depth noise from being conflated with photometric uncertainty. Each branch recovers a full-resolution single-channel uncertainty map through three progressive 2× upsampling stages with no final activation, producing the predicted photometric and geometric uncertainty maps, ˆℓphoto (p) and ˆℓgeo (p), respectively, which are parame-terized as log-covariance values.  
+
+> Fig. 2. Overview of the proposed consistency network and training pipeline. Given two temporally adjacent RGB-D frames, the network predicts dense photometric and geometric uncertainty maps through a dual-branch encoder-decoder architecture. Reference photometric and geometric consistency errors are computed using GT optical flow and GT relative pose from TartanAir, detached from the computation graph, and used to train the network with a heteroscedastic NLL loss.
+
+The lower part of Fig. 2 shows how the ground-truth reference consistency errors are computed. The photometric error ephoto (p) is the ℓ1 difference between the current frame and the reference frame warped by GT optical flow, 
+
+ephoto (p) = W(Ij , fj→i)( p) − Ii(p) 1 (1) where W(·) denotes flow-guided image warping, fj→i is the GT optical flow from frame j to frame i, and ∥ · ∥ 1 denotes the ℓ1 norm averaged over the three color channels. The geometric error egeo (p) is the relative depth incon-sistency obtained by projecting Dj into the current frame via the GT pose. Let p′ = π(Trel , D j , K ; p) denote the projected pixel location in frame i, where π(·) denotes the pixel projection induced by the projective depth transform using the GT relative pose Trel and the camera intrinsic matrix 
+
+K. Also let dproj (p) denote the depth of the transformed 3D pixel. It is then defined as 
+
+egeo (p) = dproj (p) − Di(p′)
+
+Di(p′) + ϵ , (2) where Di(p′) is the measured depth sampled at the projected location, and ϵ is a small constant for numerical stability. Both GT reference consistency errors are detached from the computation graph before training, so that gradients do not flow through the error computation. The predicted uncertainty maps together with the detached errors are then passed to a heteroscedastic NLL objective under a Laplacian noise assumption. The per-pixel losses are defined as 
+
+Lphoto (p) = ephoto (p) e−ˆℓphoto (p) + ˆℓphoto (p) (3) 
+
+Lgeo (p) = egeo (p) e−ˆℓgeo (p) + ˆℓgeo (p) (4) At the single image scale, the loss is 5
+
+L = X
+
+> p
+
+h
+
+Lphoto (p) + Lgeo (p)
+
+i
+
+(5) The network predicts only full-resolution uncertainty maps. The multi-scale loss is used during training only by average-pooling the same predicted maps and reference errors to lower image scales; it does not introduce additional prediction heads or change the inference procedure. This auxiliary supervision improves training stability and encourages the predicted un-certainty to capture both local pixel-level errors and coarser region-level inconsistency. The two terms in each per-pixel loss act in opposition: a large covariance reduces the first term but increases the second, forcing the network to predict uncertainty that is neither over-confident nor over-uncertain, but calibrated to the observed residual magnitude. 
+
+2) Training setup: The model is trained on TartanAir using 111 trajectories across 8 diverse synthetic environments, with 30 held-out trajectories for validation. We use AdamW (lr=8 ×10 −4, weight decay 10 −4) with a OneCycleLR sched-ule, batch size of 32, and mixed precision training. The final model is trained on a single NVIDIA RTX 3090 (24GB) for approximately 135.5k iterations over 75 hours. Qualitative evaluation of the learned uncertainty maps is provided in Sec. IV-A, demonstrating that the network re-sponds appropriately to diverse challenging conditions. 
+
+C. Con-DSO Construction 
+
+The learned consistency prior is integrated into Con-DSO through three consecutive stages. First, adjacent-pair network predictions are converted into an absolute host-side quality prior defined on each keyframe. Second, this prior biases support-pixel selection when a new keyframe is created. Third, the selected pixels are reweighted during coarse-to-fine direct pose estimation by a decoupled photometric-geometric weight-ing scheme. 
+
+1) Absolute Host-Side Prior Construction: The consistency network in Sec. III-B is trained on adjacent frame pairs and predicts uncertainty maps ˆℓkt−1,t , which are converted into a pairwise quality map for each pixel p:
+
+Qkt−1,t (p) = clip mkt−1,t 
+
+exp( ˆℓkt−1,t (p)) , ϵ q , 1
+
+!
+
+, (6) where mkt−1,t = median p
+
+ exp( ˆℓkt−1,t ) is the spatial median of the predicted uncertainty map, k ∈ { photo , geo } denotes the photometric or geometric branch, and ϵq = 10 −4 is a small lower bound used to avoid invalid logarithms in the subsequent log-quality fusion. This median normalization converts uncertainty into a frame-relative quality score while remaining robust to extreme predictions. These predictions provide short-horizon consistency cues on adjacent frame pairs. However, RGBD-DSO performs direct tracking between a host keyframe and the current frame, rather than between temporally adjacent frames. To bridge this tem-poral mismatch while preserving the original keyframe-based tracking formulation, we convert adjacent-pair predictions into an absolute host-side prior defined on each keyframe. A key observation is that strong short-term disturbances, such as dynamic motion, occlusion, and abrupt illumination change, are reflected as low quality in at least one adjacent pair. In this sense, the consistency network absorbs structured non-stationary disturbances into the quality prediction itself, rather than leaving them as unexplained residual noise. After this explicit quality modulation, we approximate the remaining uncertainty as a local zero-mean perturbation in the log-quality domain. This motivates the following independent Gaussian noise model, under which the absolute host-side quality prior yields a closed-form maximum-likelihood estimate. This Gaussian assumption differs from the Laplacian likeli-hood used in Sec. III-B. The latter is adopted for robust pixel-wise uncertainty learning from raw photometric and geometric consistency errors, whereas the former is used only as a local approximation for fusing normalized log-quality observations during host-side prior inference. Specifically, for a keyframe T , let μ(p) denote the latent host-side log-quality of pixel p. We model the two adjacent observations around T as independent noisy measurements of this latent quantity: 
+
+log QkT −1,T (p) = μ(p)+ η1, log QkT,T +1 (p) = μ(p)+ η2,
+
+(7) where η1, η 2i.i.d.
+
+∼ N (0 , σ 2) denote prediction noise. Under this model, the maximum-likelihood estimate of μ(p)
+
+is the average of the two log-quality observations, 
+
+ˆμ(p) = 12
+
+
+
+log QkT −1,T (p) + log QkT,T +1 (p)
+
+
+
+, (8) which yields the following absolute host-side quality prior in the original domain: 
+
+Qk
+
+> abs
+
+(p; T ) = 
+
+q
+
+QkT −1, T (p) QkT, T +1 (p). (9) The resulting prior is temporally symmetric and centered on the host keyframe. Compared with using a single pairwise prediction, the bidirectional estimate reduces the variance from 
+
+σ2 to σ2/2 under the Gaussian noise assumption. It also incorporates evidence from both temporal directions, so that disturbances confined to a single adjacent pair are reflected in the host-side prior rather than ignored. 
+
+2) Quality-Aware Pixel Selection: When a new keyframe 
+
+T is created, the photometric absolute quality prior is first used to bias the support-pixel selection stage of RGBD-DSO by modulating the original gradient-based pixel score. In the original pixel selector, each candidate pixel is scored by its directional gradient magnitude along a randomly sampled unit direction, 
+
+s(p) = ∇IT (p) · d , (10) where ∇IT (p) = ( dx, d y )⊤ is the image gradient at pixel p
+
+on keyframe T , and d is a randomly sampled unit direction introduced to diversify the spatial distribution of selected pixels. We modulate this score by the photometric host-side prior and define the quality-aware selection score as 
+
+˜s(p) = s(p) Qphoto abs (p; T ). (11) 6
+
+Among candidates that satisfy the adaptive gradient threshold 
+
+θ, support pixels are then selected by ranking ˜s(p) and retaining the top-scoring pixels: 
+
+P∗ = Top -K
+
+> p∈B , s (p)>θ
+
+˜s(p), (12) where B denotes the multi-scale candidate grid of RGBD-DSO, θ is the corresponding adaptive threshold, and the number of retained pixels K follows the original RGBD-DSO selector. This preserves the support-pixel budget of the baseline while reordering candidates so that pixels that are both informative and temporally reliable are preferentially retained. Unlike hard masking or binary gating, the proposed prior influences support formation through continuous score modu-lation without explicitly discarding candidates. 
+
+3) Decoupled Prior Weighting and Pose Estimation: After pixels are selected for a host keyframe, the same host-side priors are further used during direct pose estimation. In this stage, the prior no longer determines which pixels are selected but instead modulates how strongly each selected pixel contributes to the pose update. The key motivation is that photometric and depth-geometric inconsistency affect direct RGB-D tracking differently: the former corrupts the image residual and gradient terms used for alignment, whereas the latter, after warping, enters the first-order linearization through the inverse-depth-dependent translational term without directly altering the image-gradient components. Given a host keyframe T and an incoming frame t, the photometric residual at the i-th selected support pixel pi is defined as 
+
+ri(ξ) = IT (pi) − It(π(T(ξ)Pi)) , Pi = DT (pi) K−1 ¯pi,
+
+(13) where Pi ∈ R3 is the 3D point obtained by back-projecting 
+
+pi using the keyframe depth DT (pi), ¯pi = [ ui, v i, 1] ⊤ is the homogeneous coordinate of pi, π(·) denotes perspective pro-jection, K is the intrinsic matrix, and T(ξ) = exp( ξ) ∈ SE(3) 
+
+is the relative pose parameterized by ξ. For clarity, we omit the affine brightness parameters (a, b ) used in RGBD-DSO [18] to model exposure and gain variations across frames. They are jointly optimized with ξ in the same 8-DoF Gauss-Newton system but are not directly targeted by the proposed prior-weighting mechanism. We define the photometric and geometric weights from the absolute host-side quality priors as 
+
+wp(p) = 
+
+q
+
+Qphoto abs (p; T ) + ϵ, wg (p) = 
+
+q
+
+Qgeo abs (p; T ) + ϵ, 
+
+(14) where ϵ = 10 −4 ensures numerical stability. To make this effect explicit, we next examine how the two weights enter the first-order linearization used for the 6-DoF pose component. Let the 6-DoF pose increment be partitioned as 
+
+ξ = t⊤ ω⊤⊤ , (15) where t ∈ R3 and ω ∈ R3 denote translation and rotation, respectively. For the warped 3D point P′ 
+
+> i
+
+= T(ξ)Pi and its image projection p′ 
+
+> i
+
+= π(P′
+
+> i
+
+), let ∇It(p′
+
+> i
+
+) = ( dx, d y )⊤ denote the target-image gradient at the projected pixel. The per-pixel Jacobian of the scalar residual with respect to ξ can then be partitioned as 
+
+Ji = Jtr  
+
+> i
+
+Jrot 
+
+> i
+
+ , (16) where Jtr  
+
+> i
+
+and Jrot  
+
+> i
+
+denote the translational and rotational Jacobian blocks, respectively. Under the inverse-depth parameterization used in RGBD-DSO, the translational block depends on the warped inverse-depth term, whereas the rotational block does not. Specifically, we use ρi ∈ R to denote the corresponding scalar inverse-depth-dependent term after warping into the current frame. The Jacobian structure can then be written as 
+
+Jtr  
+
+> i
+
+= ρi Ai(dx, d y , u ′
+
+> i
+
+, v ′
+
+> i
+
+), Jrot  
+
+> i
+
+= Bi(dx, d y , u ′
+
+> i
+
+, v ′
+
+> i
+
+),
+
+(17) where (u′
+
+> i
+
+, v ′
+
+> i
+
+) = p′
+
+> i
+
+, and Ai(·) and Bi(·) collect the standard projection and motion terms of direct RGB-D tracking. Thus, in the first-order Jacobian, the image-gradient terms contribute to both translation and rotation, while the inverse-depth-dependent term appears only in the translational block. Instead of applying a single shared weight to all terms, we weight the linearization in a decoupled manner. The photometric prior rescales the residual and image-gradient terms, 
+
+˜dx = wpdx, ˜dy = wpdy , ˜ri = wpri, (18) whereas the geometric prior rescales only the warped inverse-depth term, 
+
+˜ρi = wg ρi. (19) Since both Jtr  
+
+> i
+
+and Jrot  
+
+> i
+
+are linear in the image-gradient terms, and Jtr  
+
+> i
+
+is additionally linear in ρi, the resulting weighted Jacobian can be expressed as 
+
+˜Ji = wpwg Jtr  
+
+> i
+
+wp Jrot 
+
+> i
+
+ , ˜ri = wpri. (20) This decoupling is important for pose estimation. The rotational part of the update is governed solely by the image-gradient terms and is therefore modulated solely by wp. By contrast, the translational part additionally depends on the inverse-depth term and is therefore modulated by both wp and 
+
+wg . As a result, unreliable depth can be selectively suppressed in translation estimation without unnecessarily weakening ro-tational constraints. The weighted normal equations are then solved using Gauss–Newton, 
+
+H = X
+
+> i
+
+˜J⊤ 
+
+> i
+
+˜Ji, b = X
+
+> i
+
+˜J⊤ 
+
+> i
+
+˜ri, δξ = −H−1b,
+
+(21) followed by the pose update 
+
+T ← exp( δξ) T. (22) Finally, the proposed decoupled weighting is applied only at the finest pyramid level ( l = 0 ), where the learned uncertainty maps are defined. Extending them to coarser pyramid levels would require cross-scale resampling, which may distort the predicted reliability structure through interpolation. We there-fore retain the original RGBD-DSO weighting at coarser levels and apply the learned priors only in the final full-resolution alignment stage. 7
+
+D. Keyframe-based Sliding-Window Optimization 
+
+Following the RGBD-DSO, Con-DSO maintains a bounded window of active keyframes and jointly refines their poses via local optimization. Old keyframes are marginalized as they leave the window, preserving recent multi-view constraints at bounded cost. Since the proposed consistency priors do not modify this stage, they influence it only indirectly through the selected pixels and the prior-weighted tracking established in the preceding stages. IV. EXPERIMENT AND RESULTS In the experiments, we first inspect the learned uncertainty maps to verify whether the consistency network responds to typical challenging factors, and then evaluate Con-DSO on five public RGB-D benchmarks: ICL-NUIM [37], RGB-D Scenes V2 [38], TUM RGB-D [39], BONN [40], and Open-LORIS [41]. These datasets cover controlled synthetic scenes and diverse real-world environments with dynamic objects, occlusions, illumination changes, and texture sparsity. The consistency network is trained only on TartanAir and is applied to all test datasets without fine-tuning. We compare Con-DSO with representative RGB-D VO/SLAM baselines, includ-ing CVO, ACVO, RGBD-DSO, and ORB-SLAM3. On the three challenging datasets (TUM RGB-D, BONN, and Open-LORIS), we additionally include SR-SLAM, which combines multi-metric quality assessment for challenging environments. Given that Con-DSO is designed as an RGB-D direct odometry framework, CVO, ACVO, and RGBD-DSO are treated as the primary odometry baselines, while ORB-SLAM3 and SR-SLAM are included as full-SLAM references with backend optimization and loop closure. Performance is evaluated using Absolute Trajectory Error (ATE) and translational Relative Pose Error (T.RPE), both reported as RMSE using the evo toolkit. Due to the page limit, the main paper focuses on ATE as the primary global trajectory metric, while complete T.RPE results are provided in the supplementary material. Experiments are conducted on Ubuntu 20.04 with an AMD Ryzen R7 CPU, an NVIDIA RTX 3080 GPU, and 32 GB RAM. 
+
+A. Qualitative Analysis of Learned Uncertainty 
+
+Fig. 3 visualizes the predicted photometric and geomet-ric uncertainty maps under representative conditions, where brighter regions indicate higher predicted uncertainty. In dy-namic scenes, the photometric branch highlights moving re-gions, from a partially visible hand to full human bodies, while the geometric branch also responds to associated depth occlusion and discontinuities. Under occlusion, both dynamic and static occluders produce elevated geometric uncertainty along occlusion boundaries. For illumination changes, the photometric branch responds strongly to overexposed or re-flective areas, such as sunlight entering through a balcony or bright ceiling lights. In normal static scenes, uncertainty is mainly concentrated around object boundaries and regions with unreliable depth. These results demonstrate that the learned consistency prior provides a unified response to diverse degradation factors without relying on semantic labels or designed rules. 
+
+B. Main Quantitative Results 
+
+Table I reports the sequence-level and average ATE results on five RGB-D benchmarks. ICL-NUIM and RGB-D Scenes V2 are reported in centimeters on the left side, whereas TUM RGB-D, BONN, and OpenLORIS are reported in meters on the right side. For the controlled synthetic setting, ICL-NUIM (ICL 01– ICL 08) provides accurate camera poses, depth maps, and 3D scene geometry, but still contains large weakly textured regions such as walls, ceilings, and floors. These nearly featureless views make visual tracking difficult, especially in office sequences. CVO and ACVO accumulate frame-to-frame registration errors, while ORB-SLAM3 becomes unstable on weakly textured sequences, most notably ICL 06. In contrast, RGBD-DSO and Con-DSO remain substantially more stable due to their sparse direct RGB-D formulation. Con-DSO achieves the best ATE on five of eight sequences and reduces the average ATE from 1.31 cm to 1.04 cm, with the largest gain on ICL 05, where the ATE decreases from 6.02 cm to 4.18 cm. Moving from synthetic to real RGB-D sensing, RGB-D Scenes V2 (V2 01–V2 04) introduces Kinect depth noise and invalid depth regions in tabletop environments. ORB-SLAM3 achieves the best ATE on all sequences, benefiting from rich tabletop and object textures as well as loop closure and global bundle adjustment. However, RGBD-DSO is strongly affected by noisy or invalid depth, where its sensor-derived depth prior and fixed occlusion gating become less reliable. Con-DSO attenuates unreliable photometric and depth-geometric observations, reducing the average ATE from 22.30 cm to 3.75 cm and achieving the second-best result on all sequences. This indicates that Con-DSO can maintain feature-SLAM-level accuracy in scenarios where other direct methods suffer from severe drift. The dynamic benchmarks further test robustness under mov-ing foreground objects, dynamic occlusion, and mixed camera-object motion. The selected TUM RGB-D walking sequences (w xyz–w half) contain active camera motion with frequent pedestrian movement, while BONN (crowd–sync)includes more complex interactions such as random crowd motion, manipulated objects, single-person motion tracking, and close-range synchronized human motion. SR-SLAM achieves the best average ATE on both TUM RGB-D and BONN, bene-fiting from its explicit dynamic-region handling. On the three TUM sequences, CVO, ACVO, ORB-SLAM3, and RGBD-DSO all suffer from large errors under frequent pedestrian motion, whereas Con-DSO maintains the same order of accu-racy as SR-SLAM. On BONN, Con-DSO achieves the lowest ATE on mov box, suggesting better robustness to manipulated objects that are difficult for detection-based filtering. On crowd and person, where dense pedestrian motion and close-range human motion dominate the scene, SR-SLAM benefits from explicit person detection and obtains lower ATE, while Con-DSO remains substantially more stable than the direct methods. On sync, RGBD-DSO and Con-DSO both achieve very low ATE (0.008 m vs. 0.009 m), indicating that both hard depth gating and soft weighting are effective in this close-8 
+
+> Fig. 3. Qualitative visualization of learned photometric and geometric uncertainty under representative degradation factors. Brighter regions indicate higher predicted uncertainty. TABLE I ATE COMPARISON ON FIVE RGB-D BENCHMARKS
+
+Seq. CVO ACVO ORB3 SR RGBD Ours Seq. CVO ACVO ORB3 SR RGBD Ours 
+
+ICL 01 25.37 25.13 24.70 – 0.27 0.19 w xyz 1.644 1.666 0.513 0.015 0.119 0.039 ICL 02 2.92 2.66 8.84 – 0.20 0.19 w rpy 1.703 1.586 0.624 0.028 0.326 0.088 ICL 03 18.73 18.64 17.14 – 0.78 0.79 w half 1.218 1.134 0.270 0.022 0.239 0.139 ICL 04 20.79 22.23 5.38 – 0.61 0.26 crowd 2.610 2.568 1.192 0.147 1.332 0.558 ICL 05 25.12 24.66 23.82 – 6.02 4.18 mov box 0.614 0.591 0.241 0.035 0.142 0.027 
+
+ICL 06 9.66 9.54 73.25 – 0.92 0.95 person 0.638 0.519 0.777 0.085 0.805 0.350 ICL 07 19.43 19.03 18.34 – 0.83 0.81 sync 1.097 1.172 1.314 0.011 0.008 0.009 ICL 08 10.65 10.11 3.88 – 0.87 0.93 cafe 0.841 0.833 4.407 4.136 2.051 1.635 V2 01 11.62 12.29 1.28 – 9.94 1.52 office 0.218 0.210 0.066 0.065 0.266 0.072 V2 02 10.67 12.54 1.60 – 26.78 2.92 home 0.807 0.727 2.929 2.901 x 1.459 V2 03 15.63 16.89 1.40 – 22.33 5.70 market 25.444 46.494 16.448 3.062 2.939 0.804 
+
+V2 04 13.69 14.22 1.50 – 30.16 4.84 – – – – – – –
+
+ICL Avg 16.58 16.50 21.92 – 1.31 1.04 TUM Avg 1.521 1.462 0.469 0.022 0.228 0.089 
+
+V2 Avg 12.90 13.99 1.45 – 22.30 3.75 BONN Avg 1.240 1.212 0.881 0.070 0.572 0.236 – – – – – – – OL Avg † 8.834 15.846 6.974 2.421 1.752 0.837   
+
+> Note: The best and second-best results in each row are highlighted in bold and underlined, respectively. ORB3, SR, RGBD, and OL denote ORB-SLAM3, SR-SLAM, RGBD-DSO, and OpenLORIS, respectively. ICL-NUIM and RGB-D Scenes V2 are reported in cm, while TUM RGB-D, BONN, and OpenLORIS are reported in m. “x” denotes that RGBD-DSO tracks only 20% of frames. †OpenLORIS average is computed over the three complete sequences used by all compared methods. Full ATE/T.RPE results are provided in the supplementary material.
+
+range synchronized human-motion scene. Finally, OpenLORIS (cafe–market) evaluates robustness in real robotic indoor environments with dynamic objects, oc-clusions, illumination variations, and different scene scales. In the small-scale cafe sequence, transient human motion, close-range occlusion, and low-texture walls challenge both feature-based and direct methods. ORB-SLAM3 and SR-SLAM degrade due to unstable feature tracking and incorrect relocalization, while CVO and ACVO perform best by relying on point-cloud alignment. In office, strong illumination dis-turbs direct methods, whereas feature-based methods obtain the lowest errors. Con-DSO remains close to the best result, indicating that quality-aware pixel selection and weighting help suppress overexposed regions. In home, CVO and ACVO again perform best, while RGBD-DSO fails to maintain stable tracking because frequent invalid depth can drive inverse-depth initialization toward invalid or infinite values. Con-DSO reduces the impact of unreliable depth and outperforms the feature-based methods. The strongest OpenLORIS gain appears on the large-scale market sequence, where the robot moves through a super-market environment with partial occlusions, moving objects, and varying illumination. CVO and ACVO suffer from severe frame-to-frame drift, and feature-based methods also degrade despite loop closure and global optimization. RGBD-DSO performs better because the scene provides mostly valid depth measurements, but Con-DSO achieves the best ATE of 0.804 m. Overall, Con-DSO obtains the best average ATE over the complete OpenLORIS sequences, mainly driven by its strong performance in the large-scale sequence while maintaining competitive accuracy in smaller scenes. Fig. 4 provides representative trajectory comparisons. Con-9
+
+> Fig. 4. Representative trajectory comparisons on ICL 05, TUM w-xyz, BONN mov-box, and OpenLORIS market. The selected sequences cover weak texture, dynamic human motion, manipulated objects, and large-scale real-world environments. The black solid line denotes the ground truth, the red solid line denotes Con-DSO, and the dashed lines denote baseline methods: gray for CVO, brown for ACVO, yellow for ORB-SLAM3, green for SR-SLAM, and blue for RGBD-DSO.
+
+DSO remains close to the ground truth across weak-texture, dynamic, manipulated-object, and large-scale scenes, whereas direct baselines often show accumulated drift and full-SLAM references may still degrade under challenging dynamics or relocalization errors. Complete trajectory visualizations are included in the supplementary material. 
+
+C. Ablation Study 
+
+To further analyze the contribution of each component, we conduct ablation studies on all datasets. The experiments are based on the proposed Con-DSO framework, where P denotes the quality-aware pixel selection module and W denotes the decoupled weighting module. Table II reports the average ATE RMSE under three configurations: without both modules (-P-W), with pixel selection only (+P), and with both modules (+P+W). On ICL-NUIM, where the environment is static and depth measurements are accurate, introducing pixel selection alone leads to slight performance degradation (1.31 cm to 1.59 cm) due to reduced measurement diversity. When combined with decoupled weighting, the full system achieves an overall improvement of 20.6%, indicating that the weighting mod-ule compensates by stabilizing optimization. On RGB-D Scenes V2, pixel selection significantly improves performance (34.92 cm to 18.85 cm), and the weighting module further reduces the error to 3.75 cm, corresponding to an overall improvement of 89.3%. On the dynamic datasets, both modules contribute to im-proved robustness under dynamic interference. The combined configuration reduces ATE from 0.228 m to 0.089 m on TUM RGB-D and from 0.572 m to 0.236 m on BONN, correspond-ing to improvements of 61.0% and 58.7%, respectively. On OpenLORIS, which includes illumination changes, occlusions, and long trajectories, the proposed modules achieve a 52.2% reduction in ATE. Overall, these results indicate that quality-aware pixel se-lection and decoupled weighting provide complementary im-provements, jointly improving robustness across scenarios with diverse challenging factors. 
+
+> TABLE II ABLATION STUDY OF ATE RMSE
+
+Dataset (-P-W) (+P) (+P+W) Improv. 
+
+ICL-NUIM (cm) 1.31 1.59 1.04 20.6% 
+
+RGB-D Scenes V2 (cm) 34.92 18.85 3.75 89.3% 
+
+TUM RGB-D (m) 0.228 0.129 0.089 61.0% 
+
+BONN (m) 0.572 0.401 0.236 58.7% 
+
+OpenLORIS (m) † 1.752 1.379 0.837 52.2%  
+
+> Note: †OpenLORIS average is computed over the three complete sequences.
+
+D. Runtime Analysis 
+
+Con-DSO runs at 54.69–101.04 ms/frame across the eval-uated datasets. Compared with RGBD-DSO, the additional overhead mainly comes from network inference and host-side prior construction, while pixel ranking and decoupled weight-ing introduce only minor cost. Although slower than ORB-SLAM3 and RGBD-DSO, Con-DSO remains faster than dense point-cloud registration methods such as CVO and ACVO, and achieves runtime comparable to SR-SLAM on dynamic benchmarks. Detailed runtime breakdowns are provided in the supplementary material. V. C ONCLUSION 
+
+In this paper, we proposed Con-DSO, a consistency-aware RGB-D direct sparse odometry framework for challenging en-vironments. Con-DSO learns photometric and depth-geometric uncertainty from temporally adjacent RGB-D frame pairs and converts the pairwise predictions into a host-side quality prior. This prior is then applied to the VO pipeline through quality-aware support-pixel selection and decoupled photometric-geometric weighting during pose estimation, enabling unre-liable observations to be continuously attenuated. Extensive experiments on five public RGB-D datasets show that the learned consistency prior improves the accuracy and robustness of direct RGB-D odometry across synthetic and real-world scenes while maintaining competitive runtime. Despite these advantages, Con-DSO has several limita-tions. First, while the learned consistency prior provides a 10 
+
+unified quality measure, it may not fully match specialized methods designed for particular challenges. More effective post-processing and geometric scaling of the predicted un-certainty, such as non-maximum suppression and depth-aware covariance correction [28], may further improve its preci-sion. Second, the current prior is constructed from short-horizon adjacent-pair observations and is primarily used for local keyframe-based tracking. Extending this short-horizon consistency estimate into a temporally persistent quality model for global optimization, loop closure, and map maintenance, similar to persistent object representations [42], represents an important direction for future work. REFERENCES [1] D. Nister, O. Naroditsky, and J. Bergen, “Visual odometry for ground vehicle applications,” J. Fields Robot., vol. 23, no. 1, pp. 3–20, 2006. [2] J.-C. Piao and S.-D. Kim, “Real-time visual-inertial SLAM based on adaptive keyframe selection for mobile AR applications,” IEEE Trans. Multimedia, vol. 21, no. 11, pp. 2827–2836, Nov. 2019. [3] I. A. Kazerouni, L. Fitzgerald, G. Dooly, and D. Toal, “A survey of state-of-the-art on visual slam,” Expert Systems with Applications , vol. 205, p. 117734, 2022. [4] R. A. Newcombe et al., “KinectFusion: Real-time dense surface mapping and tracking,” in Proc. 10th IEEE Int. Symp. Mixed Augmented Reality ,2011, pp. 127–136. [5] C. Kerl, J. Sturm, and D. Cremers, “Robust odometry estimation for RGB-D cameras,” in Proc. IEEE Int. Conf. Robot. Automat. (ICRA) , 2013, pp. 3748–3754. [6] T. Whelan, R. F. Salas-Moreno, B. Glocker, A. J. Davison, and S. Leutenegger, “ElasticFusion: Real-time dense SLAM and light source estimation,” Int. J. Robot. Res. , vol. 35, no. 14, pp. 1697–1716, 2016. [7] R. Mur-Artal, J. M. M. Montiel, and J. D. Tardos, “ORB-SLAM: A Versatile and Accurate Monocular SLAM System,” IEEE Trans. Robot. ,vol. 31, no. 5, pp. 1147–1163, 2015. [8] R. Mur-Artal and J. D. Tard´ os, “ORB-SLAM2: An open-source slam system for monocular, stereo, and RGB-D cameras,” IEEE Trans. Robot. ,vol. 33, no. 5, pp. 1255–1262, Oct. 2017. [9] C. Campos, R. Elvira, J. J. G. Rodr´ ıguez, J. M. M. Montiel, and J. D. Tard´ os, “ORB-SLAM3: An accurate open-source library for visual, visual–inertial, and multimap SLAM,” IEEE Trans. Robot. , vol. 37, no. 6, pp. 1874–1890, Dec. 2021. [10] Z. Teed and J. Deng, “DROID-SLAM: Deep visual SLAM for monocu-lar, stereo, and RGB-D cameras,” in Proc. Int. Conf. Neural Inf. Process. Syst., 2021, pp. 16558–16569. [11] Z. Zhu et al., “Nice-SLAM: Neural implicit scalable encoding for SLAM,” in Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit., 2021, pp. 12786–12796. [12] C. Yu et al., “DS-SLAM: A semantic visual SLAM towards dynamic environments,” in Proc. IEEE/RSJ Int. Conf. Intell. Robots Syst.(IROS) ,Oct. 2018, pp. 1168–1174. [13] S. Cheng, C. Sun, S. Zhang, and D. Zhang, “SG-SLAM: A realtime RGB-D visual SLAM toward dynamic scenes with semantic and geomet-ric information,” IEEE Trans. Instrum. Meas. , vol. 72, pp. 1–12, 2023. [14] C. Sheng, S. Pan, W. Gao, Tan. W, T. Zhao, Dynamic-DSO: Direct Sparse Odometry Using Objects Semantic Information for Dynamic Environments. Appl. Sci. 2020, 10, 1467. [15] Y. Fan, Q. Zhang, Y. Tang, S. Liu, H. Han, Blitz-SLAM: A semantic SLAM in dynamic environments, Pattern Recognit. 121 (2022) 108225. [16] S. Gilroy, E. Jones, M. Glavin, ” Overcoming occlusion in the auto-motive environment—A review,” IEEE Trans. Intell. Transp. Syst. 22 (1) (2021) 23–35. [17] W. Kang, S. Gai, F. Da and Z. Cai, ”Occlusion-Aware Monocular Visual Odometry for Robust Trajectory Tracking,” IEEE Robot. Automat. Lett. ,vol. 9, no. 5, pp. 4774–4781, May 2024. [18] Z. Yuan, K. Cheng, J. Tang, and X. Yang, “RGB-D DSO: Direct sparse odometry with RGB-D cameras for indoor scenes,” IEEE Trans. Multimedia, vol. 24, pp. 4092–4101, 2022. [19] L. Li, Z. -K. Zuo, R. -F. Bu, Y. -J. Zhang, R. -M. Wang and E. -L. Tan, “An Illumination-Adaptive Visual SLAM Algorithm With Lightweight Object Detection for Complex Dynamic Environments,” IEEE Trans. Instrum. Meas. , vol. 74, pp. 1–22, 2025. [20] M. Ghaffari, W. Clark, A. Bloch, R. M. Eustice, and J. W. Grizzle, “Continuous direct sparse visual odometry from RGB-D images,” in Proc. Robot. Sci. Syst. Conf., Jun. 2019. [21] Tzu-Yuan Lin, William Clark, Ryan M Eustice, Jessy W Grizzle, An-thony Bloch, and Maani Ghaffari. Adaptive continuous visual odometry from RGB-D images. arXiv preprint arXiv: 1910.00713, 2019. [22] S. Li and D. Lee, “RGB-D SLAM in dynamic environments using static point weighting,” IEEE Robot. Automat. Lett., vol. 2, no. 4, pp. 2263–2270, Oct. 2017. [23] W. Dai, Y. Zhang, P. Li, Z. Fang, and S. Scherer, “RGB-D SLAM in dynamic environments using point correlations,” IEEE Trans. Pattern Anal. Mach. Intell. , vol. 44, no. 1, pp. 373–389, Jan. 2022. [24] G. Zhang and P. A. Vela, “Good features to track for visual SLAM,” in 
+
+Proc. IEEE Conf. Comput. Vis. Pattern Recognit. (CVPR) , Jun. 2015, pp. 1373–1382. [25] G. Li, Z. Yu, K. Yang, M. Lin, and C. L. P. Chen, “Exploring feature selection with limited labels: A comprehensive survey of semisupervised and unsupervised approaches,” IEEE Trans. Knowl. Data Eng. , vol. 36, no. 11, pp. 6124–6144, Nov. 2024. [26] Y. Liu, J. Liu, Y. Hao, B. Deng, Z. Meng, A switching-coupled backend for simultaneous localization and dynamic object tracking, IEEE Robot. Autom. Lett. 6 (2) (2021) 1296–1303. [27] R. Long, C. Rauch, T. Zhang, V. Ivan, and S. Vijayakumar, “Rigid-Fusion: Robot localisation and mapping in environments with large dynamic rigid objects,” IEEE Robot. Automat. Lett. , vol. 6, no. 2, pp. 3703–3710, Apr. 2021. [28] Y. Qiu, Y. Chen, Z. Zhang, W. Wang, S. Scherer, ”MAC-VO: Metrics-aware covariance for learning-based stereo visual odometry,” in Proc. IEEE Int. Conf. Robot. Automat. (ICRA) , 2025, pp. 3803-3814. [29] Z. Ma, D. He, X. Gao, Y. Yang, W. Yu and T. -K. Truong, ”QualiSLAM: Quality-Driven Feature Adaptation for Visual SLAM in Challenging Environments,” IEEE Trans. Instrum. Meas. , vol. 74, pp. 1–16, 2025. [30] H. Zhang, C. Li, T. N. Canh, L. Wang and N. Y. Chong, “SR-SLAM: Scene reliability-based RGB-D SLAM in diverse environments,” Robot. Auton. Syst. , 197 (2026) 105306. [31] R. Hartley and A. Zisserman, Multiple View Geometry in Computer Vision. Cambridge, U.K.: Cambridge Univ. Press, 2003. [32] M. Jaimez, C. Kerl, J. Gonzalez-Jimenez, and D. Cremers, “Fast odome-try and scene flow from RGB-D cameras based on geometric clustering,” 
+
+in Proc. IEEE Int. Conf. Robot. Automat., 2017, pp. 3992–3999. [33] R. Scona, M. Jaimez, Y. R. Petillot, M. Fallon, and D. Cremers, “StaticFusion: Background reconstruction for dense RGB-D SLAM in dynamic environments,” in Proc. IEEE Int. Conf. Robot. Automat. , 2018, pp. 38493856. [34] Z. Huang, X. Shi, C. Zhang, Q. Wang, K. C. Cheung, H. Qin, J. Dai, and H. Li, “Flowformer: A transformer architecture for optical flow,” in 
+
+European conference on computer vision. Springer, 2022, pp. 668–685. [35] W. Wang, D. Zhu, X. Wang, Y. Hu, Y. Qiu, C. Wang, Y. Hu, A. Kapoor, and S. Scherer, “Tartanair: A dataset to push the limits of visual slam,” 
+
+in 2020 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) , pp. 4909–4916, IEEE, 2020. [36] Z. Teed and J. Deng, “Raft: Recurrent all-pairs field transforms for op-tical flow,” in Computer Vision–ECCV 2020: 16th European Conference, Glasgow, UK, August 23–28, 2020, Proceedings, Part II 16. Springer, 2020, pp. 402–419. [37] A. Handa, T. Whelan, J. McDonald, and A. J. Davison, “A benchmark for RGB-D visual odometry, 3D reconstruction and SLAM,” in Proc. IEEE Int. Conf. Robot. Automat. , 2014, pp. 1524–1531. [38] K. Lai, L. Bo, and D. Fox, “Unsupervised feature learning for 3D scene labeling,” in Proc. IEEE Int. Conf. Robot. Automat., 2014, pp. 3050–3057. [39] J. Sturm, N. Engelhard, F. Endres, W. Burgard, and D. Cremers, “A benchmark for the evaluation of RGB-D SLAM systems,” in Proc. IEEE/RSJ Int. Conf. Intell. Robots Syst. (IROS) , Oct. 2012, pp. 573–580. [40] E. Palazzolo, J. Behley, P. Lottes, P. Gigu` ere, and C. Stachniss, “Re-Fusion: 3D reconstruction in dynamic environments for RGB-D cameras exploiting residuals,” in Proc. IEEE/RSJ Int. Conf. Intell. Robots Syst. (IROS) , Nov. 2019, pp. 7855–7862. [41] X. Shi, et al., ”Are we ready for service robots? The OpenLORIS-scene datasetsfor lifelong SLAM,” in Proc. IEEE Int. Conf. Robot. Automat, ICRA, 2020, pp. 3139–3145. [42] L. Schmid, M. Abate, Y. Chang, and L. Carlone, “Khronos: A unified approach for spatio-temporal metric-semantic slam in dynamic environ-ments,” in Proc. of Robotics: Science and Systems , 2024.

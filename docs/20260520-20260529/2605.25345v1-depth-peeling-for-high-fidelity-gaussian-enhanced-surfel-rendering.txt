@@ -1,0 +1,500 @@
+Title: Depth Peeling for High-Fidelity Gaussian-Enhanced Surfel Rendering
+
+URL Source: https://arxiv.org/pdf/2605.25345v1
+
+Published Time: Tue, 26 May 2026 01:40:42 GMT
+
+Number of Pages: 14
+
+Markdown Content:
+# Depth Peeling for High-Fidelity Gaussian-Enhanced Surfel Rendering 
+
+# Keyang Ye Hongzhi Wu Kun Zhou *
+
+# State Key Lab of CAD&CG, Zhejiang University Hangzhou Research Institute of Holographic and AI Technology 
+
+yekeyang@zju.edu.cn, hwu@acm.org, kunzhou@acm.org Ground-truth Ours 26.79 / 488 PSNR ↑ / FPS ↑  
+
+> DBS 24.31 / 221
+> GES 24.53 / 576
+> 3DGS-MCMC 24.33 / 297
+> SSS 26.01 / 52
+> Ground-truth Ours 32.39 / 542 PSNR ↑/ FPS ↑
+> DBS 31.91 / 192
+> GES 30.24 / 524
+> AbsGS 30.08 / 297
+> HTGS 30.45 / 311
+
+Figure 1. Our novel representation achieves fast, high-fidelity and popping-free rendering, outperforming state-of-the-art techniques: GES [42], SSS [46], DBS [25], AbsGS [43], 3DGS-MCMC [20] and HTGS [11]. 
+
+# Abstract 
+
+Novel view synthesis has been significantly advanced by NeRFs and 3D Gaussian Splatting (3DGS), which require ordering volumetric samples or primitives for correct color blending. While the recent Gaussian-Enhanced Surfels (GES) enable high-performance, sort-free rendering, they suffer from aliasing artifacts and suboptimal reconstruc-tion. To address these limitations, we propose DP-GES, a novel representation that combines 2D opaque surfels with semi-transparent boundaries to represent coarse-scale ge-ometry and appearance, and 3D Gaussians surrounding the surfels to supplement fine-scale details. We employ Depth Peeling to achieve accurate per-pixel ordering for surfel rendering, which enables sort-free Gaussian splatting with correct transmittance modulation, effectively eliminat-ing aliasing and popping artifacts while facilitating a fully differentiable joint optimization. Extensive experiments demonstrate that our method achieves superior novel view synthesis quality and compares favorably against state-of-the-art techniques across a wide range of scenes. 
+
+> *Corresponding author
+
+# 1. Introduction 
+
+Novel view synthesis from captured images is a fundamen-tal task in computer vision and graphics. The field has seen continuous improvement, evolving from classic light field [8, 23] to the recent breakthroughs of Neural Radiance Fields (NeRF) [29] and 3D Gaussian Splatting (3DGS) [19]. Both NeRF and 3DGS represent scenes using volumet-ric radiance fields and synthesize novel views by blend-ing colors of volumetric samples or primitives in near-to-far order. NeRF relies on volumetric ray marching, which requires computationally expensive neural network infer-ences at densely sampled points along each ray. This high computational cost significantly limits its applicability in real-time scenarios. 3DGS explicitly sorts Gaussian prim-itives and employs tile-based sorting to reduce computa-tional overhead. While this approximation improves per-formance, it introduces view-inconsistent artifacts such as popping, where floaters appear or disappear abruptly due to changes in the sorting order. Subsequent work has explored sort-free rendering of Gaussians to eliminate sorting over-head [16], but these methods typically suffer from severe occlusion leakage problems. Recently, Gaussian-Enhanced Surfels (GES) [42] and its follow-up [31] have emerged as comprehensive solutions for sort-free and view-consistent radiance field rendering. GES employs a hybrid bi-scale representation, modeling 
+
+> arXiv:2605.25345v1 [cs.GR] 25 May 2026
+
+coarse geometry and appearance with opaque surfels ren-dered via a standard z-buffer, while enriching fine details with Gaussians splatted in a sort-free manner and compos-ited against the surfel depth buffer. This approach avoids the popping and leakage artifacts prevalent in prior meth-ods, achieving high performance and visual quality. Despite its advantages, GES has two key limitations. First, although multisample anti-aliasing (MSAA) mitigates aliasing for surfels, the hard depth test applied to Gaussians truncates their color and weight contributions, resulting in residual aliasing along object boundaries. Second, the joint optimization of surfels and Gaussians is hindered because the geometry of fully opaque surfels is fundamentally non-differentiable, and their colors are only loosely blended with Gaussians, leading to suboptimal reconstruction. We introduce DP-GES, a novel representation that ad-dresses the limitations of GES by augmenting surfels with semi-transparent boundaries. Such semi-transparent surfels require sorting for correct blending. To this end, we propose to employ Depth Peeling [34] to achieve accurate per-pixel ordering. This allows Gaussians to be splatted in a sort-free manner while having their weights correctly modulated by the transmittance from corresponding depth layers. Gaus-sians beyond the last surfel layer or with zero transmittance are culled by the hardware depth test. Experimentally, peel-ing only three surfel layers suffices for high-fidelity results, striking a favorable balance between quality and efficiency. Furthermore, the semi-transparent boundaries of surfels en-able fully differentiable joint optimization, as the transmit-tance values through the semi-transparent boundaries link surfels and Gaussians, leading to improved reconstruction. Extensive experiments demonstrate that our DP-GES achieves high-fidelity novel view synthesis, outperforming or matching state-of-the-art methods across diverse real and synthetic scenes. While introducing only minimal overhead over original GES, our method renders at over 470fps on an RTX 4090 for the Mip-NeRF360 dataset [2], 2.5 × faster than vanilla 3DGS [19] and 3 × faster than a recent high-quality splatting approach [25]. 
+
+# 2. Related Work 
+
+In this section, we only review previous work most rele-vant to our method, i.e ., 3D Gaussian Splatting and order-independent transparency, while leaving the discussion of NeRF-related work to recent excellent surveys [7, 24]. 
+
+2.1. 3D Gaussian Splatting 
+
+3DGS [19] achieves real-time and high-quality novel view synthesis by modeling scenes with anisotropic Gaussian primitives, exploiting the efficiency of rasterization for volume rendering. Comprehensive overviews of recent progress can be found in [4, 38, 39]. Here we review previ-ous work on quality improvement to the original 3DGS, par-ticularly on splatting primitives and view-consistent render-ing, which are mostly related to this paper. Note that other aspects of improvement, such as densification and prun-ing strategies [20, 43] and high-frequency reflection model-ing [40, 41], are orthogonal and can be used in conjunction with our pipeline. 
+
+Splatting Primitives. Recent work explores various ker-nels to improve geometry [17, 35] or rendering quality [5, 12, 14, 46]. Deformable beta splatting (DBS) [25] intro-duces a deformable radial kernel and replaces the spheri-cal harmonics (SH) color function in 3DGS with spherical Beta, enhancing high-frequency effects and reducing mem-ory footprint. 2D Gaussian Splatting (2DGS) [17] employs 2D Gaussians for accurate surface modeling. SolidGS [35] further modifies the 2D Gaussian kernel by enlarging the region with opacity close to 1 for better view consistency. Our surfel kernel is similar to that of SolidGS: except for the boundary, the opacity of our surfel is exactly 1 to facilitate efficient Gaussian culling. Another line of research leverages textured primitives to capture fine-grained texture details, such as HDGS [36], Neural Shell Splatting [45], Billboard Splatting [37], and Textured Gaussians [3]. These methods improve appear-ance fidelity with fewer textured primitives, but this comes at a higher cost on per-primitive storage and rendering. Our DP-GES consists of a small set of 2D surfels and a number of 3D Gaussians, along with a fully differentiable rendering pipeline. This design achieves higher reconstruc-tion quality with lower computational cost. Moreover, these kernel refinements can be directly applied to our Gaussian representation. We incorporate spherical Beta color func-tion from [25] to improve view-dependent effects. 
+
+View-Consistent Rendering. 3DGS exhibits popping ar-tifacts during camera rotation, since it approximates per-pixel depth ordering with a tile-based global sorting of Gaussian centers for alpha-blending. StopThePop [32] first proposes a hierarchical sorting strategy to improve sorting precision. DRK [18] simplifies this strategy by cache sort-ing. However, approximate sorting cannot fully eliminate popping. Ray-tracing–based methods such as 3DGRT [30] and EVER [27] achieve accurate per-ray ordering but at a much higher computational cost. Inspired by traditional OIT methods, SortFreeGS [16] completely eliminates sort-ing by blending Gaussians according to the weights com-puted from depths, but inevitably introduces occlusion leak-age. Stochastic Splats [21] mitigates popping via stochas-tic transparency sampling at the cost of temporal noise and reduced rendering efficiency. HTGS [10] precisely sorts only the first few Gaussians and approximates the rest as a weighted tail. Although this visually reduces popping, it introduces additional overhead due to insertion sort, and prevents early termination. Duplex-GS [26] in-troduces cell proxies for local Gaussian grouping, and per-forms tile-based sorting between cells while aggregating in-ternal Gaussians via weighted sums. Misalignment between cells and Gaussians can degrade quality, and the potential popping caused by cell-level ordering is not thoroughly dis-cussed. 
+
+Comparison with GES. GES [42] uses a set of fully opaque surfels to build coarse geometry and appearance, while using Gaussians to enrich details. Its surfel is ren-dered by a standard z-buffer-based pipeline, and Gaussians are accumulated via weighted blending, with surfel depth used for Gaussian culling. This completely eliminates sort-ing, achieving ultra-fast and popping-free rendering. Inherited from GES, DP-GES preserves both efficiency and view consistency while addressing its limitations. In terms of surfel representation, the opacity in DP-GES smoothly decays from 1 to 0 at the boundaries to miti-gate aliasing from depth testing. For rendering, both sur-fels and Gaussians are fully differentiable and thus jointly optimized. This leads to improved reconstruction quality. 
+
+2.2. Order-Independent Transparency 
+
+Order-independent transparency (OIT) is a classic problem in real-time rendering. Traditional solutions such as A-Buffer [9] and K-Buffer [6] record multiple ordered frag-ments per pixel. Depth peeling [34] explicitly renders the scene with multiple passes. For each pass, it “peels” away the nearest visible layer by comparing per-pixel depths stored in the previous pass. This process guarantees the cor-rect front-to-back order for alpha compositing. Its memory footprint and rendering cost grow linearly with the num-ber of layers. Weighted blended OIT [28] uses camera-distance-based weights to composite the result. It heavily relies on per-scene weight tuning and is prone to occlusion leakage. DP-GES combines the advantages of depth peeling and weighted blended OIT: three surfel layers are efficiently peeled to provide accurate depth ordering, while Gaussians are blended in a sort-free manner to accelerate rendering. The peeled depths further guide Gaussian culling, effec-tively preventing occlusion leakage and enabling fast, ro-bust and view-consistent rendering. 
+
+# 3. DP-GES Representation 
+
+Our representation contains two types of primitives: a set of 2D opaque surfels with semi-transparent boundaries to represent the coarse-scale geometry and appearance, and a set of 3D Gaussians surrounding the surfels to supplement fine-scale appearance details. It is an improved variant of GES [42]. Below we focus on key differences between the two representations. 
+
+Surfel Representation. Our 2D surfel set S is defined as 
+
+S = {pi, ri, si, Bi}Ni=1 , where pi ∈ R3 is the surfel center position, ri ∈ R4 is the rotation quaternion, si ∈ R2 is the anisotropic scaling, and Bi is the parameters of the Spher-ical Beta functions [25] (SB), representing view-dependent colors. The color of the whole surfel is the same as the color in the direction from the surfel center to the camera position. More details of spherical Beta can be found in [25]. A surfel in DP-GES has a gradually decreasing opacity within a thin ring-shaped region along the boundaries, as shown in Fig. 3. For a surfel defined as a circular disc on the XY-plane in its local coordinates, the opacity for a point 
+
+(x, y ) on the surfel is now defined as: 
+
+αi(x, y ) = min(1 , wG (x, y )) , with G(x, y ) =exp( − x2+y2 
+
+> 2
+
+). Here w is the opacity modulation parame-ter, a fixed constant shared by all surfels. When w < 1,the surfel becomes fully translucent, while when w = 255 ,it is completely opaque, identical to the original GES sur-fel. We use a fixed w = 30 in our final representation, which keeps the central region opaque while preserving a thin semi-transparent boundary ring. 
+
+Gaussian Representation. The 3D Gaussians G in DP-GES are defined as G = {pi, σ i, ri, si, Bi}Mi=1 . The only difference from the original GES is that we replace the SH color function with spherical Beta. 
+
+# 4. DP-GES Rendering 
+
+We use the following equation to render an image C as a weighted combination of the colors from surfels and Gaus-sians, similar to [42]: C = Cs+CG 
+
+> Ws+WG
+
+. Here CS and CG
+
+are the colors rendered from surfels and Gaussians, respec-tively, and WS and WG are the corresponding sums of weights. As shown in Fig. 2, the rendering of DP-GES consists of two main stages. In the first stage, we rasterize surfels through a standard graphics pipeline, extracting the nearest 3 layers of depth maps {Dsi }3
+
+> i=1
+
+, color maps {Csi }3
+
+> i=1
+
+, and opacity maps {Asi }3 
+
+> i=1
+
+from the surfels by performing z-buffer–based depth peeling. We use 3 layers because, as observed in our experiments, it helps reduce background color leakage in surfel rendering while balancing efficiency and robustness. A discussion is detailed in Sec. 6.2. The 3 layers are then alpha-blended, following the same compositing scheme as in 3DGS [19], to obtain the fi-nal surfel-rendered color Cs and the transmittance maps 
+
+{T si }3 
+
+> i=0
+
+as 
+
+Cs =
+
+> 3
+
+X
+
+> i=1
+
+Asi T si−1Csi + T s 
+
+> 3
+
+Cb, (1) 
+
+T si =
+
+(
+
+1, if i = 0 ,
+
+Qij=1 (1 − Asj ), otherwise . (2) Rendering Representation 3D Gaussian 
+
+𝐩 , 𝐫 , 𝜎 , 𝐬 , 𝐁 
+
+2D Surfel 
+
+𝐩 , 𝐫 , 𝐬 , 𝐁 
+
+𝐶 ௦ ሼ𝐷 ௜௦ ሽ௜ୀଵ ଷ
+
+Pass 1 Pass 2 
+
+𝐶 ሼ𝑇 ௜௦ ሽ௜ୀଵ ଷ 𝐷 ଵ௦𝐷 ଶ௦𝐷 ଷ௦𝑇 ଴௦ 𝑇 ଵ௦ 𝑇 ଶ௦𝑐 ൌ 𝑐 ௦ ൅ ∑ 𝑐 ௜ 𝛼 ௜ 𝑡 ௜௜       
+
+> 1൅ ∑ 𝛼 ௜𝑡 ௜௜
+> 𝑐 ௜𝛼 ௜𝑡 ௜
+
+Culled Figure 2. Representation and rendering pipeline of DP-GES. The DP-GES representation is composed of a set of 2D opaque surfels with semi-transparent boundaries S = {pi, ri, si, Bi}Ni=1 , and a few 3D Gaussians G = {pi, σ i, ri, si, Bi}Mi=1 surrounding the surfels, where 
+
+pi, σ i, ri, si, Bi are the position, maximum opacity, rotation, scaling and spherical Beta parameters [25], respectively. DP-GES renders in two passes: first, it performs 3-layer depth peeling of surfels using the standard graphics pipeline to obtain surfel colors Cs, and per-layer depth {Dsi }3 
+
+> i=1
+
+and transmittance maps {T si }3 
+
+> i=0
+
+(with T s 
+
+> 0
+
+= 1 ). Then, 3D Gaussians are splatted onto the screen, accumulating their colors and weights by a sort-free additive blending, where each Gaussian queries transmittance value ti according to its corresponding depth layer, multiplied with its Gaussian weight αi to get the final weights. GES Surfel Our Surfel   
+
+> 0
+> 𝛼
+> 1Depth Test Depth Test Our Anti-aliased Rendering GES Aliased Rendering Surfel Gaussian Top View (on XY-plane) Side View (on XZ-plane) 0
+> 𝑡
+> 1
+
+Figure 3. Comparison of our surfel representation and the sur-fel in GES [42]. Left: the shape of our 2D opaque surfel with semi-transparent boundary and GES’s fully opaque surfel on top view. Right: the alpha α and transmittance t distribution on side view. Although GES employs MSAA, it only smooths the sur-fel rendering. Once Gaussians are added, the hard depth test acts as if transmittance were abruptly clamped from 1 to 0, reintro-ducing aliasing. In contrast, DP-GES performs depth testing after Gaussian weights have smoothly decayed through transmittance, thereby reducing aliasing artifacts. 
+
+Here Cb is the background color. Therefore, Ws =P3 
+
+> i=1
+
+Asi T si−1 + T s 
+
+> 3
+
+= 1 is the sum of surfel color weights, which is a constant. In the second stage, we splat the 3D Gaussians onto the screen without sorting, and accumulate their colors and weights for each pixel. The accumulated Gaussian color 
+
+CG and weight WG for a pixel ˆx are: 
+
+CG(ˆ x) = 
+
+> K
+
+X
+
+> i=1
+
+1dt (ˆ x)ciαi(ˆ x)ts(ˆ x), (3) 
+
+WG(ˆ x) = 
+
+> K
+
+X
+
+> i=1
+
+1dt (ˆ x)αi(ˆ x)ts(ˆ x), (4) where the indicator function 1dt (ˆ x) denotes the depth test; 
+
+αi(ˆ x) is the Gaussian weight; ci is the Gaussian color in the current view direction, and K is the number of Gaussians covering the pixel. ts(ˆ x) is defined as 
+
+ts(ˆ x) = 
+
+
+
+T s 
+
+> 0
+
+(ˆ x), if di < D s
+
+> 1
+
+(ˆ x),T s 
+
+> 1
+
+(ˆ x), if Ds
+
+> 1
+
+(ˆ x) < d i < D s
+
+> 2
+
+(ˆ x),T s 
+
+> 2
+
+(ˆ x), otherwise .
+
+(5) Each Gaussian determines its corresponding depth interval from {Dsi }3 
+
+> i=1
+
+based on its depth at the center. The trans-mittance value is queried using Eq. (5) and multiplied with the Gaussian weight to obtain the final weight. This ensures partially occluded Gaussians fade near surfel boundaries, reducing aliasing artifacts as illustrated in Fig. 3. During rasterization, depth test is performed: any Gaus-sian whose depth lies beyond the 3rd peeled layer or whose transmittance weight is zero is discarded for correct oc-clusion handling. We use an indicator function 1dt (ˆ x) = 
+
+1(di < d s(ˆ x) + ϵs) to denote this per-pixel culling process. Here di is the depth of a Gaussian center, as we assume a uniform depth di for all pixels covered by a Gaussian. 
+
+ds(ˆ x) is the depth used for culling at a pixel ˆx and ϵs is a tiny depth margin (detailed in Appendix 8). ds is set to the depth Dsi (ˆ x) of the nearest peeled layer i where T si (ˆ x) = 0 ;if all transmittance values of 3 layers at ˆx remain non-zero, 
+
+ds is set to a default value of the 3rd peeled depth Ds
+
+> 3
+
+(ˆ x).5. DP-GES Optimization 
+
+Given multi-view images of a static scene with camera poses [33], we aim to optimize 2D surfels and 3D Gaus-sians that faithfully reconstruct the scene for novel-view synthesis. We perform a fully differentiable joint optimiza-tion of all parameters after a fast initialization of surfels and 3D Gaussians (detailed in Appendix 9). Our optimization pipeline is built on PyTorch, with an equivalent OpenGL-based renderer for real-time rendering to fully leverage the standard graphics pipeline (detailed in Appendix 10). Our loss function for optimization is L = Lrgb +λ1Ls +
+
+λ2Lscale + λ3Lt. We use λ1 = 0 .01 , λ 3 = 0 .08 for all the scenes. λ2 is set to 5 × 10 −5 for all unbounded scenes and 
+
+1 × 10 −5 for all bounded scenes. Specifically, Lrgb is the same image loss used in 3DGS, computed between the rendered images C and the corre-sponding ground-truth images Igt . In addition, we impose an L1 constraint Ls = L1(Cs, I gt ) between the rendered surfel results Cs and the ground-truth images, ensuring that the surfels faithfully fit the coarse appearance and geome-try of the scene. To prevent surfels from growing exces-sively during optimization, which could compromise geo-metric robustness, we penalize oversized surfels using an exponential function: 
+
+Lscale = 1
+
+> N
+
+PNi=1 exp( ˜sXi +˜ sYi 
+
+> 2
+
+),where ˜sXi and ˜sYi denotes the surfel scaling along the X and Y axes, respectively, after mean normalization across all surfels. To further mitigate background color leakage in surfel rendering, the final term is defined as: 
+
+Lt = 1
+
+> HW
+
+P
+
+> ˆx
+
+(1 − T3(ˆ x)) 2.Here HW is the number of pixels. In DP-GES, we peel only 3 surfel layers, and Gaussians with depths beyond the third peeled layer are occluded, which requires the transmit-tance after the 3rd layer to be zero ( i.e ., T3 = 0 ); otherwise, background color leakage or truncation artifacts may occur. We already improve the probability of T3 = 0 by retaining a large opaque region of surfels. A natural idea to further enforce this condition would be to add a loss term encourag-ing T3 = 0 . However, experiments show that this approach actually increases the stacking of semi-transparent regions within a pixel, thereby raising the probability that T3̸ = 0 .Instead, we take the opposite strategy by adding Lt.Though this may sound counterintuitive, it is in fact effec-tive: for pixels ˆx where T3(ˆ x) = 0 , they must have been covered by an opaque surfel region, which contributes no gradient to its geometry parameters, so the loss has no ef-fect. For pixels ˆx where T3(ˆ x)̸ = 0 , this loss encourages the overlapping semi-transparent parts of surfels to go apart, making it more likely for this pixel to be covered by opaque regions of other surfels. This essentially drives T3 toward zero. For pixels covered by fewer than 2 surfel layers, we mask out the corresponding loss gradients. Please refer to Appendix 9 for more details on optimiza-tion and initialization strategies. 
+
+# 6. Results and Evaluation 
+
+We conduct experiments on a workstation with an i7-13700KF CPU, 32GB memory and an NVIDIA RTX 4090 GPU, to demonstrate the effectiveness and efficiency of DP-GES. 
+
+Datasets. We perform tests on the same datasets used in [19], including 8 synthetic scenes from NeRF Syn-thetic Dataset [29], 9 real-world scenes from Mip-NeRF360 Dataset [1], 2 real scenes from DeepBlending Dataset [13], and 2 from Tanks & Temples Dataset [22]. The collec-tion covers both synthetic objects with intricate geometries and various texture-rich indoor and outdoor environments, providing a comprehensive benchmark for comparing dif-ferent approaches. Following [19], we use the same pre-downscaled JPG images for training and evaluation on real scenes. 
+
+Baselines and Metrics. We comprehensively compare DP-GES with vanilla 3DGS [19], 4 methods with state-of-the-art reconstruction quality: AbsGS [43], MipSplat [44], 
+
+3DGS-MCMC [20], DBS [25] and SSS [46], 4 meth-ods eliminating or reducing popping artifacts: GES [42], 
+
+SortFreeGS [15], StopThePop [32], HTGS [11]. For all MCMC-based methods, including 3DGS-MCMC, DBS and SSS, we set the number of primitives to be equal to the total number of surfels and Gaussians used in our DP-GES for a fair comparison. We use PSNR, LPIPS, and SSIM metrics to evaluate the rendering quality. We use FPS, computed by the recipro-cal of the average rendering time, to evaluate the rendering speed. We also follow StopThePop [32] to use F LIP 1 and F LIP 7 to evaluate the short-term and long-term popping ar-tifacts in video results. We employ the same “flexible stop-ping” strategy as used in DBS for all baselines. This ensures every method was trained enough iterations to their optimal quality. Due to space limit, below we focus on our core advan-tages and key ablation designs. Additional results, includ-ing surfel geometry reconstruction, surfel-Gaussian decom-position rendering and detailed ablations, are presented in the supplementary material. We also provide supplemen-tary video results for dynamic visual comparisons. 
+
+6.1. Comparisons 
+
+Rendering Quality. In Table 1, DP-GES matches or sur-passes all state-of-the-art methods across all datasets, par-ticularly in LPIPS metric. As illustrated in Fig. 4, our DBS Ground-truth SSS MCMC AbsGS HTGS GES 3DGS Ours Figure 4. Qualitative comparisons on image quality. From top to bottom: Garden , Train , Bonsai , Kitchen and Counter . Our DP-GES representations reconstruct rich appearance details with joint optimization while maintaining high frame rates with sorting-free rendering. Table 1. Dataset-averaged quantitative evaluation on image quality. Results marked with * are evaluated using our reproduced code.                                                                                                                                                                 
+
+> Datasets Mip-NeRF360 Deep Blending Tanks & Temples NeRF Synthetic Method/Metric SSIM ↑PSNR ↑LPIPS ↓SSIM ↑PSNR ↑LPIPS ↓SSIM ↑PSNR ↑LPIPS ↓SSIM ↑PSNR ↑LPIPS ↓
+> 3DGS 0.814 27.43 0.214 0.903 29.41 0.243 0.841 23.62 0.183 0.969 33.31 0.037 AbsGS 0.821 27.49 0.208 0.902 29.65 0.243 0.851 23.75 0.167 0.969 33.32 0.037 MipSplat 0.815 27.49 0.214 0.904 29.48 0.243 0.846 23.71 0.158 0.969 33.33 0.037 3DGS-MCMC 0.830 27.85 0.206 0.909 29.77 0.257 0.858 24.33 0.180 0.970 33.33 0.033 DBS 0.827 28.10 0.210 0.912 30.25 0.250 0.860 24.52 0.166 0.972 34.34 0.030 SSS 0.824 27.78 0.203 0.911 30.25 0.242 0.864 24.70 0.166 0.968 33.63 0.036 GES 0.813 27.38 0.208 0.906 30.00 0.241 0.841 23.95 0.181 0.967 33.37 0.033 SortFreeGS* 0.790 27.04 0.263 0.910 30.22 0.254 0.825 23.49 0.223 0.964 32.72 0.040 StopThePop 0.816 27.44 0.217 0.904 29.69 0.248 0.843 23.43 0.178 0.970 33.32 0.035 HTGS 0.820 27.04 0.235 0.908 29.88 0.301 0.849 23.17 0.206 0.969 33.73 0.036 Ours 0.827 28.11 0.196 0.909 30.30 0.239 0.866 24.61 0.162 0.970 34.13 0.030
+
+method faithfully preserves fine appearance details, espe-cially in distant backgrounds. In Bonsai , DP-GES effec-tively removes the floater artifacts common in other base-lines. In Counter , DP-GES even achieves high-fidelity re-flections. These improvements stem from our representa-tion and fully differentiable rendering, where surfels pro-vide coarse geometry and Gaussians collaboratively refine appearance details. Among other baselines, MCMC-based methods (DBS, SSS, MCMC) produce blurry results. Ab-sGS reconstructs details but introduces noise due to its den-sification strategy. Fig. 7 highlights the floater artifacts in HTGS. By sorting only the front 16 Gaussians for al-pha blending and approximating the rest as a weighted tail, HTGS avoids popping but amplifies floaters. Floaters often dominate the front depth ranks, pushing deeper Gaussians into the low-weight tail. During optimization, the floaters gradually increase in opacity to compensate for tail errors, making them more noticeable. To more clearly demonstrate our improvements over GES, we present more qualitative comparisons in Fig. 5. Our method produces smoother object boundaries than GES. In Fig. 6 and Kitchen in Fig. 4, some protruding sur-fels significantly degrade GES’s rendering quality. Surfels in GES are optimized during its surfel optimization stage but cannot be refined during its joint optimization stage. In contrast, surfels and Gaussians are updated together during DP-GES joint optimization, ensuring mutual adaptation and harmonious appearance. Ground-truth Ours GES Figure 5. Qualitative comparisons with GES [42]. GES exhibits noticeable aliasing artifacts due to its depth test. Ground-truth Ours GES 
+
+Figure 6. Qualitative comparisons with GES [42]. GES exhibits poor coordination between surfels and Gaussians, resulting in pro-truding surfels that occlude fine details. Ours HTGS Ours HTGS 
+
+Figure 7. Qualitative comparisons with HTGS [11]. Floaters with high opacity appear in their results. 
+
+Efficiency. As reported in Table 2, DP-GES achieves over 470 fps at 1080p, which is more than 3 × faster than other high-fidelity baselines such as DBS and SSS. The minor overhead over GES arises mainly from the Gaussian ren-dering pass, which requires fetching peeled depth and trans-mittance values from texture buffers, increasing bandwidth usage. In contrast, 3-layer depth peeling adds negligible cost since the number of surfels is much smaller than that of Gaussians (typically less than 10%), and rasterization within the standard graphics pipeline is highly efficient. 
+
+View Consistency. In Fig. 8, our sort-free rendering eliminates popping artifacts. In Table 2, our method shows slightly higher F LIP 1 and F LIP 7 error than GES mainly be-cause the spherical Beta function enables higher-frequency view-dependent effects. As F LIP computes optical-flow-based warping errors and does not distinguish between view-dependent variation and actual popping, our slightly higher F LIP values do not reflect inferior consistency. From video results, both HTGS and SortFreeGS avoid visible popping as well. However, SortFreeGS suffers from 
+
+Table 2. Dataset-averaged quantitative evaluation on frame rate (FPS) at 1080p resolutions, storage (MB), training time (minute) and popping artifacts ( F LIP 1 and F LIP 7), averaged on Mip-NeRF360 dataset. Results marked with * are evaluated using our reproduced code. The training time (encompassing all training steps including initialization) is measured for the native image res-olutions of training images.                                                             
+
+> FPS ↑MEM ↓Train ↓F LIP 1↓F LIP 7↓
+> 3DGS 185 734 28 0.0250 0.0471 AbsGS 176 746 29 0.0256 0.0473 3DGS-MCMC 160 348 21 0.0236 0.0472 DBS 156 165 20 0.0297 0.0771 SSS 62 351 38 0.0300 0.0716 3D-GES 675 366 43 0.0229 0.0394 SortFreeGS* 321 506 42 0.0271 0.0625 StopThePop 167 830 40 0.0247 0.0466 HTGS 271 491 23 0.0243 0.0587 Ours 472 156 40 0.0232 0.0431 View F௜View F௜ାଵ LIP 1
+> Ours STP
+> Ours DBS View F௜View F௜ାଵ LIP 1
+
+Figure 8. Qualitative comparisons of “popping” artifacts. The zoomed-in patches are rendered from Treehill and Garden in the Mip-NeRF360 [1] dataset. View Fi+1 is warped to View Fi using optical flow for alignment and comparison. The F LIP views mark the specific popping areas. STP: StopThePop [32]. 
+
+severe occlusion leakage, while HTGS exhibits numerous floaters, both of which significantly increase F LIP error. Additionally, MCMC-based methods tend to produce ex-cessively large Gaussians, which frequently pop in and out between adjacent frames, producing global brightness flicker. The negative opacity strategy of SSS improves ren-dering quality, but introduces flickering of dark or bright patches in unseen views. 
+
+6.2. Ablations 
+
+We conduct a series of ablation experiments. Table 3 lists all quantitative metrics. 
+
+Reverting to GES Configurations. To isolate the impact of our core improvements, this variant follows the original GES setup. Specifically, we replace the SB color represen-tation with SH, and revert our MCMC-based densification (refer to Appendix 9) to the original GES strategy. In Ta-ble 3, this variant, denoted as Ours (base) , still achieves an average PSNR of 27.72 on the MipNeRF360 dataset, out-performing GES and AbsGS [43], and is close to SSS [46]. Table 3. Ablation study. Dataset-averaged image quality and frame rate (1080p) on Mip-NeRF360 Dataset [2] with isolated al-gorithm choices. Ours (base): reverting the color representation and densification strategy to the original GES settings; w/ 2 lay-ers: using 2 surfel layers; w/o trans. grad: stopping transmittance gradients from Gaussians to surfels.                                       
+
+> SSIM ↑PSNR ↑LPIPS ↓FPS ↑
+> Ours (full) 0.827 28.11 0.196 472 Ours (base) 0.821 27.72 0.197 480 w/ 2 layers 0.810 27.02 0.223 578 w/ 4 layers 0.830 28.10 0.196 278 w/o trans. grad 0.825 27.82 0.206 477 w/o Ls0.824 28.05 0.198 462 w/o Lscale 0.824 28.07 0.203 461 w/o Lt0.822 27.86 0.209 475
+
+This improvement comes solely from our novel representa-tion and rendering model and is orthogonal to densification or primitive choices. 
+
+Impact of the Number of Peeling Layers. With only the first 2 layers, any overlapping semi-transparent regions in-evitably cause background color leakage, while the opaque regions in the 3rd layer can block the remaining transmit-tance, making it possible that the remaining transmittance reaches zero everywhere. In Fig. 9, using 3-layer peeling with Lt loss eliminates background leakage, whereas 2-layer peeling exhibits leakage artifacts at various locations. In Table 3, peeling 4 layers offers negligible quality gain but incurs a significant frame-rate drop, since surfel rendering does not model appearance details and 4-layer peeling in-creases memory bandwidth in OpenGL by breaking 4-float-alignment packing. Thus, 3-layer peeling is our choice after balancing quality and performance. 
+
+Impact of Ls, Lt and Lscale . Ls enforces geometric alignment with ground-truth colors, preventing missing ge-ometry as shown in Fig. 9. Removing Lt increases the prob-ability of background leakage caused by the stack of over-lapping semi-transparent regions. In Fig. 10, Lscale regu-larizes surfel scaling for spatial uniformity, reducing color leakage from chaotic scaling distribution. 
+
+Impact of New Gradient Path. During rendering, trans-mittance values link surfels and Gaussians, enabling surfel geometry parameters Sg = {pi, ri, si}Ni=1 to receive gradi-ents not only directly from image loss ∂L 
+
+> ∂C ∂C
+> ∂C s
+> ∂C s
+> ∂S g
+
+but also indirectly through transmittance-mediated Gaussian gradi-ents ∂L 
+
+> ∂C ∂C
+> ∂C G
+> ∂C G
+> ∂t s
+> ∂t s
+> ∂S g
+
+. In Fig. 11, stopping these gradient paths leads to blurrier details and prominent small surfels, similar to the artifacts shown in GES in Fig. 6, confirming the importance of treating surfels and Gaussians as a fully w/o ℒ ୱOurs w/o ℒ ୲ w/ 2 layers 
+
+> Surfel Color Trans. Map
+
+Figure 9. Qualitative comparisons of rendered surfel colors with-out Ls and Lt, and with only first 2 layers peeled. The transmit-tance maps T s 
+
+> 1
+
+show the distribution of surfels. Other ablation set-tings show geometry missing or background leakage (background set to black during optimization). w/o ℒ ୱୡୟ୪ୣ Ours    
+
+> Full Rendering Trans. Map w/o ℒୱୡୟ୪ୣ Ours
+
+Figure 10. Qualitative comparisons of images rendered without 
+
+Lscale . Transmittance maps T s 
+
+> 1
+
+show the distribution of surfels. Ground-truth Ours w/o trans. grad 
+
+Figure 11. Qualitative comparisons of images rendered with transmittance-mediated gradients stopped. 
+
+coupled differentiable system, compared with differentiable surfels only. 
+
+# 7. Limitations and Future Work 
+
+Our work is subject to some limitations. Similar to GES, DP-GES shows artifacts in transparent or semi-transparent objects ( e.g ., glass windows), as our surfels are mainly opaque. Nevertheless, our improved representation pro-duces noticeably better reconstruction even in these chal-lenging cases (see the glass bottle in Fig. 1). Second, our surfel is less flexible than the fully translucent surfels in 2DGS [17], requiring extra initialization and relatively long training time. Moreover, while spherical Beta function en-hances view-dependent effects, it also increases the risk of overfitting, as observed in DBS [25]. DP-GES significantly improves the spatial distribution of surfels. In future, we plan to further explore the potential of surfels as a coarse geometry and appearance representa-tion, and apply to high-quality mesh extraction, physically-based interactions, and shadow casting. Acknowledgments 
+
+This work is partially supported by NSF China (No. 62227806, 62421003) and the XPLORER PRIZE. 
+
+# References 
+
+[1] Jonathan T Barron, Ben Mildenhall, Dor Verbin, Pratul P Srinivasan, and Peter Hedman. Mip-nerf 360: Unbounded anti-aliased neural radiance fields. In Proceedings of the IEEE/CVF CVPR , pages 5470–5479, 2022. 5, 7 [2] Jonathan T. Barron, Ben Mildenhall, Dor Verbin, Pratul P. Srinivasan, and Peter Hedman. Mip-nerf 360: Unbounded anti-aliased neural radiance fields. In 2022 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 5460–5469, 2022. 2, 8 [3] Brian Chao, Hung-Yu Tseng, Lorenzo Porzi, Chen Gao, Tuotuo Li, Qinbo Li, Ayush Saraf, Jia-Bin Huang, Johannes Kopf, Gordon Wetzstein, et al. Textured gaussians for en-hanced 3d scene appearance modeling. In Proceedings of the Computer Vision and Pattern Recognition Conference , pages 8964–8974, 2025. 2 [4] Guikun Chen and Wenguan Wang. A survey on 3d gaussian splatting, 2024. 2 [5] Haodong Chen, Runnan Chen, Qiang Qu, Zhaoqing Wang, Tongliang Liu, Xiaoming Chen, and Yuk Ying Chung. Be-yond gaussians: Fast and high-fidelity 3d splatting with lin-ear kernels, 2024. 2 [6] Cass Everitt. Interactive order-independent transparency. 
+
+White paper, nVIDIA , 2(6):7, 2001. 3 [7] Kyle Gao, Yina Gao, Hongjie He, Dening Lu, Linlin Xu, and Jonathan Li. Nerf: Neural radiance field in 3d vision, a comprehensive review. arXiv preprint arXiv:2210.00379 ,2022. 2 [8] Steven J. Gortler, Radek Grzeszczuk, Richard Szeliski, and Michael F. Cohen. The lumigraph. In Proceedings of SIG-GRAPH ’96 , page 43–54, New York, NY, USA, 1996. ACM. 1[9] Paul Haeberli and Kurt Akeley. The accumulation buffer: hardware support for high-quality rendering. SIGGRAPH Comput. Graph. , 24(4):309–318, 1990. 3 [10] Florian Hahlbohm, Fabian Friederichs, Tim Weyrich, Li-nus Franke, Moritz Kappel, Susana Castillo, Marc Stam-minger, Martin Eisemann, and Marcus Magnor. Efficient perspective-correct 3d gaussian splatting using hybrid trans-parency, 2024. 2 [11] Florian Hahlbohm, Fabian Friederichs, Tim Weyrich, Li-nus Franke, Moritz Kappel, Susana Castillo, Marc Stam-minger, Martin Eisemann, and Marcus Magnor. Efficient perspective-correct 3d gaussian splatting using hybrid trans-parency. Computer Graphics Forum , 44(2), 2025. 1, 5, 7 [12] Abdullah Hamdi, Luke Melas-Kyriazi, Jinjie Mai, Guocheng Qian, Ruoshi Liu, Carl Vondrick, Bernard Ghanem, and Andrea Vedaldi. Ges: Generalized exponential splatting for efficient radiance field rendering. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 19812–19822, 2024. 2 [13] Peter Hedman, Julien Philip, True Price, Jan-Michael Frahm, George Drettakis, and Gabriel Brostow. Deep blending for free-viewpoint image-based rendering. ACM Trans. Graph. ,37(6):1–15, 2018. 5 [14] Jan Held, Renaud Vandeghen, Abdullah Hamdi, Adrien Deliege, Anthony Cioppa, Silvio Giancola, Andrea Vedaldi, Bernard Ghanem, and Marc Van Droogenbroeck. 3d convex splatting: Radiance field rendering with 3d smooth convexes. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , 2025. 2 [15] Qiqi Hou, Randall Rauwendaal, Zifeng Li, Hoang Le, Farzad Farhadzadeh, Fatih Porikli, Alexei Bourd, and Amir Said. Sort-free gaussian splatting via weighted sum rendering. 
+
+arXiv preprint arXiv:2410.18931 , 2024. 5 [16] Qiqi Hou, Randall Rauwendaal, Zifeng Li, Hoang Le, Farzad Farhadzadeh, Fatih Porikli, Alexei Bourd, and Amir Said. Sort-free gaussian splatting via weighted sum rendering, 2024. 1, 2 [17] Binbin Huang, Zehao Yu, Anpei Chen, Andreas Geiger, and Shenghua Gao. 2d gaussian splatting for geometrically ac-curate radiance fields. In ACM SIGGRAPH 2024 Conference Papers , 2024. 2, 8, 1 [18] Yi-Hua Huang, Ming-Xian Lin, Yang-Tian Sun, Ziyi Yang, Xiaoyang Lyu, Yan-Pei Cao, and Xiaojuan Qi. Deformable radial kernel splatting. In Proceedings of the Computer Vision and Pattern Recognition Conference , pages 21513– 21523, 2025. 2 [19] Bernhard Kerbl, Georgios Kopanas, Thomas Leimk¨ uhler, and George Drettakis. 3d gaussian splatting for real-time radiance field rendering. ACM Trans. Graph. , 42(4), 2023. 1, 2, 3, 5 [20] Shakiba Kheradmand, Daniel Rebain, Gopal Sharma, Wei-wei Sun, Yang-Che Tseng, Hossam Isack, Abhishek Kar, Andrea Tagliasacchi, and Kwang Moo Yi. 3d gaussian splat-ting as markov chain monte carlo. Advances in Neural In-formation Processing Systems , 37:80965–80986, 2024. 1, 2, 5[21] Shakiba Kheradmand, Delio Vicini, George Kopanas, Dmitry Lagun, Kwang Moo Yi, Mark Matthews, and An-drea Tagliasacchi. Stochasticsplats: Stochastic rasteriza-tion for sorting-free 3d gaussian splatting. arXiv preprint arXiv:2503.24366 , 2025. 2 [22] Arno Knapitsch, Jaesik Park, Qian-Yi Zhou, and Vladlen Koltun. Tanks and temples: Benchmarking large-scale scene reconstruction. ACM Trans. Graph. , 36(4):1–13, 2017. 5 [23] Marc Levoy and Pat Hanrahan. Light field rendering. In 
+
+Proceedings of SIGGRAPH ’96 , page 31–42, New York, NY, USA, 1996. Association for Computing Machinery. 1 [24] Yun Liao, Yide Di, Hao Zhou, Kaijun Zhu, Mingyu Lu, Qing Duan, and Junhui Liu. A survey on neural radiance fields. 
+
+ACM Comput. Surv. , 58(2), 2025. 2 [25] Rong Liu, Dylan Sun, Meida Chen, Yue Wang, and Andrew Feng. Deformable beta splatting. In Proceedings of the Spe-cial Interest Group on Computer Graphics and Interactive Techniques Conference Conference Papers , New York, NY, USA, 2025. Association for Computing Machinery. 1, 2, 3, 4, 5, 8 [26] Weihang Liu, Yuke Li, Yuxuan Li, Jingyi Yu, and Xin Lou. Duplex-gs: Proxy-guided weighted blending for real-time order-independent gaussian splatting. arXiv preprint arXiv:2508.03180 , 2025. 3 [27] Alexander Mai, Peter Hedman, George Kopanas, Dor Verbin, David Futschik, Qiangeng Xu, Falko Kuester, Jonathan T Barron, and Yinda Zhang. Ever: Exact volu-metric ellipsoid rendering for real-time view synthesis. In 
+
+Proceedings of the IEEE/CVF International Conference on Computer Vision , pages 4930–4939, 2025. 2 [28] Morgan McGuire and Louis Bavoil. Weighted blended order-independent transparency. Journal of Computer Graphics Techniques , 2(4), 2013. 3 [29] Ben Mildenhall, Pratul P. Srinivasan, Matthew Tancik, Jonathan T. Barron, Ravi Ramamoorthi, and Ren Ng. Nerf: Representing scenes as neural radiance fields for view syn-thesis. In Proceedings of ECCV , pages 405–421, 2020. 1, 5, 3[30] Nicolas Moenne-Loccoz, Ashkan Mirzaei, Or Perel, Ric-cardo de Lutio, Janick Martinez Esturo, Gavriel State, Sanja Fidler, Nicholas Sharp, and Zan Gojcic. 3d gaussian ray trac-ing: Fast tracing of particle scenes. ACM Trans. Graph. , 43 (6):1–19, 2024. 2 [31] Zhexi Peng, Kun Zhou, and Tianjia Shao. Gaussian-plus-sdf slam: High-fidelity 3d reconstruction at 150+ fps. Computa-tional Visual Media , 2025. 1 [32] Lukas Radl, Michael Steiner, Mathias Parger, Alexan-der Weinrauch, Bernhard Kerbl, and Markus Steinberger. Stopthepop: Sorted gaussian splatting for view-consistent real-time rendering. ACM Trans. Graph. , 43(4), 2024. 2, 5, 7 [33] Johannes L. Sch¨ onberger and Jan-Michael Frahm. Structure-from-motion revisited. In 2016 IEEE Conference on Com-puter Vision and Pattern Recognition (CVPR) , pages 4104– 4113, 2016. 5 [34] Jonathan Shade, Steven Gortler, Li-wei He, and Richard Szeliski. Layered depth images. In Proceedings of the 25th annual conference on Computer graphics and interac-tive techniques , pages 231–242, 1998. 2, 3 [35] Zhuowen Shen, Yuan Liu, Zhang Chen, Zhong Li, Jiepeng Wang, Yongqing Liang, Zhengming Yu, Jingdong Zhang, Yi Xu, Scott Schaefer, Xin Li, and Wenping Wang. Solidgs: Consolidating gaussian surfel splatting for sparse-view sur-face reconstruction. arXiv preprint arXiv:2412.15400 , 2024. 2[36] Yunzhou Song, Heguang Lin, Jiahui Lei, Lingjie Liu, and Kostas Daniilidis. Hdgs: Textured 2d gaussian splatting for enhanced scene rendering. arXiv preprint arXiv:2412.01823 ,2024. 2 [37] David Svitov, Pietro Morerio, Lourdes Agapito, and Alessio Del Bue. Billboard splatting (bbsplat): Learnable textured primitives for novel view synthesis. In Proceedings of the IEEE/CVF International Conference on Computer Vision ,pages 25029–25039, 2025. 2 [38] Tong Wu, Yu-Jie Yuan, Ling-Xiao Zhang, Jie Yang, Yan-Pei Cao, Ling-Qi Yan, and Lin Gao. Recent advances in 3d gaussian splatting. Computational Visual Media , 10(4):613– 642, 2024. 2 [39] Tong Wu, Yu-Jie Yuan, Ling-Xiao Zhang, Jie Yang, Yan-Pei Cao, Ling-Qi Yan, and Lin Gao. Recent advances in 3d gaussian splatting. Computational Visual Media , 10(4):613– 642, 2024. 2 [40] Ziyi Yang, Xinyu Gao, Yang-Tian Sun, Yihua Huang, Xi-aoyang Lyu, Wen Zhou, Shaohui Jiao, Xiaojuan Qi, and Xi-aogang Jin. Spec-gaussian: Anisotropic view-dependent ap-pearance for 3d gaussian splatting. Advances in Neural In-formation Processing Systems , 37:61192–61216, 2024. 2 [41] Keyang Ye, Qiming Hou, and Kun Zhou. 3d gaussian splat-ting with deferred reflection. In ACM SIGGRAPH 2024 Con-ference Papers , 2024. 2 [42] Keyang Ye, Tianjia Shao, and Kun Zhou. When gaussian meets surfel: Ultra-fast high-fidelity radiance field render-ing. ACM Trans. Graph. , 44(4), 2025. 1, 3, 4, 5, 7, 2 [43] Zongxin Ye, Wenyu Li, Sidun Liu, Peng Qiao, and Yong Dou. Absgs: Recovering fine details in 3d gaussian splat-ting. In Proceedings of the 32nd ACM International Confer-ence on Multimedia , pages 1053–1061, 2024. 1, 2, 5, 7 [44] Zehao Yu, Anpei Chen, Binbin Huang, Torsten Sattler, and Andreas Geiger. Mip-splatting: Alias-free 3d gaussian splat-ting. In 2024 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 19447–19456, 2024. 5 [45] Xin Zhang, Anpei Chen, Jincheng Xiong, Pinxuan Dai, Yu-jun Shen, and Weiwei Xu. Neural shell texture splatting: More details and fewer primitives. In Proceedings of the IEEE/CVF International Conference on Computer Vision ,pages 25229–25238, 2025. 2 [46] Jialin Zhu, Jiangbei Yue, Feixiang He, and He Wang. 3d stu-dent splatting and scooping. In Proceedings of the Computer Vision and Pattern Recognition Conference (CVPR) , pages 21045–21054, 2025. 1, 2, 5, 7 Depth Peeling for High-Fidelity Gaussian-Enhanced Surfel Rendering 
+
+# Supplementary Material 
+
+In the supplementary material, Sec. 8–Sec. 11 describe more technical details, while the remaining sections present additional experimental results. 
+
+# 8. Determining Depth Margin 
+
+In Sec. 4, we use the depth margin ϵs to prevent Gaussians intersecting with surfels from being partially truncated dur-ing the depth test. Specifically, we first compute the initial value of ϵi = 52 (sXi + sYi ) in the same way as GES, and then, for each surfel, we query its 16 nearest neighboring surfels and take the median of their ϵ values as the final one. Our motivation stems from the fact that using a fixed con-stant margin can prevent truncation but may lead to occlu-sion leakage in fine structures, as discussed in GES [42]. To address this, GES defines the margin based on surfel scal-ing, achieving geometry-adaptive control to mitigate such leakage. However, we observed that this strategy is not sufficiently robust: when a large surfel is located near fine structures composed of many small surfels, its large depth margin can still cause occlusion leakage. Our modification enforces a locally smooth distribution of ϵ, further reducing the probability of such leakage. 
+
+# 9. Training Details 
+
+Joint Optimization. During this stage, we adopt the den-sification and pruning strategies of GES with minor modi-fications. Specifically, for surfels, we prune surfels that are either heavily occluded or extremely small, determined by the number of pixels they cover in the first peeled layer. The pruning thresholds are the same as GES. For Gaussians, we introduce an extra step to split overly large Gaussians. We found that DBS [25] tends to generate many excessively large Gaussians due to the added posi-tional noise, and such Gaussians often intersect with surfels, causing partial occlusion artifacts (see Fig. 13). Although our depth tolerance margin ϵ helps mitigate this issue, it re-mains ineffective for extremely large Gaussians. Therefore, every 2000 iterations, we query the 16 nearest surfels for each Gaussian, compute the average ϵ among them, and if a Gaussian’s average scale exceeds twice this value, we iden-tify it as a potentially oversized Gaussian and split it into two smaller Gaussians following the same splitting strategy as in 3DGS [19]. For the depth margin ϵ, since the surfel scale remains stable after initialization, it is computed only at the beginning and once again at the 4k-th iteration of joint optimization. The joint optimization converges after around 25k iterations on average. Ground-truth Ours w/ raw ϵ  
+
+> Figure 12. Qualitative comparisons of images rendered with the original ϵstrategy used in GES [42].
+
+Initialization. Although our surfels are differentiable within their semi-transparent boundary regions, their opti-mization efficiency remains limited compared to fully con-tinuous representations. Therefore, similar to GES, we initialize the surfel positions and scales using 2DGS [17]. Specifically, we take the sparse SfM point cloud as the ini-tial input and train a 2DGS model for 20k iterations using the same differentiable rendering pipeline and loss func-tions as in the original 2DGS. The positions and scales of the final 2D Gaussians with opacity values greater than 0.8 are then used to initialize our surfels. This threshold is the same as in GES [42]. For Gaussians, we incorporate the MCMC-based densi-fication from DBS [25] via a fast initialization step to con-trol the primitive count and enhance reconstruction quality. Specifically, using the sparse SfM point cloud as input, we train DBS for 20k iterations with its Beta kernel replaced by a fixed Gaussian kernel, utilizing the resulting positions and scales for our Gaussian initialization. To accelerate this process, the initial number of Gaussians is kept significantly smaller than the final target. Following this MCMC phase, we continue adding Gaussians based on image-space er-rors during training, identically to GES, until the predefined limit is reached. 
+
+# 10. OpenGL Implementation 
+
+As demonstrated in Sec. 5, we develop an OpenGL-based renderer for real-time rendering after training, fully leverag-ing the efficiency of our sort-free rendering scheme within the traditional graphics pipeline. The OpenGL-based ren-derer also consists of two main passes: In the first pass, we perform depth peeling for the nearest three surfel layers. During each rasterization step, we write not only the depth but also the surfel ID into the buffer. This Ground-truth Ours w/o splitting Figure 13. Qualitative comparisons of images rendered without our large Gaussian splitting strategy during training. 
+
+additional ID information enables us to correctly identify and handle interleaved surfels, preventing the issue where two intersecting surfels could otherwise be peeled only once along their intersection line. After the three peeling passes, a post-processing shader blends the peeled layers to gen-erate the final surfel color map, while also writing the ϵ-adjusted depth into the depth buffer. The peeled depth maps 
+
+{Dsi }2 
+
+> i=1
+
+and transmittance maps {T si }2 
+
+> i=1
+
+are packed into a four-channel texture. Since Gaussians beyond Ds 
+
+> 3
+
+are culled by the hardware depth test, storing Ds 
+
+> 3
+
+and T s 
+
+> 3
+
+is unneces-sary. In the second pass, Gaussians are splatted onto the screen with depth testing enabled and depth writing disabled. Dur-ing this process, the shader queries the peeled depth and transmittance values from the four-channel texture to ac-cumulate color and weight contributions. Finally, another post-processing shader performs weight normalization, pro-ducing the final rendering result. Our method is entirely based on the programmable graphics pipeline and does not rely on compute shaders, making it easy to be integrated into existing rendering engines and mobile devices. 
+
+# 11. Geometry Regularization 
+
+To enable the surfel representation to better capture the scene geometry, which is essential for downstream tasks such as mesh extraction, we optionally adopt a geometry regularization loss Lgeo = λ4Lsd +λ5Lsn +λ6Lsdn , where 
+
+λ4 = 0 .1, λ5 = 0 .05 and λ6 = 0 .05 , respectively. 
+
+Lsd = L1(Dsupv , D s), (6) 
+
+Lsn = 1
+
+HW 
+
+X
+
+> ˆx
+
+(1 − Nsupv (ˆ x) · Ns(ˆ x)) , (7) 
+
+Lsdn = 1
+
+HW 
+
+X
+
+> ˆx
+
+(1 − Nsupv (ˆ x) · ∇ (Ds(ˆ x))) , (8) where ∇(·) is the depth-to-normal operator, the reference depth maps Dsupv and normal maps Nsupv are generated in                                      
+
+> Table 4. Ablation study. Dataset-averaged image quality and frame rate (1080p) on Mip-NeRF360 Dataset [2]. Base/Full: us-ing our base/full model; w/o splitting: without the large-Gaussian splitting strategy; w/ raw ϵ: using the original ϵcomputation from GES [42]. SSIM ↑PSNR ↑LPIPS ↓FPS ↑
+> GES 0.813 27.38 0.208 675 Base, w/o trans. grad 0.818 27.57 0.201 482 Base 0.821 27.72 0.197 480 Base, w/ MCMC dens. 0.826 27.98 0.195 470 Full 0.827 28.11 0.196 472 Full, w/o splitting 0.825 28.04 0.197 479 Full, w/ raw ϵ0.827 28.08 0.199 469
+
+the last iteration of 2DGS initialization, and the depth map 
+
+Ds and normal map Ns of surfels are rendered by alpha blending, following the same procedure as Eq. (1). 
+
+# 12. Additional Comparisons with GES 
+
+Surfel-Gaussian Decomposition Rendering. In the left-most 3 columns of Fig. 14, we visualize the surfel-Gaussian decomposition rendering compared with GES. In Chair ,GES preserves high-frequency texture in surfel colors be-cause its image-loss-based surfel initialization inevitably embeds appearance details, deviating from the intended coarse-geometry representation. In contrast, DP-GES natu-rally transfers high-frequency details from surfels to Gaus-sians during joint training, resulting in smoother surfel ren-dering without visual noise (see the zoomed-in patches of 
+
+Hotdog and Drums ). 
+
+Surfel Distribution and Geometry Reconstruction. In this experiment, we compare our DP-GES with GES, with geometry regularization enabled for both methods. In the rightmost 3 columns of Fig. 14, the joint optimization in DP-GES keeps surfels well-regularized, yielding a more uniform and coherent distribution than GES. This prevents geometry and appearance artifacts: GES often produces needle-like surfels that manifest as sharp spikes, resulting in non-smooth surfaces in the extracted mesh. 
+
+# 13. Additional Ablations 
+
+We present quantitative additive ablations and additional re-sults in Table 4. The additive study demonstrates a clear and continuous improvement as we progressively upgrade the original GES to our full model. Applying our render-ing model to GES while disabling the new gradient path (Base, w/o trans. grad ) alleviates the aliasing issue, yet the reconstruction remains suboptimal. Enabling the gradient path ( Base ) enhances the reconstruction quality. Incorporat-ing the MCMC-based densification strategy from DBS [25] Full Rendering Gaussian Rendering Surfel Rendering Trans. Map Normal Map Mesh Rendering 
+
+> Ours
+> GES
+> Ours
+> GES
+> Ours
+> GES
+
+Figure 14. Qualitative comparisons between our DP-GES and GES [42] are shown across three aspects: surfel-Gaussian decomposition rendering, surfel distribution, and surfel geometry. For decomposition rendering, we visualize the Gaussian and surfel components as 
+
+CG/(Ws + WG) and Cs/(Ws + WG), respectively. Surfel distribution is illustrated by the transmittance map T s 
+
+> 1
+
+in DP-GES, with GES processed in a similar way. Surfel geometry is represented by the normal map computed from depth and the mesh extracted from surfels. From top to bottom: scenes are Hotdog , Drums and Chair from the NeRF Synthetic Dataset [29]. 
+
+(Base, w/o MCMC dens. ) yields additional gains, and re-placing the SH color with SB color representation ( Full )brings a marginal but consistent quality increase. These steady improvements validate that our core contributions are highly effective and orthogonal to existing auxiliary techniques. 
+
+Impact of Improved Depth Margin Strategy. In Fig. 12, smooth structures ( e.g ., pot rims) and detailed structures (e.g ., waves) are typically fitted by large and small surfels, respectively. Using the same ϵ strategy as in GES, occlu-sion leakage occurs in regions where large and small sur-fels are adjacent. Our ϵ computation incorporates the sizes of neighboring surfels, yielding smoother local transitions and reducing such leakage. 
+
+Impact of Large Gaussian Splitting. In Fig. 13, our Gaussian splitting strategy mitigates the issue of excessively large Gaussians produced during DBS initialization. With-out splitting, these large Gaussians can extend across sur-fels and be abruptly truncated by the depth test, producing visual artifacts. By splitting them into smaller Gaussians, we reduce the probability of such depth-test cutoffs.

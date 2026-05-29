@@ -1,0 +1,2029 @@
+Title: Provably Guaranteed Polytopic Uncertainty Quantification for SLAM
+
+URL Source: https://arxiv.org/pdf/2605.28172v1
+
+Published Time: Thu, 28 May 2026 00:57:25 GMT
+
+Number of Pages: 16
+
+Markdown Content:
+# Provably Guaranteed Polytopic Uncertainty Quantification for SLAM 
+
+Guangyang Zeng 1,2, Yulong Gao 3, Yuan Shen 1, Lingpeng Chen 1, Haoying Li 1, Guodong Shi 4, and Junfeng Wu 1,21School of Data Science, The Chinese University of Hong Kong, Shenzhen 
+
+2School of Artificial Intelligence, The Chinese University of Hong Kong, Shenzhen 
+
+3Department of Electrical and Electronic Engineering, Imperial College London 
+
+4School of Aerospace, Mechanical and Mechatronic Engineering, The University of Sydney Mapping 
+
+Relative pose tracking 
+
+Local point cloud 
+
+𝑇𝑇 𝑘𝑘 𝑘𝑘−1 
+
+Localization  Smoothing 
+
+Loop 
+
+closure  
+
+> 𝑇𝑇 𝑘𝑘 𝑘𝑘−1
+> 𝑇𝑇 𝑘𝑘−1 𝑇𝑇 𝑘𝑘
+
+Registration 
+
+(Forward UQ) 
+
+> 𝑇𝑇 𝑘𝑘
+> map points
+> poses
+> link by relative poses
+> link by loop closure
+
+𝑇𝑇 𝑘𝑘−1  𝑇𝑇 𝑘𝑘 
+
+(Pose compound) 
+
+Global pose tracking 
+
+(Backward UQ) 
+
+(Backward UQ) 
+
+Figure 1: Our guaranteed polytopic SLAM uncertainty quantification (UQ) framework. For global robot localization, there are two alternatives: (i) relative pose tracking followed by pose compound (marked as dashed purple lines), and (ii) global pose tracking (marked as dashed orange lines). 
+
+Abstract —In safety-critical robotics applications, guaranteed and practical uncertainty quantification (UQ) in perception is vital. Many existing works either offer no formal containment guarantee, rely on restrictive modeling assumptions, or focus only on pose estimation rather than a complete SLAM pipeline. This paper presents provably guaranteed UQ algorithms for 3D-3D landmark-based SLAM. The algorithms consist of three basic UQ modules: forward UQ for mapping, backward UQ for pose tracking, and pose compound. Each module produces a certified uncertainty set; when the input uncertainty bounds are deterministic, the output sets inherit deterministic guaran-tees, i.e., they provably contain the true poses and landmarks. Specifically, we use polytopes to represent uncertainty sets, enabling tractable computations and a unified treatment of pose uncertainty. To enhance algorithms’ practical usability, we incorporate conformal prediction to calibrate measurement uncertainty from data with prescribed probability. Simulations and experiments demonstrate that the proposed algorithms provide both strong theoretical guarantees and practical usability. The code is open-sourced at https://github.com/LIAS-CUHKSZ/ Polytopic-SLAM-Uncertainty-Quantification. 
+
+I. I NTRODUCTION 
+
+Simultaneous localization and mapping (SLAM) has found widespread applications in robotics. In recent years, substantial progress has been made, with research primarily improving accuracy [1], robustness [2], and efficiency [3], among other aspects. Most SLAM algorithms calculate optimal point esti-mates for the robot state and the environment map. However, for safety-critical applications such as autonomous driving and unmanned aerial vehicle navigation, point estimates alone are insufficient. Reliable uncertainty quantification (UQ) is needed so that downstream planning and control can explicitly account for perception risk and make safety-aware decisions. 
+
+Probabilistic UQ. This line of work typically assumes that the measurement uncertainty follows a distribution, most commonly Gaussian. Under such assumptions, one often com-putes a point estimate via maximum likelihood or maximum a posteriori inference, and then approximates the associated uncertainty using the inverse Fisher information matrix (FIM) or Hessian evaluated at the optimal solution to obtain a covari-ance [4, 5, 6]. Despite its popularity, this approach has several limitations. (i) Measurement uncertainty often deviates from a Gaussian distribution and may vary in dynamic scenes [7, 8]. (ii) Using FIM or Hessian again assumes a Gaussian distri-bution and is prone to underestimating the undergoing uncer-tainty [9]. (iii) The resulting covariance ellipsoid provides no formal guarantee of containing the true parameter; it is an approximation rather than a certified confidence region. 
+
+Deterministic UQ. This line of work is commonly referred to as set-membership estimation (SME). SME assumes mea-surement uncertainty is modeled by hard bounds rather than probability distributions and computes the set of all parameters consistent with measurements. SME offers two advantages: (i) 
+
+> arXiv:2605.28172v1 [cs.RO] 27 May 2026
+
+it requires only knowledge of the uncertainty support, without committing to a particular distribution; and (ii) the resulting parameter uncertainty set comes with a provable guarantee of containing the true parameter. SME has been widely studied in control theory [10, 11, 12] and in signal processing [13, 14]. In recent years, it has gained traction in robotics perception and estimation problems, with many works favoring interval-based formulations [15, 16, 17]. More recently, a stream of work has introduced conformal prediction (CP) [18, 19] to construct statistically valid measurement uncertainty bounds using a calibration data set, and then to perform pose estimation. Specifically, CP is used to calibrate uncertainty sets for the residuals g(T, x i, y i) := ( yi − f (T, x i)) ∈ G i, i = 1 , . . . , N ,where T ∈ SE(3) denotes the unknown pose, xi is the regressor, and yi is the model output. The resulting feasible pose set is defined as 
+
+{T ∈ SE(3) | g(T, x i, y i) ∈ G i, i = 1 , . . . , N }. (1) Although the pose uncertainty set admits the concise descrip-tion in (1), it is difficult to calculate, analyze or manipulate, since f may be non-convex, and the pose T is subject to non-convex constraints. Tractable approximations are adopted, including outer approximations [20, 21, 22] and inner approx-imations [7]. However, these approaches are limited to pose estimation and do not yet extend to a complete SLAM pipeline. 
+
+Contributions. In our work, we develop a novel framework that bridges distribution-free calibration with SME to enable tractable, provably guaranteed UQ for 3D-3D landmark-based SLAM. Unlike heuristic approaches, our method guarantees that estimated sets contain the true parameter with a prescribed probability. A key novelty is the framework’s duality and modularity: it seamlessly transitions between probabilistic confidence sets (via CP) and strict deterministic enclosures by simply interchanging the bounding module. Technically, as illustrated in Figure 1, we realize this via three primitives: forward UQ (mapping), backward UQ (pose tracking), and pose compound. Each primitive presents distinct challenges, and the associated uncertainties entangle mutually due to the propagation between landmarks and poses. We resolve them with tractable algorithms and then integrate them for full SLAM UQ. In particular, by implementing these primitives using polytopic sets, we leverage mature tools to ensure computational tractability via linear constraints, while enabling a unified representation of rotation and translation uncertainty. Simulations and experiments demonstrate that our algorithms contain the true parameters with certified guaran-tees, achieve tighter uncertainty sets than recent guaranteed pose UQ methods, and apply to complete SLAM pipelines. 
+
+Notations: Let X and Y be two sets, X +Y and X ·Y denote their Minkowski sum and Minkowski product, respectively. The closed Euclidean ball centered at point p0 ∈ Rn with radius r ≥ 0 is denoted as B(p0, r ). For a set X in a Euclidean space, its convex hull is denoted by conv( X ). Let 2X be the collection of all subsets of X . A set-valued function f : X → 
+
+2Y will be rewritten as f : X →→ Y to emphasize its set-valuedness. The image of C ⊂ X under f is defined as f (C) = 
+
+S 
+
+> x∈C
+
+f (x). The preimage of C is defined as f −1(C) = {x :
+
+f (x)∩C̸ = ∅} . For two vectors x and y, ⟨x, y ⟩ represents their inner product, col( x, y ) = [ x⊤, y ⊤]⊤ for short, and x ≤ y
+
+means the element-wise inequality. II. P RELIMINARIES 
+
+A. Rigid Transformation 
+
+In 3D Euclidean space, (proper) rigid transformations in-clude rotations and translations. They preserve the distance between any two points of and the handedness (orientation) of rigid bodies. A translation is depicted by a vector in R3. A rotation can be characterized by a rotation matrix. Specifically, rotation matrices belong to the special orthogonal group 
+
+SO(3) = {R ∈ R3×3 | R⊤R = I3, det( R) = 1 }.
+
+The group operation is the usual matrix multiplication, and the inverse is the matrix transpose. The group SO(3) forms a smooth manifold, and the tangent space at the identity is the Lie algebra, denoted as so (3) , which is comprised of all 
+
+3 × 3 skew-symmetric matrices. Every 3 × 3 skew-symmetric matrix can be generated from a vector—say s ∈ R3—via the 
+
+hat operator s∧ ∈ so (3) , which maps s into so (3) .The exponential map exp : so (3) → SO(3) coincides with standard matrix exponential. Specifically, Rodrigues’ rotation formula reads that 
+
+exp ( s∧) = I3 + sin( ∥s∥)
+
+∥s∥ s∧ + 1 − cos( ∥s∥)
+
+∥s∥2 (s∧)2 .
+
+We let Exp : R3 → SO(3) be the composition of the hat operator followed by exp , that is, Exp( s) = exp( s∧). The inverse operation of Exp is denoted as Log : SO(3) →{s ∈ R3 | ∥ s∥ ∈ [0 , π )}. The geodesic distance between two rotations is defined as 
+
+dis( R1, R 2) = cos −1
+
+ tr( R1R⊤ 
+
+> 2
+
+) − 12
+
+
+
+∈ [0 , π ].
+
+B. Conformal Prediction 
+
+Conformal prediction (CP) is a lightweight statistical tool for uncertainty quantification [23, 18]. Unlike standard ma-chine learning models, which typically provide a single point prediction, it outputs a prediction set that is guaranteed to contain the true value with a user-specified probability. Specif-ically, let s0, s 1, . . . , s L be L + 1 exchangeable random vari-ables 1. It is straightforward that independent and identically distributed random variables are exchangeable. The goal of CP is to estimate an upper bound for s0 using the calibration set s1, . . . , s L, ensuring coverage with probability 1−δ. Based on the quantile function, the upper bound C : RL → R
+
+is given by C(s1, . . . , s L) = Quantile 1−δ (s1, . . . , s L, ∞),which is the (1 − δ)-quantile over the empirical distribution of 
+
+s1, . . . , s L, ∞. Let sL+1 = ∞, and without loss of generality,          
+
+> 1The random variables s0, . . . , s Lare said to be exchangeable if the joint distribution of s0. . . , s Lis the same to that of sσ(0) , . . . , s σ(L)for any permutation σon indices.
+
+assume s1, . . . , s L are sorted in non-decreasing order. Then, we have 
+
+C(s1, . . . , s L) = sp, p = ⌈(1 − δ)( L + 1) ⌉, (2) where ⌈·⌉ is the ceiling function. 
+
+Lemma 1 (Marginal coverage [23, 18]). With the choice of 
+
+C in (2) , it holds that 
+
+Prob( s0 ≤ C(s1, . . . , s L)) ≥ 1 − δ. (3) The variable sl, l ∈ {0, . . . , L } is typically called the 
+
+nonconformity score . It quantifies the deviation between a predictor’s output ˆyl and the true value yol , e.g., for vector-valued predictions, it may be defined as the prediction error 
+
+sl = ∥ˆyl − yol ∥. A large nonconformity score indicates a poor prediction. For a comprehensive review of CP, see [19, 24]. 
+
+C. Polytopes 
+
+Given A = [ a1, . . . , a M ]⊤ 2 and b = [ b1, . . . , b M ]⊤, define the set 
+
+P(A, b ) := {x ∈ Rn | Ax ≤ b}. (4) If P(A, b ) is bounded, we call it a polytope. The one in form of (4) is an H-polytope, due to its half-space representation. Without loss of any generalization, we assume that each facet 
+
+am is a unit normal vector. According to the Minkowski-Weyl’s Theorem, any H-polytope P(A, b ) has an equivalent V -polytope: 
+
+P({v1, . . . , v N }) := conv( v1, . . . , v N ):= {x | x =
+
+> N
+
+X
+
+> i=1
+
+λivi, λ i ≥ 0,
+
+> N
+
+X
+
+> i=1
+
+λi = 1 },
+
+where vi ∈ Rn, i = 1 , . . . , N , are the vertices of the polytope. Both the vertex enumeration (from H-rep. to V -rep.) and facet enumeration (from V -rep. to H-rep.) can be performed using the libraries cddlib or lrslib [25]. Next, we introduce some definitions and polytope operations. 
+
+Definition 1 (Polytope diameter) . For a polytope P ⊂ Rn, its diameter d(P) is defined as 
+
+d(P) = max  
+
+> p1,p 2∈P
+
+∥p1 − p2∥.
+
+Definition 2 (Chebyshev ball and Chebyshev center) . For a polytope P, the unique ball of minimal radius that encloses the entire P is called its Chebyshev ball. Its radius, known as the Chebyshev radius, is given by, 
+
+min  
+
+> x0,r
+
+{r : ∥x0 − x∥ ≤ r, ∀x ∈ P} .
+
+The Chebyshev center is denoted by cent ( P) and the Cheby-shev radius by r(P).
+
+These two definitions are still valid for a general set. In the case of polytopes, the diameter is attained by a pair of vertices.   
+
+> 2The rows of Aare assumed to be independent for minimal representation.
+
+Hence, it can be computed by checking all vertex pairs, which takes O(N 2) time in the number N of vertices: 
+
+d(P) = max  
+
+> p1,p 2∈V
+
+∥p1 − p2∥, (5) where V = {vi}Ni=1 is the vertex set of P. The Chebyshev center and radius of P can be found by solving a convex optimization problem: 
+
+min  
+
+> x0,r
+
+r (6a) 
+
+s.t. ∥x0 − vi∥ ≤ r, i = 1 , . . . , N. (6b) The obtained optimal x∗ 
+
+> 0
+
+is the Chebyshev center, and r∗ is the Chebyshev radius. Solving (6) using interior-point methods leads to a time complexity of O(N 1.5).
+
+Definition 3. Given three polytopes P, P1, P2 ⊂ Rn, a linear map H ∈ Rm×n, and a vector q ∈ Rm, define following set operations:  
+
+> •
+
+(Affine Map) HP + q := {Hx + q | x ∈ P} ; 
+
+> •
+
+(Minkowski Sum) P1 + P2 := {x + y | x ∈ P 1, y ∈ P 2}; 
+
+> •
+
+(Intersection) P1 ∩ P 2 := {x | x ∈ P 1 and x ∈ P 2}; 
+
+> •
+
+(Set projection to subspace Rd) πRd (P) = {x ∈ Rd |∃y ∈ Rn−d, col( x, y ) ∈ P} .
+
+These set operations can be defined for arbitrary sets, however, within the context of polytopes, they are closed, i.e., the result is again a polytope. The set projection can be performed by the Fourier-Motzkin elimination algorithm [26]. III. B ASIC UNCERTAINTY QUANTIFICATIONS 
+
+We study three fundamental UQ primitives that form the core building blocks for Sec.IV. Consider a rigid transformation T =
+
+ R t 
+
+0⊤ 
+
+> 3
+
+1
+
+
+
+of SE(3) ,which acts on points in R3 via a left group action ϕ :SE(3) × R3 → R3. We denote x(T ) := col(vec( R), t ) ∈ R12 
+
+as the vectorization of T . In robotics, if T maps a local frame to a reference frame and p is a point in the local frame, then ϕ(T, p ) = Rp + t gives the point in the reference frame. Define the map ϕp : SE(3) → R3, T 7 → ϕ(T, p ).The basic problems to be discussed involve the forward and backward transfer of uncertainty between the argument of ϕp
+
+(elements of SE(3) ) and its image in R3. The forward UQ aims to propagate uncertainty from SE(3) to R3, whereas the backward UQ infers the uncertainty on SE(3) from that on R3.We will also investigate the fundamental UQ problem for pose compound. Before proceeding, we introduce the following definition. For a given set S of points, define a set-valued function ϕS : SE(3) →→R3 by 
+
+ϕS (T ) = {ϕp(T ) : p ∈ S} . (7) 
+
+A. Forward Uncertainty Quantification 
+
+The forward UQ problem is interpreted as follows: given a fixed, known and bounded set S, for a set T ⊂ SE(3) , find the image ϕS (T ). For tractability and computational issues, we restrict S to a polytope P(A1, b 1) = {p ∈ R3 | A1p ≤ b1}and focus on the rigid transformation uncertainty form as 
+
+T = {T ∈ SE(3) | Hx (T ) ≤ d}. In the SLAM context in Sec.IV, p denotes a landmark’s local coordinates, with uncertainty P(A1, b 1) provided by CP, and the set T for a robot pose can be obtained by backward UQ in each iteration. The forward UQ derived from T and P(A1, b 1) is to compute the set 
+
+Q := {q = ϕ(T, p ) | T ∈ T , p ∈ P (A1, b 1)}. (8) However, due to the bilinear property of ϕ and non-convex 
+
+SO(3) constraint, the set Q is hard to characterize. In what follows, we instead compute a tight and computationally efficient polytopic approximation P(A2, b 2) of Q.Fo computational efficiency, we fix the matrix A2 =[a1, . . . , a M ]⊤ a prior , where each am is a unit normal . One way to select A2 is from the regular 3D polytope with M
+
+sides. Now the problem of computing P(A2, b 2) boils down to computing the smallest b2 giving the tightest approximation. We need to solve M optimization problems in form of 
+
+[b2]m = max  
+
+> q,T,p
+
+a⊤
+
+> m
+
+q (9a) 
+
+s.t. Hx (T ) ≤ d, A 1p ≤ b1, (9b) 
+
+q = ϕ(T, p ), T ∈ SE(3) . (9c) This problem can be simplified by only considering the vertices of P(A1, b 1) for p, as shown in the following lemma. 
+
+Lemma 2. Let V = {vi}Ni=1 be the vertex set of P(A1, b 1),where N is the vertex number. Problem (9) is equivalent to 
+
+[b2]m = max  
+
+> vi∈V
+
+max  
+
+> q,T
+
+a⊤
+
+> m
+
+q (10a) 
+
+s.t. Hx (T ) ≤ d, q = ϕ(T, v i), (10b) 
+
+T ∈ SE(3) . (10c) 
+
+Proof. Suppose the optimum is achieved at q∗, T ∗, p ∗ where 
+
+p∗ /∈ V . First, assume that p∗ strictly lies inside the P(A1, b 1).Since there exists a ∆q ∈ R3 such that a⊤
+
+> m
+
+∆q > 0, we can choose a λ > 0 and a ∆p = R∗⊤ ∆q such that p∗ + λ∆p ∈P(A1, b 1) and a⊤
+
+> m
+
+ϕ(T ∗, p ∗ +λ∆p) = a⊤
+
+> m
+
+(q∗ +λ∆q) > a ⊤
+
+> m
+
+q∗,which leads to a contradiction. Second, assume that p∗ lies on a facet (or edge) of P(A1, b 1). Then, it is straightforward that there is a vertex v∗ ∈ V on this facet (or edge) such that 
+
+a⊤
+
+> m
+
+ϕ(T ∗, v ∗) ≥ a⊤
+
+> m
+
+q∗, which completes the proof. In Lemma 2, we enumerate all vertices vi ∈ V and solve the inner problem in (10) at each iteration. The maximum objective value over V is selected as [b2]m. However, the inner problem is still non-convex due to the SE(3) constraint. We can relax it to an SDP and obtain a certifiable upper bound. Let y = col( x(T ), 1) and X = yy ⊤. Then, the relaxed SDP is 
+
+[ˆb2]m = max  
+
+> vi∈V
+
+max  
+
+> X∈S13
+
+tr( Qm, 0X) (11a) 
+
+s.t. X ⪰ 0, [X]13 ,13 = 1 , (11b) 
+
+tr( QiX) = 0 , i = 1 , . . . , 6, (11c) 
+
+tr( FiX) ≤ 0, i = 1 , . . . , d T , (11d) where dT is the dimension of d. The data matrices 
+
+Qm, 0, Q i, F i have the following forms: 
+
+Qm, 0 =
+
+ 012 ×12 12 (vi ⊗ I3)am 
+
+> 12
+
+am 
+
+> 12
+
+a⊤
+
+> m
+
+(v⊤ 
+
+> i
+
+⊗ I3) 12 a⊤ 
+
+> m
+
+0
+
+ , (12) 
+
+
+
+˜Q1 =
+
+
+
+I3 03×3 03×3
+
+03×3 03×3 03×3
+
+03×3 03×3 03×3
+
+ ,
+
+˜Q2 =
+
+
+
+03×3 03×3 03×3
+
+03×3 I3 03×3
+
+03×3 03×3 03×3
+
+ ,
+
+˜Q3 =
+
+
+
+03×3 03×3 03×3
+
+03×3 03×3 03×3
+
+03×3 03×3 I3
+
+ ,
+
+˜Q4 =
+
+
+
+03×3 12 I3 03×312 I3 03×3 03×3
+
+03×3 03×3 03×3
+
+ ,
+
+˜Q5 =
+
+
+
+03×3 03×3 12 I3
+
+03×3 03×3 03×312 I3 03×3 03×3
+
+ ,Q6 =
+
+
+
+03×3 03×3 03×3
+
+03×3 03×3 12 I3
+
+03×3 12 I3 03×3
+
+ .
+
+(13) 
+
+Qi =
+
+
+
+˜Qi 09×3 09
+
+03×9 03×3 03
+
+0⊤ 
+
+> 9
+
+0⊤ 
+
+> 3
+
+−1
+
+ , i = 1 , 2, 3, (14) 
+
+Qi =
+
+
+
+˜Qi 09×3 09
+
+03×9 03×3 03
+
+0⊤ 
+
+> 9
+
+0⊤ 
+
+> 3
+
+0
+
+ , i = 4 , 5, 6, (15) 
+
+Fi =
+
+012 ×12 12 [H]⊤ 
+
+> i
+> 12
+
+[H]i −[d]i
+
+
+
+, (16) where [H]i denotes the i-th row of H. The time complexity to solve (11) using interior-point algorithms is O(n3.5N d T +
+
+n2.5N d 2 
+
+> T
+
++ n0.5N d 3 
+
+> T
+
+) [27] ( n = 13 in our problem). Since the data matrices are sparse and the constraint numbers in polytopic description is typically moderate in our problem, the SDP can be efficiently solved by off-the-shelf solvers such as 
+
+MOSEK . To tighten the SDP relaxation, the automatic method in [28] can also be adopted, which augments the formulation with automatically generated redundant constraints. Finally, we conclude with the following guaranteed result of the whole procedure. The forward propagation algorithm is summarized in Algorithm 1. 
+
+Theorem 1. The set P(A2, ˆb2) is a guaranteed approximation for Q in (8) , that is, Q ⊆ P (A2, ˆb2).Proof. For any q ∈ Q, from (9), we have that a⊤
+
+> m
+
+q ≤
+
+[b2]m, m ∈ { 1, . . . , M }, which implies that Q ⊆ P (A2, b 2).Algorithm 1 Forward UQ under ϕS
+
+Input : P(A1, b 1) for S, P(H, d ) for T , unit normal matrix A2.
+
+Output : Polytopic enclosure P(A2, ˆb2) for ϕS (T ). 
+
+> 1:
+
+Calculate {Qi}6 
+
+> i=1
+
+in (14)–(15) and {Fi}dT 
+
+> i=1
+
+in (16);  
+
+> 2:
+
+for m = 1 : M do  
+
+> 3:
+
+Calculate Qm, 0 according to (12);  
+
+> 4:
+
+Solve SDP (11) for [ˆb2]m; 
+
+> 5:
+
+end for 
+
+Moreover, since (11) is a relaxation of (10), it holds that [b2]m ≤ [ˆb2]m, m ∈ {1, . . . , M }. Therefore, Q ⊆P(A2, b 2) ⊆ P (A2, ˆb2), which completes the proof. 
+
+B. Backward Uncertainty Quantification 
+
+The backward UQ problem can be interpreted as follows: given a fixed bounded set S, for a target subset Q ⊂ R3 find the preimage ϕ−1 
+
+> S
+
+(Q) in the manifold of SE(3) . The following theorem provides an upper bound on this preimage by relating it to the preimage of a single-valued map ϕs for some s ∈ S .
+
+Theorem 2. For any s ∈ S , ϕ−1 
+
+> S
+
+(Q) ⊆ ϕ−1 
+
+> s
+
+(Q+) for all 
+
+Q+ ⊇ Q + B(0 , d (S)) . In particular, when s = cent( S),
+
+ϕ−1 
+
+> S
+
+(Q) ⊆ ϕ−1 
+
+> s
+
+(Q+) for all Q+ ⊇ Q + B(0 , r (S)) .Proof. From the definition of ϕ−1 
+
+> S
+
+(Q), for any T ∈ ϕ−1 
+
+> S
+
+(Q),there exist s ∈ S and q ∈ Q such that q = ϕs(T ). Fix an arbitrary s′ ∈ S . Since ∥s − s′∥ ≤ d(S), we have 
+
+ϕs′ (T ) = Rs ′ + t = q + R(s′ − s) ∈ Q + B(0 , d (S)) ,
+
+which proves the first assertion. For the second assertion, take 
+
+s′ =cent ( S). Then, ∥s−s′∥ ≤ r(S) by Definition 2, and thus 
+
+ϕs′ (T ) ∈ Q + B(0 , r (S)) , which completes the proof. When S and Q are arbitrary sets, the preimage is generally difficult to characterize. Although Theorem 2 provides an upper bound on this preimage, obtaining a closed-form ex-pression remains impractical. For further analysis, we restrict 
+
+Q to be a polytope. A useful lemma is 
+
+Lemma 3. Give a polytope P(A, b ), for any real number ϵ > 
+
+0, it holds that P(A, b ) + B(0 , ϵ ) ⊂ P (A, b + ϵ1).Proof. For any pϵ ∈ P (A, b ) + B(0 , ϵ ), one can find p ∈P(A, b ) and v ∈ B (0 , ϵ ) such that pϵ = p + v. Then, Ap ϵ =
+
+Ap + Av ≤ b + Av . Since ∥v∥ ≤ ϵ (due to v ∈ B (0 , ϵ )) and each row a⊤ 
+
+> m
+
+in A is a unit vector, we have a⊤
+
+> m
+
+v ≤ ϵ for all m.Thus Ap ϵ ≤ b + ϵ1, which shows pϵ ∈ P (A, b + ϵ1). To prove the inclusion is strict, take a point p′ 
+
+> ϵ
+
+satisfying Ap ′ 
+
+> ϵ
+
+= b + ϵ1.For any p ∈ P (A, b ), we have A(p′ 
+
+> ϵ
+
+− p) = b + ϵ1 − Ap ≥ ϵ1.The Cauchy-Schwarz inequality implies a⊤
+
+> m
+
+(p′ 
+
+> ϵ
+
+−p) ≤ ∥ p′ 
+
+> ϵ
+
+−p∥
+
+for each m with equality only if p′ 
+
+> ϵ
+
+−p is parallel to am. On the other hand, since A is the data matrix for a polytope, at least one inequality is strict. Thus, ∥p′ 
+
+> ϵ
+
+− p∥ > ϵ , which concludes 
+
+p′
+
+> ϵ
+
+̸ ∈ P (A, b ) + B(0 , ϵ ). This completes the proof. An immediate benefit of restricting Q to a polytope repre-sented in H-form as P(A2, b 2) is that the set Q + B(0 , r (S)) 
+
+can be bounded by a polytope P(A2, b 2 + r(S)1) as estab-lished in Lemma 3 by considering the Chebyshev ball of S.Moreover, by Theorem 2, fixing s = cent( S) renders ϕs linear, ensuring that the preimage of a polytope under ϕs remains a polytope. In addition, if S itself is constrained to be a polytope 
+
+P(A1, b 1), locating its Chebyshev ball is computationally efficient. In the SLAM context in Sec.IV, P(A1, b 1) for local point p can be provided by CP, and P(A2, b 2) for global map coordinate q can be obtained by previous forward UQ rounds. The backward UQ from P(A1, b 1) and P(A2, b 2) is to compute the set 
+
+T := {T ∈ SE(3) | ∃ p ∈ P (A1, b 1), q ∈ P (A2, b 2)such that q = ϕ(T, p )}. (17) From Theorem 2 and Lemma 3, by setting s =cent (P (A1, b 1)) , for any T ∈ ϕ−1 
+
+> s
+
+(P(A2, b 2 + r(P(A1, b 1)1)) ,we have A2ϕ(T, s ) ≤ b2 + r(P(A1, b 1)1. It follows that 
+
+Tr = {T ∈ SE(3) | Hx (T ) ≤ d}, (18) where H = [ A2(s⊤ ⊗ I3), A 2] and d = b2 + r(P(A1, b 1)1.Theorem 2 also allows for a looser bound based on the polytope diameter, which is computationally simpler as it bypasses the computation of the Chebyshev center. Choosing arbitrary s ∈ P (A1, b 1), and the preimage ϕ−1 
+
+> s
+
+(P(A2, b 2 +
+
+d(P(A1, b 1)1)) is given by 
+
+Td = {T ∈ SE(3) | Hx (T ) ≤ d}, (19) where H = [ A2(s⊤ ⊗ I3), A 2] and d = b2 + d(P(A1, b 1)1.In summary, we conclude with the following result on the 
+
+guarantee of the whole procedure. 
+
+Theorem 3. Both Tr in (18) and Td in (19) are guaranteed approximations for T in (17) , that is, T ⊂ T r , Td. Moreover, 
+
+Tr is the unique minimum set that 1) can be written as SE(3) ∩ P (H, ·) with template H =[A2(s⊤ ⊗ I3), A 2], s =cent ( P(A1, b 1)) ;2) encloses T ;3) is enclosed by any other set satisfying 1) and 2). Proof. The conservatism of Tr and Td are straightforward by Theorem 2 and Lemma 3. To prove the second claim, suppose that there exists d′ such that T ′ = {T ∈ SE(3) | Hx (T ) ≤ d′}
+
+encloses T , and there exists at least an m such that [d′]m <
+
+[d]m. Recall s = cent( P(A1, b 1)) . Take s′ in the set P(A1, b 1)
+
+to achieve the Chebyshev radius, that is, 
+
+∥s − s′∥ = r(P(A1, b 1)) . (20) Denote A2 = [ a1, . . . , a M ]⊤. Let q∗ from P(A2, b 2) and q∗
+
+> m
+
+from the facet a⊤
+
+> m
+
+q = [ d]m so that they achieve the distance between the two sets, which combining the unity of a⊤ 
+
+> m
+
+leads to 
+
+a⊤
+
+> m
+
+(q∗ 
+
+> m
+
+− q∗) = ∥q∗ − q∗
+
+> m
+
+∥ = r(P(A1, b 1)) .
+
+Due to (20), we can find a rotation R satisfying R(s − s′) = 
+
+q∗ 
+
+> m
+
+− q∗. Define t = q∗ 
+
+> m
+
+− Rs and we have Rs + t = q∗
+
+> m
+
+.Hence, Rs ′ + t = Rs + t − R(s − s′) = q∗ 
+
+> m
+
++ q∗ − q∗ 
+
+> m
+
+= q∗and 
+
+ R t 
+
+0⊤ 
+
+> 3
+
+1
+
+
+
+=: T ∈ T by (17) since s′ ∈ P (A1, b 1) and 
+
+q∗ ∈ P (A2, b 2). On the other hand, by (18), 
+
+[Hx (T )] m = a⊤
+
+> m
+
+(Rs + t) = a⊤
+
+> m
+
+q∗ 
+
+> m
+
+= [ d]m,
+
+which leads to [Hx (T )] m > [d′]m. As a result, T̸ ∈ T ′. It implies that T ′ does not enclose T , introducing a contradiction and completing the proof. Our backward UQ is reported in Algorithm 2. 
+
+Algorithm 2 Backward UQ under ϕS
+
+Input : P(A1, b 1) for S and P(A2, b 2) for Q.
+
+Output :Polytopic enclosure T for ϕ−1 
+
+> S
+
+(Q). 
+
+> 1:
+
+if prioritize tightness then  
+
+> 2:
+
+Calculate s =cent ( P(A1, b 1)) and r(P(A1, b 1)) by solving (6);  
+
+> 3:
+
+Set H = [ A2(s⊤⊗I3), A 2] and d = b2+r(P(A1, b 1)1; 
+
+> 4:
+
+else if prioritize efficiency then  
+
+> 5:
+
+Calculate d(P(A1, b 1)) and set d = b2+d(P(A1, b 1)1; 
+
+> 6:
+
+Choose s ∈ P (A1, b 1) and set H = [ A2(s⊤ ⊗I3), A 2]; 
+
+> 7:
+
+end if  
+
+> 8:
+
+Set T = {T ∈ SE(3) | Hx (T ) ≤ d}.
+
+C. Rigid Transformation Uncertainty Compound 
+
+The rigid transformation uncertainty compound problem is formulated as follows: find a set T3, if there exists one, of 
+
+SE(3) for uncertainty sets T1, T2 ⊂ SE(3) such that 
+
+ϕS (T3) = ϕϕS (T2)(T1) (21) holds for any bounded point set S. The problem is well-defined only if T3 exists and is unique. The composition of the group action ϕ on R3 is compatible with the group multiplication in SE(3) . Specifically, for T1, T 2 ∈ SE(3) , ϕϕp(T2)(T1) = 
+
+ϕp(T1T2). Consequently, the compound of these uncertainties can be fully characterized using the Minkowski product, establishing that the problem is well-defined. 
+
+Lemma 4. For two sets T1, T2 ⊂ SE(3) , T3 ⊂ SE(3) 
+
+satisfies (21) for any bounded set S if and only if T3 = T1 · T 2.Proof. For T1 · T 2, we have 
+
+ϕS (T1 · T 2) = ∪T ∈T 1·T 2 ϕS (T )= {ϕp(T1T2) | p ∈ S , T 1 ∈ T 1, T 2 ∈ T 2}
+
+= {ϕq (T2) | q ∈ ϕS (T1), T 2 ∈ T 2}
+
+= ϕϕS (T1)(T2). (22) Moreover, since (21) is satisfied for any bounded S, one can reuse argument in (22) and show by contradiction that T3
+
+cannot be any set other than T1 · T 2, which completes the proof. By Lemma 4, the problem of compounding uncertainties in rigid transformations can be conveniently reformulated as a set product problem. To facilitate further analysis, let us restrict our attention to the polytopic uncertainty sets T1 =
+
+{T ∈ SE(3) | A1x(T ) ≤ b1} on T1 and T2 = {T ∈ SE(3) |
+
+A2x(T ) ≤ b2} on T2. Assume that P(A1, b 1) and P(A2, b 2)
+
+are given. The polytopic structure is not generally preserved under the group product. We propose two methods—one direct and one indirect—to compute enclosures for T1 · T 2.
+
+1) Direct Computation Method: In this part, we are inter-ested in developing an algorithm to compute a tight polytopic set P(A3, b 3) = {x ∈ R12 | A3x ≤ b3} on x(T3).Similar to the forward UQ in Sec.III-A, we fix the template 
+
+A3 = [ a1, . . . , a M ]⊤ a prior to improve the computational efficiency. Here each am is a unit normal . Then, the problem to be solved is 
+
+[b3]m = max 
+
+> T1,T 2,T 3
+
+a⊤
+
+> m
+
+x(T3) (23a) 
+
+s.t. T3 = T1T2, A 1x(T1) ≤ b1, (23b) 
+
+A2x(T2) ≤ b2, T 1, T 2 ∈ SE(3) . (23c) This bilinear optimization problem is hard to be globally solved. Let y = col( x(T1), x (T2), 1) and X = yy ⊤. We have the following relaxed SDP giving a certifiable upper bound. 
+
+[ˆb3]m = max  
+
+> X∈S25
+
+tr( Qm, 0X) (24a) 
+
+s.t. X ⪰ 0, [X]25 ,25 = 1 , (24b) 
+
+tr( QiX) = 0 , i = 1 , . . . , 12 , (24c) 
+
+tr( FiX) ≤ 0, i = 1 , . . . , b 1,T , (24d) 
+
+tr( GiX) ≤ 0, i = 1 , . . . , b 2,T , (24e) where b1,T and b2,T are the dimensions of b1 and b2, re-spectively, and the data matrices Qm, 0, Q i, F i, G i have the following forms: 
+
+
+
+Qi =
+
+
+
+˜Qi 09×15 09
+
+015 ×9 015 ×15 015 
+
+0⊤ 
+
+> 9
+
+0⊤ 
+
+> 15
+
+−1
+
+ , i = 1 , 2, 3,Qi =
+
+
+
+˜Qi 09×15 09
+
+015 ×9 015 ×15 015 
+
+0⊤ 
+
+> 9
+
+0⊤ 
+
+> 15
+
+0
+
+ , i = 4 , 5, 6,Qi =
+
+
+
+012 ×12 012 ×9 012 ×3 012 
+
+09×12 ˜Qi−6 09×3 09
+
+03×12 03×9 03×3 03
+
+0⊤ 
+
+> 12
+
+0⊤ 
+
+> 9
+
+0⊤ 
+
+> 3
+
+−1
+
+ , i = 7 , 8, 9,Qi =
+
+
+
+012 ×12 012 ×9 012 ×3 012 
+
+09×12 ˜Qi−6 09×3 09
+
+03×12 03×9 03×3 03
+
+0⊤ 
+
+> 12
+
+0⊤ 
+
+> 9
+
+0⊤ 
+
+> 3
+
+0
+
+ , i = 10 , 11 , 12 ,
+
+(25) with the same ˜Qi, i = 1 , . . . , 6 in (13), 
+
+Qm, 0 =
+
+
+
+09×9 09×3 12 Φ 12 Ψ 09
+
+03×9 03×3 03×9 03×3 12 am,t  
+
+> 12
+
+Φ⊤ 09×3 09×9 09×3 0912 Ψ⊤ 03×3 03×9 03×3 03
+
+0⊤  
+
+> 912
+
+a⊤ 
+
+> m,t
+
+0⊤ 
+
+> 9
+
+0⊤ 
+
+> 3
+
+0
+
+ , (26) with am,t = [0 3×9 I3]am, Φ = P3 
+
+> k=1
+
+U ⊤ 
+
+> k
+
+AS k,and Ψ = [U ⊤ 
+
+> 1
+
+am,t U ⊤ 
+
+> 2
+
+am,t U ⊤ 
+
+> 3
+
+am,t ], with A =[[ am]1:3 [am]4:6 [am]7:9 ] and 
+
+U1 = [ I3 03×6], U 2 = [0 3×3 I3 03×3], U 3 = [0 3×6 I3],
+
+
+
+S1 =
+
+
+
+1 0 0⊤
+
+> 7
+
+0⊤ 
+
+> 3
+
+1 0⊤
+
+> 5
+
+0⊤ 
+
+> 6
+
+1 0⊤
+
+> 2
+
+ , S 2 =
+
+
+
+0 1 0⊤
+
+> 7
+
+0⊤ 
+
+> 4
+
+1 0⊤
+
+> 4
+
+0⊤ 
+
+> 7
+
+1 0
+
+ ,S3 =
+
+
+
+0⊤ 
+
+> 2
+
+1 0⊤
+
+> 6
+
+0⊤ 
+
+> 5
+
+1 0⊤
+
+> 3
+
+0⊤ 
+
+> 7
+
+0 1
+
+ ,
+
+(27) and 
+
+Fi =
+
+ 024 ×24 12 [A1]⊤
+
+> i
+
+012 12 [A1]i 0⊤ 
+
+> 12
+
+−[b1]i
+
+ ,Gi =
+
+ 024 ×24 
+
+012 12 [A2]⊤
+
+> i
+
+0⊤  
+
+> 12 12
+
+[A2]i −[b2]i
+
+ .
+
+(28) The time complexity to solve the SDP using interior-point algorithms is O(n3.5b1,T + n2.5b21,T + n0.5b31,T + n3.5b2,T +
+
+n2.5b22,T + n0.5b32,T ) [27] ( n = 25 in this problem). Similarly, this SDP can be tightened using the method in [28] and solved by off-the-shelf solvers like MOSEK .
+
+Theorem 4. The set {T3 ∈ SE(3) | A3x(T3) ≤ ˆb3} is a guaranteed approximation for the original set T3.
+
+The proof of Theorem 4 is similar to that of Theorem 1 and is omitted here. Our direct pose uncertainty compound algorithm is summa-rized in Algorithm 3. 
+
+Algorithm 3 Direct pose compound 
+
+Input : P(A1, b 1), P(A2, b 2) for x(T1), x(T2) and unit normal matrix A3
+
+Output : Polytopic enclosure P(A3, ˆb3) for x(T1T2). 
+
+> 1:
+
+Calculate {Qi}12 
+
+> i=1
+
+, {Fi}b1,T  
+
+> i=1
+
+, {Gi}b2,T  
+
+> i=1
+
+according to (25)– (28);  
+
+> 2:
+
+for m = 1 : M do  
+
+> 3:
+
+Calculate Qm, 0 according to (26);  
+
+> 4:
+
+Solve the SDP (24) for [ˆb3]m; 
+
+> 5:
+
+end for 
+
+2) Indirect Computation Method: Since x(T3) ∈ R12 , its polytopic template A3 can be complex (i.e., M is large), and solving M SDPs (24) may become prohibitive. We instead propose an efficient indirect method. This approach decom-poses the polytope P(A, b ) via set projection into translation 
+
+P(At, b t) and rotation P(Ar , b r ) (where r = vec( R)), and then further relax the rotation uncertainty. We begin with over-approximating P(Ar , b r ) using the polytopic set X := {Exp( θw ) | w ∈ S2, θ ∈ [0 , θ ′]} (defined by one-dimensional uncertainty θ). The following proposition characterizes this set. 
+
+Proposition 1. Consider the polytope P(Ar , b r ) where Ar =[a1, . . . , a M ]⊤ and br = [ b1, . . . , b M ]⊤. Then, the set ¯RX
+
+is a guaranteed approximation for the set {R ∈ SO(3) |
+
+vec( R) ∈ P(Ar , b r )}, where X := {Exp( θw ) | w ∈
+
+S2, θ ∈ [0 , θ ′]}. Here, ¯R ∈ SO(3) is obtained from ¯r via inverse vectorization and singular value decomposition-based 
+
+SO(3) projection [29] and θ′ = cos −1
+
+
+
+max { c∗−12 , −1}
+
+
+
+. In particular, ¯r is the Chebyshev center of P(Ar , b r ), and c∗ is obtained by solving the problem 
+
+c∗ = max  
+
+> X∈S10
+
+tr( Q0X) (29a) 
+
+s.t. X ⪰ 0, [X]10 ,10 = 1 , (29b) 
+
+tr( QiX) = 0 , i = 1 , . . . , 6, (29c) 
+
+tr( FiX) ≤ 0, i = 1 , . . . , M. (29d) 
+
+The data matrices Q0, Q i, F i are provided as 
+
+Q0 =
+
+09×9 12 ¯r 
+
+> 12
+
+¯r⊤ 0
+
+
+
+, F i =
+
+ 09×9 12 [Ar ]⊤ 
+
+> i
+> 12
+
+[Ar ]i −[br ]i
+
+
+
+, (30) 
+
+Qi =
+
+ ˜Qi 09
+
+0⊤ 
+
+> 9
+
+−1
+
+
+
+, i = 1 , 2, 3, Q i =
+
+ ˜Qi 09
+
+0⊤ 
+
+> 9
+
+0
+
+
+
+, i = 4 , 5, 6,
+
+(31) 
+
+where ˜Qi, i = 1 , . . . , 6 are the same as in (13) .Proof. Since ¯r is the Chebyshev center of P(Ar , b r ), ¯R can be interpreted as an approximate center of {R ∈ SO(3) |
+
+vec( R) ∈ P (Ar , b r )}. On the other hand, let R∗ be the optimal solution to the problem 
+
+min  
+
+> R∈SO(3)
+
+tr( R ¯R⊤) (32a) 
+
+s.t. Ar vec( R) ≤ br . (32b) For any R ∈ {R ∈ SO(3) | vec( R) ∈ P(Ar , b r )},we have tr( R∗ ¯R⊤) ≤ tr( R ¯R⊤). That is dis( R, ¯R) ≤
+
+dis( R∗, ¯R). Moreover, Problem (29) is actually an SDP re-laxation of (32). Hence, c∗ ≤ tr( R∗ ¯R⊤), which implies 
+
+θ′ = cos −1
+
+
+
+max { c∗−12 , −1}
+
+
+
+≥ dis( R∗, ¯R) ≥ dis( R, ¯R).This means that R ∈ ¯RX and completes the proof. Now let us consider the pose compound T3 = T1T2, as defined before. Suppose that the uncertainties on the pose Ti
+
+are characterized by the set ¯RiXi on the rotation Ri and the set P(Ati , b ti ) on the translation ti, where Xi = {Exp( θiw) |
+
+w ∈ S2, θ i ∈ [0 , θ ′
+
+> i
+
+]}. According to the pose compound operation, we have that R3 = R1R2 and t3 = R1t2 + t1.From a set-valued perspective, we have 
+
+R3 ∈ ( ¯R1X1 ¯R2) · X 2, t 3 ∈ ¯R1X1 · P (At2 , b t2 ) + P(At1 , b t1 ).
+
+Next we develop an efficient method to compute tight un-certainty sets ¯R3X3 = { ¯R3Exp( θ3w) | w ∈ S2, θ 3 ∈ [0 , θ ′
+
+> 3
+
+]}
+
+on R3 and P(At3 , b t3 ) = {t ∈ R3 | At3 t ≤ bt3 } on t3. The following lemma gives the exact characterization of ¯R3X3.Lemma 5. Let θ′ 
+
+> 3
+
+= θ′ 
+
+> 1
+
++ θ′ 
+
+> 2
+
+and ¯R3 = ¯R1 ¯R2. Then, the uncertainty set ¯R3X3 is equivalent to ( ¯R1X1 ¯R2) · X 2, i.e., 
+
+¯R3X3 = ( ¯R1X1 ¯R2) · X 2.Proof. The first supporting lemma is 
+
+Lemma 6. Let X = {Exp( θw ) | w ∈ S2, θ ∈ [0 , θ ′]}, then for any R ∈ SO(3) , we have RX = X R.Proof. It is equivalent to prove RX R⊤ = X . For any X ∈ X ,let X′ = R⊤XR . We have 
+
+dis( X′, I ) = dis( X, I ) ≤ θ′,
+
+which implies X′ ∈ X . Hence, X = RX ′R⊤ ∈ RX R⊤, that is, X ⊆ RX R⊤.For any X ∈ RX R⊤, there exists an X′ ∈ X such that 
+
+X = RX ′R⊤. We have 
+
+dis( X, I ) = dis( X′, I ) ≤ θ′,
+
+which implies X ∈ X . Therefore, RX R⊤ ⊆ X , which completes the proof. Based on Lemma 6, we can rewrite ( ¯R1X1 ¯R2)·X 2 as ¯R3X1 ·X2. The second supporting lemma is 
+
+Lemma 7. It holds that X3 = X1 · X 2.Proof. For any X3 ∈ X3, we can express it as X3 =Exp( θ3w) for some w ∈ S2, θ 3 ∈ [0 , θ ′ 
+
+> 1
+
++ θ′
+
+> 2
+
+]. Then, there exist θ1 ∈ [0 , θ ′
+
+> 1
+
+] and θ2 ∈ [0 , θ ′
+
+> 2
+
+] such that θ1 + θ2 = θ3. Let 
+
+X1 = Exp( θ1w) and X2 = Exp( θ2w), we have 
+
+X1X2 = Exp(( θ1 + θ2)w) = Exp( θ3w) = X3,
+
+which implies X3 ∈ X 1 · X 2, and thus X3 ⊆ X 1 · X 2.For any X3 ∈ X 1 · X 2, there exist X1 ∈ X 1 and X2 ∈ X 2
+
+such that X3 = X1X2. We have 
+
+dis( X1X2, I ) = dis( X1, X ⊤ 
+
+> 2
+
+)
+
+≤ dis( X1, I ) + dis( I, X ⊤ 
+
+> 2
+
+)
+
+≤ θ′ 
+
+> 1
+
++ θ′
+
+> 2
+
+,
+
+where the first inequality is based on the triangle inequal-ity [30]. Therefore, X3 = X1X2 ∈ X 3, indicating X1 · X 2 ⊆X3 and completing the proof. Based on Lemma 7, we have ¯R3X1 · X 2 = ¯R3X3, which completes the proof of Lemma 5. The following lemma gives a polytopic overapproximation of the uncertainty set P(At3 , b t3 ) over t3.
+
+Lemma 8. Given a matrix A = [ a1, . . . , a M ]⊤ where each 
+
+am is a normal vector, the set P(At3 , b t3 ) = P(A ¯R⊤ 
+
+> 1
+
+, b ) + 
+
+P(At1 , b t1 ) is a guaranteed approximation for the uncertainty set on t3, i.e., ¯R1X1 · P (At2 , b t2 ) + P(At1 , b t1 ). Here, 
+
+[b]m = max 
+
+> v∈V 2
+
+
+
+max 
+
+> θ1∈[0 ,θ ′
+> 1],w ∈S2
+
+⟨Exp( θ1w)am, v ⟩
+
+
+
+, (33) 
+
+where V2 is the vertex set of P(At2 , b t2 ).Proof. It is straightforward that the polytope P(A, b ) encloses the set X1 · P (At2 , b t2 ) if [b]m is solving by 
+
+[b]m = max 
+
+> θ1,w,t 2
+
+a⊤
+
+> m
+
+Exp( θ1w)t2 (34a) 
+
+s.t. θ1 ∈ [0 , θ ′
+
+> 1
+
+], w ∈ S2, t 2 ∈ P (At2 , b t2 ). (34b) Since w spans over the whole S2, we can rewrite the objective in (34) as a⊤
+
+> m
+
+Exp( θ1w)⊤t2 = ⟨Exp( θ1w)am, t 2⟩. In addition, 
+
+⟨Exp( θ1w)am, t 2⟩ achieves its maximum value at one of the vertices of P(At2 , b t2 ). Therefore, Problem (34) is equiva-lent to (33). As a result, the uncertainty set P(At3 , b t3 ) = 
+
+P(A ¯R⊤ 
+
+> 1
+
+, b ) + P(At1 , b t1 ) is a guaranteed approximation for the uncertainty set ¯R1X1 · P (At2 , b t2 ) + P(At1 , b t1 ), which completes the proof. As illustrated in Figure 2, the inner maximization in (33) has a closed-form solution: 
+
+max 
+
+> θ1∈[0 ,θ ′
+> 1],w ∈S2
+
+⟨Exp( θ1w)am, v ⟩
+
+=
+
+(
+
+∥v∥, if ∠(am, v ) ≤ θ′
+
+> 1
+
+,
+
+∥v∥ cos( ∠(am, v ) − θ′
+
+> 1
+
+), if ∠(am, v ) > θ ′
+
+> 1
+
+,
+
+(35) where ∠(am, v ) denotes the angle between am and v. This enables efficient set computation. The above result ensures a guaranteed result for the uncer-tainty set on T3 via pose compound. 
+
+Theorem 5. The set {T3 ∈ SE(3) | R3 ∈ ¯R3X3, t 3 ∈P(At3 , b t3 )} is a guaranteed approximation for the set T3.Proof. Based on the property of set projection and Proposition 1, we have T1 ⊆ {T1 ∈ SE(3) | R1 ∈ ¯R1X1, t 1 ∈P(At1 , b t1 )} and T2 ⊆ { T2 ∈ SE(3) | R2 ∈ ¯R2X2, t 2 ∈P(At2 , b t2 )}. Therefore, it holds from T3 = T1T2 that 
+
+T3 ⊆ { T3 ∈ SE(3) |R3 ∈ ( ¯R1X1 ¯R2) · X 2,t3 ∈ ¯R1X1 · P (At2 , b t2 ) + P(At1 , b t1 )}.
+
+Finally, according to Lemmas 5 and 8, we have T3 ⊆ { T3 ∈
+
+SE(3) | R3 ∈ ¯R3X3, t 3 ∈ P (At3 , b t3 )}, which completes the proof. Our indirect pose uncertainty compound algorithm is sum-marized in Algorithm 4. 
+
+Algorithm 4 Indirect pose compound 
+
+Input : Uncertainty ¯R1X1 for R1, P(At1 , b t1 ) for t1, ¯R2X2
+
+for R2, and P(At2 , b t2 ) for t2.
+
+Output : Uncertainty ¯R3X3 for R3 and P(At3 , b t3 ) for t3. 
+
+> 1:
+
+Set ¯R3 = ¯R1 ¯R2 and X3 = X1 · X 2 = {Exp( θ3w) | w ∈
+
+S2, θ 3 ∈ [0 , θ ′ 
+
+> 1
+
++ θ′
+
+> 2
+
+]}; 
+
+> 2:
+
+Fix A = [ a1, . . . , a M ]⊤, where each am is a unit normal;  
+
+> 3:
+
+for m = 1 : M do  
+
+> 4:
+
+Solve Problem (33) and obtain [b]m; 
+
+> 5:
+
+end for  
+
+> 6:
+
+Set P(At3 , b t3 ) = P(A ¯R⊤ 
+
+> 1
+
+, b ) + P(At1 , b t1 ).Figure 2: Illustration of Eq. (35). When ∠(am, v ) ≤ θ′
+
+> 1
+
+, the optimal rotation Exp( θ∗ 
+
+> 1
+
+w∗) aligns am to the direction of v;when ∠(am, v ) > θ ′
+
+> 1
+
+, the optimal rotation Exp( θ∗ 
+
+> 1
+
+w∗) rotates 
+
+am along the optimal axis w∗ by θ∗ 
+
+> 1
+
+= θ′ 
+
+> 1
+
+such that the rotated vector has an angle of ∠(am, v ) − θ′ 
+
+> 1
+
+relative to v.IV. U NCERTAINTY QUANTIFICATION FOR SLAM In the section, we construct a guaranteed SLAM UQ pipeline based on the basic UQ primitives in Sec.III. Here we focus on 3D-3D landmark-based SLAM (joint pose-landmark estimation) [31, 32] as a representative formulation. 
+
+A. Algorithm Overview 
+
+An overview of our algorithm is shown in Figure 1. The robot is assumed to possess metric-scale 3D perception capa-bilities, enabled by sensors such as stereo cameras, RGB-D cameras, or LiDARs, for local point cloud generation. The proposed algorithm consists of the following key components: 1) Local point cloud generation : extracting point clouds in the local frame from the raw sensor data. 2) Localization : estimating the global poses of the robot. 3) Mapping : estimating the global landmark positions. 4) Smoothing : leveraging loop closures to correct the esti-mated robot’s trajectory and map landmarks. As illustrated in Figure 1, the localization module can be im-plemented as a relative framework , which estimates relative poses between consecutive frames and compound it with the previous global localization, or a global framework , which executes direct pose tracking by establishing correspondences between the local point cloud and the global map. Next, we will utilize CP and the basic UQ in Sec.III to illustrate how to quantify uncertainty in each component. 
+
+B. Uncertainty Quantification for Local Point Cloud 
+
+We employ CP to provide polytopic uncertainty sets for local point clouds. When a new frame arrives, the robot generates a local point cloud using onboard sensors. Let pi
+
+be the coordinates of the i-th local 3D point. The objective is to characterize its uncertainty by constructing a polytopic uncertainty set P(Ai, b i) = {pi | Aipi ≤ bi}. The derivation of ellipsoidal uncertainty sets for points directly measured by LiDARs or RGB-D cameras using CP has been studied in [7], which can be easily adapted for polytopic uncertainties. Here, we further investigate the uncertainty modeling of 3D points reconstructed from stereo image measurements and derive their ellipsoidal uncertainty sets via CP, followed by polytopic uncertainty approximation. Let {ul, v l, p ol }Ll=1 be the calibration set of CP, where ul
+
+and vl are the normalized image coordinates of a pair of matched features in the left and right images, respectively, and 
+
+pol is the true 3D coordinates of the point in the left camera frame. Let (RRL , t RL ) be the stereo baseline. Following [29], the triangulated 3D point is given by 
+
+ˆpl = ( H⊤ 
+
+> l
+
+Hl)−1H⊤ 
+
+> l
+
+yl, H l =
+
+ uh∧
+
+> l
+
+vh∧ 
+
+> l
+
+RRL
+
+
+
+, yl =
+
+ 03
+
+−vh∧ 
+
+> l
+
+tRL
+
+
+
+,
+
+and uhl and vhl are the homogeneous coordinates. In addition, a scaled covariance Σl of ˆpl can be given as Σl = JlJ⊤ 
+
+> l
+
+, where 
+
+Jl is the Jocabian matrix of ˆpl with respect to col( ul, v l). Then, we can construct the nonconformity score as 
+
+sl = ∥ˆpl − pol ∥Σl . (36) 
+
+Remark 1. It is well known that the uncertainty of a triangu-lated point can vary substantially across points, largely due to differences in depth [29, 1]. We therefore introduce a scaled covariance Σl to normalize the uncertainty of each point, so that the resulting quantities sl, l = 1 , . . . , L , better satisfy the exchangeability assumption under which CP is valid. 
+
+For the tested data (ui, v i, p oi ), it holds from Lemma 1 that 
+
+Prob( ∥ˆpi − poi ∥Σi ≤ C(s1, . . . , s L)) ≥ 1 − δ. 
+
+Hence, the ellipsoidal uncertainty set for pi is ∥ˆpi − pi∥Σi ≤
+
+C(s1, . . . , s L).Given the ellipsoid ∥ˆpi − pi∥Σi ≤ C(s1, . . . , s L), by fixing the polytope unit normals, we can analytically give the min-imum polytope that encloses the ellipsoid [33]. Specifically, we fix the unit normals Ai = [ a1, . . . , a M ]⊤ a prior . For each 
+
+am, the tightest offset [bi]m is given by 
+
+[bi]m = a⊤ 
+
+> m
+
+ˆpi + C(s1, . . . , s L)
+
+q
+
+a⊤
+
+> m
+
+Σiam.
+
+Finally, the polytopic uncertainty set for pi is P(Ai, b i). Since the polytope encloses the ellipsoid, it is straightforward that 
+
+Prob( poi ∈ P (Ai, b i)) ≥ 1 − δ. 
+
+C. Localization 1) Relative pose tracking followed by pose compound: 
+
+When a new frame arrives, we perform relative pose tracking, i.e., estimating the relative pose between the k-th frame and the previous frame, denoted by T k−1 
+
+> k
+
+. After feature matching, we have point correspondences {pk,i , q k,i }nk
+
+> i=1
+
+, where pk,i and 
+
+qk,i are coordinates in the k-th frame and the previous frame, respectively. They have the relationship qk,i = ϕ(T k−1 
+
+> k
+
+, p k,i ).The uncertainty sets P(Apk,i , b pk,i ) for pk,i and P(Aqk,i , b qk,i )
+
+for qk,i are provided by CP. Applying the backward UQ in Sec.III-B gives T k−1 
+
+> k
+
+= {T k−1 
+
+> k
+
+∈ SE(3) | Hk−1 
+
+> k
+
+vec( T k−1 
+
+> k
+
+) ≤
+
+dk−1 
+
+> k
+
+}. Note that Tk = Tk−1T k−1 
+
+> k
+
+. The uncertainty set 
+
+Tk−1 = {Tk−1 ∈ SE(3) | Hk−1vec( Tk−1) ≤ dk−1} for 
+
+Tk−1 is stored by the previous frame localization. Quantifying the uncertainty of Tk requires UQ through pose compound. We can apply either direct or indirect rigid transformation uncertainty compound in Sec.III-C to compute the set Tk =
+
+{Tk ∈ SE(3) | Hkvec( Tk) ≤ dk} for Tk.2) Global pose tracking: As an alternative, we can directly estimate the global pose by tracking points in the global map. After feature matching between consecutive frames, we can obtain point correspondences {pk,i , q k,i }nk
+
+> i=1
+
+, where pk,i and 
+
+qk,i are coordinates in the k-th frame and the global frame, respectively. They have the relationship qk,i = ϕ(Tk, p k,i ).The uncertainty sets P(Apk,i , b pk,i ) for pk,i and P(Aqk,i , b qk,i )
+
+for qk,i are provided by CP and the mapping function, re-spectively. We can utilize our backward UQ in Sec.III-B for global pose estimation and compute Tk = {Tk ∈ SE(3) |
+
+Hkvec( Tk) ≤ dk}.
+
+D. Mapping 
+
+Once an arriving frame has been localized, the mapping module is invoked to incorporate the newly observed local points into the global map. Let pNe  
+
+> k,i
+
+and qNe  
+
+> k,i
+
+be the coor-dinates of the i-th newly observed point in the k-th robot frame and the global frame, respectively, which is related by 
+
+qNe  
+
+> k,i
+
+= ϕ(Tk, p Ne 
+
+> k,i
+
+). The uncertainty set P(ANe  
+
+> pk,i
+
+, b Ne  
+
+> pk,i
+
+) for pNe 
+
+> k,i
+
+is provided by CP and the uncertainty set Tk = {Tk ∈ SE(3) |
+
+Hkvec( Tk) ≤ dk} for Tk is provided by the localization function. We can apply the forward propagation in Sec.III-A to compute the uncertainty set P(ANe  
+
+> qk,i
+
+, b Ne  
+
+> qk,i
+
+) for qNe 
+
+> k,i
+
+.
+
+E. Smoothing 
+
+Upon loop closure detection, the trajectory and map are jointly optimized to mitigate accumulated drift and improve global consistency. As shown in Figure 1, the frames that involve in the loop closures may additionally link to more map points, denoted by dashed factors in the figure. Then, we jointly optimize all frame poses and map points within the loop closures. Specifically, we adopt an alternating optimization scheme: at each iteration, we first update the map points and subsequently refine the frame poses. For each map point, we incorporate all associated frames and execute the forward UQ in Sec.III-A to refine the map uncertainty set. To update each frame pose, we utilize all visible points and apply the backward UQ in Sec.III-B. Because both the pose and map point sets decrease monotonically and are bounded below by the empty set, the iteration is guaranteed to converge. As detailed in the supplementary pseudocode, we employ a maximum of three iterations or stop when the uncertainty set refinement becomes negligible. It is noteworthy that if an incorrect loop closure is introduced, the uncertainty sets may shrink incorrectly, possibly losing containment or even becoming empty. Note that empty uncertainty sets can indicate an incorrect loop closure and thus support rejection. The pseudo code for the whole pipeline is provided in Algorithm 5. 
+
+Remark 2. Our algorithm relies on the exchangeability as-sumption of calibration and test data to construct statistically valid uncertainty sets via CP. In SLAM, this assumption holds when both datasets originate from the same underlying process, encompassing the sensor model, front-end pipeline, and environmental distribution. Outliers do not inherently 
+
+Algorithm 5 Guaranteed SLAM UQ  
+
+> 1:
+
+# Initialization  
+
+> 2:
+
+k = 1, H k = [1 , −1] ⊤ ⊗ I12 , dk = [1 , −1] ⊤ ⊗
+
+[vec( I3)⊤, 0⊤ 
+
+> 3
+
+]⊤, Tk = {T ∈ SE(3) | Hkx(T ) ≤ dk}; 
+
+> 3:
+
+Use CP to obtain P(ANe  
+
+> pk,i
+
+, b Ne  
+
+> pk,i
+
+) for pk,i ; 
+
+> 4:
+
+Apply Algorithm 1 on Tk and P(ANe  
+
+> pk,i
+
+, b Ne  
+
+> pk,i
+
+) to obtain 
+
+P(ANe  
+
+> qk,i
+
+, b Ne  
+
+> qk,i
+
+); 
+
+> 5:
+
+while not stopped do  
+
+> 6:
+
+k = k + 1 ; 
+
+> 7:
+
+# Localization  
+
+> 8:
+
+# Option 1: relative framework  
+
+> 9:
+
+Execute feature matching to obtain point correspon-dences {pk,i , q k,i }nk
+
+> i=1
+
+; 
+
+> 10:
+
+Use CP to obtain P(Apk,i , b pk,i ) for pk,i and 
+
+P(Aqk,i , b qk,i ) for qk,i ; 
+
+> 11:
+
+Apply Algorithm 2 on P(Apk,i , b pk,i ) and 
+
+P(Aqk,i , b qk,i ) to obtain T k−1 
+
+> k
+
+; 
+
+> 12:
+
+Apply Algorithm 3 or Algorithm 4 on T k−1 
+
+> k
+
+and Tk−1
+
+to obtain Tk; 
+
+> 13:
+
+# Option 2: global framework  
+
+> 14:
+
+Inquire the global map to obtain P(Aqk,i , b qk,i ); 
+
+> 15:
+
+Apply Algorithm 2 on P(Apk,i , b pk,i ) and 
+
+P(Aqk,i , b qk,i ) to obtain Tk; 
+
+> 16:
+
+# Mapping  
+
+> 17:
+
+Apply Algorithm 1 on Tk and P(ANe  
+
+> pk,i
+
+, b Ne  
+
+> pk,i
+
+) to obtain 
+
+P(ANe  
+
+> qk,i
+
+, b Ne  
+
+> qk,i
+
+); 
+
+> 18:
+
+# Loop-closure smoothing  
+
+> 19:
+
+if a loop closure is detected then  
+
+> 20:
+
+for l = 1 : max _iter do  
+
+> 21:
+
+Apply Algorithm 1 to update the uncertainty of the map within the loop closure;  
+
+> 22:
+
+Apply Algorithm 2 to update the uncertainty of poses within the loop closure;  
+
+> 23:
+
+end for  
+
+> 24:
+
+end if  
+
+> 25:
+
+end while 
+
+violate exchangeability, provided the contamination mecha-nism remains consistent across both datasets; however, higher outlier rates typically yield looser uncertainty sets. As the core building blocks in our SLAM UQ pipeline, three primitives (forward UQ, backward UQ, and pose compound) require no specialized assumptions. Our theoretical derivation rigorously shows that if the input uncertainty sets are valid, then the outputs are guaranteed to contain the true values. While we integrate these primitives with CP here, they remain agnostic to the specific local point cloud calibration method used. 
+
+V. S IMULATION AND EXPERIMENT 
+
+A. Basic Uncertainty Quantification Simulation 1) Forward uncertainty quantification: To test our forward UQ in Sec.III-A, six random trials are performed. In each trial, we randomly generate a pose T ∈ SE(3) and a point 
+
+p ∈ R3. In addition, we impose a box uncertainty on p, whose size is drawn from [0 .08 , 0.2] m. We also endow 
+
+x(T ) with a box uncertainty, where the first 9 dimensions and the last 3 dimensions take values from [0 .01 , 0.02] and 
+
+[0 .05 , 0.1] m, respectively. We generate the polytope matrix A2
+
+for q by enforcing a 45 ◦ dihedral angle between each pair of adjacent facets. To verify the conservatism of our algorithm, we randomly sample 1000 points from the original set Q for 
+
+q = ϕ(T, p ) and test whether they fall inside our estimated set P(A2, ˆb2). The result is that all samples belong to the estimated set, and Figure 3 visualizes one of the trials, which validates our guaranteed UQ.  
+
+> (a) Trial 1 (b) Trial 2
+
+Figure 3: Forward propagation results. Samples from the original set Q all locate inside our estimated polytope by Algorithm 1. 
+
+2) Backward uncertainty quantification: In this part, we evaluate our backward UQ in Sec.III-B and compare it with the pose UQ methods CLOSURE [7] and GRCC [20]. 
+
+CLOSURE produces an inner approximation of the original set, whereas GRCC gives an outer approximation. Consider point correspondences {pi, q i}ni=1 satisfying qi = Rp i +t. The compared methods model uncertainty directly on the residuals 
+
+qi−Rp i−t using ellipsoidal sets, rather than imposing separate uncertainties on both pi and qi. To match their setting, we treat pi as exact and assign an ellipsoidal uncertainty set to each qi. For our method, we first generate a polytope matrix by enforcing a 45 ◦ dihedral angle between each pair of adjacent facets and compute a minimum-volume enclosing polytope for each ellipsoid. Then, we perform pose uncertainty quantification using these more conservative polytopes. We have conducted six trials with randomly sampled poses and ellipsoid semi-axis lengths ranging from 0.01 m to 0.05 m. For 
+
+CLOSURE , we adopt the default reasonable parameter con-figuration provided in [7], without tuning its hyperparameters in the random walk sampling. The conservatism test results are presented in Table I. All pose samples drawn from the original set T lie within the sets given by our algorithm and 
+
+GRCC , validating the guaranteed property of the two methods. However, since CLOSURE only gives an inner approximation of T , some samples fall outside its estimated set. In addition, the conservatism of CLOSURE varies a lot in different random trails, resulting in inconsistent containment rates. We note that CLOSURE and GRCC quantify translation and rotation uncertainties separately. The translation uncertainty is represented by a Euclidean ball {t ∈ R3 | ∥ t − ¯t∥ ≤ rt},and the rotation uncertainty by a geodesic ball {R ∈ SO(3) |
+
+dis( R, ¯R) ≤ rR}. To enable a direct comparison, we follow the convention used by the baselines by projecting our es-timated polytopes P(H, d ) onto the rotation and translation polytopes. We then enclose each rotation polytope within a geodesic ball; note that this representation tends to favor the baseline methods by changing our polytopic bounds. For visualization, we map rotation matrices to R3 via the Log 
+
+operation and plot the rotation uncertainty as the Euclidean ball {s ∈ R3 | ∥s − Log( ¯R) ∥ ≤ rR}. The translation and rotation uncertainties in the first trial are visualized in Figure 4. Our projected results are more conservative than 
+
+CLOSURE for both translation and rotation and more conser-vative than GRCC for rotation. For complete pose uncertainty visualization, we adopt a sampling-based method. Specifically, we draw 1000 poses from the estimated set, transform a ball of radius 0.01 m using these poses, and visualize the union of the transformed balls. The ball center is set as 
+
+[1 0 0] ⊤, [0 1 0] ⊤, [0 0 1] ⊤, [1 1 1] ⊤, respectively, and the results in the first trial are shown in Figure 5. Interestingly, unlike Figure 4, the pose uncertainty of our method is com-parable to CLOSURE and tighter than GRCC . The reason may be attributed to the conservatism (in Figure 4) introduced by the comparison adaptation to ensure a direct comparison. 
+
+Figure 4: Visualization of uncertainties for translation (left) and rotation (right) in backward UQ. 
+
+3) Pose compound: We perform six trials. In each trial, we randomly generate poses T1 and T2 and use the same uncertainty-generation procedure as in the forward UQ exper-iments. To assess conservatism, we draw 1000 samples from the original set T3 and verify that all samples lie within the pose uncertainty sets provided by both the direct method and (a) Ball center: [1 0 0] ⊤ (b) Ball center: [0 1 0] ⊤ (c) Ball center: [0 0 1] ⊤ (d) Ball center: [1 1 1] ⊤       
+
+> (e) Ball center: [1 0 0] ⊤(f) Ball center: [0 1 0] ⊤(g) Ball center: [0 0 1] ⊤(h) Ball center: [1 1 1] ⊤
+
+Figure 5: Sampling-based pose uncertainty visualization in backward UQ. A ball with radius 0.01 m is transformed by 1000 
+
+poses sampled from the estimated pose set, and the union of the transformed balls are plotted.        
+
+> (a) Ball center: [10 0 0] ⊤(b) Ball center: [0 10 0] ⊤(c) Ball center: [0 0 10] ⊤(d) Ball center: [10 10 10] ⊤
+
+Figure 6: Sampling-based pose uncertainty visualization in pose compound. A ball of radius 0.2m is transformed by 1000 
+
+poses sampled from the estimated set, and the union of the transformed balls are plotted.    
+
+> (a) Relative framework (b) Global framework (c) Loop closure (d) Global framework ablation
+
+Figure 7: Guaranteed SLAM simulation results. In the relative framework, “direct” and “indirect” denote the direct pose compound and the indirect pose compound results, respectively, and the map are constructed based on direct pose compound results. The loop closure results are obtained by feeding the “direct” results into the smoothing module. The global framework ablation uses the setting that each frame registers all visible (instead of newly observed) landmarks into the global map. Table I: Conservatism test for backward UQ: the percentage of 1000 samples from the original set T that lie within the estimated set.                         
+
+> Trial 123456CLOSURE 87.1% 59.6% 32.8% 71.3% 73.2% 10.4% GRCC 100% 100% 100% 100% 100% 100% Ours 100% 100% 100% 100% 100% 100%
+
+the indirect method in Sec.III-C. We plot the translation and rotation uncertainties in the first trial in Figure 8. The direct al-gorithm yields a more conservative translation uncertainty but a tighter rotation uncertainty. Part of the higher rotation conser-vatism of the indirect method is attributed to its geodesic-ball approximation. We then use a sampling-based approach for complete pose uncertainty visualization. We draw 1000 poses from the estimated set and transform a ball of radius 0.2m. The ball center is set as [10 0 0] ⊤, [0 10 0] ⊤, [0 0 10] ⊤, [10 10 10] ⊤,respectively, and the results in the first trial are shown in Figure 6. We see that the direct algorithm achieves a tighter pose uncertainty. 
+
+Figure 8: Visualization of uncertainties for translation (left) and rotation (right) in pose compound. 
+
+B. Numerical SLAM Simulation 
+
+We evaluate the proposed guaranteed SLAM UQ algorithms using synthetic data. We uniformly scatter 3D landmarks within a 50m × 50m × 50m workspace and randomly gen-erate a circular robot trajectory. The robot’s field of view is 60 ◦ horizontally, 60 ◦ vertically, and [0 .5, 5]m in depth. For each visible landmark, we impose box uncertainties on the visual measurements, where the box size is proportional to the landmark’s distance from the robot. The results are shown in Figure 7. In the relative framework, uncertainties for both robot poses and landmark positions accumulate over time. Notably, the pose uncertainty in the indirect compound algorithm grows more rapidly than in the direct one, aligning with the results from the previous subsection. We note that the map and trajectory uncertainties in the global framework are much smaller than those in the relative framework. This phenomenon occurs because, during motion, the robot may observe previously registered landmarks with low uncertainty; these observations mitigate current pose uncertainties. To substantiate this explanation, we conduct an ablation study in which each frame registers all visible landmarks pk,i , rather than only newly observed landmarks pNe 
+
+> k,i
+
+, into the global map. Under this modification, previously registered landmarks are re-registered whenever they become visible in a new frame and thus may have a larger uncertainty set. The ablation results show that the estimated uncertainty increases significantly, especially when the trajectory returns to the starting point, which verifies our claim. Moreover, when a loop closure is detected and smoothing is performed, the uncertainties of both the trajectory and the map can be significantly reduced. Finally, we observe that all ground-truth poses and landmarks lie within their corresponding uncertainty sets. We also evaluate the computational complexity of our algo-rithm. When the average number of points per frame is 19, the average runtime of each module (MATLAB implementation on a computer with 32 GB RAM and an Intel Core Ultra 7 265 CPU) is as follows: forward UQ ( 9.3s), backward UQ (0.0036 s), direct pose compound ( 12 s), indirect pose com-pound ( 0.5s), and loop-closure smoothing ( 29 .55 s per frame, 
+
+591 s over 20 frames). The primary computational bottleneck in our framework arises from the repeated SDP optimizations required for forward UQ and direct pose compound. While our current MATLAB implementation is a research prototype not yet intended for real-time use, it remains usable and effective for offline applications like uncertainty-aware mapping. For comparison with probabilistic counterparts, we imple-ment a probabilistic baseline that computes the exact posterior in a linear-Gaussian setting without SE(3) constraints. We conduct open-loop comparisons under both global and relative frameworks. Unlike our algorithm, this baseline provides no formal containment guarantee. We represent its uncertainty sets by covariance-induced ellipsoids at the 99 % confidence level. In the global framework, with a moderate number of points per frame ( ∼ 15 ), by frame 20 , the baseline fails to cover the ground truth in 9/20 pose estimates and 26 /120 
+
+map points, whereas our method achieves full containment. The probabilistic baseline generally exhibits lower uncertainty than our method. However, since it ignores SE(3) constraints, in the relative framework, its uncertainty grows faster when only a few points are visible. For ∼ 5 points per frame, by frame 30 , the translation ellipsoid volume is 3.12 , whereas our polytope volume is 1.2, showing about 3× slower growth. 
+
+C. SLAM Experiment 
+
+We evaluate our method on the Replica dataset [34], which provides photo-realistic indoor environments. For any camera pose, it renders an RGB image and a dense depth map, which we back-project to generate a point cloud. To calibrate CP, we randomly generate three trajectories, each containing hundreds of frames. When a new frame arrives, we extract ORB features [32] from the current and previous frames and perform feature matching. To ensure tighter uncertainty bounds, we apply RANSAC-based outlier rejection. We reject outliers using the feature depths and the ground-truth relative pose provided by the dataset. For each 3D correspondence 
+
+(pl, q l), we transform pl using the relative pose (R, t ) and Est map 
+
+> Est trajectory
+> GT trajectory
+
+(a) Relative framework (direct) Est map  
+
+> Est trajectory
+> GT trajectory
+
+(b) Global framework 
+
+Figure 9: Replica experiment results. The proposed relative framework using the direct pose compound method (left); the proposed global framework (right). 
+
+(a) Pose 1 (b) Pose 2 (c) Pose 3 (d) Pose 4 (e) Pose 5
+
+(f) Pose 6 (g) Pose 7 (h) Pose 8 (i) Pose 9 (j) Pose 10 
+
+(k) Pose 11 (l) Pose 12 (m) Pose 13 (n) Pose 14 (o) Pose 15 
+
+Figure 10: Sampling-based pose uncertainty visualization in SLAM experiment. A ball centered at [0 0 1] ⊤ of radius 0.02 m is transformed by 1000 poses sampled from the estimated set, and the union of the transformed balls are plotted. In the relative framework, direct pose compound is adopted. define the nonconformity score as sl = ∥ql − Rp l − t∥.We set the target miscoverage level in CP to δ = 0 .01 to calibrate local point uncertainties. During testing, we use the same feature extraction and matching pipeline. Loop closure detection is not involved. To balance runtime and accuracy, we randomly retain 15 correspondences for each pair of consecutive frames. In our feature-matching setting, the global framework works in the same way as in the ablation study in Figure 7. As shown in Figure 9, the estimated trajectories and maps enclose their ground truths well. An interesting phenomenon is that the global framework achieves tighter map uncertainty but more conservative trajectory (translation) uncertainty than the relative framework. The reason is that although the marginally projected translation uncertainty of the global framework is larger, its joint pose uncertainty in the form {T ∈ SE(3) | Hx (T ) ≤ d} is smaller due to the coupling between translation and rotation. To verify this, we conduct a sampling-based pose uncertainty test. As shown in Figure 10, the poses sampled from the relative framework-generated uncertainty sets span a ball to a larger volume, indicating its larger pose uncertainty. Overall, the uncertainty sets of both frameworks expand relatively rapidly in the absence of loop-closure smoothing. VI. C ONCLUSION AND FUTURE WORK 
+
+In this paper, we proposed SME-based UQ for 3D-3D SLAM pipelines. We identified three UQ primitives—forward UQ, backward UQ, and pose compound—and derived uncer-tainty sets with guarantees for each. By integrating them with CP, we obtain a complete SLAM UQ algorithm. Representing uncertainties as polytopes further enables tractable computa-tion and a unified treatment of pose uncertainty. Future work will focus on three directions. (i) Tightness: In our tests, the uncertainty sets expand relatively quickly. We plan to incorporate sliding-window bundle adjustment and develop tighter SDP formulations to slow this growth. We are also interested in providing a rigorous theoretical analysis of the uncertainty set growth rate. (ii) Real-time performance: While tractable, the current algorithms are still in an early stage; future iterations will target real-time performance by transitioning to C++ and incorporating parallel SDP compu-tation, keyframe mechanisms, and customized solver designs. (iii) Practical utility: Our current implementation is limited to 3D-3D landmark-based SLAM. Extending the approach to more sensor modalities (e.g., IMUs and range sensors) and validating it in complex, large-scale (loop-closure) scenarios remain promising directions. ACKNOWLEDGEMENT 
+
+This work was supported in part by NSFC under Grants 62273288 and 62336005, in part by the Shenzhen Science and Technology Program under Grants JCYJ20241202124010014 and JCYJ20240813113609013, and in part by Australian Research Council (ARC) under Grants DP190103615, LP210200473, and DP230101014. REFERENCES 
+
+[1] Igor Cviši´ c, Ivan Markovi´ c, and Ivan Petrovi´ c. Soft2: Stereo visual odometry for road vehicles based on a point-to-epipolar-line metric. IEEE Transactions on Robotics , 39(1):273–288, 2022. [2] Heng Yang, Jingnan Shi, and Luca Carlone. Teaser: Fast and certifiable point cloud registration. IEEE Transac-tions on Robotics , 37(2):314–333, 2020. [3] Haoyu Han and Heng Yang. Building rome with convex optimization. In Proceedings of Robotics: Science and Systems , pages 1–19, 2025. [4] Jakob Engel, Thomas Schöps, and Daniel Cremers. LSD-SLAM: Large-scale direct monocular SLAM. In Pro-ceedings of European Conference on Computer Vision ,pages 834–849, 2014. [5] David M Rosen, Luca Carlone, Afonso S Bandeira, and John J Leonard. SE-Sync: A certifiably correct algorithm for synchronization over the special euclidean group. The International Journal of Robotics Research , 38(2-3):95– 125, 2019. [6] Joshua G Mangelson, Maani Ghaffari, Ram Vasudevan, and Ryan M Eustice. Characterizing the uncertainty of jointly distributed poses in the Lie algebra. IEEE Transactions on Robotics , 36(5):1371–1388, 2020. [7] Yihuai Gao, Yukai Tang, Han Qi, and Heng Yang. Closure: Fast quantification of pose uncertainty sets. In 
+
+Proceedings of Robotics: Science and Systems , pages 1– 13, 2024. [8] Devansh Ramgopal Agrawal, Ruichang Chen, and Dim-itra Panagou. gatekeeper: Online safety verification and control for nonlinear systems in dynamic environments. 
+
+IEEE Transactions on Robotics , 40:4358–4375, 2024. [9] Richard Szeliski. Computer Vision: Algorithms and Applications . Springer Nature, 2022. [10] Ye Wang, Vicenç Puig, and Gabriela Cembrano. Set-membership approach and kalman observer based on zonotopes for discrete-time descriptor systems. Automat-ica , 93:435–443, 2018. [11] Alesi A de Paula, Davide M Raimondo, Guilherme V Raffo, and Bruno OS Teixeira. Set-based state esti-mation for discrete-time constrained nonlinear systems: An approach based on constrained zonotopes and DC programming. Automatica , 159:111401, 2024. [12] Ye Wang, Zhenhua Wang, Vicenç Puig, and Gabriela Cembrano. Zonotopic set-membership state estimation for discrete-time descriptor LPV systems. IEEE Trans-actions on Automatic Control , 64(5):2092–2099, 2018. [13] Gustavo Belforte, Basilio Bona, and Vito Cerone. Param-eter estimation algorithms for a set-membership descrip-tion of uncertainty. Automatica , 26(5):887–898, 1990. [14] Luc Jaulin and Eric Walter. Set inversion via interval analysis for nonlinear bounded-error estimation. Auto-matica , 29(4):1053–1064, 1993. [15] Mohamed Mustafa, Alexandru Stancu, Nicolas De-lanoue, and Eduard Codres. Guaranteed SLAM—an interval approach. Robotics and Autonomous Systems ,100:160–170, 2018. [16] Raphael Voges and Bernardo Wagner. Interval-based visual-lidar sensor fusion. IEEE Robotics and Automa-tion Letters , 6(2):1304–1311, 2021. [17] Aaronkumar Ehambram, Raphael Voges, Claus Brenner, and Bernardo Wagner. Interval-based visual-inertial Li-DAR SLAM with anchoring poses. In Proceedings of International Conference on Robotics and Automation ,pages 7589–7596, 2022. [18] Lars Lindemann, Yiqi Zhao, Xinyi Yu, George J Pappas, and Jyotirmoy V Deshmukh. Formal verification and control with conformal prediction: Practical safety guar-antees for autonomous systems. IEEE Control Systems ,45(6):72–122, 2025. [19] Anastasios N Angelopoulos, Stephen Bates, et al. Con-formal prediction: A gentle introduction. Foundations and Trends® in Machine Learning , 16(4):494–591, 2023. [20] Yukai Tang, Jean-Bernard Lasserre, and Heng Yang. Uncertainty quantification of set-membership estimation in control and perception: Revisiting the minimum en-closing ellipsoid. In Proceedings of Annual Learning for Dynamics & Control Conference , pages 286–298, 2024. [21] Heng Yang and Marco Pavone. Object pose estimation with statistical guarantees: Conformal keypoint detection and geometric uncertainty propagation. In Proceedings of IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 8947–8958, 2023. [22] Lorenzo Shaikewitz, Charis Georgiou, and Luca Carlone. Uncertainty quantification for visual object pose estima-tion. arXiv preprint arXiv:2511.21666 , 2025. [23] Glenn Shafer and Vladimir Vovk. A tutorial on confor-mal prediction. Journal of Machine Learning Research ,9(3):371–421, 2008. [24] Matteo Fontana, Gianluca Zeni, and Simone Vantini. Conformal prediction: a unified review of theory and new challenges. Bernoulli , 29(1):1–23, 2023. [25] David Avis, Komei Fukuda, and Stefano Picozzi. On canonical representations of convex polyhedra. In Mathe-matical Software , pages 350–360. World Scientific, 2002. [26] Jianzhe Zhen, Dick Den Hertog, and Melvyn Sim. Ad-justable robust optimization via Fourier–Motzkin elimi-nation. Operations Research , 66(4):1086–1100, 2018. [27] Yurii Nesterov and Arkadii Nemirovskii. Interior-point polynomial algorithms in convex programming . SIAM, 1994. [28] Frederike Dümbgen, Connor Holmes, Ben Agro, and Timothy Barfoot. Toward globally optimal state esti-mation using automatically tightened semidefinite relax-ations. IEEE Transactions on Robotics , 40:4338–4358, 2024. [29] Guangyang Zeng, Yuan Shen, Ziyang Hong, Yuze Hong, Viorela Ila, Guodong Shi, and Junfeng Wu. Bias-eliminated PnP for stereo visual odometry: Provably consistent and large-scale localization. IEEE Robotics and Automation Letters , 10(11):11840–11847, 2025. [30] John M Lee. Introduction to Riemannian Manifolds ,volume 2. Springer, 2018. [31] Ji Zhang, Sanjiv Singh, et al. LOAM: Lidar odometry and mapping in real-time. In Proceedings of Robotics: Science and Systems , pages 1–9, 2014. [32] Orb-slam3: An accurate open-source library for visual, visual–inertial, and multimap SLAM. [33] Stephen Boyd and Lieven Vandenberghe. Convex Opti-mization . Cambridge University Press, 2004. [34] Julian Straub, Thomas Whelan, Lingni Ma, Yufan Chen, Erik Wijmans, Simon Green, Jakob J Engel, Raul Mur-Artal, Carl Ren, Shobhit Verma, et al. The replica dataset: A digital replica of indoor spaces. arXiv preprint arXiv:1906.05797 , 2019.

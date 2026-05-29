@@ -1,0 +1,904 @@
+Title: ForeSplat: Optimization-Aware Foresight for Feed-Forward 3D Gaussian Splatting
+
+URL Source: https://arxiv.org/pdf/2605.22020v1
+
+Published Time: Fri, 22 May 2026 00:45:00 GMT
+
+Number of Pages: 19
+
+Markdown Content:
+# ForeSplat: Optimization-Aware Foresight for Feed-Forward 3D Gaussian Splatting 
+
+## Yuke Li 1,∗, Weihang Liu 1,2,∗,†, Cheng Zhang 1,2,∗, Yuefeng Zhang 1,2,∗, Jiadi Cui 3, Zixuan Wang 1,Junran Ding 1, Haoyu Wu 1, Yujiao Shi 1, Jingyi Yu 1, Xin Lou 1,2,†
+
+> 1
+
+## ShanghaiTech University, 2GGU Technology Co., Ltd, 3Stereye 
+
+Figure 1. ForeSplat equips feed-forward 3D Gaussian Splatting with an optimization-aware training objective, making its predictions amenable to rapid per-scene refinement. We showcase its generality by attaching it to diverse backbones, including AnySplat, Pi3X, and a distilled variant. The resulting post-optimization improvements are observed across multiple model families, datasets, and both indoor and outdoor scenes. 
+
+## Abstract 
+
+Feed-forward 3D Gaussian Splatting (3DGS) models offer fast single-pass reconstruction, but scaling them to match per-scene optimization quality is fundamentally hindered by the scarcity of large-scale 3D annotations. A practical compromise is predict-then-refine, where post-prediction optimization compensates for the limited capacity of the feed-forward network. However, standard feed-forward 3DGS is trained solely for zero-step rendering error, ig-noring whether its output constitutes a good initializa-tion for the downstream optimizer. We present ForeS-plat, an optimization-aware training framework that equips feed-forward 3DGS models to produce initializations ex-plicitly designed for rapid, effective refinement. By offload-ing part of the scene-modeling burden to the optimizer, 
+
+> *Equal Contribution.
+> †Corresponding author.
+
+ForeSplat substantially reduces the capacity pressure on the feed-forward model, making high-quality reconstruc-tion feasible even with compact networks. At its core is MetaGrad, a lightweight multi-anchor meta-gradient train-ing rule that bypasses costly higher-order differentiation through the 3DGS optimizer. MetaGrad unrolls a short inner-loop refinement trajectory, samples anchor states, and back-propagates aggregated first-order gradients to the prediction head as a surrogate optimization-aware sig-nal. This fine-tuning adds no inference cost and enables high-quality reconstruction within seconds after a few re-finement steps. We instantiate ForeSplat on diverse back-bones, including AnySplat, Pi3X, and a distilled variant tai-lored for edge deployment. Across all tested architectures, a ForeSplat-trained initialization converges in fewer refine-ment steps and reaches a higher peak reconstruction qual-ity than its vanilla counterpart, even fully converged. The framework consistently bridges the gap between amortized 
+
+> arXiv:2605.22020v1 [cs.CV] 21 May 2026
+
+prediction and per-scene optimization, establishing a prac-tical path toward lightweight, high-fidelity 3D reconstruc-tion. 
+
+## 1. Introduction 
+
+Feed-forward 3D Gaussian Splatting (3DGS) models [5, 6, 15] reconstruct a scene from sparse views in a single for-ward pass, avoiding the high cost of per-scene optimization. Despite this efficiency, their one-shot rendering quality re-mains inferior to that of fully optimized per-scene recon-structions. A natural direction, therefore, is to scale up these feed-forward models until their output rivals per-scene opti-mization quality. The core obstacle, however, is the widely recognized scarcity of large-scale, high-quality 3D scene annotations [14]: unlike 2D vision, acquiring dense ground truth for diverse, unbounded scenes remains costly and of-ten noisy. Consequently, feed-forward 3DGS models are trained on limited datasets, and further increases in model capacity yield diminishing returns as the supervisory signal saturates. A practical compromise is predict-then-refine : use the feed-forward output as an initialization and apply a mod-est budget of per-scene optimization [7, 15, 22]. This shifts the central requirement from single-pass quality to provid-ing an initialization that is well conditioned for rapid refine-ment. Yet existing feed-forward 3DGS training does not reflect this deployment objective. Let G0 = fΘ(I) be the Gaussian scene predicted from inputs I. Standard train-ing minimizes a loss on G0, whereas a predict-then-refine pipeline ultimately evaluates the refined state GK after K
+
+steps of optimization. A prediction with low zero-step error is not necessarily an optimal starting point: it may lie in a region of the 3DGS parameter space where convergence is slow, local gradients are uninformative, or the optimization plateaus prematurely under a fixed budget. This mismatch motivates optimization-aware training: feed-forward 3DGS should be evaluated not only by its immediate rendering quality, but by the quality attainable after a downstream refinement budget. In light of the se-vere scarcity of annotated 3D data, we reframe the prob-lem as learning to optimize, equipping the feed-forward model with the meta-learning capability to produce ini-tializations that are amenable to rapid refinement, rather than to directly predict the final output. Directly optimiz-ing this meta-objective, however, requires back-propagating through a multi-step 3DGS refinement trajectory where the Gaussian scene typically contains tens of millions of pa-rameters. Consequently, even a modest number of inner steps incurs prohibitive memory and involves second-order derivatives whose Hessian matrices are far too large to com-pute or store. We present ForeSplat , an optimization-aware training framework for feed-forward 3DGS. ForeSplat preserves the inference-time architecture of the host model but retrains its Gaussian prediction head to produce initializations that the downstream optimizer can rapidly improve. We formu-late this task as a meta-learning problem, where the ob-jective is to learn an initial set of parameters that, follow-ing a brief refinement process, yields low loss. Directly back-propagating through the multi-step 3DGS optimizer would entail expensive second-order derivatives. Further-more, because the training iterations often exceed hundreds or even thousands, unrolling the optimization process, as in a conventional meta-learning framework, leads to increased training time and instability [11, 12, 52]. To circumvent this, we introduce MetaGrad , alightweight meta-gradient training rule that avoids high-order derivatives. During training, MetaGrad unrolls a short per-scene refinement trajectory from the feed-forward pre-diction, samples several anchor states along that trajectory, and evaluates photometric losses at these anchors to form an aggregate meta-objective Lmeta . To propagate the supervi-sion back to the Gaussian prediction head, we differentiate 
+
+Lmeta with respect to the sampled anchor states, accumu-late the resulting gradients, and use their sum as a surrogate error signal for the initial prediction G0. This surrogate sig-nal is then back-propagated through the feed-forward Gaus-sian head. In this way, MetaGrad encourages the network to predict initialization-friendly Gaussian parameters that are better suited for subsequent refinement, while avoiding full higher-order differentiation through the optimizer. We instantiate ForeSplat on multiple feed-forward back-bones, including AnySplat [15] and Pi3X [49]. By of-floading part of the scene modeling burden to the down-stream optimizer, ForeSplat substantially reduces the ca-pacity pressure on the feed-forward model. This makes it feasible to learn scene prediction with smaller networks, opening up new possibilities for deploying 3D reconstruc-tion on edge devices and in resource-constrained settings. To demonstrate its effectiveness in this lightweight regime, we further introduce a distilled variant of Pi3X. Across all tested backbones, a ForeSplat-trained initial-ization converges more rapidly and to a higher peak recon-struction quality than the vanilla baseline can attain. In sum-mary, our contributions are as follows: • Optimization-aware training for feed-forward 3DGS. We identify a training–deployment mismatch: existing mod-els are trained for raw prediction error, while predict-then-refine pipelines depend on post-refinement quality. The proposed ForeSplat addresses it by meta-training the network to minimize post-optimization loss without re-quiring larger 3D datasets. • Multi-anchor meta-gradient rule. We propose MetaGrad, which bypasses higher-order differentiation through the 3DGS optimizer by aggregating first-order gradients sam-pled at multiple anchor states along the inner-loop tra-jectory. The multi-anchor design stabilizes the meta-objective without incurring second-order cost. • Plug-in compatibility across backbones. Applied to mul-tiple feed-forward backbones (AnySplat, Pi3X, and a dis-tilled compact Pi3X), ForeSplat consistently improves post-refinement quality under a fixed optimization budget without architectural changes or inference-time overhead, paving the way for lightweight deployment of 3D models. 
+
+## 2. Related Work 
+
+2.1. Optimization-based Novel View Synthesis 
+
+Optimization-based methods have long dominated novel view synthesis. The central bottleneck in this family is the tension between rendering quality and deployment cost. These approaches, exemplified by Neural Radiance Field (NeRF) [3, 23, 24, 27, 28] and 3D Gaussian Splatting (3DGS) [16], achieve impressive fidelity by iteratively fit-ting a scene representation to input images using stochas-tic optimizers such as Adam [17]. However, this process demands two expensive prerequisites: (i) accurate camera poses, conventionally obtained via Structure-from-Motion (SfM) [34, 38] tools like COLMAP, and (ii) minutes to hours of per-scene optimization [25, 26]. Even recent work that jointly optimizes poses and scene representation [9, 20] does not eliminate these costs; it merely reduces them incre-mentally. As a result, deploying optimization-based meth-ods in unconstrained, real-time settings remains imprac-tical. This gap has motivated a parallel line of research that replaces per-scene optimization with amortized feed-forward inference. 
+
+2.2. Feed-forward 3D reconstruction 
+
+Generalizable 3D foundation models. A parallel line of work trains large-scale models to predict scenes directly from images without per-scene optimization. DUSt3R [45] and its successors MAST3R [18] and Fast3R [55] jointly es-timate depth and camera poses from unordered image pairs or collections, producing dense point clouds. VGGT [10, 43] and Pi3X [49] further extend this to multi-view pose estimation and point tracking. While these models excel at geometric reconstruction, they do not directly support novel view synthesis because they lack a differentiable renderer for radiance fields. 
+
+Feed-forward 3D Gaussian Splatting. To enable instant novel view synthesis, several works combine feed-forward prediction with 3DGS, building on a longer line of gen-eralizable neural rendering pioneered by pixelNeRF [60] and large reconstruction models such as LRM [13]. pix-elSplat [5] and MVSplat [6] predict per-pixel Gaussians from sparse, calibrated views using cost volumes. La-tentSplat [50] models variational Gaussians in a latent space. Object-level variants such as Splatter Image [39], GS-LRM [61], LGM [42], GRM [59], and AGG [53] scale transformer backbones to Gaussian prediction. More re-cent work pushes toward many-view, pose-free, or in-the-wild scene-level settings: Flash3D [40] builds on a monoc-ular depth foundation model; DepthSplat [54] couples feed-forward Gaussians with multi-view depth; FreeSplat [47] aggregates redundancy across long indoor sequences; No-PoSplat [57] eliminates known poses; Long-LRM [63] scales to 32 input views. AnySplat [15] removes the need for camera poses by jointly predicting Gaussians and cam-era parameters from unposed images. YoNoSplat [48] han-dles arbitrary numbers of views and can optionally use ground-truth poses when available. EcoSplat [30] intro-duces controllable primitive count via importance-aware training. Across all these methods, the network is super-vised to produce the final radiance field in one shot; when the prediction is used as-is, a persistent quality gap to a full per-scene 3DGS optimization remains. 
+
+Predict-then-refine and the training–deployment mis-match. A natural extension is to use feed-forward predic-tion as an initializer for a few steps of per-scene refinement. This predict-then-refine strategy has been adopted in recent pipelines: AnySplat [15] itself applies post-optimization to boost quality, and dedicated works such as InstantSplat [7], Splatt3R [37], and MVSGaussian [22] show that a modest number of refinement steps closes much of the gap between feed-forward and fully optimized reconstructions. How-ever, a critical mismatch remains: the feed-forward network is still trained solely to minimize the error of its own predic-tion. It never receives supervision from the quality achieved after refinement. Consequently, the predicted Gaussians may lie in regions of the parameter space where refine-ment converges slowly, responds poorly to local gradients, or plateaus early. The network is not encouraged to produce an initialization that is easy to improve. Instead, it is only rewarded for being good from the start. This disconnect be-tween training objective and deployment goal motivates our work. 
+
+2.3. Meta-Learning 
+
+Meta-learning extracts transferable knowledge across tasks to enable rapid adaptation from limited data. Optimization-based methods such as MAML [8] and Reptile [29] find a weight initialization from which a few gradient steps suffice for new tasks, with subsequent works providing implicit-gradient variants [31] and validating first-order training with adaptive optimizers [2]; a parallel line learns the opti-mizer itself [1]. Tancik et al. [41] applied this idea to NeRF, MetaSDF [35] extended it to signed distance fields, and FewShotNeRF [36] extended it to category-specific scene adaptation. Our work, ForeSplat, applies a first-order meta-gradient to train a feed-forward 3DGS model. This en-courages initializations that achieve higher quality after a shorter per-scene refinement. Crucially, this approach in-curs no inference-time overhead, thereby paving the way for lightweight deployment of 3D models. 
+
+## 3. Method 
+
+We propose ForeSplat , a plug-and-play optimization-aware training framework that turns a feed-forward 3DGS model into an initialization generator whose predictions converge faster and to a higher peak quality under per-scene refine-ment. As shown in Fig. 2, ForeSplat first predicts an initial set of Gaussians from uncalibrated images and then unrolls a short per-scene refinement trajectory from this prediction. The meta-gradients back-propagated along the unrolled steps serve as the supervisory signal for the Gaussian pre-diction head. Crucially, ForeSplat leaves the inference-time architecture of the host network untouched; the change is confined to the training objective and the gradient flow in-duced by the unrolled optimizer. In this section, we first es-tablish the necessary notation (Sec. 3.1) and formalize the optimization-aware learning problem (Sec. 3.2). Building on this, we derive the second-order meta-gradient and its tractable first-order approximation for 3DGS (Sec. 3.3), and finally introduce MetaGrad , the multi-anchor first-order training rule at the core of ForeSplat (Sec. 3.4). 
+
+3.1. Preliminaries 
+
+Per-scene Optimization 3DGS Given a set of input im-ages, a standard 3DGS pipeline first recovers camera poses and an initial sparse point cloud, typically using SfM or learning-based alternatives such as MASt3R and VGGT. These points serve as the centers μi of a set of anisotropic Gaussian primitives G = {(μi, s i, q i, α i, c i)}|G|
+
+> i=1
+
+, where 
+
+si ∈ R3 is the scale, qi a rotation quaternion, αi the opac-ity, and ci a view-dependent color encoded via spherical harmonics [16]. The scene representation is then refined by repeatedly rendering G to the training viewpoints and minimizing a photometric loss LA(G) using the Adam op-timizer for tens of thousands of iterations. The loss typi-cally combines an L1 term with a D-SSIM term and is often augmented with opacity and scale regularizers. This opti-mization may also include adaptive control strategies such as densification, cloning, splitting, and pruning. 
+
+Feed-forward 3DGS A feed-forward model fΘ : I 7 → 
+
+G0 predicts a 3D Gaussian scene G0 = fΘ(I) from input images I in a single forward pass. The network parame-ters Θ typically consist of a 3D backbone and a Gaussian prediction head. 
+
+3.2. Problem Formulation: Optimization-Aware Initialization 
+
+We combine feed-forward 3DGS with per-scene post-optimization to achieve lightweight, high-quality reconstruction within seconds, without requiring explicit 3D supervision (e.g., ground-truth point clouds). Starting from the feed-forward prediction G0, we apply K steps of refinement, yielding a trajectory G0 → G1 → · · · → GK ;we denote this operator by RK (G0) := GK . In our experiments, the post-optimization keeps the number of Gaussian primitives fixed: structural operations such as densification, cloning, splitting, and pruning are disabled, so the inner loop updates only the attributes of the predicted Gaussians. For analytical purposes, we write a generic inner step as 
+
+Gk+1 = Gk − η ∇Gk LA(Gk), (1) where η is the inner learning rate. Eq. 1 uses SGD as a tractable proxy; in practice we use Adam, and the analytical structure that follows remains valid [2]. The conventional training objective for feed-forward 3DGS minimizes the immediate rendering loss of the pre-dicted Gaussians: 
+
+min  
+
+> Θ
+
+EI
+
+ LA
+
+ fΘ(I)  . (2) In our design, however, the feed-forward prediction serves only as a starting point for downstream per-scene refine-ment; the final quality after refinement is what matters. We therefore optimize the post-optimization loss directly: 
+
+min  
+
+> Θ
+
+EI
+
+ LA
+
+ RK (fΘ(I))   . (3) This reformulates feed-forward 3DGS training as alearning-to-optimize problem: we seek an initialization 
+
+G0 = fΘ(I) that is well aligned with the loss landscape navigated by the downstream optimizer. Eq. 3 is the canon-ical Model-Agnostic Meta-Learning (MAML) objective [8] instantiated for the feed-forward 3DGS pipeline. 
+
+3.3. Meta-Gradient via MAML and its First-Order Approximation 
+
+3.3.1. Second-order meta-gradient 
+
+To minimize Eq. 3 by gradient descent, we require the derivative ∇ΘLA(GK ). Applying the chain rule along the inner trajectory Eq. 1 rewrites this as 
+
+∇G0 LA(GK ) = ∇GK LA(GK ) ·
+
+> K−1
+
+Y
+
+> k=0
+
+∂G k+1 
+
+∂G k
+
+. (4) From Eq. 1 we obtain 
+
+∂G k+1 
+
+∂G k
+
+= I − η ∇2 
+
+> Gk
+
+LA(Gk), (5) Initial 3DGS 
+
+> Model
+> Final 3DGS
+> Model
+> Captured
+> Image
+> Feed -forward
+> 3DGS Model
+> 3D Foundation
+> Model
+> Distilled
+> Backbone
+> (Optional)
+> 3DGS
+> Predictor
+> Differentiable
+> Rendering -based
+> Optimization
+> Meta -Learned
+> Optimization Prior
+> Meta -Learned
+> Optimization Prior
+> Meta -Learned
+> Optimization Prior
+
+Figure 2. Overview of ForeSplat. Given a set of uncalibrated input images, a feed-forward 3DGS model predicts initial Gaussians. ForeSplat then unrolls a short refinement trajectory, samples anchor states, and back-propagates the resulting first-order meta-gradients through the Gaussian prediction head. This produces optimization-aware initializations without altering the inference-time pipeline. 
+
+where I is the identity matrix and ∇2 
+
+> Gk
+
+LA denotes the Hes-sian of LA at Gk. Substituting this term yields the full 
+
+second-order meta-gradient: 
+
+∇G0 LA(GK ) = ∇GK LA(GK )·
+
+> 0
+
+Y
+
+> k=K−1
+
+
+
+I−η ∇2 
+
+> Gk
+
+LA(Gk)
+
+
+
+.
+
+(6) Finally, the gradient is back-propagated to the network weights via 
+
+∇ΘLA(GK ) = ∇G0 LA(GK ) · ∂f Θ(I)
+
+∂Θ . (7) 
+
+3.3.2. Intractability of the Second-Order Meta-Gradient 
+
+While training with the full second-order meta-gradient ap-pears conceptually attractive, two fundamental obstacles render it intractable in the 3DGS setting. 
+
+(i) Hessian dimension. The Gaussian state G typically contains 10 7 to 10 8 parameters. Consequently, the Hessian 
+
+∇2 
+
+> Gk
+
+LA ∈ R|G|×| G| can be neither explicitly formed nor directly multiplied. Even Hessian–vector products through the splatting rasterizer are prohibitively slow. 
+
+(ii) Memory of unrolled back-propagation. Differen-tiating through K inner Adam steps requires caching all intermediate states {Gk, Adam moments }Kk=0 , which adds 
+
+O(K) memory on top of an already memory-intensive ras-terization graph. As illustrated in Fig. 3, native K-step un-rolling for second-order meta-learning demands a full se-quential backward pass through the entire optimization tra-jectory, whereas our sparse-anchor alternative avoids this costly unrolled back-propagation. 
+
+3.3.3. First-order approximation (FOMAML) 
+
+Following Finn et al. [8], we drop all second-order terms by approximating ∂G k+1 /∂G k ≈ I, which collapses Eq. 6 to 
+
+∇G0 LA(GK ) ≈ ∇ GK LA(GK ), (8) i.e. the photometric gradient evaluated at the post-optimization state GK is used as a surrogate gradient on the pre-optimization state G0, and from there propagated to 
+
+Θ through a single backward pass: 
+
+∇ΘLA(GK ) ≈ ∇ GK LA(GK ) · ∂f Θ(I)
+
+∂Θ . (9) The intuition is that, after K inner steps, the descent direc-tion at GK remains a meaningful supervisory signal for the initialization G0. This approximation is known to perform competitively with the full second-order variant in prac-tice [8, 29], while reducing memory from O(K) to O(1) 
+
+in the inner loop. 
+
+3.4. MetaGrad: Multi-Anchor FOMAML along the Optimization Trajectory 
+
+Motivation Single-endpoint FOMAML supervises the network solely at a fixed, pre-defined optimization horizon 
+
+K, leaving the intermediate states G1, . . . , G K−1 uncon-strained. In practice, this can make the learned initialization sensitive to the chosen K, leading to degraded performance when the number of refinement steps at deployment devi-ates substantially from the training-time K.An alternative is to supervise every step along the trajec-tory. Reptile [29] takes this approach by accumulating the overall parameter displacement as a surrogate update direc-tion: 
+
+ˆgreptile Θ = ( G0 − GKrand ) · ∂f Θ(I)
+
+∂Θ . (10) However, in 3DGS post-optimization the inner trajectory can be long, and densely supervising every step, as illus-trated in Fig. 3, introduces noise and training instability. 
+
+Trajectory sampling We address this by supervising multiple horizons along the optimization trajectory and ag-Multi -anchor Muta -learning 
+
+> Differentiable
+> Rendering -based
+> Optimization
+> Unroll
+> Step K
+> Step K -1
+> Step 2
+> Step 1
+> Step 3
+> Feed -forward 3DGS Model
+> . . .
+> Native K -step Unrolling
+> Differentiable
+> Rendering -based
+> Optimization
+> Unroll
+> Step K
+> Step K -1
+> Step 2
+> Step 1
+> Step 3
+> Feed -forward 3DGS Model
+> . . .
+> Sequential
+> Back -propagation
+> Ill -conditioned
+> gradients accumulation
+> Anchor
+> Stable
+> Meta -Learning
+> Forward
+> Backward
+> Forward
+> Backward
+
+Figure 3. Comparison between native K-step unrolling and Meta-Grad. Top: native K-step unrolling for second-order meta-learning differentiates through the full refinement trajectory, re-quiring sequential back-propagation across all inner steps and ac-cumulating ill-conditioned gradients. Bottom: MetaGrad samples sparse anchor states along the trajectory and routes their first-order surrogate gradients directly back to the feed-forward 3DGS model, enabling more stable meta-learning. 
+
+gregating their surrogate gradients via equal-weight multi-horizon averaging. Let Kmax denote the maximum unroll horizon used during training and ∆ the anchor stride (we use ∆ = 40 ). At each training iteration we sample 
+
+Krand ∼ U{ Kmin , . . . , K max }, (11) and roll out Krand Adam steps of per-scene refinement, caching only the sparse anchor set 
+
+K = { k ∈ Z | 1 ≤ k ≤ Krand , k mod ∆ = 0 },Nanchor = |K| . (12) Randomizing the horizon prevents overfitting to any single 
+
+K and exposes the network to a curriculum of refinement depths. 
+
+Multi-anchor loss aggregate We define the post-optimization-aware scalar anchor-loss aggregate, denoted 
+
+Lmeta (MetaLoss), as the equal-weight average of the pho-tometric losses at the sampled anchors, 
+
+Lmeta = 1
+
+Nanchor 
+
+X
+
+> k∈K
+
+LA(Gk), (13) For exposition, we write the combined outer objective as 
+
+L(Θ) = λ L A(G0) + (1 − λ) Lmeta , λ ∈ [0 , 1] .
+
+(14) Eq. 14 is shorthand for the outer-loop weighting only: in implementation, LA(G0) is back-propagated directly, whereas Lmeta contributes through the detached surro-gate meta-gradient estimator described below rather than through end-to-end differentiation of the inner trajectory. 
+
+Equal-weight aggregation and sparse anchoring Three properties of Eq. 13 deserve comment. (i) Equal weighting across anchors. Each Gk corresponds to a legitimate hori-zon at which a user might stop refinement at deployment; absent a prior on the deployment horizon, we have no rea-son to favor any particular anchor and therefore weight them equally. (ii) Sparse sampling with stride ∆ = 40 . Consec-utive Adam steps move Gk by an amount that is small rela-tive to its own scale, so ∇Gk LA(Gk) and ∇Gk+1 LA(Gk+1 )
+
+are highly correlated and the marginal supervisory informa-tion of including every step is limited. Meanwhile, every additional anchor incurs one extra photometric backward pass, so densely anchoring the trajectory significantly slows training. (iii) Normalization by Nanchor . The explicit 
+
+1/N anchor factor keeps the overall magnitude of Lmeta in-variant to the sampled Krand , so the optimal λ in Eq. (14) does not drift across iterations and hyper-parameter tuning is simplified. 
+
+Meta-gradient estimator MetaGrad does not back-propagate through Eq. 13 as a fully differentiable scalar ob-jective. Instead, it computes first-order photometric gradi-ents on detached anchor states, averages them, and attaches the resulting surrogate gradient to G0. Applying the FO-MAML approximation of Eq. (8) to each anchor yields the surrogate meta-gradient estimator 
+
+ˆgmeta Θ = 1
+
+Nanchor 
+
+X
+
+> k∈K
+
+∇Gk LA(Gk)
+
+!
+
+· ∂f Θ(I)
+
+∂Θ
+
+≈ ∇ ΘLmeta . (15) The bracketed term is computed without back-propagation through the inner trajectory: each ∇Gk LA(Gk) is an inde-pendent first-order gradient on a detached tensor, and their average is then attached to G0.4. Experiments 
+
+4.1. Experimental Setup 
+
+Datasets. Following standard practice in large-scale feed-forward 3D reconstruction models [15, 49], we train on a heterogeneous mixture of nine public multi-view datasets, including DL3DV-10K [21], CO3Dv2 [33], ARK-itScenes [4], WildRGB-D [51], TartanAir [46], GTA-SfM [44], ScanNet++ [58], MatrixCity [19], and Blended-MVS [56]. This combined dataset provides extensive cover-age of object-centric, indoor, outdoor, and city-scale scenes, encompassing both synthetic and real-world scenarios. The input resolution follows the pretraining regime of each host backbone. For Pi3X and Distill Pi3X, following the train-ing setup of the original Pi3X model [49], all images are resized to 224 × 224 . For AnySplat, by contrast, we keep the training resolution at 448 × 448 .
+
+Baselines. We position MetaGrad as a plug-in train-ing strategy that applies to any feed-forward Gaussian-prediction model equipped with a differentiable renderer. To demonstrate its generality, we attach it to three represen-tative backbones. The three backbones are: 1. AnySplat [15], a state-of-the-art feed-forward 3DGS model that jointly predicts Gaussians and camera param-eters in a single forward pass. 2. Pi3X [49], one of the most accurate feed-forward ge-ometry foundation models to date. Since Pi3X does not natively predict Gaussians, we attach a lightweight DPT-style [32] Gaussian head on top of its predicted point cloud so that it produces renderable 3D Gaussians; the head architecture and pre-training protocol are detailed in the Appendix .3. Distill Pi3X , a distilled variant of Pi3X. Its parameter count is roughly 45% that of Pi3X. Full architecture and distillation details are given in the Appendix .In addition, we include InstantSplat [7] as a traditional predict-then-refine baseline in the quantitative summary. Since it is not a MetaGrad-compatible Gaussian-head back-bone in our setup, Tab. 2 reports only its vanilla results. 
+
+Training protocol. Starting from the pretrained check-point of each backbone, we fine-tune only the Gaussian prediction head for 2,000 iterations while keeping the host backbone entirely frozen. For AnySplat, we optimize its native Gaussian head; for Pi3X and Distill Pi3X, we opti-mize only the appended DPT-style Gaussian head described above. In the MetaGrad variant, each outer-loop iteration unrolls a detached inner refinement trajectory whose length is randomly sampled from [50 , 500] steps; anchor states are recorded every 40 steps along that trajectory. 
+
+Training cost. Tab. 1 reports the computational cost of the different training stages used in our experiments. Base-line training, which may involve full backbone optimiza-tion, requires substantially more GPU-hours. In contrast, the MetaGrad fine-tuning stage requires only a single GPU and completes in a few GPU-hours for all backbones. 
+
+Evaluation benchmarks. We evaluate MetaGrad on five datasets: CO3Dv2 [33], DL3DV-10K [21], GTA-SfM [44], ScanNet++ [58], and TartanAir [46]. For evaluation, a to-tal of 50 scenes are sampled from these datasets, with any scene appearing in the training split explicitly excluded to keep the evaluation set strictly scene-disjoint. Each scene contains 16 images, from which every fourth image is held out as a test view and the remaining 12 images are treated as training views. Following AnySplat [15] and InstantSplat [7], we re-port results under a pose-aligned AnySplat-style evalua-tion protocol . Each scene is first passed once through the feed-forward model using all 16 images to obtain a glob-ally consistent scene prediction and camera initialization. Post-optimization then retains only the Gaussians associ-ated with the 12 training views: the test-view Gaussians are discarded, and the test-view RGB images are never used as photometric supervision for updating the Gaussian parame-ters. All methods are evaluated on exactly the same 50 scenes, the same train/test view splits, and the same evaluation-time pose-alignment procedure to ensure a fair comparison. 
+
+Post-optimization protocol. During post-optimization, structural operations such as densification, cloning, split-ting, and pruning are disabled; only the attributes of the ex-isting Gaussians are updated. The inner post-optimization optimizer, loss terms, learning-rate schedule, and per-parameter learning rates are kept fixed throughout all the experiments. 
+
+4.2. MetaGrad Gains 
+
+We compare checkpoints trained with and without Meta-Grad. Following the protocol of Sec. 4.1, we measure the evolution of PSNR, SSIM, and LPIPS on held-out test views over a 2,000 -step post-optimization window. Quantitative summaries are reported in Tab. 2. 
+
+Post-optimization quality. Under the same post-optimization budgets, MetaGrad consistently out-performs vanilla across all three backbones and all three metrics. The benefit of MetaGrad is most pronounced on Pi3X, where PSNR increases by nearly 0.9 dB ( 24 .97 vs. 
+
+25 .81 ), along with consistent gains in SSIM and LPIPS. The advantage also holds on AnySplat and Distill Pi3X. Despite substantial differences among the three backbones Table 1. Computational cost of the different training stages used in our experiments. Method Backbone Trainable part GPUs Wall-clock GPU hours 
+
+w/o MetaGrad 
+
+AnySplat 1 Backbone, GS head 16 × NVIDIA A800 48.00 768.00 Pi3X GS head 2× RTX 5090 23.11 46.22 Distill Pi3X Backbone, GS head 6× NVIDIA H20 124.31 745.86 
+
+MetaGrad Finetune 
+
+AnySplat GS head 1× RTX 5090 6.86 6.86 Pi3X GS head 1× RTX 5090 6.11 6.11 Distill Pi3X GS head 1× RTX 5090 4.41 4.41  
+
+> 1Results from original paper.
+
+Table 2. Quantitative post-optimization results. PSNR, SSIM, and LPIPS are reported on the same held-out evaluation views over 0–2,000 
+
+refinement steps. For each MetaGrad-trained model, ≈ steps denotes the number of refinement steps required to match the PSNR of its vanilla counterpart at each budget. Following the evaluation protocol of the original backbones, AnySplat is evaluated at 448 ×448 
+
+resolution, while Pi3X and Distill Pi3X are evaluated at 224 ×224 resolution.                                                                                                                                                           
+
+> Method PSNR ↑SSIM ↑LPIPS ↓≈steps ↓
+> 0200 500 1k 2k 0200 500 1k 2k 0200 500 1k 2k 500 1k 2k
+> InstantSplat 18.77 23.55 25.20 25.63 25.91 0.640 0.732 0.771 0.779 0.771 0.389 0.236 0.202 0.193 0.194 ---
+> AnySplat
+> Vanilla 21.66 26.17 26.88 27.02 27.03 0.736 0.838 0.844 0.839 0.833 0.254 0.166 0.153 0.156 0.163 ---+ MetaGrad 20.70 26.36 27.32 27.60 27.68 0.698 0.839 0.852 0.850 0.846 0.299 0.172 0.148 0.144 0.146 300 350 350
+> Pi3X
+> Vanilla 21.29 23.88 24.48 24.86 24.97 0.675 0.775 0.782 0.784 0.777 0.231 0.168 0.164 0.165 0.171 ---+ MetaGrad 18.84 23.92 24.92 25.44 25.81 0.562 0.762 0.783 0.788 0.792 0.365 0.193 0.167 0.158 0.153 300 500 500
+> Distill Pi3X
+> Vanilla 20.30 22.89 23.28 23.50 23.61 0.597 0.717 0.725 0.729 0.727 0.287 0.175 0.173 0.175 0.180 ---+ MetaGrad 19.44 23.02 23.61 23.86 24.05 0.580 0.721 0.737 0.741 0.743 0.326 0.181 0.170 0.168 0.168 300 400 500 AnySplat Pi3X Distill Pi3X
+> −0.5
+> 0.0
+> 0.5
+> 1.0
+> 1.5
+> 2.0
+> ΔPSNR
+
+Figure 4. Per-scene PSNR gain at 2,000 post-optimization steps. For each backbone, each point denotes one evaluation scene and the vertical axis reports PSNR MetaGrad −PSNR vanilla at 2,000 post-optimization steps. Box plots summarize the scene-level distribu-tion, and the inset statistics report the mean, median, and positive-scene ratio. 
+
+in feed-forward architecture, parameter count, and training data, the direction of improvement remains identical. This gain is not driven by a small number of favorable scenes. Fig. 4 shows that, for all three backbones, the per-scene PSNR differences relative to vanilla are broadly shifted to the positive values, while the inset mean, median, and positive-scene ratio all remain favorable to MetaGrad. This scene-level picture is consistent with the “Scenes bet-ter” columns in Tab. 2, where MetaGrad yields higher PSNR on the large majority of evaluation scenes under the same post-optimization step budget. Together, these statis-tics confirm that the average gain reflects broad scene-level improvement rather than a handful of outliers within this 50-scene paired benchmark. 
+
+Convergence speed. The per-step metrics reported in Tab. 2 show that MetaGrad-trained initializations converge markedly faster than their vanilla counterparts. Although MetaGrad may start from a slightly lower immediate ren-dering quality, its post-optimization trajectory rises with a consistently steeper slope, overtaking the vanilla curve well before the final budget and continuing to a higher end-of-budget plateau. This accelerated convergence fol-lows directly from the MetaGrad objective: the Gaussian head is trained to produce initializations that the down-stream optimizer can improve rapidly, rather than to match the target views at step zero. The resulting predictions are thus post-optimization-friendly : they occupy a region of the Table 3. PSNR performance under varying post-optimization wall-clock time budgets. The number following each backbone name denotes its feed-forward inference time, shared by both Vanilla and MetaGrad. The inference column reports the zero-step feed-forward prediction, while +1 s to +20 s denote additional post-optimization time allocated after inference. 
+
+Method PSNR [dB] ↑
+
+inference +1s +2s +5s +10s +20s 
+
+AnySplat (inference: 0.72s) Vanilla 21.66 24.85 25.56 26.56 26.97 27.02 + MetaGrad 20.70 24.98 25.81 26.92 27.43 27.61 
+
+Pi3X (inference: 0.30s) Vanilla 21.29 23.48 23.88 24.47 24.87 24.97 + MetaGrad 18.84 23.28 23.92 24.92 25.55 25.81 
+
+Distill Pi3X (inference: 0.23s) Vanilla 20.30 22.36 22.89 23.29 23.50 23.61 + MetaGrad 19.44 22.38 23.02 23.60 23.87 24.05 loss landscape from which per-step refinement is more ef-fective, yielding both faster progress and a higher final qual-ity under the same optimization budget. To provide further intuitions, the full training trajectories are presented in Ap-pendix .
+
+End-to-End reconstruction comparison. Tab. 3 sepa-rates the fixed feed-forward cost from the additional post-optimization budget: each backbone header reports the shared inference time ( 0.72 s for AnySplat, 0.30 s for Pi3X, and 0.23 s for Distill Pi3X), the inference column reports the zero-step feed-forward prediction, and +1 s to +20 s de-note additional post-optimization time after inference. Un-der a +1 s post-optimization budget, the two variants are already comparable; once the extra budget reaches +2 s, MetaGrad outperforms vanilla on all three backbones, and the gap continues to widen as more post-optimization time becomes available. At +20 s of post-optimization, for ex-ample, PSNR improves from 27 .02 to 27 .61 on AnySplat, from 24 .97 to 25 .81 on Pi3X, and from 23 .61 to 24 .05 on Distill Pi3X, showing that ForeSplat yields a better practical reconstruction quality-time trade-off. 
+
+Qualitative Comparison As shown in Fig. 5 and Fig. 6, the proposed ForeSplat produces optimization-friendly ini-tializations that refine into higher-fidelity scene repre-sentations within seconds, and it generalizes these gains across diverse scenes and backbones. Fig. 5 demonstrates this optimization-friendly behavior explicitly: even though ForeSplat may start from slightly weaker zero-step render-ings, after post-optimization it consistently recovers finer details and sharper structures than vanilla, maintaining    
+
+> Table 4. Ablation of λon the Pi3X backbone. Colored PSNR cells mark the top three values in each step column, indicated by 1st , 2nd , and 3rd , respectively.
+
+Method PSNR ↑
+
+0 200 500 1k 2k baseline 21.30 23.71 24.27 24.62 24.82 
+
+λ = 1 .00 21.29 23.88 24.48 24.86 24.97 
+
+λ = 0 .75 21.31 23.94 24.62 24.96 25.07 
+
+λ = 0 .50 21.23 24.02 24.71 25.07 25.28 
+
+λ = 0 .25 20.99 24.03 24.79 25.19 25.41 
+
+λ = 0 .00 18.84 23.92 24.92 25.44 25.81 this advantage even on the lightweight distilled backbone, which illustrates end-to-end high-quality 3D reconstruction in a compact setting. Fig. 6 further compares our method with the AnySplat baseline [15]; across a wide range of in-door and outdoor scenes, ForeSplat delivers higher recon-struction quality, yielding cleaner geometry and more faith-ful appearance under the same evaluation protocol. 
+
+4.3. Ablation Studies 
+
+In this section, we ablate two central design choices of MetaGrad: the loss-balancing coefficient λ in Eq. 14 and the anchor stride ∆ in Eq. 12. The λ sweep, repeated on all three backbones, tests whether the gains and trajectory-shape changes reported in Sec. 4.2 are genuinely driven by the meta-gradient signal rather than by the additional fine-tuning compute, and whether this trend is stable across ar-chitectures. We then study the anchor-sampling design on AnySplat, comparing different ∆ values and a Reptile-style first-order alternative to assess how the density of anchor supervision affects post-optimization quality. 
+
+4.3.1. Effect of the Meta-Gradient Weight λ
+
+Sweep configuration. We sweep λ ∈{0.0, 0.25 , 0.5, 0.75 , 1.0}, with each value corresponding to an independent 2,000 -step outer-loop run. The two endpoints carry distinct interpretations. At λ = 1 .0, the meta-gradient term is disabled entirely, so the procedure re-duces to purely supervised fine-tuning for 2,000 additional steps under the original supervised loss. This is exactly the 
+
+vanilla setting used in 4.2. At λ = 0 .0, the training uses the meta-gradient term exclusively ( pure-meta ). For every variant we record the full PSNR/SSIM/LPIPS trajectories over the same 2,000 -step post-optimization window. The full post-optimization trajectories together with the 2,000-step summaries across all three backbones are provided in the Appendix, while Tab. 4 provides the detailed Pi3X PSNR values at post-optimization steps 0, 200 , 500 , 1,000 ,and 2,000 .Table 5. Ablation of the anchor stride ∆ in MetaGrad on the AnySplat backbone. We report PSNR at post-optimization steps              
+
+> 0,200 ,500 ,1,000 , and 2,000 . In Eq. 12, ∆denotes the anchor-sampling interval along the inner optimization trajectory. Vanilla
+> denotes supervised fine-tuning without MetaGrad, Reptile denotes the Reptile-style first-order baseline defined in Eq. (10), and Base-line denotes the original model without fine-tuning. GPU Hours
+> denotes the time required by each fine-tuning-based variant to complete the same 2,000-step fine-tuning run on a single RTX 5090. Colored PSNR cells use the same ranking convention as in Tab. 4.
+
+Method PSNR ↑ GPU Hours 
+
+0 200 500 1k 2k Baseline 21.90 26.16 26.91 27.03 27.05 -Vanilla 21.66 26.17 26.88 27.02 27.03 0.98 Reptile 22.53 26.16 26.88 26.97 27.00 8.05 
+
+∆1 21.32 26.11 26.86 27.13 27.20 22.37 
+
+∆20 21.09 26.15 26.92 27.19 27.28 6.54 
+
+∆40 20.70 26.36 27.32 27.60 27.68 6.86 
+
+∆80 21.20 26.11 26.91 27.17 27.19 6.75 
+
+Dependence on the meta-gradient weight. A consistent trend emerges across all three backbones: relative to the purely supervised endpoint λ = 1 .0, increasing the meta-gradient weight improves end-of-budget PSNR and SSIM and lowers LPIPS, with the strongest results appearing in the strong-meta region of the sweep. The full sweep from 
+
+λ=1 to λ=0 moves PSNR by roughly 0.4–0.8 dB depend-ing on the backbone, with the tabulated checkpoints remain-ing monotonic and directionally consistent 
+
+Effect on trajectory shape. The same end-of-budget trend is mirrored in the shape of the post-optimization tra-jectory. As 1 − λ grows, the early post-optimization deficit deepens, while the late-stage plateau generally lifts. This dependence shows that the two-stage “below vanilla early, above vanilla late” pattern described in Sec. 4.2 is not a binary phenomenon but a controllable property whose strength varies with the weight of the meta-gradient term. 
+
+4.3.2. Effect of the Anchor Sampling Stride ∆
+
+The hyperparameter ∆ in Eq. 12 controls how sparsely an-chor states are sampled along the inner optimization trajec-tory. To examine its practical effect, we keep all other train-ing settings fixed and sweep over ∆, while also comparing against the vanilla baseline and a Reptile-style first-order al-ternative (Eq. 10), which is equivalent to simply summing the gradients over all inner-loop steps. A denser interval (∆ = 1 ) overemphasizes highly correlated neighboring in-ner states, whereas a sparser interval ( ∆ = 80 ) loses cover-age of the optimization trajectory; ∆ = 40 balances these two effects. The Reptile-style alternative attains a stronger step-0 initialization, but fails to translate that early advan-tage into better reconstruction quality at larger optimization budgets. This aligns with our claim that MetaGrad should optimize the post-optimization trajectory rather than the im-mediate feed-forward prediction alone. 
+
+## 5. Application: Toward Edge 3D Reconstruc-tion Cameras 
+
+> Figure 7. A lightweight capture-and-refine camera that produces renderable 3D scene representations on device within seconds.
+
+Beyond improving post-optimization metrics, ForeSplat points to a practical deployment scenario: lightweight, high-quality, end-to-end 3D reconstruction within seconds in a compact capture-and-refine pipeline. Existing feed-forward 3DGS models offer fast scene prediction, but achieving high reconstruction quality often requires either a large backbone or a costly per-scene optimization process. ForeSplat changes this trade-off by shifting part of the re-construction burden from the feed-forward model itself to a short, optimization-aware refinement stage. Instead of re-quiring the network to directly predict a final high-fidelity radiance field in a single forward pass, the model is trained to produce an initialization that can be rapidly improved by downstream differentiable rendering-based optimization. This property is particularly important for edge-side 3D reconstruction. Since the post-optimization stage can com-pensate for part of the representational limitations of the feed-forward predictor, ForeSplat makes it feasible to use a compact distilled backbone rather than a full-scale founda-tion model. The distilled model provides an efficient initial reconstruction under limited memory and compute, while the subsequent lightweight refinement recovers missing de-tails and improves rendering fidelity. In this way, ForeS-plat relaxes the dependency on large server-side models and opens the possibility of running practical 3D reconstruction on edge AI hardware. A representative application is a 3D reconstruction cam-era. Such a device would capture a short burst of images, in-fer an initial 3D Gaussian representation directly on-device, and then perform a small number of refinement steps to ob-tain a higher-quality scene representation. The resulting 3D asset can be immediately rendered from novel view-points, edited, transmitted, or stored as a compact scene-level memory. Compared with conventional image or video capture, this pipeline records not only appearance but also a renderable spatial representation of the scene. We view this as an initial step toward a new imaging paradigm. Traditional cameras capture 2D observations, leaving geometry, view synthesis, and scene understand-ing to offline processing. An edge 3D reconstruction cam-era instead treats 3D representation as the native output of capture. ForeSplat contributes to this direction by making the predict-then-refine pipeline more compatible with com-pact models and limited compute budgets, thereby bring-ing high-quality feed-forward 3DGS reconstruction closer to practical, portable, and interactive deployment. 
+
+## 6. Conclusion and Limitations 
+
+ForeSplat addresses a central training-deployment mis-match in feed-forward 3DGS: practical systems are often used in a predict-then-refine regime, yet standard training optimizes only immediate rendering quality. By training the Gaussian prediction head with the optimization-aware 
+
+MetaGrad rule, ForeSplat encourages feed-forward models to produce initializations that are easier for a downstream optimizer to improve. Across multiple backbones, this shift consistently yields better post-optimization trajectories un-der matched budgets, even when the zero-step rendering quality is lower. Our current study is limited to fixed-topology post-optimization, with densification, cloning, splitting, and pruning disabled. Extending optimization-aware training to refinement pipelines incorporating structural 3DGS opera-tions, additional optimizer adaptation, and broader Gaus-sian settings remains important future work. More broadly, these results suggest that learning better initializations is a practical path toward bridging fast feed-forward prediction and high-quality iterative refinement. 
+
+## References 
+
+[1] Marcin Andrychowicz, Misha Denil, Sergio Gomez, Matthew W Hoffman, David Pfau, Tom Schaul, Brendan Shillingford, and Nando De Freitas. Learning to learn by gradient descent by gradient descent. 2016. 3 [2] Antreas Antoniou, Harrison Edwards, and Amos Storkey. How to train your MAML. arXiv preprint arXiv:1810.09502 ,2018. 3, 4 [3] Jonathan T Barron, Ben Mildenhall, Dor Verbin, Pratul P Srinivasan, and Peter Hedman. Mip-NeRF 360: Unbounded Anti-Aliased Neural Radiance Fields. In Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recog. , pages 5855–5864, 2022. 3[4] Gilad Baruch, Zhuoyuan Chen, Afshin Dehghan, Tal Dimry, Yuri Feigin, Peter Fu, Thomas Gebauer, Brandon Joffe, Daniel Kurz, Arik Schwartz, et al. ARKitScenes: A Diverse Real-World Dataset for 3D Indoor Scene Understanding Us-ing Mobile RGB-D Data. arXiv preprint arXiv:2111.08897 ,2021. 7 [5] David Charatan, Sizhe Lester Li, Andrea Tagliasacchi, and Vincent Sitzmann. pixelSplat: 3D Gaussian Splats from Im-age Pairs for Scalable Generalizable 3D Reconstruction. In 
+
+Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recog. , pages 19457–19467, 2024. 2, 3 [6] Yuedong Chen, Haofei Xu, Chuanxia Zheng, Bohan Zhuang, Marc Pollefeys, Andreas Geiger, Tat-Jen Cham, and Jianfei Cai. MVSplat: Efficient 3D Gaussian Splatting from Sparse Multi-View Images. In Proc. Eur. Conf. Comput. Vis. , 2024. 2, 3 [7] Zhiwen Fan, Wenyan Cong, Kairun Wen, Kevin Wang, Jian Zhang, Xinghao Ding, Danfei Xu, Boris Ivanovic, Marco Pavone, Georgios Pavlakos, et al. InstantSplat: Sparse-view gaussian splatting in seconds. arXiv preprint arXiv:2403.20309 , 2024. 2, 3, 7 [8] Chelsea Finn, Pieter Abbeel, and Sergey Levine. Model-Agnostic Meta-Learning for Fast Adaptation of Deep Net-works. In Proc. Int. Conf. Mach. Learn. , pages 1126–1135, 2017. 3, 4, 5 [9] Yang Fu, Xiaolong Wang, Sifei Liu, Amey Kulkarni, Jan Kautz, and Alexei A. Efros. COLMAP-Free 3D Gaussian Splatting. In Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recog. , pages 20796–20805, 2024. 3 [10] Yijing Guo, Mengjun Chao, Luo Wang, Tianyang Zhao, Haizhao Dai, Yingliang Zhang, Jingyi Yu, and Yujiao Shi. PanoVGGT: Feed-Forward 3D Reconstruction from Panoramic Imagery. In Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recog. , 2026. 3 [11] Samar Hadou, Navid NaderiAlizadeh, and Alejandro Ribeiro. Robust Stochastically-Descending Unrolled Net-works. IEEE Trans. Image Process. , 72:5484–5499, 2024. 2[12] James Harrison, Luke Metz, and Jascha Sohl-Dickstein. A Closer Look at Learned Optimization: Stability, Robustness, and Inductive Biases. In Proc. Adv. Neural Inform. Process. Syst. , 2022. 2 [13] Yicong Hong, Kai Zhang, Jiuxiang Gu, Sai Bi, Yang Zhou, Difan Liu, Feng Liu, Kalyan Sunkavalli, Trung Bui, and Hao Tan. LRM: Large Reconstruction Model for Single Image to 3D, 2024. 3 [14] Hanwen Jiang, Zexiang Xu, Desai Xie, Ziwen Chen, Haian Jin, Fujun Luan, Zhixin Shu, Kai Zhang, Sai Bi, Xin Sun, Ji-uxiang Gu, Qixing Huang, Georgios Pavlakos, and Hao Tan. MegaSynth: Scaling Up 3D Scene Reconstruction with Syn-thesized Data. In Proc. IEEE/CVF Conf. Comput. Vis. Pat-tern Recog. , 2025. 2 [15] Lihan Jiang, Yucheng Mao, Linning Xu, Tao Lu, Kerui Ren, Yichen Jin, Xudong Xu, Mulin Yu, Jiangmiao Pang, Feng Zhao, et al. AnySplat: Feed-forward 3D Gaussian Splatting from Unconstrained Views. ACM Trans. Graph. , 44(6):1–16, 2025. 2, 3, 7, 9 [16] Bernhard Kerbl, Georgios Kopanas, Thomas Leimk¨ uhler, and George Drettakis. 3D Gaussian Splatting for Real-Time Radiance Field Rendering. ACM Trans. Graph. , 42(4), 2023. 3, 4 [17] Diederik P. Kingma and Jimmy Ba. Adam: A Method for Stochastic Optimization. CoRR , abs/1412.6980, 2014. 3 [18] Vincent Leroy, Yohann Cabon, and Jerome Revaud. Ground-ing Image Matching in 3D with MASt3R. In Proc. Eur. Conf. Comput. Vis. , 2024. 3 [19] Yixuan Li, Lihan Jiang, Linning Xu, Yuanbo Xiangli, Zhen-zhi Wang, Dahua Lin, and Bo Dai. MatrixCity: A Large-Scale City Dataset for City-Scale Neural Rendering and Be-yond. In Proc. IEEE Int. Conf. Comput. Vis. , pages 3205– 3215, 2023. 7 [20] Chen-Hsuan Lin, Wei-Chiu Ma, Antonio Torralba, and Si-mon Lucey. BARF: Bundle-Adjusting Neural Radiance Fields. In Proc. IEEE Int. Conf. Comput. Vis. , 2021. 3 [21] Lu Ling, Yichen Sheng, Zhi Tu, Wentian Zhao, Cheng Xin, Kun Wan, Lantao Yu, Qianyu Guo, Zixun Yu, Yawen Lu, et al. DL3DV-10K: A Large-Scale Scene Dataset for Deep Learning-based 3D Vision. In Proc. IEEE/CVF Conf. Com-put. Vis. Pattern Recog. , pages 22160–22169, 2024. 7 [22] Tianqi Liu, Guangcong Wang, Shoukang Hu, Liao Shen, Xinyi Ye, Yuhang Zang, Zhiguo Cao, Wei Li, and Ziwei Liu. MVSGaussian: Fast Generalizable Gaussian Splatting Re-construction from Multi-View Stereo. In Proc. Eur. Conf. Comput. Vis. , 2024. 2, 3 [23] Weihang Liu, Xue Xian Zheng, Jingyi Yu, and Xin Lou. Content-Aware Radiance Fields: Aligning Model Complex-ity with Scene Intricacy Through Learned Bitwidth Quanti-zation. In Proc. Eur. Conf. Comput. Vis. , 2024. 3 [24] Weihang Liu, Xue Xian Zheng, Yuke Li, Tareq Y. Al-Naffouri, Jingyi Yu, and Xin Lou. CoARF++: Content-Aware Radiance Field Aligning Model Complexity With Scene Intricacy. IEEE Trans. Vis. Comput. Graph. , pages 1–14, 2025. 3 [25] Weihang Liu, Yuhui Zhong, Yuke Li, Xi Chen, Jiadi Cui, Honglong Zhang, Lan Xu, Xin Lou, Yujiao Shi, Jingyi Yu, and Yingliang Zhang. CityGo: Lightweight Urban Model-ing and Rendering with Proxy Buildings and Residual Gaus-sians. In Proc. ACM SIGGRAPH Asia , 2025. 3 [26] Weihang Liu, Yuke Li, Yuxuan Li, Jingyi Yu, and Xin Lou. Duplex-GS: Proxy-Guided Weighted Blending for Real-Time Order-Independent Gaussian Splatting. IEEE Trans. Circuits Syst. Video Technol. , 2026. 3 [27] Ben Mildenhall, Pratul P. Srinivasan, Matthew Tancik, Jonathan T. Barron, Ravi Ramamoorthi, and Ren Ng. NeRF: Representing Scenes as Neural Radiance Fields for View Synthesis. In Proc. Eur. Conf. Comput. Vis. , 2020. 3 [28] Thomas M¨ uller, Alex Evans, Christoph Schied, and Alexan-der Keller. Instant Neural Graphics Primitives with a Mul-tiresolution Hash Encoding. ACM Trans. Graph. , 41(4), 2022. 3 [29] Alex Nichol, Joshua Achiam, and John Schulman. On first-order meta-learning algorithms. arXiv preprint arXiv:1803.02999 , 2018. 3, 5 [30] Jongmin Park, Minh-Quan Viet Bui, Juan Luis Gonza-lez Bello, Jaeho Moon, Jihyong Oh, and Munchurl Kim. EcoSplat: Efficiency-controllable Feed-forward 3D Gaus-sian Splatting from Multi-view Images. In Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recog. , 2025. 3 [31] Aravind Rajeswaran, Chelsea Finn, Sham M Kakade, and Sergey Levine. Meta-learning with implicit gradients. In 
+
+Proc. Adv. Neural Inform. Process. Syst. , 2019. 3 [32] Ren´ e Ranftl, Alexey Bochkovskiy, and Vladlen Koltun. Vi-sion Transformers for Dense Prediction. ArXiv preprint ,2021. 7, 16 [33] Jeremy Reizenstein, Roman Shapovalov, Philipp Henzler, Luca Sbordone, Patrick Labatut, and David Novotny. Com-mon Objects in 3D: Large-Scale Learning and Evaluation of Real-life 3D Category Reconstruction. In Proc. IEEE Int. Conf. Comput. Vis. , pages 10901–10911, 2021. 7 [34] Johannes L. Sch¨ onberger and Jan-Michae Frahm. Structure-from-Motion Revisited. In Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recog. , pages 4104–4113, 2016. 3 [35] Vincent Sitzmann, Eric Chan, Richard Tucker, Noah Snavely, and Gordon Wetzstein. MetaSDF: Meta-learning Signed Distance Functions. Proc. Adv. Neural Inform. Pro-cess. Syst. , 33:10136–10147, 2020. 3 [36] Piraveen Sivakumar, Paul Janson, Jathushan Rajasegaran, and Thanuja Ambegoda. FewShotNeRF: Meta-Learning-based Novel View Synthesis for Rapid Scene-Specific Adap-tation, 2024. 3 [37] Brandon Smart, Chuanxia Zheng, Iro Laina, and Vic-tor Adrian Prisacariu. Splatt3R: Zero-shot Gaussian Splat-ting from Uncalibrated Image Pairs. 2024. 3 [38] Noah Snavely, Steven M. Seitz, and Richard Szeliski. Skele-tal graphs for efficient structure from motion. In Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recog. , pages 1–8, 2008. 3 [39] Stanislaw Szymanowicz, Christian Rupprecht, and Andrea Vedaldi. Splatter Image: Ultra-Fast Single-View 3D Recon-struction. In Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recog. , 2024. 3 [40] Stanislaw Szymanowicz, Eldar Insafutdinov, Chuanxia Zheng, Dylan Campbell, Jo˜ ao F. Henriques, Christian Rup-precht, and Andrea Vedaldi. Flash3D: Feed-Forward Gener-alisable 3D Scene Reconstruction from a Single Image. In 
+
+2025 International Conference on 3D Vision (3DV) , 2025. 3 [41] Matthew Tancik, Ben Mildenhall, Terrance Wang, Divi Schmidt, Pratul P Srinivasan, Jonathan T Barron, and Ren Ng. Learned Initializations for Optimizing Coordinate-Based Neural Representations. In Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recog. , pages 2846–2855, 2021. 3 [42] Jiaxiang Tang, Zhaoxi Chen, Xiaokang Chen, Tengfei Wang, Gang Zeng, and Ziwei Liu. LGM: Large Multi-View Gaus-sian Model for High-Resolution 3D Content Creation. In 
+
+Proc. Eur. Conf. Comput. Vis. , 2024. 3 [43] Jianyuan Wang, Minghao Chen, Nikita Karaev, An-drea Vedaldi, Christian Rupprecht, and David Novotny. VGGT: Visual Geometry Grounded Transformer. In Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recog. , 2025. 3 [44] Kaixuan Wang and Shaojie Shen. Flow-motion and depth network for monocular stereo and beyond. IEEE Robotics and Automation Letters , 5(2):3307–3314, 2020. 7 [45] Shuzhe Wang, Vincent Leroy, Yohann Cabon, Boris Chidlovskii, and Jerome Revaud. DUSt3R: Geometric 3D Vision Made Easy. In Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recog. , 2024. 3 [46] Wenshan Wang, Delong Zhu, Xiangwei Wang, Yaoyu Hu, Yuheng Qiu, Chen Wang, Yafei Hu, Ashish Kapoor, and Se-bastian Scherer. TartanAir: A Dataset to Push the Limits of Visual SLAM. In 2020 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) , pages 4909–4916. IEEE, 2020. 7 [47] Yunsong Wang, Tianxin Huang, Hanlin Chen, and Gim Hee Lee. FreeSplat: Generalizable 3D Gaussian Splatting To-wards Free-View Synthesis of Indoor Scenes. In Proc. Adv. Neural Inform. Process. Syst. , 2024. 3 [48] Yifan Wang, Jianjun Zhou, Haoyi Zhu, Wenzheng Chang, Yang Zhou, Zizun Li, Junyi Chen, Jiangmiao Pang, Chunhua Shen, and Tong He. YoNoSplat: You Only Need One Model for Feedforward 3D Gaussian Splatting. In Proc. Int. Conf. Learn. Represent. , 2026. 3 [49] Yifan Wang, Jianjun Zhou, Haoyi Zhu, Wenzheng Chang, Yang Zhou, Zizun Li, Junyi Chen, Jiangmiao Pang, Chun-hua Shen, and Tong He. π3: Permutation-Equivariant Visual Geometry Learning. In Int. Conf. Learn. Represent. , 2026. 2, 3, 7 [50] Christopher Wewer, Kevin Raj, Eddy Ilg, Bernt Schiele, and Jan Eric Lenssen. latentSplat: Autoencoding Variational Gaussians for Fast Generalizable 3D Reconstruction. In 
+
+Proc. Eur. Conf. Comput. Vis. , 2024. 3 [51] Hongchi Xia, Yang Fu, Sifei Liu, and Xiaolong Wang. RGBD Objects in the Wild: Scaling Real-World 3D Ob-ject Learning from RGB-D Videos. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 22378–22389, 2024. 7 [52] Bingyu Xin, Meng Ye, Leon Axel, and Dimitris N. Metaxas. Rethinking Deep Unrolled Model for Accelerated MRI Re-construction. In Proc. Eur. Conf. Comput. Vis. , 2024. 2 [53] Dejia Xu, Ye Yuan, Morteza Mardani, Sifei Liu, Jiaming Song, Zhangyang Wang, and Arash Vahdat. AGG: Amor-tized Generative 3D Gaussians for Single Image to 3D. arXiv preprint 2401.04099 , 2024. 3 [54] Haofei Xu, Songyou Peng, Fangjinhua Wang, Hermann Blum, Daniel Barath, Andreas Geiger, and Marc Pollefeys. DepthSplat: Connecting Gaussian Splatting and Depth. In 
+
+Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recog. , 2025. 3 [55] Jianing Yang, Alexander Sax, Kevin J. Liang, Mikael Henaff, Hao Tang, Ang Cao, Joyce Chai, Franziska Meier, and Matt Feiszli. Fast3R: Towards 3D Reconstruction of 1000+ Im-ages in One Forward Pass. In Proc. IEEE/CVF Conf. Com-put. Vis. Pattern Recog. , 2025. 3 [56] Yao Yao, Zixin Luo, Shiwei Li, Jingyang Zhang, Yufan Ren, Lei Zhou, Tian Fang, and Long Quan. BlendedMVS: A Large-Scale Dataset for Generalized Multi-View Stereo Networks. In Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recog. , pages 1790–1799, 2020. 7 [57] Botao Ye, Sifei Liu, Haofei Xu, Li Xueting, Marc Pollefeys, Ming-Hsuan Yang, and Peng Songyou. No Pose, No Prob-lem: Surprisingly Simple 3D Gaussian Splats from Sparse Unposed Images. In Proc. Int. Conf. Learn. Represent. ,2025. 3 [58] Chandan Yeshwanth, Yueh-Cheng Liu, Matthias Nießner, and Angela Dai. ScanNet++: A High-Fidelity Dataset of 3D Indoor Scenes. In Proc. IEEE Int. Conf. Comput. Vis. ,pages 12–22, 2023. 7 [59] Xu Yinghao, Shi Zifan, Yifan Wang, Chen Hansheng, Yang Ceyuan, Peng Sida, Shen Yujun, and Wetzstein Gordon. GRM: Large Gaussian Reconstruction Model for Efficient 3D Reconstruction and Generation. In Proc. Eur. Conf. Com-put. Vis. , 2024. 3 [60] Alex Yu, Vickie Ye, Matthew Tancik, and Angjoo Kanazawa. pixelNeRF: Neural Radiance Fields from One or Few Im-ages. In Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recog. ,2021. 3 [61] Kai Zhang, Sai Bi, Hao Tan, Yuanbo Xiangli, Nanxuan Zhao, Kalyan Sunkavalli, and Zexiang Xu. GS-LRM: Large Re-construction Model for 3D Gaussian Splatting. In Proc. Eur. Conf. Comput. Vis. , 2024. 3 [62] Richard Zhang, Phillip Isola, Alexei A Efros, Eli Shechtman, and Oliver Wang. The Unreasonable Effectiveness of Deep Features as a Perceptual Metric. In CVPR , 2018. 16 [63] Chen Ziwen, Hao Tan, Kai Zhang, Sai Bi, Fujun Luan, Yi-cong Hong, Li Fuxin, and Zexiang Xu. Long-LRM: Long-Sequence Large Reconstruction Model for Wide-Coverage Gaussian Splats. In Proc. IEEE Int. Conf. Comput. Vis. ,pages 4349–4359, 2025. 3 ⋯ ⋯
+
+# ⋯ ⋯
+
+Input GT Novel View 
+
+> step 0 step 2000
+
+AnySplat (vanilla) AnySplat + metagrad Detail 
+
+Input GT Novel View 
+
+> step 0 step 2000
+
+AnySplat (vanilla) AnySplat + metagrad Detail 
+
+Input GT Novel View 
+
+> step 0 step 2000
+
+Pi3X (vanilla) Pi3X + metagrad Detail 
+
+Input GT Novel View 
+
+> step 0 step 2000
+
+Distill-Pi3X (vanilla) Distill-Pi3X + metagrad Detail Figure 5. Qualitative comparison of vanilla and MetaGrad before and after post-optimization. MetaGrad starts from weaker zero-step renderings, yet after post-optimization, it consistently attains cleaner structure and sharper appearance than vanilla, demonstrating a more post-optimization-friendly initialization. AnySplat  
+
+> ForeSplat (Ours)
+> GT
+> AnySplat detail
+> ForeSplat detail
+> AnySplat
+> ForeSplat (Ours)
+> GT
+> AnySplat detail
+> ForeSplat detail
+> AnySplat
+> ForeSplat (Ours)
+> GT
+> AnySplat detail
+> ForeSplat detail
+> AnySplat
+> ForeSplat (Ours)
+> GT
+> AnySplat detail
+> ForeSplat detail
+> ForeSplat (Ours) GT
+> NVS (Ours)
+
+Inputs Predicted 3D Gaussians Reference / Details Inputs Predicted 3D Gaussians Reference / Details 
+
+Inputs Predicted 3D Gaussians (ForeSplat) Compare Additional View Renderings 
+
+Indoor Outdoor Figure 6. Qualitative comparison of 3D reconstruction quality between AnySplat and our ForeSplat (ours). The upper block shows two indoor (left) and two outdoor (right) scene. The bottom row showcases a single scene rendered from multiple novel viewpoints by our method. ForeSplat: Optimization-Aware Foresight for Feed-Forward 3D Gaussian Splatting 
+
+# Supplementary Material 
+
+## 7. MetaGrad Pseudocode 
+
+Algorithm 1 summarizes one iteration of the MetaGrad training rule within the ForeSplat framework on a single training tuple I. The notation matches Section 3.4. 
+
+ALGORITHM 1: MetaGrad training rule within ForeSplat: one training iteration. 
+
+Data: Tuple I; weights Θ of FF-3DGS network 
+
+fΘ; host loss LA; max post opt step Kmax ;anchor stride ∆; inner/outer LRs η, η out ;hyper parameter λ ∈ [0 , 1] ; stop-grad sg( ·);
+
+Adam (·): one Adam step. 
+
+Result: Updated weights Θ.
+
+G0 ← fΘ(I)
+
+L0 ← LA(G0)
+
+Krand ∼ U{ Kmin , . . . , K max }
+
+Gopt ← sg( G0)
+
+Sum grad ← 0, N ← 0
+
+for k ← 1 to Krand do 
+
+Gopt ← Adam (Gopt , ∇GLA(G), η )
+
+if k mod ∆ = 0 then 
+
+Sum grad ← Sum grad + ∇GLA(sg( Gopt )) 
+
+N ← N + 1 
+
+end end 
+
+ˆg0 ← Sum grad /N gimm ← ∇ ΘL0
+
+gmeta ← ˆg0 · ∂f Θ(I)/∂ Θ
+
+gΘ ← λ g imm + (1 − λ) gmeta 
+
+Θ ← Adam (Θ , g Θ, η out )
+
+## 8. Pi3X Gaussian Head: Architecture and Training Protocol 
+
+This section details the construction and pre-training of the Gaussian head attached to the Pi3X backbone, which turns Pi3X into the FF-3DGS network fΘ used throughout Sec-tion 3.4. 
+
+Architecture. The Gaussian head is a lightweight DPT-style [32] decoder grafted onto the frozen Pi3X transformer. It taps the hidden states of four intermediate decoder lay-ers (indices {8, 18 , 26 , 34 } out of 36 ), each projected from 
+
+2,048 to 256 channels by a 1 × 1 convolution and rescaled to a coarse-to-fine pyramid via transposed and strided con-volutions. A stack of four feature-fusion blocks with resid-ual convolutional units progressively merges the pyramid up to the input resolution, and a parallel 7 × 7+3 × 3 con-volutional skip path injects the input RGB so that the head predicts residuals on top of the observed pixel colors. Two final 3 × 3 and 1 × 1 convolutions emit an 83 -channel at-tribute map per pixel: 1 opacity logit, 3 scale components, a 4-dimensional rotation quaternion, and 75 spherical har-monics coefficients up to degree 4. Opacity is obtained as 
+
+σ(·) modulated by the Pi3X confidence; scales are pose-free, computed as 0.001 · softplus( ·) and clamped at 0.3
+
+so that they do not depend on per-pixel depth; rotations are 
+
+ℓ2-normalized quaternions; the SH DC term is added as a residual to the input RGB, while higher-order coefficients are damped by a degree-dependent factor. The head con-tains 14 .6 M parameters, i.e. about 1.06% of the full Pi3X-with-head model ( 1,374 .7 M). To stabilize training, the last 
+
+1 × 1 convolution is zero initialized, and biases are set such that the initial output corresponds to a near-identity Gaus-sian (opacity logit 0 and identity quaternion). 
+
+Training protocol. We train only the Gaussian head, keeping the 1,360 .0 M parameters of the Pi3X backbone frozen, so that gradients flow exclusively through the 
+
+14 .6 M head parameters. Training is performed on 8×
+
+NVIDIA H20 GPUs with PyTorch DDP and FP16 mixed precision via GradScaler , for 30 ,000 iterations ( 30 
+
+epochs of 1,000 iterations each). We use RealEstate10K and DL3DV as training datasets, each iteration draws a sin-gle scene with N = 8 views at resolution 224 × 224 , and one view is uniformly sampled as the rendering target while the remaining views provide context. The per-GPU batch size is 1 with no gradient accumulation, giving an effec-tive batch size of 2. We use AdamW ( β = (0 .9, 0.999) )with peak learning rate 1 × 10 −4, weight decay 0.05 , and gradient clipping at 1.0; the schedule is a 2,000 -step linear warm-up followed by cosine decay. The objective is a pho-tometric reconstruction loss combining pixel-space ℓ2 and perceptual VGG-LPIPS [62], 
+
+Lhead = Lmse + 0 .05 Llpips , (16) evaluated between the rendered target view and the corre-sponding ground-truth RGB. The LPIPS weight is inten-tionally small to prevent the perceptual term from dominat-ing early training, when the head outputs are still close to their initialization. The resulting checkpoint provides the FF-3DGS network fΘ that serves as the input to the Meta-Grad training rule in Algorithm 1. 
+
+## 9. Distill Pi3X: Architecture and Training Pro-tocol 
+
+This section details the construction of Distill Pi3X , the lightweight backbone introduced in Section 4.1. 
+
+Architecture. Distill Pi3X is obtained by distilling Pi3X—which couples a DINOv2 Large encoder with a 36 -layer Transformer decoder—into a student that pairs a DI-NOv2 Base encoder with a 24 -layer decoder. The result-ing model contains 612 .8 M parameters, corresponding to approximately 44 .6% of Pi3X ( 1389 .4 M) and 51 .5% of AnySplat ( 1,190 .7 M). The student preserves the three ge-ometry heads of Pi3X (point, camera, confidence) and addi-tionally carries a lightweight Gaussian head, so that a single forward pass produces both Pi3X-compatible geometry and renderable 3D Gaussians. To bridge the dimensionality gap between the Base encoder and the Pi3X decoder, we insert a projection module consisting of a linear layer followed by a LayerNorm. The encoder, decoder, and geometry heads are initialized from Pi3X, while the projection module and the Gaussian head are randomly initialized. All components are trained jointly, with Pi3X serving as the teacher. 
+
+Training protocol. We reuse the dataset mixture and sampling protocol of Section 4.1 without modification. The distill model is trained on 6× NVIDIA H20 GPUs for 200 
+
+epochs of 800 iterations each. We use the AdamW opti-mizer ( β = (0 .9, 0.95) ) together with a OneCycle cosine schedule. Per-group learning rates are set to 1 × 10 −4 for the Gaussian head, 5 × 10 −5 for the decoder and the pro-jection module, and 5 × 10 −6 for the ViT-B encoder, the point head, and the camera modules; this configuration is chosen to preserve the geometric accuracy inherited from the teacher. The total loss is given by 
+
+Ltotal = Lpoint + Lnormal + 0 .1 Lcamera + 0 .2 Lfeat 
+
++ 0 .2 Lout + Lmse + 0 .05 Llpips , (17) where Lpoint , Lnormal , and Lcamera align the student with the Pi3X teacher on local points, surface normals, and camera pose, respectively, with the camera term following the Pi3-style formulation ( α = 100 , δ = 0 .1). Lfeat and Lout enforce alignment between the student and teacher hidden states at intermediate decoder layers and at the final decoder output. 
+
+Lmse and Llpips are evaluated between the rendered image and the ground-truth RGB. 
+
+Accuracy trade-off. Table 6 reports camera-pose accu-racy on the DL3DV test split. Distill Pi3X attains lower  
+
+> Table 6. Camera pose estimation comparison on DL3DV test set. AUC@30, RRA@30, and RTA@30 measured against ground-truth poses.
+
+Method #Params AUC@30 ↑ RRA@30 ↑ RTA@30 ↑
+
+Pi3 958.7M 0.859 0.971 0.955 Pi3X 1389.4M 0.880 0.982 0.957 AnySplat 1190.7M 0.879 0.985 0.988 
+
+Distill Pi3X 612.8M 0.723 0.944 0.924 scores than Pi3, Pi3X, and AnySplat across all three met-rics, with the gap most visible on AUC@30. This drop is commensurate with the substantial reduction in parameter count—roughly 45% of Pi3X and 51% of AnySplat—and constitutes an expected cost of knowledge distillation. At the same time, Distill Pi3X serves in our experiments as a representative instance of a more compact, geometrically lighter feed-forward backbone: the directionally consistent MetaGrad gains observed across all three backbones (Sec-tion 4.2) thus span a range of feed-forward model capaci-ties, from the high-capacity AnySplat to the compact Distill Pi3X. 
+
+## 10. Continuous Post-Optimization Trajectories 
+
+This section complements Sections 4.2 and 4.3 by report-ing the underlying post-optimization trajectories at a finer step resolution. The figures visualize the evolution of the metrics over the same 2,000 -step window summarized in Section 4.2, and provide the complete λ sweep trajectories on all three backbones. 
+
+Full trajectories under MetaGrad and vanilla. Figure 8 plots the PSNR, SSIM, and LPIPS curves of AnySplat, Pi3X, and Distill Pi3X on held-out test views over the first 2,000 post-optimization steps. The trajectories evolve smoothly between the steps reported in Section 4.2: the MetaGrad-trained model lies slightly below the baseline in the early phase of post-optimization, subsequently over-takes it, and remains above the baseline throughout the rest of the interval. This late-stage separation is sustained throughout the 1,500 –2,000 step zoom-in insets, and the overall shape of the curves remains qualitatively consistent across the three backbones. 
+
+λ sweep on all three backbones. The hyperparameter λ
+
+controls the relative weighting between the gradient of the original supervised loss and the meta-gradient in the train-ing objective, with a smaller λ assigning a larger share to the meta-gradient in the resulting combined gradient. Fig-ure 9 reports the complete post-optimization trajectories of all three backbones under λ ∈ { 0.0, 0.25 , 0.5, 0.75 , 1.0}.0 800 1600 
+
+Post-opt inner step 
+
+22.5 
+
+25.0 
+
+27.5 
+
+> PSNR (dB)
+
+0 800 1600 
+
+Post-opt inner step 
+
+0.72 
+
+0.78 
+
+0.84 
+
+> SSIM
+
+0 800 1600 
+
+Post-opt inner step 
+
+0.16 
+
+0.24       
+
+> LPIPS
+> 050
+> 22.5
+> 25.0
+> 1500 1750
+> 27.0
+> 27.5
+> 050
+> 0.7
+> 0.8
+> 1500 1750
+> 0.840
+> 0.845
+> 050
+> 0.2
+> 0.3
+> 1500 1750
+> 0.15
+> 0.16
+
+w/o meta-grad w/ meta-grad (a) AnySplat. 0 800 1600 
+
+Post-opt inner step 
+
+21 
+
+24 
+
+> PSNR (dB)
+
+0 800 1600 
+
+Post-opt inner step 
+
+0.6 
+
+0.7 
+
+0.8 
+
+> SSIM
+
+0 800 1600 
+
+Post-opt inner step 
+
+0.16 
+
+0.24 
+
+0.32       
+
+> LPIPS
+> 050
+> 20
+> 22
+> 1500 1750
+> 25.0
+> 25.5
+> 050
+> 0.6
+> 0.7
+> 1500 1750
+> 0.78
+> 0.79
+> 050
+> 0.2
+> 0.3
+> 1500 1750
+> 0.155
+> 0.160
+> 0.165
+
+(b) Pi3X. 0 800 1600 
+
+Post-opt inner step 
+
+20 
+
+22 
+
+24 
+
+> PSNR (dB)
+
+0 800 1600 
+
+Post-opt inner step 
+
+0.60 
+
+0.66 
+
+0.72 
+
+> SSIM
+
+0 800 1600 
+
+Post-opt inner step 
+
+0.18 
+
+0.24 
+
+0.30       
+
+> LPIPS
+> 050
+> 20
+> 22
+> 1500 1750
+> 23.8
+> 24.0
+> 050
+> 0.60
+> 0.65
+> 0.70
+> 1500 1750
+> 0.730
+> 0.735
+> 0.740
+> 050
+> 0.20
+> 0.25
+> 0.30
+> 1500 1750
+> 0.170
+> 0.175
+
+(c) Distill Pi3X. Figure 8. Post-optimization trajectories of the three backbones. (a) AnySplat, (b) Pi3X, and (c) Distill Pi3X. Within each row, we report PSNR, SSIM, and LPIPS on held-out test views over the first 2,000 post-optimization steps. 
+
+On each backbone, all MetaGrad variants exhibit the same qualitative trajectory shape as above—initially below the baseline and subsequently above it—while the value of 
+
+λ exhibits a stable correspondence with the resulting re-construction quality: the PSNR, SSIM, and LPIPS curves largely retain the same relative ordering throughout the post-optimization horizon, and this ordering is broadly con-sistent across the three backbones. 0 800 1600 
+
+Post-opt inner step   
+
+> 15
+> 20
+> 25
+> PSNR (dB)
+> 0800 1600
+
+Post-opt inner step   
+
+> 0.60
+> 0.75
+> SSIM
+> 0800 1600
+
+Post-opt inner step     
+
+> 0.15
+> 0.30
+> 0.45
+> LPIPS
+> 1000 1500
+> 27.0
+> 27.5
+> 1000 1500
+> 0.84
+> 0.85 1000 1500
+> 0.15
+> 0.16
+
+λ=0 λ=0.25 λ=0.5 λ=0.75 λ=1 (a) AnySplat. 0 800 1600 
+
+Post-opt inner step   
+
+> 21
+> 24
+> PSNR (dB)
+> 0800 1600
+
+Post-opt inner step   
+
+> 0.6
+> 0.7
+> 0.8
+> SSIM
+> 0800 1600
+
+Post-opt inner step     
+
+> 0.16
+> 0.24
+> 0.32
+> LPIPS
+> 1000 1500
+> 25.0
+> 25.5
+> 1000 1500
+> 0.78
+> 0.79 1000 1500
+> 0.16
+> 0.17
+
+(b) Pi3X. 0 800 1600 
+
+Post-opt inner step   
+
+> 20
+> 22
+> 24
+> PSNR (dB)
+> 0800 1600
+
+Post-opt inner step   
+
+> 0.60
+> 0.66
+> 0.72
+> SSIM
+> 0800 1600
+
+Post-opt inner step     
+
+> 0.18
+> 0.24
+> 0.30
+> LPIPS
+> 1000 1500
+> 23.5
+> 24.0
+> 1000 1500
+> 0.73
+> 0.74 1000 1500
+> 0.17
+> 0.18
+
+(c) Distill Pi3X. Figure 9. Effect of λ on the three backbones. (a) AnySplat, (b) Pi3X, and (c) Distill Pi3X. Within each row, we report PSNR, SSIM, and LPIPS measured at 2,000 post-optimization steps as a function of the loss-balancing coefficient λ ∈ { 0.0, 0.25 , 0.5, 0.75 , 1.0}. The two endpoints correspond to vanilla supervised fine-tuning ( λ = 1 .0) and a pure-meta variant ( λ = 0 .0), respectively. Across all three backbones, the best-performing region lies away from the purely supervised endpoint and remains broadly similar across backbones.
