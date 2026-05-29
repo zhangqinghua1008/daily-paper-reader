@@ -1,0 +1,87 @@
+{
+  "version": 2,
+  "extractor": "papercropper",
+  "figures": [
+    {
+      "url": "assets/figures/openreview/openreview-neurips-2025-tdt6hf7jk5/fig-001.webp",
+      "caption": "",
+      "page": 0,
+      "index": 1,
+      "width": 1439,
+      "height": 359,
+      "label": "Figure"
+    },
+    {
+      "url": "assets/figures/openreview/openreview-neurips-2025-tdt6hf7jk5/fig-002.webp",
+      "caption": "",
+      "page": 0,
+      "index": 2,
+      "width": 1417,
+      "height": 619,
+      "label": "Figure"
+    },
+    {
+      "url": "assets/figures/openreview/openreview-neurips-2025-tdt6hf7jk5/fig-003.webp",
+      "caption": "",
+      "page": 0,
+      "index": 3,
+      "width": 1437,
+      "height": 503,
+      "label": "Figure"
+    },
+    {
+      "url": "assets/figures/openreview/openreview-neurips-2025-tdt6hf7jk5/fig-004.webp",
+      "caption": "",
+      "page": 0,
+      "index": 4,
+      "width": 1439,
+      "height": 372,
+      "label": "Figure"
+    },
+    {
+      "url": "assets/figures/openreview/openreview-neurips-2025-tdt6hf7jk5/fig-005.webp",
+      "caption": "",
+      "page": 0,
+      "index": 5,
+      "width": 1436,
+      "height": 208,
+      "label": "Figure"
+    },
+    {
+      "url": "assets/figures/openreview/openreview-neurips-2025-tdt6hf7jk5/fig-006.webp",
+      "caption": "",
+      "page": 0,
+      "index": 6,
+      "width": 1440,
+      "height": 318,
+      "label": "Figure"
+    },
+    {
+      "url": "assets/figures/openreview/openreview-neurips-2025-tdt6hf7jk5/fig-007.webp",
+      "caption": "",
+      "page": 0,
+      "index": 7,
+      "width": 1438,
+      "height": 596,
+      "label": "Figure"
+    },
+    {
+      "url": "assets/figures/openreview/openreview-neurips-2025-tdt6hf7jk5/fig-008.webp",
+      "caption": "",
+      "page": 0,
+      "index": 8,
+      "width": 1431,
+      "height": 1296,
+      "label": "Figure"
+    },
+    {
+      "url": "assets/figures/openreview/openreview-neurips-2025-tdt6hf7jk5/fig-009.webp",
+      "caption": "",
+      "page": 0,
+      "index": 9,
+      "width": 1433,
+      "height": 1007,
+      "label": "Figure"
+    }
+  ]
+}

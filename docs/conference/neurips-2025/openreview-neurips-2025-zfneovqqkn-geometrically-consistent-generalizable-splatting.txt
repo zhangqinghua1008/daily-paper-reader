@@ -1,0 +1,1726 @@
+Title: 4328_Geometrically_Consistent_.pdf
+
+URL Source: https://openreview.net/pdf?id=ZfNeovqQkn
+
+Number of Pages: 19
+
+Markdown Content:
+# Geometrically Consistent Generalizable Splatting 
+
+Anonymous Author(s) 
+
+Affiliation Address 
+
+email 
+
+## Abstract 
+
+Gaussian splatting has emerged as the preferred 3D scene representation due to its 1
+
+incredible speed and accuracy in novel view generation. Various attempts have thus 2
+
+been made to adapt multi-view structure prediction networks to directly predict per-3
+
+pixel 3D Gaussians from images. However, most work has focused on enhancing 4
+
+self-supervised depth prediction networks to estimate additional parameters for 3D 5
+
+Gaussians – orientation, scale, opacity, and appearance. We show that optimizing 6
+
+a view-synthesis loss alone is insufficient to recover geometrically meaningful 7
+
+splats in this simple manner. We systematically analyse and address the inherent 8
+
+ambiguities in learning 3D Gaussian splats with self-supervision to learn pose-free 9
+
+generalisable splatting. Our approach achieves state-of-the-art performance in 10 
+
+(i) geometrically consistent reconstructions, (ii) relative pose estimation between 11 
+
+images, and (iii) novel-view synthesis on the RealEstate10K and ACID datasets. 12 
+
+We also showcase zero-shot capabilities of the proposed generalizable splatting on 13 
+
+ScanNet, where our method substantially outperforms the prior art in recovering 14 
+
+geometry and estimating relative pose. 15 
+
+## 1 Introduction 16 
+
+3D Gaussian splatting (3DGS) [ 22 ] has recently revolutionized 3D structure and appearance modeling 17 
+
+from multi-view images. Departing from traditional depth or point cloud representations of the scene 18 
+
+structure, 3D Gaussians implicitly model surface reflections and environment lighting to encode view-19 
+
+dependent scene appearance. They are memory-efficient compared to explicit volumetric alternatives, 20 
+
+and they facilitate rendering of the scene from arbitrary viewpoints in a fraction of a second. Due to 21 
+
+these capabilities, 3D Gaussians have become a prevalent choice for scene representation. 22 
+
+Learning-based structure estimation methods, such as single- or two-view depth predictors, are 23 
+
+increasingly being adapted to directly predict 3D Gaussians using feedforward neural networks. 24 
+
+Various laudable attempts have been made recently in training neural networks to predict 3D Gaussians 25 
+
+directly from images, achieving photorealistic results without per-scene optimization [ 2, 3 , 43 , 47 ,26 
+
+35 , 54 , 51 ]. These methods are commonly referred to as generalizable Gaussian splatting . Most 27 
+
+generalizable Gaussian splatting methods adapt well-studied one- or multi-view structure prediction 28 
+
+networks [ 46 , 42 , 25 ] to estimate locations of the 3D Gaussians. These networks typically use 29 
+
+image encoders that take in one or multiple images followed by decoders that predict Gaussian 30 
+
+means, in the form of per-pixel depth [ 46 ] or 3D point locations [ 42 , 25 ] for each input view. Nearly 31 
+
+all generalizable Gaussian splatting methods append additional decoders to depth or point-cloud 32 
+
+estimation architectures to predict Gaussian properties such as orientation, scale, opacity and view-33 
+
+dependent color – typically without much foresight. These networks are usually trained by minimizing 34 
+
+view-synthesis loss on a few target views, closely following existing self-supervised depth estimators 35 
+
+– though they differ in image formation due to the underlying change in scene representation. 36 
+
+This prevalent setup overlooks several key issues inherited from the underlying 3DGS optimization: 37 
+
+Submitted to 39th Conference on Neural Information Processing Systems (NeurIPS 2025). Do not distribute. Input View 1   
+
+> Input View 2
+> Gaussians Orientation
+> View 1
+> Rendered RGB
+> Novel View
+> Rendered Depth
+> Novel View
+> Gaussians Orientation
+> View 1
+> Rendered RGB
+> Novel View
+> Rendered Depth
+> Novel View
+> Gaussians Orientation
+> View 1
+> Rendered RGB
+> Novel View
+> Rendered Depth
+> Novel View
+> MVSplat NoPoSplat Ours
+
+Figure 1: Qualitative comparison of mesh reconstructions from two input views. We compare the baseline methods MVSplat [ 3] and NoPoSplat [ 51 ] with our approach on RE10K dataset [ 57 ]. The top row displays the textured meshes reconstructed by fusing virtual depth maps via TSDF; the bottom row visualizes Gaussian-surface normals for the first input view, and the RGB/depth rendered from a novel (virtual) viewpoint. Inaccuracy in rendered depth and normals is evident for both baselines. These inconsistent depths, when fused, create several holes in the mesh reconstruction. Our method recovers accurate geometry of fine details such as the towel, wall painting, and stool. • 3D Gaussians are grossly overparameterized compared to depth maps or point clouds. 38 
+
+Successful estimation of 3D Gaussians typically requires a large number of densely sampled 39 
+
+viewpoints. Few-shot 3DGS is an active field of research and often relies on regularization 40 
+
+priors [59, 4], which are largely ignored when training generalizable splatting networks. 41 
+
+• Unlike per-pixel depths or 3D point locations – which are uniquely defined (up to scale) – 42 
+
+multiple 3D Gaussian configurations can produce equally valid renderings. This inherent 43 
+
+ambiguity makes training difficult, even when depth data is available for supervision. 44 
+
+• Successful per-scene Gaussian splatting methods typically rely on multiple non-45 
+
+differentiable heuristics ( i.e. , splitting, and duplication of Gaussians). However, existing 46 
+
+generalizable methods are trained purely via view-synthesis gradient loss and neglect these 47 
+
+heuristics. i.e. they assume that all Gaussians remain perpetually alive during training. 48 
+
+As a result, existing generalizable Gaussian splatting methods often converge to geometrically 49 
+
+degenerate Gaussians . While the predicted locations (means) remain relatively stable —- benefiting 50 
+
+from well-established single- or multi-view depth estimators – other parameters (opacity, orientation, 51 
+
+scale) are prone to collapse. As shown in Figure 2, existing generalizable approaches struggle to 52 
+
+learn meaningful opacities, orientations, or scales when trained with view-synthesis loss alone in 53 
+
+both pose-aware and pose-free settings. In particular, we observe implausible Gaussian orientations 54 
+
+(in the form of normals) as well as unjustified elongation of the 3D Gaussians (scales). 55 
+
+We show that these artifacts are due to the inherent over-parametrization of geometry in the form 56 
+
+of splats, which require structural consistency priors to make the self-supervised learning viable. 57 
+
+By introducing such priors, our proposed method produces Gaussians that exhibit consistent and 58 
+
+physically plausible geometric patterns. As shown in Figure 2, our proposed method produces 59 
+
+accurate surface normals directly from the predicted Gaussian orientations. The resulting Gaussians – 60 
+
+parameterized as 2D disks in 3D space – are elongated along geometric discontinuities and remain 61 
+
+robust to image textures. The two approaches we selected for visualizing predicted 3D Gaussians 62 
+
+broadly represent distinct underlying representations for encoding Gaussian means: (i) per-pixel 63 
+
+depth maps [ 3], and (ii) per-pixel 3D locations aligned to a common reference frame [ 51 ]. Despite 64 
+
+this difference, to our knowledge, all existing self-supervised generalizable splatting methods suffer 65 
+
+from similar limitations – stemming from their reliance on the representations and loss functions 66 
+
+introduced in [3, 51]. 67 
+
+In this work, we aim to systematically define the ideal configuration of a geometrically consistent 68 
+
+Gaussian and propose appropriate priors to assist generalized Gaussian splatting. To that end, we 69 
+
+opt to build upon the recently proposed NoPoSplat framework [ 51 ] as our baseline. We choose 70 
+
+2MVSplat  NoPoSplat  Ours      
+
+> Gaussian Normals Gaussian Normals
+> Surface
+> Normal
+> Legend
+> Gaussian Isotropy s 3/s 1Gaussian Isotropy s 2/s 1Gaussian Isotropy s 3/s 1Gaussian Isotropy s 2/s 1
+> Source
+> Image I Source
+> Image I
+> Isotropy
+> Legend
+> Isotropic
+> Anisotropic
+> (a)
+> (d)
+> (g)
+> (b)
+> (e)
+> (h)
+> (c)
+> (f)
+> (i)
+> (a)
+> (d)
+> (g)
+> (b)
+> (e)
+> (h)
+> (c)
+> (f)
+> (i)
+
+Figure 2: Qualitative comparison of predicted Gaussian parameters . Each Gaussian has scales 
+
+s1 > s 2 > s 3, where s3 quantifies the uncertainty in localization of the surface the Gaussian belongs to with surface orientation defined by its normal [ 18 ]. Row 1 (ours) shows: (a) the source image to which Gaussians are aligned, (b) skewness of the estimated Gaussians within their own defining plane, and (c) predicted Gaussian orientations visualized as surface-normal maps. Rows 2 and 3 
+
+show results for NoPoSplat and MVSplat, respectively: (d/g) Gaussians’ elongation perpendicular to the dominant plane defined by it, (e/h) Gaussians’ skewness within the dominant plane, and (f/i) normals to the dominant plane. Existing methods yield Gaussian orientations without clear geometric meaning: MVSplat Gaussians (i) align mostly fronto-parallel to the source image plane, and NoPoSplat Gaussians orientations (f) strongly depend on texture, spanning a few dominant directions inconsistent with scene geometry. Our method produces plausible, near-Manhattan structured surface orientations. Baseline Gaussians exhibit significant elongation perpendicular to their dominant surfaces (visible as non-red colors in d/g). Notably, our Gaussians remain relatively circular (blue color in b) on planar, textureless surfaces and become skewed ellipses (red color in b) near sharp geometric edges such as shelves or wall corners. NoPoSplat not only for its state-of-the-art performance across relative camera pose estimation and 71 
+
+view-synthesis but also for its self-supervised formulation, which does not require groundtruth depth 72 
+
+maps. Additionally, utilizing DUSt3R [ 42 ] framework, the approach is one of the few to provide 73 
+
+generalizable splatting from a pair of images without requiring the relative pose of these images. 74 
+
+We address ambiguities in learning over-parametrized 3D Gaussians by adding suitable regularization 75 
+
+terms to the traditionally used view-synthesis loss. Our main observations are: 76 
+
+• Defining the ideal 3D Gaussian orientations to be dominant normals of the scene surfaces (as 77 
+
+in [ 18 ]) helps resolve structural ambiguities to enable learning of the Gaussian orientations. 78 
+
+• Ensuring that the 3D Gaussians are pixel-aligned is extremely important with self-79 
+
+supervision. Particularly pose-free methods that use PnP for relative pose estimation require 80 
+
+pixel alignment to ensure accurate camera pose and geometry prediction. 81 
+
+• Standard priors used to enforce consistency in rendered depth and normal maps [ 18 ] are not 82 
+
+easily deployable for joint learning of pose and structure. Instead, we enforce consistency 83 
+
+between Gaussian orientations and means by leveraging the local image neighborhood of 84 
+
+pixel-aligned Gaussians. This promotes stable training in generalizable splatting networks. 85 
+
+We build upon NoPoSplat [ 51 ], integrating geometric consistency priors, and trained our network 86 
+
+on the RealEstate10K (RE10K) dataset [ 57 ]. Our method outperforms prior work in novel-view 87 
+
+synthesis and, importantly, produces plausible scene geometry that enables direct depth rendering 88 
+
+from arbitrary viewpoints – something current methods cannot achieve. These consistent virtual 89 
+
+depths can be fused using Truncated Signed Distance Function (TSDF) [ 55 ] and the reconstructed 90 
+
+meshes are visualized for comparison with prior art in Figure 1. Our approach also establishes a new 91 
+
+3state-of-the-art in relative pose estimation from image pairs, surpassing methods with task-specific 92 
+
+training such as RoMa [ 6], geometry-supervised approaches such as DUSt3R [ 42 , 25 ], and pose-free 93 
+
+generalizable splatting method [ 51 ] – despite using less data and weaker supervision in some cases. 94 
+
+Our approach achieves state-of-the-art zero-shot 3D reconstruction on ScanNet [ 5], outperforming all 95 
+
+existing pose-free and pose-required generalizable splatting methods. 96 
+
+To the best of our knowledge, this is the first work in the domain of generalizable Gaussian splatting 97 
+
+which systematically analyze and evaluate the veracity and geometric meaningfulness of predicted 98 
+
+Gaussian orientations and elongations. We address the shortcomings of existing approaches in 99 
+
+training generalizable splatting networks to produce Gaussians that enable accurate depth rendering 100 
+
+from virtual views. We believe that the presented analysis lays the groundwork for future research 101 
+
+on training neural networks to predict Gaussions form images, in both depth-supervised and self-102 
+
+supervised setups. 103 
+
+## 2 Related Work 104 
+
+Owing to the state-of-the-art real-time view synthesis performance of 3D Gaussian splitting [ 22 ], 105 
+
+significant effort has been put into improving 3DGS for scenarios such as few-view reconstruction 106 
+
+[ 59 , 4, 26 , 16 , 45 , 39 ], dynamically moving objects [ 44 , 49 , 48 , 29 ], surface extraction [ 15 , 18 ], and 107 
+
+incorporating object semantics into 3D reconstructions [ 27 ]. Real-time simultaneous localization and 108 
+
+mapping approaches have also adapted Gaussian splats as an inherent scene representation [ 31 , 21 ]. 109 
+
+Additionally, Gaussian splats have been used for generating geometrically consistent images and 110 
+
+video sequences [41, 44]. 111 
+
+The deep learning revolution of the last decade has significantly influenced geometric inference from 112 
+
+one or more images. Earlier works focused on training neural networks to map a single image to 113 
+
+depth map obtained from range sensors [ 8 , 23 , 9 , 24 , 33 ]. Multi-view extensions for these supervised 114 
+
+learning algorithms are well explored as well [ 1, 19 , 50 , 14 , 40 , 38 ]. More recently, methods have 115 
+
+explored reconstructing registered sets of per-pixel point clouds from multiple images, providing 116 
+
+state-of-the-art relative pose and scene structure [42, 25]. 117 
+
+Additionally, it has been demonstrated that these feed-forward geometry prediction networks can be 118 
+
+trained without depth sensors in a self-supervised manner by minimizing view synthesis losses [ 11 , 12 ,119 
+
+56 , 53 , 13 ]. Structure prediction from single or few images has also been utilized as an optimization-120 
+
+free building block in high-fidelity tracking and mapping systems [ 58 , 60 ]. Generalizable Gaussian 121 
+
+Splatting methods have evolved recently to learn neural networks that predict 3D Gaussians explaining 122 
+
+a scene directly from a few images. We broadly categorize these methods into following two 123 
+
+categories: 124 
+
+Pose-Dependent Generalizable 3DGS : Several works assume input images come with known or pre-125 
+
+computed poses (e.g., via SfM) and focus on designing architectures to infer 3D Gaussians from these 126 
+
+posed views [ 2 , 3 , 32 , 43 , 47 , 10 , 37 , 54 ]. A prominent example is pixelSplat [ 2], which introduced a 127 
+
+two-view feed-forward network that utilizes epipolar cross attention transformer architecture to fuse 128 
+
+multi-view information and predict per-pixel depth distribution for input images. This distributions 129 
+
+are sampled to create a set of 3D Gaussian centers along the viewing rays. MVSplat [ 3] uses cost 130 
+
+volume based fusion of multi-view information, adapting the Unimatch [ 46 ] architecture to regress 131 
+
+for depth instead. Both methods use additional decoder heads to estimate rest of the 3D Gaussian 132 
+
+parameters. 133 
+
+Pose-Free Generalizable 3DGS : An emerging frontier involves dispensing with known camera 134 
+
+poses—allowing the network to infer scene geometry and camera registration jointly from images 135 
+
+alone [ 35 , 20 , 51 ]. Early efforts in this direction often build upon learned stereo matching. For 136 
+
+example, [ 35 ] tackles uncalibrated stereo pairs by extending a foundation model (MASt3R [ 25 ]) that 137 
+
+predicts dense point clouds from two images. It then outputs 3D Gaussians directly in a canonical 138 
+
+frame, augmenting each point in the MASt3R reconstruction with color and covariance attributes. 139 
+
+This process is supervised using the geometry of the 3D point cloud and followed by a novel-view 140 
+
+synthesis stage to fine-tune appearance. NoPoSplat [ 51 ] adopts a more self-supervised, multi-view 141 
+
+approach by anchoring one view’s coordinate system as canonical and training a network to predict 142 
+
+all Gaussians directly in that space, using only a photometric loss for training. 143 
+
+4To the best of our knowledge, all aforementioned generalizable splitting methods struggle to learn 144 
+
+geometrically faithful orientations and scales for 3D Gaussians. The proposed approach alleviates 145 
+
+this issue from generalizable splatting using appropriate geometric priors. 146 
+
+## 3 Method 147 
+
+In this section, we present our generalizable Gaussian splatting framework and loss functions 148 
+
+we propose to address the ill-posed nature of self-supervised learning in predicting geometrically 149 
+
+consistent Gaussians. For the architectural details, we refer the reader to supplementary material. 150 
+
+Problem Definition Assuming that we are given a set of sparse images I = {It ∈ RH×W ×3}Tt=1 151 
+
+(which is also known as context images in [ 2, 35 , 3, 51 , 47 , 20 ]), each with known camera intrinsics 152 
+
+that form the set K = {Kt ∈ R3×3}Tt=1 capturing a rigid scene, our aim is to learn a feedforward 153 
+
+neural network fΘ that maps these images and intrinsics (I, K) to a set of pixel-aligned Gaussians as 154 
+
+fΘ(I, K) = 
+
+n
+
+Gjt := 
+
+
+
+μjt , α jt , qjt , sjt , cjt
+
+o j=1: H×Wt=1: T
+
+, (1) where Gjt is the 2D Gaussian defined in the 3D space corresponding to a pixel j in image t. Each Gjt155 
+
+is characterized by its center μ ∈ R3; orientation represented by a unit quaternion vector q ∈ R4;156 
+
+two scale parameters s ∈ R2 defining the elongation of the 3D Gaussians; opacity α ∈ R; and color 157 
+
+encoded as spherical harmonics c ∈ Rd. In this work, we advocate the use of 2D Gaussians [ 18 ] to 158 
+
+represent the scene instead of the standard 3D Gaussians adopted by prevalent generalizable Gaussian 159 
+
+splatting frameworks [ 2, 3, 47 , 51 ]. Following [ 18 ], we assume that estimated Gaussians are aligned 160 
+
+with the scene surface and its elongation perpendicular to the local surface normal is zero. We show 161 
+
+through extensive evaluations how this choice helps generalizable Gaussian splatting in Section 4. 162 
+
+Note that both Gaussian centers μjt and orientations qjt are defined in the image coordinates of 163 
+
+the first image I1. Given these M × N × T Gaussians predictions, we render novel views of the 164 
+
+scene {ˆIf ∈ RH×W ×3}Ff =1 ⊂ I from F different viewpoints defined by its projection matrix 165 
+
+Pf = ( Rf , Tf ) ∈ SE(3) to be matched with its observed images If s during training. 166 
+
+We propose to minimize the view synthesis loss [51, 3, 2] from the predicted Gaussians as 167 
+
+Lsynthesis =
+
+> F
+
+X 
+
+> f=1
+
+Lrgb (If , ˆIf ) + Llpips (If , ˆIf ), (2) where ˆIf (u, v ) is the color corresponding to a pixel (u, v ) in image If rendered by blending K168 
+
+ordered projected Gaussians G′ using the 2DGS rasterizer as 169 
+
+ˆIf (u, v ) = 
+
+> K
+
+X
+
+> k=1
+
+ckαkG′(u, v )Π k−1 
+
+> j=1
+
+(1 − αj G′(u, v )) , (3) Note that G′ is the projection of the Gaussians G onto the 2D image plane of the image If , see 170 
+
+supplementary material for more details. 171 
+
+As shown in Section 4, solely relying on view synthesis loss is proven to be insufficient for learning 172 
+
+geometrically meaningful Gaussians. In this work, we propose to minimize two additional regular-173 
+
+ization losses: (i) a depth-surface normal consistency term Lorient to align the orientations of the 174 
+
+Gaussians with the rendered depth; (ii) a grid alignment loss Lalign to ensure that the estimated 175 
+
+Gaussians are aligned with the pixels of the provided images. Combining these two regularization 176 
+
+with the view synthesis loss, we define our training objective function Ltotal as 177 
+
+Ltotal = Lsynthesis + λoLorient + λaLalign , (4) where λo and λa are weighting factors balancing the influence of each regularization. We discuss the 178 
+
+motivation, formulation and impact of the regularization term in the following sections. 179 
+
+3.1 Learning Gaussian’s Orientations. 180 
+
+Recall that existing pose-free and pose-aware generalized Gaussian splatting approaches struggle 181 
+
+to learn meaningful Gaussian’s orientations, see Figure 2. To provide geometric meaning for the 182 
+
+5orientations of the Gaussians, we propose to align them with the dominant surface normals of the 183 
+
+scene they belong to. To that end, we follow the setup in [ 18 ] to estimate only two non-zero Gaussian 184 
+
+scales (sj, 1 
+
+> t
+
+, s j, 2 
+
+> t
+
+) and set the third sj, 3 
+
+> t
+
+(along the normal) to zero, so each Gaussian is "flat" in one 185 
+
+direction. The resulting rank-deficient Gaussian covariance matrix Σjt is defined as 186 
+
+Σjt = R(qjt ) diag ([ sj, 1 
+
+> t
+
+, s j, 2 
+
+> t
+
+, 0] T ) ( R(qjt )) T , where R(qjt ) ∈ SO(3) (5) whose null space – the zero-eigenvalue direction – encodes the Gaussian’s surface normal that is 187 
+
+predicted by the network N jt .188 
+
+Swapping 3D Gaussians to 2D surface elements reduces the over-parameterization to an extent; 189 
+
+however, the view synthesis loss of eq. (3) does not provide a sufficiently strong supervision signal for 190 
+
+learning orientations. The most natural way to supervise Gaussian orientation is to use surface normal 191 
+
+regularization prior from [ 18 ], where the authors propose to enforce consistency between rendered 192 
+
+normal and rendered depth maps while doing splatting. Naively deploying such regularization to 193 
+
+train our model does not work well. In the supplementary material, we discuss our observations and 194 
+
+provide remedies for successfully adapting such regularization. 195 
+
+Instead, we propose to use a simple yet effective alternative to supervise the predicted Gaussian 196 
+
+orientation qjt . Leveraging the assumption that each Gaussian Gjt is aligned with the 2D image 197 
+
+pixel j = ( u, v ) in image t, we define the local surface normal for Gjt using the 3D positions of its 198 
+
+neighboring pixels as ˆN jt . We enforce these estimated local surface normals to be consistent with 199 
+
+the predicted normal N jt (null space of the convenience matrix Σjt ) by minimizing the following loss 200 
+
+Lorient = 1
+
+T (H − 2)( W − 2) 
+
+> T
+
+X 
+
+> t=1
+> W−1
+
+X
+
+> u=2
+> H−1
+
+X
+
+> v=2
+
+∥1− < N jt , ˆN jt > ∥ρ, (6) 
+
+ˆN jt = ∥(μ(u+1 ,v ) 
+
+> t
+
+− μ(u−1,v ) 
+
+> t
+
+) × (μ(u,v +1)  
+
+> t
+
+− μ(u,v −1)  
+
+> t
+
+)∥∗, (7) where, < ., . > and , .×. are dot and cross-product or two vectors, ∥.∥∗ represents vector normalization 201 
+
+and ∥.∥ρ is Huber loss (implemented as SmoothL1Loss in Pytorch). 202 
+
+Note that, unlike the loss used in 2D Gaussian splatting (2DGS) [ 18 ], Lorient does not involve any 203 
+
+rasterization, providing a direct supervision for orientation given the Gaussian means. In fact, the 204 
+
+proposed loss mimics the standard loss used for supervised learning of surface normals [ 7], where the 205 
+
+ground truth normals are estimated from the depths using eq. (7). This simple loss in our experiments 206 
+
+outperforms alternatives and can be used for depth supervised training of generalizable splats as well. 207 
+
+3.2 Pixel-aligned Gaussians 208 
+
+Although the first generalizable splatting approach [ 2] worked in a pose-aware setup and adapted 209 
+
+two-view depth prediction network, they by construction constrains every Gaussians to lie on its corre-210 
+
+sponding viewing ray. Pose-free variants [ 51 ] drop the camera pose assumption by directly estimating 211 
+
+the Gaussian’s locations in the canonical space using a DPT decoder. While this removes the need to 212 
+
+warp Gaussians with known cameras, the parametrization rendered the structure estimation problem 213 
+
+ill-posed especially under self-supervised regime. Specifically, in contrast to depth-supervised frame-214 
+
+works like DUSt3R [ 42 ], which learns an implicit structural prior by enforcing the reconstructed 3D 215 
+
+point cloud to project onto the regular image grid, the view synthesis loss in eq. (3) does not offer 216 
+
+such constraint. Gaussians can therefore move freely into geometrically degenerate configurations, 217 
+
+hampering both structure and relative pose estimation. 218 
+
+Therefore, we explicitly align each Gaussians to with its pixel’s viewing ray. Specifically, for each 219 
+
+pixel (u, v ) in frame t, the Gaussian’s centers μ(u,v ) 
+
+> t
+
+must be projected to that pixel location with 220 
+
+known camera extrinsics (R, T) and intrinsic matrix K. We enforce this with the alignment loss as 221 
+
+Lalign = 1
+
+P 
+
+> t,u,v
+
+M(u,v )
+
+> tT
+
+X
+
+> t=1
+> W
+
+X
+
+> u=1
+> H
+
+X
+
+> v=1
+
+M(u,v ) 
+
+> t
+
+∥[u, v ]T − Π( Kt[Rt|Tt]μ(u,v ) 
+
+> t
+
+)∥22; (8) where Mu,v t is 1 if the Gaussian projects inside the image and have positive depths (otherwise 0) and 222 
+
+Π([ X, Y, Z ]T ) = [ X/Z, Y /Z ]T is the perspective projection function. We demonstrate in Section 4 223 
+
+that the proposed loss plays a crucial role in PnP-based relative pose estimation (Table 1) as well as 224 
+
+accurate structure estimation (Table 3). 225 
+
+6Table 1: Pose estimation (AUC) at multiple error thresholds on RE10K [ 57 ] (in-domain) and on ScanNet-V1 [ 5] and ACID [ 30 ] (cross-domain). The overall best results are shown in bold , and the best result-whether with or without photometric optimization-is underlined in each section. Methods marked with † are trained on additional data (e.g., ScanNet, ACID), and those marked with ‡ use extra supervision (e.g., ground-truth depth). RE10K ScanNet-V1 ACID Method 5◦ ↑ 10 ◦ ↑ 20 ◦ ↑ 5◦ ↑ 10 ◦ ↑ 20 ◦ ↑ 5◦ ↑ 10 ◦ ↑ 20 ◦ ↑
+
+CoPoNeRF † 0.161 0.362 0.575 - - - 0.078 0.216 0.398 DUSt3R †‡ 0.301 0.495 0.657 0.085 0.210 0.398 0.166 0.304 0.437 MASt3R †‡ 0.372 0.561 0.709 0.083 0.200 0.381 0.234 0.396 0.541 RoMa †‡ 0.546 0.698 0.797 0.168 0.361 0.575 0.463 0.588 0.689 
+
+PnP+RANSAC only 
+
+NoPoSplat 0.572 0.728 0.833 0.078 0.198 0.394 0.337 0.497 0.646 Ours (2DGS) 0.588 0.737 0.832 0.085 0.223 0.432 0.344 0.513 0.659 Ours (2DGS+Align) 0.621 0.760 0.849 0.123 0.279 0.471 0.382 0.540 0.674 Ours (2DGS+Orient) 0.613 0.756 0.848 0.118 0.267 0.460 0.376 0.537 0.673 Ours (2DGS+Align+Orient) 0.627 0.766 0.855 0.135 0.289 0.479 0.392 0.547 0.679 
+
+w/ Photometric Optimisation 
+
+NoPoSplat 0.672 0.791 0.868 0.109 0.256 0.463 0.456 0.593 0.705 Ours (2DGS) 0.672 0.788 0.859 0.129 0.298 0.515 0.460 0.599 0.713 Ours (2DGS+Align) 0.686 0.799 0.870 0.136 0.311 0.512 0.474 0.607 0.718 Ours (2DGS+Orient) 0.679 0.798 0.871 0.141 0.323 0.520 0.475 0.610 0.721 
+
+Ours (2DGS+Align+Orient) 0.689 0.804 0.876 0.156 0.334 0.539 0.488 0.619 0.726 
+
+## 4 Experiments 226 
+
+Datasets and implementation details. Following [ 2 , 3, 51 ], we train our models on the large-scale 227 
+
+RealEstate10K [ 57 ] (RE10K) dataset, with the train-test splits used by [ 51 ]. RE10K comprises 228 
+
+predominantly indoor real-estate videos from YouTube, containing 67,477 training and 7,289 testing 229 
+
+scenes, with camera poses computed using COLMAP [ 34 ]. For evaluating generalization, we further 230 
+
+test on two additional datasets: ACID [ 30 ], containing aerial nature scenes captured by drones (with 231 
+
+COLMAP-computed poses), and ScanNet [ 5 ], an RGB-D indoor scene dataset with distinct camera 232 
+
+motion and characteristics. Specifically, we evaluate relative pose and geometry estimation on the 233 
+
+ScanNet. Our training broadly follows recent generalizable splatting methods; full details are in 234 
+
+supplementary material. Code and models will be released. 235 
+
+4.1 Relative Pose Evaluation 236 
+
+Relative pose is evaluated by computing the AUC of the cumulative pose error curve at three 237 
+
+thresholds. We report results deploying a PnP + RANSAC algorithm to align the Gaussian means 238 
+
+Table 2: Depth estimation for novel views on ScanNet-V1 [ 5]. We use the novel-view rendered depth accuracy as a holistic measure of 3D reconstruction and interpolation. Our method outperforms all competitors on every metric. Best scores are in bold , and top results without pose refinement are underlined. Pose-required methods are marked †.Pose-required † w/o Pose Refine. w Pose Refine. Metric PixelSplat MVSplat DepthSplat NoPoSplat Ours (2DGS) NoPoSplat Ours (2DGS) (3DGS) (3DGS) (3DGS) (3DGS) λa, λ o = 0 λo = 0 λa = 0 λa, λ o̸ = 0 (3DGS) λa, λ o = 0 λo = 0 λa = 0 λa, λ o̸ = 0                                               
+
+> Abs Rel ↓0.299 0.189 0.135 0.131 0.121 0.109 0.115 0.108 0.126 0.114 0.102 0.106 0.100
+> δ1<1.10 ↑0.552 0.412 0.578 0.554 0.668 0.679 0.674 0.680 0.567 0.692 0.706 0.704 0.707
+> δ1<1.25 ↑0.818 0.745 0.864 0.851 0.879 0.890 0.884 0.892 0.861 0.884 0.901 0.898 0.904
+
+Table 3: Depth estimation for source views on ScanNet-V1 [ 5 ]. Best self-supervised scores are in 
+
+bold , and top results without pose refinement are underlined . Pose-required methods are marked †,and those using extra supervision (e.g., ground-truth depth) are marked ‡ (upper-bound reference). Supervised ‡ Pose-required † Pose-free w/o Refine. Pose-free w Refine. Metric DUSt3R pixelSplat MVSplat DepthSplat NoPoSplat Ours (2DGS) NoPoSplat Ours (2DGS) (3DGS) (3DGS) (3DGS) (3DGS) λa, λ o = 0 λo = 0 λa = 0 λa, λ o̸ = 0 (3DGS) λa, λ o = 0 λo = 0 λa = 0 λa, λ o̸ = 0                                                  
+
+> Abs Rel ↓0.059 0.288 0.132 0.105 0.121 0.118 0.111 0.114 0.109 0.112 0.105 0.100 0.102 0.098
+> δ1<1.10 ↑0.886 0.553 0.641 0.722 0.662 0.665 0.672 0.671 0.675 0.698 0.705 0.714 0.713 0.716
+> δ1<1.25 ↑0.967 0.820 0.891 0.914 0.869 0.875 0.886 0.881 0.888 0.883 0.894 0.904 0.900 0.907
+
+7Inputs pixelSplat MVSplat NoPoSplat DepthSplat Ours GT RGB 
+
+Figure 3: Qualitative comparison of rendered novel-view depth on RE10k [ 57 ] (top two rows) and ACID [30] (bottom row). Inputs pixelSplat MVSplat NoPoSplat DepthSplat Ours GT Depth 
+
+Figure 4: Qualitative comparison of rendered novel-view depth on ScanNet-V1 [5]. 
+
+with image grid as proposed in DUSt3R[ 42 ]. NoPosplat [ 51 ] proposes a gradient-descent relative 239 
+
+pose refinement in which the predicted Gaussians are rendered to generate optimal input image 240 
+
+pairs for refining the pose obtained by PnP+RANSAC. Pose Jacobians from [ 31 ] are used for this 241 
+
+refinement over a fixed number of iterations. Since these Jacobians expect 3D Gaussians, we lift our 242 
+
+2D Gaussians by assigning a small nonzero third scale, to facilitate comparisons. 243 
+
+Table 1 compares relative pose estimation across several methods. CoPoNeRF [ 17 ] is trained on 244 
+
+RE10K and ACID with explicit pose supervision; DUSt3R [ 42 ] uses indoor RGB-D and Internet SfM 245 
+
+data (e.g., ScanNet ++ [52 ], MegaDepth [ 28 ]) with a 3D regression loss supervising both depth and 246 
+
+pose; MASt3R [ 25 ] follows DUSt3R’s scheme but adds large-scale outdoor sequences (Waymo [ 36 ]); 247 
+
+RoMA [ 6] is trained on MegaDepth and ScanNet with depth-and-pose supervision. In contrast, 248 
+
+our models use no explicit depth supervision and are trained only on RE10K data. Despite this, 249 
+
+we outperform all these methods by a large margin, both on the in-domain RE10K test set and in 250 
+
+8zero-shot evaluations on ACID and ScanNet. The sole exception is RoMA [ 6] on ScanNet-V1, the 251 
+
+dataset it was explicitly trained on for relative pose estimation. 252 
+
+Compared to NoPoSplat, our method yields substantial relative-pose gains using only PnP+RANSAC. 253 
+
+Incorporating the alignment loss Lalign produces marked improvements in both in-domain and 254 
+
+cross-domain zero-shot tests, while the orientation loss Lorient provides a further pose-estimation 255 
+
+boost, with the combined full loss achieving the best performance. As in NoPoSplat, minimizing the 256 
+
+input-image synthesis loss also benefits our pose estimation. Although gains on RE10K and ACID 257 
+
+were modest, we observe proportionally larger improvements on ScanNet-V1 with this optimization. 258 
+
+4.2 Geometry Evaluation 259 
+
+Geometric veracity of the estimated 2D/3D Gaussian splats is the key focus of this work. Traditionally, 260 
+
+the geometry predicted by feed-forward neural networks is evaluated by measuring the depth errors 261 
+
+for the input views. However, input depths do not capture the interpolation capability of predicted 262 
+
+Gaussians and are insensitive to the opacity, orientation, and scale. We propose a more holistic 263 
+
+evaluation of the predicted scene structure by rendering multiple virtual depth maps from the 264 
+
+reconstructed Gaussians and reporting Absolute Relative Error and depth accuracy for two different 265 
+
+thresholds. As we do not aim to extrapolate beyond the given view frustum, we use the same 266 
+
+view-synthesis test set for depth evaluation. Virtual depth maps are rendered using the ground-truth 267 
+
+relative pose w.r.t the first input frame, assuming perfectly aligned multi-view Gaussians. This puts 268 
+
+pose-free methods at a severe disadvantage – small pose alignment errors amplify depth errors – yet 269 
+
+they outperform pose-aware counterparts by a large margin, as shown in Table 3. Our approach 270 
+
+substantially outperforms the NoPoSplat baseline. While the 2DGS parameterization improves 271 
+
+the accuracy of structure recovery, the orientation and alignment losses deliver much larger gains. 272 
+
+This trend persists even after per-image pose optimization is performed to align the recovered 3D 273 
+
+Gaussians isolating pose-estimation error from reconstruction quality. 274 
+
+We compare novel-view depth estimation of our method against pixelSplat [ 2], MVSplat [ 3], NoPoS-275 
+
+plat [ 51 ] and DepthSplat [ 47 ] in Figure 3 on RE10K and ACID. MVSplat, DepthSplat and NoPoSplat 276 
+
+depths are hypersensitive to texture, while pixelSplat produces notably noisier depths in textureless 277 
+
+regions. In contrast, our method yields more plausible depths despite not requiring relative poses. 278 
+
+Similar trends are observed in Figure 4 on ScanNet test scenes. 279 
+
+While our primary goal is to predict pixel-aligned, geometrically consistent Gaussians for novel-view 280 
+
+depth rendering, we also benchmark source-view depth estimation accuracy of all baseline methods in 281 
+
+Table 3. For each method, we report their best depth—whether rendered from Gaussians or predicted 282 
+
+by their depth-estimation head—under its best-performing configuration. For example, pixelSplat 283 
+
+attains its highest accuracy using rendered depth, whereas MVSplat and DepthSplat perform best 284 
+
+with their network-predicted depths. Our method achieves the lowest AbsRel error and performs 285 
+
+competitively in thresholded accuracy, slightly trailing DepthSplat [ 47 ]. More detailed results for 286 
+
+one- and two-view depth prediction are provided in the supplementary material. 287 
+
+4.2.1 Novel View Synthesis Evaluation 288 
+
+While not central to our contributions, we evaluate in-domain novel-view synthesis against relevant 289 
+
+baselines. Our method outperforms prior work in novel-view synthesis on Re10K dataset, largely 290 
+
+thanks to its warping-free formulation. We also observe improvements over NoPoSplat when training 291 
+
+with our proposed loss. Detailed results in the supplementary material. 292 
+
+## 5 Conclusion 293 
+
+We propose a novel self-supervised, generalizable splatting network that mitigates geometric incon-294 
+
+sistencies in Gaussian splat recovery previously overlooked by the community. Our model produces 295 
+
+state-of-the-art, geometrically consistent Gaussian splats from just two unposed images. While 296 
+
+we train on RE10k using an asymmetric transformer architecture under self-supervision, our core 297 
+
+contributions are invariant to these design choices. The priors introduced here will help future work 298 
+
+on generalizable splatting and learning-based 3D scene recovery. 299 
+
+9References 300 
+
+[1] Jia-Ren Chang and Yong-Sheng Chen. Pyramid stereo matching network. In CVPR , 2018. 4 301 
+
+[2] David Charatan, Sizhe Lester Li, Andrea Tagliasacchi, and Vincent Sitzmann. pixelsplat: 3d gaussian 302 
+
+splats from image pairs for scalable generalizable 3d reconstruction. In CVPR , 2024. 1, 4, 5, 6, 7, 9 303 
+
+[3] Yuedong Chen, Haofei Xu, Chuanxia Zheng, Bohan Zhuang, Marc Pollefeys, Andreas Geiger, Tat-Jen 304 
+
+Cham, and Jianfei Cai. Mvsplat: Efficient 3d gaussian splatting from sparse multi-view images. In ECCV ,305 
+
+2024. 1, 2, 4, 5, 7, 9 306 
+
+[4] Jaeyoung Chung, Jeongtaek Oh, and Kyoung Mu Lee. Depth-regularized optimization for 3d gaussian 307 
+
+splatting in few-shot images. In CVPR , 2024. 2, 4 308 
+
+[5] Angela Dai, Angel X Chang, Manolis Savva, Maciej Halber, Thomas Funkhouser, and Matthias Nießner. 309 
+
+Scannet: Richly-annotated 3d reconstructions of indoor scenes. In CVPR , 2017. 4, 7, 8 310 
+
+[6] Johan Edstedt, Qiyu Sun, Georg Bökman, Mårten Wadenbäck, and Michael Felsberg. Roma: Robust dense 311 
+
+feature matching. In CVPR , 2024. 4, 8, 9 312 
+
+[7] David Eigen and Rob Fergus. Predicting depth, surface normals and semantic labels with a common 313 
+
+multi-scale convolutional architecture. In Proceedings of the IEEE international conference on computer 314 
+
+vision , pages 2650–2658, 2015. 6 315 
+
+[8] David Eigen, Christian Puhrsch, and Rob Fergus. Depth map prediction from a single image using a 316 
+
+multi-scale deep network. In NeurIPS , 2014. 4 317 
+
+[9] Huan Fu, Mingming Gong, Chaohui Wang, Kayhan Batmanghelich, and Dacheng Tao. Deep ordinal 318 
+
+regression network for monocular depth estimation. In CVPR , 2018. 4 319 
+
+[10] Yang Fu, Sifei Liu, Amey Kulkarni, Jan Kautz, Alexei A Efros, and Xiaolong Wang. Colmap-free 3d 320 
+
+gaussian splatting. In CVPR , 2024. 4 321 
+
+[11] Ravi Garg, Vijay Kumar Bg, Gustavo Carneiro, and Ian Reid. Unsupervised cnn for single view depth 322 
+
+estimation: Geometry to the rescue. In ECCV , 2016. 4 323 
+
+[12] Clément Godard, Oisin Mac Aodha, and Gabriel J Brostow. Unsupervised monocular depth estimation 324 
+
+with left-right consistency. In CVPR , 2017. 4 325 
+
+[13] Clement Godard, Oisin Mac Aodha, Michael Firman, and Gabriel J. Brostow. Digging into self-supervised 326 
+
+monocular depth estimation. In ICCV , 2019. 4 327 
+
+[14] Xiaodong Gu, Zhiwen Fan, Siyu Zhu, Zuozhuo Dai, Feitong Tan, and Ping Tan. Cascade cost volume for 328 
+
+high-resolution multi-view stereo and stereo matching. In CVPR , 2020. 4 329 
+
+[15] Antoine Guédon and Vincent Lepetit. Sugar: Surface-aligned gaussian splatting for efficient 3d mesh 330 
+
+reconstruction and high-quality mesh rendering. CVPR , 2024. 4 331 
+
+[16] Liang Han, Junsheng Zhou, Yu-Shen Liu, and Zhizhong Han. Binocular-guided 3d gaussian splatting with 332 
+
+view consistency for sparse view synthesis. NeurIPS , 2024. 4 333 
+
+[17] Sunghwan Hong, Jaewoo Jung, Heeseong Shin, Jiaolong Yang, Seungryong Kim, and Chong Luo. Unifying 334 
+
+correspondence pose and nerf for generalized pose-free novel view synthesis. In CVPR , 2024. 8 335 
+
+[18] Binbin Huang, Zehao Yu, Anpei Chen, Andreas Geiger, and Shenghua Gao. 2d gaussian splatting for 336 
+
+geometrically accurate radiance fields. In ACM SIGGRAPH 2024 , 2024. 3, 4, 5, 6 337 
+
+[19] Jia-Bin Huang, Iain Matthews, and Wolf Kienzle. Deepmvs: Learning multi-view stereopsis. In CVPR ,338 
+
+2018. 4 339 
+
+[20] Seunghyun Kang, Hyunwoo Lee, and Hyeongju Chae. Selfsplat: Pose-free and 3d-prior-free generalizable 340 
+
+3d gaussian splatting. CVPR , 2025. 4, 5 341 
+
+[21] Nikhil Keetha, Jay Karhade, Krishna Murthy Jatavallabhula, Gengshan Yang, Sebastian Scherer, Deva 342 
+
+Ramanan, and Jonathon Luiten. Splatam: Splat, track & map 3d gaussians for dense rgb-d slam. In CVPR ,343 
+
+2024. 4 344 
+
+[22] Bernhard Kerbl, Georgios Kopanas, Thomas Leimkühler, and George Drettakis. 3d gaussian splatting for 345 
+
+real-time radiance field rendering. ACM TOG , 2023. 1, 4 346 
+
+10 [23] Iro Laina, Christian Rupprecht, Vasileios Belagiannis, Federico Tombari, and Nassir Navab. Deeper depth 347 
+
+prediction with fully convolutional residual networks. In 3DV , 2016. 4 348 
+
+[24] Jin Han Lee, Youngbok Bae, and In So Kweon Han. Bts: Depth estimation via local planar guidance. 349 
+
+arXiv preprint arXiv:1907.10326 , 2019. 4 350 
+
+[25] Vincent Leroy, Yohann Cabon, and Jérôme Revaud. Grounding image matching in 3d with mast3r. arXiv 351 
+
+preprint arXiv:2406.09756 , 2024. 1, 4, 8 352 
+
+[26] Jiahe Li, Jiawei Zhang, Xiao Bai, Jin Zheng, Xin Ning, Jun Zhou, and Lin Gu. Dngaussian: Optimizing 353 
+
+sparse-view 3d gaussian radiance fields with global-local depth normalization. In CVPR , 2024. 4 354 
+
+[27] Mingrui Li, Shuhong Liu, Heng Zhou, Guohao Zhu, Na Cheng, Tianchen Deng, and Hongyu Wang. 355 
+
+Sgs-slam: Semantic gaussian splatting for neural dense slam. In ECCV , 2024. 4 356 
+
+[28] Zhengqi Li and Noah Snavely. Megadepth: Learning single-view depth prediction from internet photos. In 357 
+
+CVPR , 2018. 8 358 
+
+[29] Zhan Li, Zhang Chen, Zhong Li, and Yi Xu. Spacetime gaussian feature splatting for real-time dynamic 359 
+
+view synthesis. In CVPR , 2024. 4 360 
+
+[30] Andrew Liu, Richard Tucker, Varun Jampani, Ameesh Makadia, Noah Snavely, and Angjoo Kanazawa. 361 
+
+Infinite nature: Perpetual view generation of natural scenes from a single image. In ICCV , 2021. 7, 8 362 
+
+[31] Hidenobu Matsuki, Riku Murai, Paul HJ Kelly, and Andrew J Davison. Gaussian splatting slam. In CVPR ,363 
+
+2024. 4, 8 364 
+
+[32] Zhiyuan Min, Yawei Luo, Jianwen Sun, and Yi Yang. Epipolar-free 3d gaussian splatting for generalizable 365 
+
+novel view synthesis. NeurIPS , 2024. 4 366 
+
+[33] René Ranftl, Alexey Bochkovskiy, and Vladlen Koltun. Vision transformers for dense prediction. In ICCV ,367 
+
+2021. 4 368 
+
+[34] Johannes L Schonberger and Jan-Michael Frahm. Structure-from-motion revisited. In CVPR , 2016. 7 369 
+
+[35] Brandon Smart, Chuanxia Zheng, Iro Laina, and Victor Adrian Prisacariu. Splatt3r: Zero-shot gaussian 370 
+
+splatting from uncalibrated image pairs. arXiv preprint arXiv:2408.13912 , 2024. 1, 4, 5 371 
+
+[36] Pei Sun, Henrik Kretzschmar, Xerxes Dotiwalla, Aurelien Chouard, Vijaysai Patnaik, Paul Tsui, James 372 
+
+Guo, Yin Zhou, Yuning Chai, Benjamin Caine, et al. Scalability in perception for autonomous driving: 373 
+
+Waymo open dataset. In CVPR , 2020. 8 374 
+
+[37] Shengji Tang, Weicai Ye, Peng Ye, Weihao Lin, Yang Zhou, Tao Chen, and Wanli Ouyang. Hisplat: 375 
+
+Hierarchical 3d gaussian splatting for generalizable sparse-view reconstruction. ICLR , 2025. 4 376 
+
+[38] Benjamin Ummenhofer, Hao Zhou, Jonas Uhrig, Nikolaus Mayer, Eddy Ilg, Alexey Dosovitskiy, and 377 
+
+Thomas Brox. Demon: Depth and motion network for learning monocular stereo. In CVPR , 2017. 4 378 
+
+[39] Ziyu Wan, Hao Gao, Rui Xiong, and Fang Du. S2gaussian: Sparse-view super-resolution 3d gaussian 379 
+
+splatting. In CVPR , 2025. 4 380 
+
+[40] Fangjinhua Wang, Silvano Galliani, Christoph Vogel, Pablo Speciale, and Marc Pollefeys. Patchmatchnet: 381 
+
+Learned multi-view patchmatch stereo. In CVPR , 2021. 4 382 
+
+[41] Qianqian Wang, Yifei Zhang, Aleksander Holynski, Alexei A. Efros, and Angjoo Kanazawa. Continuous 383 
+
+3d perception model with persistent state. In CVPR , 2025. 4 384 
+
+[42] Shuzhe Wang, Vincent Leroy, Yohann Cabon, Boris Chidlovskii, and Jerome Revaud. Dust3r: Geometric 385 
+
+3d vision made easy. In CVPR , 2024. 1, 3, 4, 6, 8 386 
+
+[43] Yunsong Wang, Tianxin Huang, Hanlin Chen, and Gim Hee Lee. Freesplat: Generalizable 3d gaussian 387 
+
+splatting towards free view synthesis of indoor scenes. NeurIPS , 2024. 1, 4 388 
+
+[44] Guanjun Wu, Taoran Yi, Jiemin Fang, Lingxi Xie, Xiaopeng Zhang, Wei Wei, Wenyu Liu, Qi Tian, and 389 
+
+Xinggang Wang. 4d gaussian splatting for real-time dynamic scene rendering. In CVPR , 2024. 4 390 
+
+[45] Haolin Xiong, Sairisheek Muttukuru, Rishi Upadhyay, Pradyumna Chari, and Achuta Kadambi. Sparsegs: 391 
+
+Real-time 360° sparse view synthesis using gaussian splatting. In 3DV , 2025. 4 392 
+
+11 [46] Haofei Xu, Jing Zhang, Jianfei Cai, Hamid Rezatofighi, Fisher Yu, Dacheng Tao, and Andreas Geiger. Uni-393 
+
+fying flow, stereo and depth estimation. IEEE Transactions on Pattern Analysis and Machine Intelligence ,394 
+
+45(11):13941–13958, 2023. 1, 4 395 
+
+[47] Haofei Xu, Songyou Peng, Fangjinhua Wang, Hermann Blum, Daniel Barath, Andreas Geiger, and Marc 396 
+
+Pollefeys. Depthsplat: Connecting gaussian splatting and depth. In CVPR , 2025. 1, 4, 5, 9 397 
+
+[48] Ziyi Yang, Xinyu Gao, Wen Zhou, Shaohui Jiao, Yuqing Zhang, and Xiaogang Jin. Deformable 3d 398 
+
+gaussians for high-fidelity monocular dynamic scene reconstruction. In CVPR , 2024. 4 399 
+
+[49] Zeyu Yang, Hongye Yang, Zijie Pan, and Li Zhang. Real-time photorealistic dynamic scene representation 400 
+
+and rendering with 4d gaussian splatting. In ICLR , 2024. 4 401 
+
+[50] Yao Yao, Zixin Luo, Shiwei Li, Tian Fang, and Long Quan. Mvsnet: Depth inference for unstructured 402 
+
+multi-view stereo. In ECCV , 2018. 4 403 
+
+[51] Botao Ye, Sifei Liu, Haofei Xu, Li Xueting, Marc Pollefeys, Ming-Hsuan Yang, and Peng Songyou. No 404 
+
+pose, no problem: Surprisingly simple 3d gaussian splats from sparse unposed images. In ICLR , 2025. 1, 405 
+
+2, 3, 4, 5, 6, 7, 8, 9 406 
+
+[52] Chandan Yeshwanth, Yueh-Cheng Liu, Matthias Nießner, and Angela Dai. Scannet++: A high-fidelity 407 
+
+dataset of 3d indoor scenes. In ICCV , 2023. 8 408 
+
+[53] Huangying Zhan, Ravi Garg, Chamara Saroj Weerasekera, Kejie Li, Harsh Agarwal, and Ian Reid. 409 
+
+Unsupervised learning of monocular depth estimation and visual odometry with deep feature reconstruction. 410 
+
+In CVPR , 2018. 4 411 
+
+[54] Shunyuan Zheng, Boyao Zhou, Ruizhi Shao, Boning Liu, Shengping Zhang, Liqiang Nie, and Yebin Liu. 412 
+
+Gps-gaussian: Generalizable pixel-wise 3d gaussian splatting for real-time human novel view synthesis. In 413 
+
+CVPR , 2024. 1, 4 414 
+
+[55] Qian-Yi Zhou, Jaesik Park, and Vladlen Koltun. Open3d: A modern library for 3d data processing. arXiv 415 
+
+preprint arXiv:1801.09847 , 2018. 3 416 
+
+[56] Tinghui Zhou, Matthew Brown, Noah Snavely, and David G Lowe. Unsupervised learning of depth and 417 
+
+ego-motion from video. In CVPR , 2017. 4 418 
+
+[57] Tinghui Zhou, Richard Tucker, John Flynn, Graham Fyffe, and Noah Snavely. Stereo magnification: 419 
+
+learning view synthesis using multiplane images. ACM TOG , 2018. 2, 3, 7, 8 420 
+
+[58] Zihan Zhu, Songyou Peng, Viktor Larsson, Weiwei Xu, Hujun Bao, Zhaopeng Cui, Martin R Oswald, and 421 
+
+Marc Pollefeys. Nice-slam: Neural implicit scalable encoding for slam. In CVPR , 2022. 4 422 
+
+[59] Zehao Zhu, Zhiwen Fan, Yifan Jiang, and Zhangyang Wang. Fsgs: Real-time few-shot view synthesis 423 
+
+using gaussian splatting. In ECCV , 2024. 2, 4 424 
+
+[60] Zihan Zhu, Songyou Peng, Viktor Larsson, Zhaopeng Cui, Martin R Oswald, Andreas Geiger, and Marc 425 
+
+Pollefeys. Nicer-slam: Neural implicit scene encoding for rgb slam. In 3DV , 2024. 4 426 
+
+12 NeurIPS Paper Checklist 427 
+
+1. Claims 428 
+
+Question: Do the main claims made in the abstract and introduction accurately reflect the 429 
+
+paper’s contributions and scope? 430 
+
+Answer: [Yes] 431 
+
+Justification: See Section 3, Section 4. 432 
+
+Guidelines: 433 
+
+• The answer NA means that the abstract and introduction do not include the claims 434 
+
+made in the paper. 435 
+
+• The abstract and/or introduction should clearly state the claims made, including the 436 
+
+contributions made in the paper and important assumptions and limitations. A No or 437 
+
+NA answer to this question will not be perceived well by the reviewers. 438 
+
+• The claims made should match theoretical and experimental results, and reflect how 439 
+
+much the results can be expected to generalize to other settings. 440 
+
+• It is fine to include aspirational goals as motivation as long as it is clear that these goals 441 
+
+are not attained by the paper. 442 
+
+2. Limitations 443 
+
+Question: Does the paper discuss the limitations of the work performed by the authors? 444 
+
+Answer: [Yes] 445 
+
+Justification: See Section 1, Section 4. 446 
+
+Guidelines: 447 
+
+• The answer NA means that the paper has no limitation while the answer No means that 448 
+
+the paper has limitations, but those are not discussed in the paper. 449 
+
+• The authors are encouraged to create a separate "Limitations" section in their paper. 450 
+
+• The paper should point out any strong assumptions and how robust the results are to 451 
+
+violations of these assumptions (e.g., independence assumptions, noiseless settings, 452 
+
+model well-specification, asymptotic approximations only holding locally). The authors 453 
+
+should reflect on how these assumptions might be violated in practice and what the 454 
+
+implications would be. 455 
+
+• The authors should reflect on the scope of the claims made, e.g., if the approach was 456 
+
+only tested on a few datasets or with a few runs. In general, empirical results often 457 
+
+depend on implicit assumptions, which should be articulated. 458 
+
+• The authors should reflect on the factors that influence the performance of the approach. 459 
+
+For example, a facial recognition algorithm may perform poorly when image resolution 460 
+
+is low or images are taken in low lighting. Or a speech-to-text system might not be 461 
+
+used reliably to provide closed captions for online lectures because it fails to handle 462 
+
+technical jargon. 463 
+
+• The authors should discuss the computational efficiency of the proposed algorithms 464 
+
+and how they scale with dataset size. 465 
+
+• If applicable, the authors should discuss possible limitations of their approach to 466 
+
+address problems of privacy and fairness. 467 
+
+• While the authors might fear that complete honesty about limitations might be used by 468 
+
+reviewers as grounds for rejection, a worse outcome might be that reviewers discover 469 
+
+limitations that aren’t acknowledged in the paper. The authors should use their best 470 
+
+judgment and recognize that individual actions in favor of transparency play an impor-471 
+
+tant role in developing norms that preserve the integrity of the community. Reviewers 472 
+
+will be specifically instructed to not penalize honesty concerning limitations. 473 
+
+3. Theory assumptions and proofs 474 
+
+Question: For each theoretical result, does the paper provide the full set of assumptions and 475 
+
+a complete (and correct) proof? 476 
+
+Answer: [Yes] 477 
+
+13 Justification: See Section 1, Section 3. 478 
+
+Guidelines: 479 
+
+• The answer NA means that the paper does not include theoretical results. 480 
+
+• All the theorems, formulas, and proofs in the paper should be numbered and cross-481 
+
+referenced. 482 
+
+• All assumptions should be clearly stated or referenced in the statement of any theorems. 483 
+
+• The proofs can either appear in the main paper or the supplemental material, but if 484 
+
+they appear in the supplemental material, the authors are encouraged to provide a short 485 
+
+proof sketch to provide intuition. 486 
+
+• Inversely, any informal proof provided in the core of the paper should be complemented 487 
+
+by formal proofs provided in appendix or supplemental material. 488 
+
+• Theorems and Lemmas that the proof relies upon should be properly referenced. 489 
+
+4. Experimental result reproducibility 490 
+
+Question: Does the paper fully disclose all the information needed to reproduce the main ex-491 
+
+perimental results of the paper to the extent that it affects the main claims and/or conclusions 492 
+
+of the paper (regardless of whether the code and data are provided or not)? 493 
+
+Answer: [Yes] 494 
+
+Justification: See Section 4. 495 
+
+Guidelines: 496 
+
+• The answer NA means that the paper does not include experiments. 497 
+
+• If the paper includes experiments, a No answer to this question will not be perceived 498 
+
+well by the reviewers: Making the paper reproducible is important, regardless of 499 
+
+whether the code and data are provided or not. 500 
+
+• If the contribution is a dataset and/or model, the authors should describe the steps taken 501 
+
+to make their results reproducible or verifiable. 502 
+
+• Depending on the contribution, reproducibility can be accomplished in various ways. 503 
+
+For example, if the contribution is a novel architecture, describing the architecture fully 504 
+
+might suffice, or if the contribution is a specific model and empirical evaluation, it may 505 
+
+be necessary to either make it possible for others to replicate the model with the same 506 
+
+dataset, or provide access to the model. In general. releasing code and data is often 507 
+
+one good way to accomplish this, but reproducibility can also be provided via detailed 508 
+
+instructions for how to replicate the results, access to a hosted model (e.g., in the case 509 
+
+of a large language model), releasing of a model checkpoint, or other means that are 510 
+
+appropriate to the research performed. 511 
+
+• While NeurIPS does not require releasing code, the conference does require all submis-512 
+
+sions to provide some reasonable avenue for reproducibility, which may depend on the 513 
+
+nature of the contribution. For example 514 
+
+(a) If the contribution is primarily a new algorithm, the paper should make it clear how 515 
+
+to reproduce that algorithm. 516 
+
+(b) If the contribution is primarily a new model architecture, the paper should describe 517 
+
+the architecture clearly and fully. 518 
+
+(c) If the contribution is a new model (e.g., a large language model), then there should 519 
+
+either be a way to access this model for reproducing the results or a way to reproduce 520 
+
+the model (e.g., with an open-source dataset or instructions for how to construct 521 
+
+the dataset). 522 
+
+(d) We recognize that reproducibility may be tricky in some cases, in which case 523 
+
+authors are welcome to describe the particular way they provide for reproducibility. 524 
+
+In the case of closed-source models, it may be that access to the model is limited in 525 
+
+some way (e.g., to registered users), but it should be possible for other researchers 526 
+
+to have some path to reproducing or verifying the results. 527 
+
+5. Open access to data and code 528 
+
+Question: Does the paper provide open access to the data and code, with sufficient instruc-529 
+
+tions to faithfully reproduce the main experimental results, as described in supplemental 530 
+
+material? 531 
+
+14 Answer: [Yes] 532 
+
+Justification: See Section 4, and supplemental material. We will release our code and model. 533 
+
+Guidelines: 534 
+
+• The answer NA means that paper does not include experiments requiring code. 535 
+
+• Please see the NeurIPS code and data submission guidelines ( https://nips.cc/ 536 
+
+public/guides/CodeSubmissionPolicy ) for more details. 537 
+
+• While we encourage the release of code and data, we understand that this might not be 538 
+
+possible, so “No” is an acceptable answer. Papers cannot be rejected simply for not 539 
+
+including code, unless this is central to the contribution (e.g., for a new open-source 540 
+
+benchmark). 541 
+
+• The instructions should contain the exact command and environment needed to run to 542 
+
+reproduce the results. See the NeurIPS code and data submission guidelines ( https: 543 
+
+//nips.cc/public/guides/CodeSubmissionPolicy ) for more details. 544 
+
+• The authors should provide instructions on data access and preparation, including how 545 
+
+to access the raw data, preprocessed data, intermediate data, and generated data, etc. 546 
+
+• The authors should provide scripts to reproduce all experimental results for the new 547 
+
+proposed method and baselines. If only a subset of experiments are reproducible, they 548 
+
+should state which ones are omitted from the script and why. 549 
+
+• At submission time, to preserve anonymity, the authors should release anonymized 550 
+
+versions (if applicable). 551 
+
+• Providing as much information as possible in supplemental material (appended to the 552 
+
+paper) is recommended, but including URLs to data and code is permitted. 553 
+
+6. Experimental setting/details 554 
+
+Question: Does the paper specify all the training and test details (e.g., data splits, hyper-555 
+
+parameters, how they were chosen, type of optimizer, etc.) necessary to understand the 556 
+
+results? 557 
+
+Answer: [Yes] 558 
+
+Justification: See Section 4, and supplemental material. 559 
+
+Guidelines: 560 
+
+• The answer NA means that the paper does not include experiments. 561 
+
+• The experimental setting should be presented in the core of the paper to a level of detail 562 
+
+that is necessary to appreciate the results and make sense of them. 563 
+
+• The full details can be provided either with the code, in appendix, or as supplemental 564 
+
+material. 565 
+
+7. Experiment statistical significance 566 
+
+Question: Does the paper report error bars suitably and correctly defined or other appropriate 567 
+
+information about the statistical significance of the experiments? 568 
+
+Answer: [NA] 569 
+
+Justification: This paper does not include experiments reporting error bars. 570 
+
+Guidelines: 571 
+
+• The answer NA means that the paper does not include experiments. 572 
+
+• The authors should answer "Yes" if the results are accompanied by error bars, confi-573 
+
+dence intervals, or statistical significance tests, at least for the experiments that support 574 
+
+the main claims of the paper. 575 
+
+• The factors of variability that the error bars are capturing should be clearly stated (for 576 
+
+example, train/test split, initialization, random drawing of some parameter, or overall 577 
+
+run with given experimental conditions). 578 
+
+• The method for calculating the error bars should be explained (closed form formula, 579 
+
+call to a library function, bootstrap, etc.) 580 
+
+• The assumptions made should be given (e.g., Normally distributed errors). 581 
+
+• It should be clear whether the error bar is the standard deviation or the standard error 582 
+
+of the mean. 583 
+
+15 • It is OK to report 1-sigma error bars, but one should state it. The authors should 584 
+
+preferably report a 2-sigma error bar than state that they have a 96% CI, if the hypothesis 585 
+
+of Normality of errors is not verified. 586 
+
+• For asymmetric distributions, the authors should be careful not to show in tables or 587 
+
+figures symmetric error bars that would yield results that are out of range (e.g. negative 588 
+
+error rates). 589 
+
+• If error bars are reported in tables or plots, The authors should explain in the text how 590 
+
+they were calculated and reference the corresponding figures or tables in the text. 591 
+
+8. Experiments compute resources 592 
+
+Question: For each experiment, does the paper provide sufficient information on the com-593 
+
+puter resources (type of compute workers, memory, time of execution) needed to reproduce 594 
+
+the experiments? 595 
+
+Answer: [Yes] 596 
+
+Justification: See Section 4, and supplemental material. 597 
+
+Guidelines: 598 
+
+• The answer NA means that the paper does not include experiments. 599 
+
+• The paper should indicate the type of compute workers CPU or GPU, internal cluster, 600 
+
+or cloud provider, including relevant memory and storage. 601 
+
+• The paper should provide the amount of compute required for each of the individual 602 
+
+experimental runs as well as estimate the total compute. 603 
+
+• The paper should disclose whether the full research project required more compute 604 
+
+than the experiments reported in the paper (e.g., preliminary or failed experiments that 605 
+
+didn’t make it into the paper). 606 
+
+9. Code of ethics 607 
+
+Question: Does the research conducted in the paper conform, in every respect, with the 608 
+
+NeurIPS Code of Ethics https://neurips.cc/public/EthicsGuidelines ?609 
+
+Answer: [Yes] 610 
+
+Justification: This paper conforms, in every respect, with the NeurIPS Code of Ethics. 611 
+
+Guidelines: 612 
+
+• The answer NA means that the authors have not reviewed the NeurIPS Code of Ethics. 613 
+
+• If the authors answer No, they should explain the special circumstances that require a 614 
+
+deviation from the Code of Ethics. 615 
+
+• The authors should make sure to preserve anonymity (e.g., if there is a special consid-616 
+
+eration due to laws or regulations in their jurisdiction). 617 
+
+10. Broader impacts 618 
+
+Question: Does the paper discuss both potential positive societal impacts and negative 619 
+
+societal impacts of the work performed? 620 
+
+Answer: [Yes] 621 
+
+Justification: See supplemental material. 622 
+
+Guidelines: 623 
+
+• The answer NA means that there is no societal impact of the work performed. 624 
+
+• If the authors answer NA or No, they should explain why their work has no societal 625 
+
+impact or why the paper does not address societal impact. 626 
+
+• Examples of negative societal impacts include potential malicious or unintended uses 627 
+
+(e.g., disinformation, generating fake profiles, surveillance), fairness considerations 628 
+
+(e.g., deployment of technologies that could make decisions that unfairly impact specific 629 
+
+groups), privacy considerations, and security considerations. 630 
+
+• The conference expects that many papers will be foundational research and not tied 631 
+
+to particular applications, let alone deployments. However, if there is a direct path to 632 
+
+any negative applications, the authors should point it out. For example, it is legitimate 633 
+
+to point out that an improvement in the quality of generative models could be used to 634 
+
+16 generate deepfakes for disinformation. On the other hand, it is not needed to point out 635 
+
+that a generic algorithm for optimizing neural networks could enable people to train 636 
+
+models that generate Deepfakes faster. 637 
+
+• The authors should consider possible harms that could arise when the technology is 638 
+
+being used as intended and functioning correctly, harms that could arise when the 639 
+
+technology is being used as intended but gives incorrect results, and harms following 640 
+
+from (intentional or unintentional) misuse of the technology. 641 
+
+• If there are negative societal impacts, the authors could also discuss possible mitigation 642 
+
+strategies (e.g., gated release of models, providing defenses in addition to attacks, 643 
+
+mechanisms for monitoring misuse, mechanisms to monitor how a system learns from 644 
+
+feedback over time, improving the efficiency and accessibility of ML). 645 
+
+11. Safeguards 646 
+
+Question: Does the paper describe safeguards that have been put in place for responsible 647 
+
+release of data or models that have a high risk for misuse (e.g., pretrained language models, 648 
+
+image generators, or scraped datasets)? 649 
+
+Answer: [NA] 650 
+
+Justification: The paper poses no such risks. 651 
+
+Guidelines: 652 
+
+• The answer NA means that the paper poses no such risks. 653 
+
+• Released models that have a high risk for misuse or dual-use should be released with 654 
+
+necessary safeguards to allow for controlled use of the model, for example by requiring 655 
+
+that users adhere to usage guidelines or restrictions to access the model or implementing 656 
+
+safety filters. 657 
+
+• Datasets that have been scraped from the Internet could pose safety risks. The authors 658 
+
+should describe how they avoided releasing unsafe images. 659 
+
+• We recognize that providing effective safeguards is challenging, and many papers do 660 
+
+not require this, but we encourage authors to take this into account and make a best 661 
+
+faith effort. 662 
+
+12. Licenses for existing assets 663 
+
+Question: Are the creators or original owners of assets (e.g., code, data, models), used in 664 
+
+the paper, properly credited and are the license and terms of use explicitly mentioned and 665 
+
+properly respected? 666 
+
+Answer: [Yes] 667 
+
+Justification: We have correctly cited and credited assets used by our work. 668 
+
+Guidelines: 669 
+
+• The answer NA means that the paper does not use existing assets. 670 
+
+• The authors should cite the original paper that produced the code package or dataset. 671 
+
+• The authors should state which version of the asset is used and, if possible, include a 672 
+
+URL. 673 
+
+• The name of the license (e.g., CC-BY 4.0) should be included for each asset. 674 
+
+• For scraped data from a particular source (e.g., website), the copyright and terms of 675 
+
+service of that source should be provided. 676 
+
+• If assets are released, the license, copyright information, and terms of use in the 677 
+
+package should be provided. For popular datasets, paperswithcode.com/datasets 678 
+
+has curated licenses for some datasets. Their licensing guide can help determine the 679 
+
+license of a dataset. 680 
+
+• For existing datasets that are re-packaged, both the original license and the license of 681 
+
+the derived asset (if it has changed) should be provided. 682 
+
+• If this information is not available online, the authors are encouraged to reach out to 683 
+
+the asset’s creators. 684 
+
+13. New assets 685 
+
+Question: Are new assets introduced in the paper well documented and is the documentation 686 
+
+provided alongside the assets? 687 
+
+17 Answer: [NA] 688 
+
+Justification: This paper does not release new assets. 689 
+
+Guidelines: 690 
+
+• The answer NA means that the paper does not release new assets. 691 
+
+• Researchers should communicate the details of the dataset/code/model as part of their 692 
+
+submissions via structured templates. This includes details about training, license, 693 
+
+limitations, etc. 694 
+
+• The paper should discuss whether and how consent was obtained from people whose 695 
+
+asset is used. 696 
+
+• At submission time, remember to anonymize your assets (if applicable). You can either 697 
+
+create an anonymized URL or include an anonymized zip file. 698 
+
+14. Crowdsourcing and research with human subjects 699 
+
+Question: For crowdsourcing experiments and research with human subjects, does the paper 700 
+
+include the full text of instructions given to participants and screenshots, if applicable, as 701 
+
+well as details about compensation (if any)? 702 
+
+Answer: [NA] 703 
+
+Justification: The paper does not involve crowdsourcing nor research with human subjects. 704 
+
+Guidelines: 705 
+
+• The answer NA means that the paper does not involve crowdsourcing nor research with 706 
+
+human subjects. 707 
+
+• Including this information in the supplemental material is fine, but if the main contribu-708 
+
+tion of the paper involves human subjects, then as much detail as possible should be 709 
+
+included in the main paper. 710 
+
+• According to the NeurIPS Code of Ethics, workers involved in data collection, curation, 711 
+
+or other labor should be paid at least the minimum wage in the country of the data 712 
+
+collector. 713 
+
+15. Institutional review board (IRB) approvals or equivalent for research with human 714 
+
+subjects 715 
+
+Question: Does the paper describe potential risks incurred by study participants, whether 716 
+
+such risks were disclosed to the subjects, and whether Institutional Review Board (IRB) 717 
+
+approvals (or an equivalent approval/review based on the requirements of your country or 718 
+
+institution) were obtained? 719 
+
+Answer: [NA] 720 
+
+Justification: The paper does not involve crowdsourcing nor research with human subjects. 721 
+
+Guidelines: 722 
+
+• The answer NA means that the paper does not involve crowdsourcing nor research with 723 
+
+human subjects. 724 
+
+• Depending on the country in which research is conducted, IRB approval (or equivalent) 725 
+
+may be required for any human subjects research. If you obtained IRB approval, you 726 
+
+should clearly state this in the paper. 727 
+
+• We recognize that the procedures for this may vary significantly between institutions 728 
+
+and locations, and we expect authors to adhere to the NeurIPS Code of Ethics and the 729 
+
+guidelines for their institution. 730 
+
+• For initial submissions, do not include any information that would break anonymity (if 731 
+
+applicable), such as the institution conducting the review. 732 
+
+16. Declaration of LLM usage 733 
+
+Question: Does the paper describe the usage of LLMs if it is an important, original, or 734 
+
+non-standard component of the core methods in this research? Note that if the LLM is used 735 
+
+only for writing, editing, or formatting purposes and does not impact the core methodology, 736 
+
+scientific rigorousness, or originality of the research, declaration is not required. 737 
+
+Answer: [NA] 738 
+
+18 Justification: LLM is used only for editing and formatting. 739 
+
+Guidelines: 740 
+
+• The answer NA means that the core method development in this research does not 741 
+
+involve LLMs as any important, original, or non-standard components. 742 
+
+• Please refer to our LLM policy ( https://neurips.cc/Conferences/2025/LLM )743 
+
+for what should or should not be described. 744 
+
+19

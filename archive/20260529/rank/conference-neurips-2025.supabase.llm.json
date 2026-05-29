@@ -1,0 +1,3456 @@
+{
+  "top_k": 200,
+  "generated_at": "2026-05-29T08:31:41.991643+00:00",
+  "papers": [
+    {
+      "id": "openreview-neurips-2025-gmic4ccyhn",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "Optimized Minimal 3D Gaussian Splatting",
+      "abstract": "3D Gaussian Splatting (3DGS) has emerged as a powerful representation for real-time, high-performance rendering, enabling a wide range of applications. However, representing 3D scenes with numerous explicit Gaussian primitives imposes significant storage and memory overhead. Recent studies have shown that high-quality rendering can be achieved with a substantially reduced number of Gaussians when represented with high-precision attributes. Nevertheless, existing 3DGS compression methods still rely on a relatively large number of Gaussians, focusing primarily on attribute compression. This is because a smaller set of Gaussians becomes increasingly sensitive to lossy attribute compression, leading to severe quality degradation. Since the number of Gaussians is directly tied to computational costs, it is essential to reduce the number of Gaussians effectively rather than only optimizing storage. In this paper, we propose Optimized Minimal Gaussians representation (OMG), which significantly reduces storage while using a minimal number of primitives. First, we determine the distinct Gaussian from the near ones, minimizing redundancy without sacrificing quality. Second, we propose a compact and precise attribute representation that efficiently captures both continuity and irregularity among primitives. Additionally, we propose a sub-vector quantization technique for improved irregularity representation, maintaining fast training with a negligible codebook size. Extensive experiments demonstrate that OMG reduces storage requirements by nearly 50% compared to the previous state-of-the-art and enables 600+ FPS rendering while maintaining high rendering quality. Our source code is available at https://maincold2.github.io/omg/.",
+      "authors": [
+        "Joo Chan Lee",
+        "Jong Hwan Ko",
+        "Eunbyung Park"
+      ],
+      "primary_category": "3D Gaussian Splatting",
+      "categories": [
+        "3D Gaussian Splatting",
+        "Efficient Neural Rendering"
+      ],
+      "published": "2025-09-18T17:37:28.812+00:00",
+      "link": "https://openreview.net/forum?id=GMiC4ccyHn",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-grpo8nttzk",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "Quantifying and Alleviating Co-Adaptation in Sparse-View 3D Gaussian Splatting",
+      "abstract": "3D Gaussian Splatting (3DGS) has demonstrated impressive performance in novel view synthesis under dense-view settings. However, in sparse-view scenarios, despite the realistic renderings in training views, 3DGS occasionally manifests appearance artifacts in novel views. This paper investigates the appearance artifacts in sparse-view 3DGS and uncovers a core limitation of current approaches: the optimized Gaussians are overly-entangled with one another to aggressively fit the training views, which leads to a neglect of the real appearance distribution of the underlying scene and results in appearance artifacts in novel views. The analysis is based on a proposed metric, termed Co-Adaptation Score (CA), which quantifies the entanglement among Gaussians, i.e., co-adaptation, by computing the pixel-wise variance across multiple renderings of the same viewpoint, with different random subsets of Gaussians. The analysis reveals that the degree of co-adaptation is naturally alleviated as the number of training views increases. Based on the analysis, we propose two lightweight strategies to explicitly mitigate the co-adaptation in sparse-view 3DGS: (1) random gaussian dropout; (2) multiplicative noise injection to the opacity. Both strategies are designed to be plug-and-play, and their effectiveness is validated across various methods and benchmarks. We hope that our insights into the co-adaptation effect will inspire the community to achieve a more comprehensive understanding of sparse-view 3DGS.",
+      "authors": [
+        "Kangjie Chen",
+        "Yingji Zhong",
+        "Zhihao Li",
+        "Jiaqi Lin",
+        "Youyu Chen",
+        "Minghan Qin",
+        "Haoqian Wang"
+      ],
+      "primary_category": "gaussian splatting; sparse-view reconstruction; co-adaptation;",
+      "categories": [
+        "gaussian splatting; sparse-view reconstruction; co-adaptation;"
+      ],
+      "published": "2025-09-18T17:29:30.891+00:00",
+      "link": "https://openreview.net/forum?id=GrPo8NTtzK",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-ewgzitwahh",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "3D Gaussian Splatting based Scene-independent Relocalization with Unidirectional and Bidirectional Feature Fusion",
+      "abstract": "Visual localization is a critical component across various domains.\nThe recent emergence of novel scene representations, such as 3D Gaussian Splatting (3D GS), introduces new opportunities for advancing localization pipelines.\nIn this paper, we propose a novel 3D GS-based framework for RGB based, scene-independent camera relocalization, with three main contributions.\nFirst, we design a two-stage pipeline with fully exploiting 3D GS.\nThe pipeline consists of an initial stage, which utilizes 2D-3D correspondences between image pixels and 3D Gaussians,\nfollowed by pose refinement using the rendered image by 3D GS.\nSecond, we introduce a 3D GS based Relocalization Network, termed GS-RelocNet, to establish correspondences for initial camera pose estimation.\nAdditionally, we present a refinement network that further optimizes the camera pose.\nThird, we propose a unidirectional 2D-3D feature fusion module and a bidirectional image feature fusion module, integrated into GS-RelocNet and the refinement network, respectively, to enhance feature sharing across the two stages.\nExperimental results on public 7 Scenes, Cambridge Landmarks, TUM RGB-D and Bonn demonstrate state-of-the-art performance.\nFurthermore, the beneficial effects of the two feature fusion modules and pose refinement are also highlighted.\nIn summary, we believe that the proposed framework can be a novel universal localization pipeline for further research.",
+      "authors": [
+        "Junyi Wang",
+        "Yuze Wang",
+        "Wantong Duan",
+        "Meng Wang",
+        "Yue Qi"
+      ],
+      "primary_category": "Camera relocalization",
+      "categories": [
+        "Camera relocalization",
+        "3D Gaussian Splatting",
+        "Feature Fusion"
+      ],
+      "published": "2025-09-18T17:33:22.383+00:00",
+      "link": "https://openreview.net/forum?id=ewgZItWaHh",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-azlj6obedf",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "IBGS: Image-Based Gaussian Splatting",
+      "abstract": "3D Gaussian Splatting (3DGS) has recently emerged as a fast, high-quality method for novel view synthesis (NVS). However, its use of low-degree spherical harmonics limits its ability to capture spatially varying color and view-dependent effects such as specular highlights. Existing works augment Gaussians with either a global texture map, which struggles with complex scenes, or per-Gaussian texture maps, which introduces high storage overhead. We propose Image-Based Gaussian Splatting, an efficient alternative that leverages high-resolution source images for fine details and view-specific color modeling. Specifically, we model each pixel color as a combination of a base color from standard 3DGS rendering and a learned residual inferred from neighboring training images. This promotes accurate surface alignment and enables rendering images of high-frequency details and accurate view-dependent effects. Experiments on standard NVS benchmarks show that our method significantly outperforms prior Gaussian Splatting approaches in rendering quality, without increasing the storage footprint. Our project page is available at https://hoangchuongnguyen.github.io/ibgs.",
+      "authors": [
+        "Hoang Chuong Nguyen",
+        "Wei Mao",
+        "Jose M. Alvarez",
+        "Miaomiao Liu"
+      ],
+      "primary_category": "3D vision",
+      "categories": [
+        "3D vision",
+        "novel-view synthesis"
+      ],
+      "published": "2025-09-18T17:32:33.784+00:00",
+      "link": "https://openreview.net/forum?id=AZLj6ObEDF",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-ksmgnl6pub",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "Learning Efficient Fuse-and-Refine for Feed-Forward 3D Gaussian Splatting",
+      "abstract": "Recent advances in feed-forward 3D Gaussian Splatting have led to rapid improvements in efficient scene reconstruction from sparse views. However, most existing approaches construct Gaussian primitives directly aligned with the pixels in one or more of the input images. This leads to redundancies in the representation when input views overlap and constrains the position of the primitives to lie along the input rays without full flexibility in 3D space. Moreover, these pixel-aligned approaches do not naturally generalize to dynamic scenes, where effectively leveraging temporal information requires resolving both redundant and newly appearing content across frames. To address these limitations, we introduce a novel Fuse-and-Refine module that enhances existing feed-forward models by merging and refining the primitives in a canonical 3D space. At the core of our method is an efficient hybrid Splat-Voxel representation – from an initial set of pixel-aligned Gaussian primitives, we aggregate local features into a coarse-to-fine voxel hierarchy, and then use a sparse voxel transformer to process these voxel features and generate refined Gaussian primitives. By fusing and refining an arbitrary number of inputs into a consistent set of primitives, our representation effectively reduces redundancy and naturally adapts to temporal frames, enabling history-aware online reconstruction of dynamic scenes. Trained on large-scale static scene datasets, our model learns an effective global strategy to process around 200k primitives within 15ms and significantly enhances reconstruction quality compared to pixel-aligned reconstruction approaches. Without additional training, our model generalizes to video by fusing primitives across time, yielding a more temporally coherent result compared to baseline methods with graceful handling of occluded content. Our approach achieves state-of-the-art performance in both static and streaming scene reconstructions while running at interactive rates (15 fps with 350ms delay) on a single H100 GPU.",
+      "authors": [
+        "Yiming Wang",
+        "Lucy Chai",
+        "Xuan Luo",
+        "Michael Niemeyer",
+        "Manuel Lagunas",
+        "Stephen Lombardi",
+        "Siyu Tang",
+        "Tiancheng Sun"
+      ],
+      "primary_category": "Feed-forward Models",
+      "categories": [
+        "Feed-forward Models",
+        "3D Gaussian Splatting",
+        "Novel View Synthesis",
+        "Streaming Reconstruction"
+      ],
+      "published": "2025-09-18T17:41:11.328+00:00",
+      "link": "https://openreview.net/forum?id=KsmgnL6PUb",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-sopsi570ap",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "NopeRoomGS: Indoor 3D Gaussian Splatting Optimization without Camera Pose Input",
+      "abstract": "Recent advances in 3D Gaussian Splatting (3DGS) have enabled real-time, high-fidelity view synthesis, but remain critically dependent on camera poses estimated by Structure-from-Motion (SfM), which is notoriously unreliable in textureless indoor environments. To eliminate this dependency, recent pose-free variants have been proposed, yet they often fail under abrupt camera motion due to unstable initialization and purely photometric objectives. \nIn this work, we introduce **Nope-RoomGS**, an optimization framework with no need for camera pose inputs, which effectively addresses the textureless regions and abrupt camera motion in indoor room environments through a local-to-global optimization paradigm for 3DGS reconstruction. In the local stage, we propose a lightweight local neural geometric representation to bootstrap a set of reliable local 3D Gaussians for separated short video clips, regularized by multi-frame tracking constraints and foundation model depth priors. This enables reliable initialization even in textureless regions or under abrupt camera motions. \nIn the global stage, we fuse local 3D Gaussians into a unified 3DGS representation through an alternating optimization strategy that jointly refines camera poses and Gaussian parameters, effectively mitigating gradient interference between them. Furthermore, we decompose camera pose optimization based on a piecewise planarity assumption, further enhancing robustness under abrupt camera motion. Extensive experiments on Replica, ScanNet and Tanks & Temples demonstrate the state-of-the-art performance of our method in both camera pose estimation and novel view synthesis.",
+      "authors": [
+        "Wenbo Li",
+        "Yan Xu",
+        "Mingde Yao",
+        "Fengjie Liang",
+        "Jiankai Sun",
+        "Menglu Wang",
+        "Guofeng Zhang",
+        "Linjiang Huang",
+        "Hongsheng Li"
+      ],
+      "primary_category": "Indoor Reconstruction; Pose-Free Gaussian Splatting;",
+      "categories": [
+        "Indoor Reconstruction; Pose-Free Gaussian Splatting;"
+      ],
+      "published": "2025-09-18T17:29:08.394+00:00",
+      "link": "https://openreview.net/forum?id=SoPSI570Ap",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-pqcsyobzii",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "DC4GS: Directional Consistency-Driven Adaptive Density Control for 3D Gaussian Splatting",
+      "abstract": "We present a Directional Consistency (DC)-driven Adaptive Density Control (ADC) for 3D Gaussian Splatting (DC4GS). Whereas the conventional ADC bases its primitive splitting on the magnitudes of positional gradients, we further incorporate the DC of the gradients into ADC, and realize it through the angular coherence of the gradients. Our DC better captures local structural complexities in ADC, avoiding redundant splitting. When splitting is required, we again utilize the DC to define optimal split positions so that sub-primitives best align with the local structures than the conventional random placement. As a consequence, our DC4GS greatly reduces the number of primitives (up to 30\\% in our experiments) than the existing ADC, and also enhances reconstruction fidelity greatly.",
+      "authors": [
+        "Moonsoo Jeong",
+        "Dongbeen Kim",
+        "Minseong Kim",
+        "Sungkil Lee"
+      ],
+      "primary_category": "Computer Vision",
+      "categories": [
+        "Computer Vision",
+        "Novel-View Synthesis",
+        "3D Gaussian Splatting",
+        "Density Control",
+        "Directional Consistency"
+      ],
+      "published": "2025-09-18T17:32:44.538+00:00",
+      "link": "https://openreview.net/forum?id=PQcSYOBZii",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-sl4kqwbkdq",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "Deep Gaussian from Motion: Exploring 3D Geometric Foundation Models for Gaussian Splatting",
+      "abstract": "Neural radiance fields (NeRF) and 3D Gaussian Splatting (3DGS) are popular techniques to reconstruct and render photorealistic images. However, the prerequisite of running Structure-from-Motion (SfM) to get camera poses limits their completeness. Although previous methods can reconstruct a few unposed images, they are not applicable when images are unordered or densely captured. In this work, we propose a method to train 3DGS from unposed images. Our method leverages a pre-trained 3D geometric foundation model as the neural scene representation. Since the accuracy of the predicted pointmaps does not suffice for accurate image registration and high-fidelity image rendering, we propose to mitigate the issue by initializing and fine-tuning the pre-trained model from a seed image. The images are then progressively registered and added to the training buffer, which is used to train the model further. We also propose to refine the camera poses and pointmaps by minimizing a point-to-camera ray consistency loss across multiple views. When evaluated on diverse challenging datasets, our method outperforms state-of-the-art pose-free NeRF/3DGS methods in terms of both camera pose accuracy and novel view synthesis, and even renders higher fidelity images than 3DGS trained with COLMAP poses.",
+      "authors": [
+        "Yu Chen",
+        "Rolandos Alexandros Potamias",
+        "Evangelos Ververas",
+        "Jifei Song",
+        "Jiankang Deng",
+        "Gim Hee Lee"
+      ],
+      "primary_category": "Gaussian Splatting",
+      "categories": [
+        "Gaussian Splatting",
+        "Novel View Synthesis"
+      ],
+      "published": "2025-09-18T17:37:42.81+00:00",
+      "link": "https://openreview.net/forum?id=sl4KqWBkDq",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-yt8v2qfv5w",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "Holistic Large-Scale Scene Reconstruction via Mixed Gaussian Splatting",
+      "abstract": "Recent advances in 3D Gaussian Splatting have shown remarkable potential for novel view synthesis. However, most existing large-scale scene reconstruction methods rely on the divide-and-conquer paradigm, which often leads to the loss of global scene information and requires complex parameter tuning due to scene partitioning and local optimization. To address these limitations, we propose MixGS, a novel holistic optimization framework for large-scale 3D scene reconstruction. MixGS models the entire scene holistically by integrating camera pose and Gaussian attributes into a view-aware representation, which is decoded into fine-detailed Gaussians. Furthermore, a novel mixing operation combines decoded and original Gaussians to jointly preserve global coherence and local fidelity. Extensive experiments on large-scale scenes demonstrate that MixGS achieves state-of-the-art rendering quality and competitive speed, while significantly reducing computational requirements, enabling large-scale scene reconstruction training on a single 24GB VRAM GPU.",
+      "authors": [
+        "Chuandong Liu",
+        "Huijiao Wang",
+        "Lei YU",
+        "Gui-Song Xia"
+      ],
+      "primary_category": "Gaussian Splatting",
+      "categories": [
+        "Gaussian Splatting",
+        "Large-Scale Scene",
+        "3D Reconstruction",
+        "Novel View Synthesis"
+      ],
+      "published": "2025-09-18T17:32:06.969+00:00",
+      "link": "https://openreview.net/forum?id=yT8v2QFv5w",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-znsr3waluo",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "VA-GS: Enhancing the Geometric Representation of Gaussian Splatting via View Alignment",
+      "abstract": "3D Gaussian Splatting has recently emerged as an efficient solution for high-quality and real-time novel view synthesis. However, its capability for accurate surface reconstruction remains underexplored. Due to the discrete and unstructured nature of Gaussians, supervision based solely on image rendering loss often leads to inaccurate geometry and inconsistent multi-view alignment. In this work, we propose a novel method that enhances the geometric representation of 3D Gaussians through view alignment (VA). Specifically, we incorporate edge-aware image cues into the rendering loss to improve surface boundary delineation. To enforce geometric consistency across views, we introduce a visibility-aware photometric alignment loss that models occlusions and encourages accurate spatial relationships among Gaussians. To further mitigate ambiguities caused by lighting variations, we incorporate normal-based constraints to refine the spatial orientation of Gaussians and improve local surface estimation. Additionally, we leverage deep image feature embeddings to enforce cross-view consistency, enhancing the robustness of the learned geometry under varying viewpoints and illumination. Extensive experiments on standard benchmarks demonstrate that our method achieves state-of-the-art performance in both surface reconstruction and novel view synthesis. The source code is available at https://github.com/LeoQLi/VA-GS.",
+      "authors": [
+        "Qing Li",
+        "Huifang Feng",
+        "Xun Gong",
+        "Yu-Shen Liu"
+      ],
+      "primary_category": "Gaussian Splatting",
+      "categories": [
+        "Gaussian Splatting",
+        "Neural Rendering",
+        "Surface Reconstruction",
+        "Novel View Synthesis"
+      ],
+      "published": "2025-09-18T17:32:40.683+00:00",
+      "link": "https://openreview.net/forum?id=ZnsR3waLUo",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-zwmq0msimg",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "Novel View Synthesis from A Few Glimpses via Test-Time Natural Video Completion",
+      "abstract": "Given just a few glimpses of a scene, can you imagine the movie playing out as the camera glides through it? That’s the lens we take on sparse-input novel view synthesis, not only as filling spatial gaps between widely spaced views, but also as completing a natural video unfolding through space. We recast the task as test-time natural video completion, using powerful priors from pretrained video diffusion models to hallucinate plausible in-between views. Our zero-shot, generation-guided framework produces pseudo views at novel camera\nposes, modulated by an uncertainty-aware mechanism for spatial coherence. These synthesized frames densify supervision for 3D Gaussian Splatting (3D-GS) for scene reconstruction, especially in under-observed regions. An iterative feedback loop lets 3D geometry and 2D view synthesis inform each other, improving both the scene reconstruction and the generated views. The result is coherent, high-fidelity renderings from sparse inputs without any scene-specific training or fine-tuning. On LLFF, DTU, DL3DV, and MipNeRF-360, our method significantly outperforms strong 3D-GS baselines under extreme sparsity. Our project page is at https://decayale.github.io/project/SV2CGS.",
+      "authors": [
+        "Yan Xu",
+        "Yixing Wang",
+        "Stella X. Yu"
+      ],
+      "primary_category": "Novel View Synthesis",
+      "categories": [
+        "Novel View Synthesis",
+        "3D Gaussian Splatting"
+      ],
+      "published": "2025-09-18T17:29:57.823+00:00",
+      "link": "https://openreview.net/forum?id=zwmq0MsIMG",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-rrpyi2h0yn",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "Eve3D: Elevating Vision Models for Enhanced 3D Surface Reconstruction via Gaussian Splatting",
+      "abstract": "We present Eve3D, a novel framework for dense 3D reconstruction based on 3D\nGaussian Splatting (3DGS). While most existing methods rely on imperfect priors\nderived from pre-trained vision models, Eve3D fully leverages these priors by\njointly optimizing both them and the 3DGS backbone. This joint optimization\ncreates a mutually reinforcing cycle: the priors enhance the quality of 3DGS, which\nin turn refines the priors, further improving the reconstruction. Additionally, Eve3D\nintroduces a novel optimization step based on bundle adjustment, overcoming the\nlimitations of the highly local supervision in standard 3DGS pipelines. Eve3D\nachieves state-of-the-art results in surface reconstruction and novel view synthesis\non the Tanks & Temples, DTU, and Mip-NeRF360 datasets. while retaining fast\nconvergence, highlighting an unprecedented trade-off between accuracy and speed.",
+      "authors": [
+        "Jiawei Zhang",
+        "Youmin Zhang",
+        "Fabio Tosi",
+        "Meiying Gu",
+        "Jiahe Li",
+        "Xiaohan Yu",
+        "Jin Zheng",
+        "Xiao Bai",
+        "Matteo Poggi"
+      ],
+      "primary_category": "surface reconstruction",
+      "categories": [
+        "surface reconstruction",
+        "3d gaussian splatting"
+      ],
+      "published": "2025-09-18T17:36:54.223+00:00",
+      "link": "https://openreview.net/forum?id=rRPyI2h0yN",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-zfneovqqkn",
+      "source": "NeurIPS-2025-Rejected-Public",
+      "title": "Geometrically Consistent Generalizable Splatting",
+      "abstract": "Gaussian splatting has emerged as the preferred 3D scene representation due to its incredible speed and accuracy in novel view generation. Various attempts have thus been made to adapt multi-view structure prediction networks to directly predict per-pixel 3D Gaussians from images. However, most work has focused on enhancing self-supervised depth prediction networks to estimate additional parameters for 3D Gaussians -- orientation, scale, opacity, and appearance. We show that optimizing a view-synthesis loss alone is insufficient to recover geometrically meaningful splats in this simple manner. We systematically analyse and address the inherent ambiguities in learning 3D Gaussian splats with self-supervision to learn pose-free generalisable splitting. Our approach achieves state-of-the-art performance in \n(i) geometrically consistent reconstructions, \n(ii) relative pose estimation between images, and \n(iii) novel-view synthesis \non the RealEstate10K and ACID datasets. We also showcase zero-shot capabilities of the proposed generalizable splatting on ScanNet, where our method substantially outperforms the prior art in recovering geometry and estimating relative pose.",
+      "authors": [
+        "Mehdi Hosseinzadeh",
+        "Shin-Fang Chng",
+        "Ian Reid",
+        "Simon Lucey",
+        "Ravi Garg"
+      ],
+      "primary_category": "Generalizable Gaussian Splatting",
+      "categories": [
+        "Generalizable Gaussian Splatting",
+        "Geometry-Consistent Reconstruction",
+        "Self-Supervised Learning",
+        "Relative Pose Estimation",
+        "Novel View Synthesis"
+      ],
+      "published": "2025-04-27T10:20:03.901+00:00",
+      "link": "https://openreview.net/forum?id=ZfNeovqQkn",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-25c8oc1pb2",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "EGGS: Exchangeable 2D/3D Gaussian Splatting for Geometry-Appearance Balanced Novel View Synthesis",
+      "abstract": "Novel view synthesis (NVS) is crucial in computer vision and graphics, with wide applications in AR, VR, and autonomous driving. While 3D Gaussian Splatting (3DGS) enables real-time rendering with high appearance fidelity, it suffers from multi-view inconsistencies, limiting geometric accuracy. In contrast, 2D Gaussian Splatting (2DGS) enforces multi-view consistency but compromises texture details. To address these limitations, we propose Exchangeable Gaussian Splatting (EGGS), a hybrid representation that integrates 2D and 3D Gaussians to balance appearance and geometry. To achieve this, we introduce Hybrid Gaussian Rasterization for unified rendering, Adaptive Type Exchange for dynamic adaptation between 2D and 3D Gaussians, and Frequency-Decoupled Optimization that effectively exploits the strengths of each type of Gaussian representation. Our CUDA-accelerated implementation ensures efficient training and inference. Extensive experiments demonstrate that EGGS outperforms existing methods in rendering quality, geometric accuracy, and efficiency, providing a practical solution for high-quality NVS.",
+      "authors": [
+        "Yancheng Zhang",
+        "Guangyu Sun",
+        "Chen Chen"
+      ],
+      "primary_category": "Gaussian Splatting",
+      "categories": [
+        "Gaussian Splatting",
+        "Novel View Synthesis"
+      ],
+      "published": "2025-09-18T17:33:13.13+00:00",
+      "link": "https://openreview.net/forum?id=25C8oC1pb2",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-x2u8esisdb",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "DGS-LRM: Real-Time Deformable 3D Gaussian Reconstruction From Monocular Videos",
+      "abstract": "We introduce the Deformable Gaussian Splats Large Reconstruction Model (DGS-LRM), the first feed-forward method predicting deformable 3D Gaussian splats from a monocular posed video of any dynamic scene. Feed-forward scene reconstruction has gained significant attention for its ability to rapidly create digital replicas of real-world environments. However, most existing models are limited to static scenes and fail to reconstruct the motion of moving objects. Developing a feed-forward model for dynamic scene reconstruction poses significant challenges, including the scarcity of training data and the need for appropriate 3D representations and training paradigms. To address these challenges, we introduce several key technical contributions: an enhanced large-scale synthetic dataset with ground-truth multi-view videos and dense 3D scene flow supervision; a per-pixel deformable 3D Gaussian representation that is easy to learn, supports high-quality dynamic view synthesis, and enables long-range 3D tracking; and a large transformer network that achieves real-time, generalizable dynamic scene reconstruction. Extensive qualitative and quantitative experiments demonstrate that DGS-LRM achieves dynamic scene reconstruction quality comparable to optimization-based methods, while significantly outperforming the state-of-the-art predictive dynamic reconstruction method on real-world examples. Its predicted physically grounded 3D deformation is accurate and can be readily adapted for long-range 3D tracking tasks, achieving performance on par with state-of-the-art monocular video 3D tracking methods.",
+      "authors": [
+        "Chieh Hubert Lin",
+        "Zhaoyang Lv",
+        "Songyin Wu",
+        "Zhen Xu",
+        "Thu Nguyen-Phuoc",
+        "Hung-Yu Tseng",
+        "Julian Straub",
+        "Numair Khan",
+        "Lei Xiao",
+        "Ming-Hsuan Yang",
+        "Yuheng Ren",
+        "Richard Newcombe",
+        "Zhao Dong",
+        "Zhengqin Li"
+      ],
+      "primary_category": "Large reconstruction model",
+      "categories": [
+        "Large reconstruction model",
+        "LRM",
+        "dynamic"
+      ],
+      "published": "2025-09-18T17:30:24.847+00:00",
+      "link": "https://openreview.net/forum?id=X2u8esISdb",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-ztvk8xnffy",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "HAIF-GS: Hierarchical and Induced Flow-Guided Gaussian Splatting for Dynamic Scene",
+      "abstract": "Reconstructing dynamic 3D scenes from monocular videos remains a fundamental challenge in 3D vision. While 3D Gaussian Splatting (3DGS) achieves real-time rendering in static settings, extending it to dynamic scenes is challenging due to the difficulty of learning structured and temporally consistent motion representations. This challenge often manifests as three limitations in existing methods: redundant Gaussian updates, insufficient motion supervision, and weak modeling of complex non-rigid deformations. These issues collectively hinder coherent and efficient dynamic reconstruction. To address these limitations, we propose HAIF-GS, a unified framework that enables structured and consistent dynamic modeling through sparse anchor-driven deformation. It first identifies motion-relevant regions via an Anchor Filter to suppress redundant updates in static areas. A self-supervised Induced Flow-Guided Deformation module induces anchor motion using multi-frame feature aggregation, eliminating the need for explicit flow labels. To further handle fine-grained deformations, a Hierarchical Anchor Propagation mechanism increases anchor resolution based on motion complexity and propagates multi-level transformations. Extensive experiments on synthetic and real-world benchmarks validate that HAIF-GS significantly outperforms prior dynamic 3DGS methods in rendering quality, temporal coherence, and reconstruction efficiency.",
+      "authors": [
+        "Jianing Chen",
+        "Zehao Li",
+        "Yujun Cai",
+        "Hao Jiang",
+        "Chengxuan Qian",
+        "Juyuan Kang",
+        "Shuqin Gao",
+        "Honglong Zhao",
+        "Tianlu Mao",
+        "Yucheng Zhang"
+      ],
+      "primary_category": "3D dynamic reconstruction; computer vision",
+      "categories": [
+        "3D dynamic reconstruction; computer vision"
+      ],
+      "published": "2025-09-18T17:32:21.946+00:00",
+      "link": "https://openreview.net/forum?id=ztVk8XNffY",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-vkjtyhatoa",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "Reframing Gaussian Splatting Densification with Complexity-Density Consistency of Primitives",
+      "abstract": "The essence of 3D Gaussian Splatting (3DGS) training is to smartly allocate Gaussian primitives, expressing complex regions with more primitives and vice versa. \nPrior researches typically mark out under-reconstructed regions in a rendering-loss-driven manner. \nHowever, such a loss-driven strategy is often dominated by low-frequency regions, which leads to insufficient modeling of high-frequency details in texture-rich regions. As a result, it yields a suboptimal spatial allocation of Gaussian primitives.\nThis inspires us to excavate the loss-agnostic visual prior in training views to identify complex regions that need more primitives to model. \nBased on this insight, we propose Complexity-Density Consistent Gaussian Splatting (CDC-GS), which allocates primitives based on the consistency between visual complexity of training views and the density of primitives. \nSpecifically, primitives involved in rendering high visual complexity areas are categorized as modeling high complexity regions, where we leverage the high frequency wavelet components of training views to measure the visual complexity. \nAnd the density of a primitive is computed with the inverse of geometric mean of its distance to the neighboring primitives. \nGuided by the positive correlation between primitive complexity and density, we determine primitives to be densified as well as pruned. \nExtensive experiments demonstrate that our CDC-GS surpasses the baseline methods in rendering quality by a large margin using the same amount of Gaussians. \nAnd we provide insightful analysis to reveal that our method serves perpendicularly to rendering loss in guiding Gaussian primitive allocation.",
+      "authors": [
+        "Zhemeng Dong",
+        "Junjun Jiang",
+        "Youyu Chen",
+        "Jiaxin Zhang",
+        "Kui Jiang",
+        "Xianming Liu"
+      ],
+      "primary_category": "3D Gaussian Splatting",
+      "categories": [
+        "3D Gaussian Splatting",
+        "Novel View Synthesis",
+        "3D Reconstruction",
+        "Computer Vision"
+      ],
+      "published": "2025-09-18T17:29:48.974+00:00",
+      "link": "https://openreview.net/forum?id=VKJTyhAtoA",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-0suihptncp",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "SurfelSplat: Learning Efficient and Generalizable Gaussian Surfel Representations for Sparse-View Surface Reconstruction",
+      "abstract": "3D Gaussian Splatting (3DGS) has demonstrated impressive performance in 3D scene reconstruction. Beyond novel view synthesis, it shows great potential for multi-view surface reconstruction. Existing methods employ optimization-based reconstruction pipelines that achieve precise and complete surface extractions. However, these approaches typically require dense input views and high time consumption for per-scene optimization. To address these limitations, we propose SurfaceSplat, a feed-forward framework that generates efficient and generalizable pixel-aligned Gaussian surfel representations from sparse-view images. We observe that conventional feed-forward structures struggle to recover accurate geometric attributes of Gaussian surfels because the spatial frequency of pixel-aligned primitives exceeds Nyquist sampling rates. Therefore, we propose a cross-view feature aggregation module based on the Nyquist sampling theorem. Specifically, we first adapt the geometric forms of Gaussian surfels with spatial sampling rate-guided low-pass filters. We then project the filtered surfels across all input views to obtain cross-view feature correlations. By processing these correlations through a specially designed feature fusion network, we can finally regress Gaussian surfels with precise geometry. Extensive experiments on DTU reconstruction benchmarks demonstrate that our model achieves comparable results with state-of-the-art methods, and predict Gaussian surfels within 1 second, offering a 100× speedup without costly per-scene training.",
+      "authors": [
+        "Chensheng Dai",
+        "Shengjun Zhang",
+        "Min Chen",
+        "Yueqi Duan"
+      ],
+      "primary_category": "3D Gaussian Splatting",
+      "categories": [
+        "3D Gaussian Splatting",
+        "feed-forward netowrk",
+        "surface reconstruction"
+      ],
+      "published": "2025-09-18T17:32:52.104+00:00",
+      "link": "https://openreview.net/forum?id=0sUihPtncP",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-mgjmpnzgqo",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "SAP: Exact Sorting in Splatting via Screen-Aligned Primitives",
+      "abstract": "Recently, 3D Gaussian Splatting (3DGS) has achieved state-of-the-art rendering results. However, its efficiency relies on simplifications that disregard the thickness of Gaussian primitives and their overlapping interactions. These simplifications can lead to popping artifacts due to inaccurate sorting, thereby affecting the rendering quality. In this paper, we propose Screen-Aligned Primitives (SAP), an anisotropic kernel that generates primitives parallel to the image plane for each view. Our rasterization pipeline enables full per-pixel ordering in real time. Since the primitives are parallel for a given viewpoint, a single global sorting operation suffices for correct per-pixel depth ordering. We formulate 3D reconstruction as a combination of a 3D-consistent decoder and 2D view-specific primitives, and further propose a highly efficient decoder to ensure 3D consistency.  Moreover, within our framework, the primitive function values remain consistent between view space and screen space, allowing arbitrary radial basis functions (RBFs) to represent the scene without introducing projection errors. Experiments on diverse datasets demonstrate that our method achieves state-of-the-art rendering quality while maintaining real-time performance.",
+      "authors": [
+        "Zhanke Wang",
+        "Zhiyan Wang",
+        "Kaiqiang Xiong",
+        "Jiahao Wu",
+        "Yang Deng",
+        "Ronggang Wang"
+      ],
+      "primary_category": "3DGS; NeRF;Novel View Synthesis",
+      "categories": [
+        "3DGS; NeRF;Novel View Synthesis"
+      ],
+      "published": "2025-09-18T17:37:51.425+00:00",
+      "link": "https://openreview.net/forum?id=mGjmPnzGQo",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-iqu63cyi3z",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "LODGE: Level-of-Detail Large-Scale Gaussian Splatting with Efficient Rendering",
+      "abstract": "In this work, we present a novel level-of-detail (LOD) method for 3D Gaussian Splatting that enables real-time rendering of large-scale scenes on memory-constrained devices. Our approach introduces a hierarchical LOD representation that iteratively selects optimal subsets of Gaussians based on camera distance, thus largely reducing both rendering time and GPU memory usage. We construct each LOD level by applying a depth-aware 3D smoothing filter, followed by importance-based pruning and fine-tuning to maintain visual fidelity. To further reduce memory overhead, we partition the scene into spatial chunks and dynamically load only relevant Gaussians during rendering, employing an opacity-blending mechanism to avoid visual artifacts at chunk boundaries. Our method achieves state-of-the-art performance on both outdoor (Hierarchical 3DGS) and indoor (Zip-NeRF) datasets, delivering high-quality renderings with reduced latency and memory requirements.",
+      "authors": [
+        "Jonas Kulhanek",
+        "Marie-Julie Rakotosaona",
+        "Fabian Manhardt",
+        "Christina Tsalicoglou",
+        "Michael Niemeyer",
+        "Torsten Sattler",
+        "Songyou Peng",
+        "Federico Tombari"
+      ],
+      "primary_category": "3D Gaussian splatting",
+      "categories": [
+        "3D Gaussian splatting",
+        "Level-of-Detail"
+      ],
+      "published": "2025-09-18T17:36:21.71+00:00",
+      "link": "https://openreview.net/forum?id=Iqu63cYI3z",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-3molquhfpv",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "HyRF: Hybrid Radiance Fields for Memory-efficient and High-quality Novel View Synthesis",
+      "abstract": "Recently, 3D Gaussian Splatting (3DGS) has emerged as a powerful alternative to NeRF-based approaches, enabling real-time, high-quality novel view synthesis through explicit, optimizable 3D Gaussians.  However, 3DGS suffers from significant memory overhead due to its reliance on per-Gaussian parameters to model view-dependent effects and anisotropic shapes. While recent works propose compressing 3DGS with neural fields, these methods struggle to capture high-frequency spatial variations in Gaussian properties, leading to degraded reconstruction of fine details. We present Hybrid Radiance Fields (HyRF), a novel scene representation that combines the strengths of explicit Gaussians and neural fields. HyRF decomposes the scene into (1) a compact set of explicit Gaussians storing only critical high-frequency parameters and (2) grid-based neural fields that predict remaining properties. To enhance representational capacity, we introduce a decoupled neural field architecture, separately modeling geometry (scale, opacity, rotation) and view-dependent color. Additionally, we propose a hybrid rendering scheme that composites Gaussian splatting with a neural field-predicted background, addressing limitations in distant scene representation.Experiments demonstrate that HyRF achieves state-of-the-art rendering quality while reducing model size by over 20× compared to 3DGS and maintaining real-time performance.",
+      "authors": [
+        "Zipeng Wang",
+        "Dan Xu"
+      ],
+      "primary_category": "Neural Radiance Fields",
+      "categories": [
+        "Neural Radiance Fields",
+        "3D Gaussian Splatting"
+      ],
+      "published": "2025-09-18T17:37:35.434+00:00",
+      "link": "https://openreview.net/forum?id=3molquhFpv",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-jtf0hyfgil",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "Generalizable Hand-Object Modeling from Monocular RGB Images via 3D Gaussians",
+      "abstract": "Recent advances in hand-object interaction modeling have employed implicit representations, such as Signed Distance Functions (SDF) and Neural Radiance Fields (NeRF) to reconstruct hands and objects with arbitrary topology and photo-realistic detail. However, these methods often rely on dense 3D surface annotations, or are tailored to short clips constrained in motion trajectories and scene contexts, limiting their generalization to diverse environments and movement patterns. In this work, we present HOGS, an adaptively perceptive 3D Gaussian Splatting (3DGS) framework for generalizable hand-object modeling from unconstrained monocular RGB images. By integrating photometric cues from the visual modality with the physically grounded structure of 3D Gaussians, HOGS disentangles inherent geometry from transient lighting and motion-induced appearance changes. This endows hand-object assets with the ability to generalize to unseen environments and dynamic motion patterns. Experiments on two challenging datasets demonstrate that HOGS outperforms state-of-the-art methods in monocular hand-object reconstruction and photo-realistic rendering.",
+      "authors": [
+        "Xingyu Liu",
+        "Pengfei Ren",
+        "Qi Qi",
+        "Haifeng Sun",
+        "Zirui Zhuang",
+        "Jing Wang",
+        "Jianxin Liao",
+        "Jingyu Wang"
+      ],
+      "primary_category": "Hand-object reconstruction",
+      "categories": [
+        "Hand-object reconstruction",
+        "3D Gaussian Splatting"
+      ],
+      "published": "2025-09-18T17:37:57.842+00:00",
+      "link": "https://openreview.net/forum?id=JTF0HYfGiL",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-fdx7eb9cdv",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "4D3R: Motion-Aware Neural Reconstruction and Rendering of Dynamic Scenes from Monocular Videos",
+      "abstract": "Novel view synthesis from monocular videos of dynamic scenes with unknown camera poses remains a fundamental challenge in computer vision and graphics. While recent advances in 3D representations such as Neural Radiance Fields (NeRF) and 3D Gaussian Splatting (3DGS) have shown promising results for static scenes, they struggle with dynamic content and typically rely on pre-computed camera poses.\nWe present 4D3R, a pose-free dynamic neural rendering framework that decouples static and dynamic components through a two-stage approach. Our method first leverages 3D foundational models for initial pose and geometry estimation, followed by motion-aware refinement. 4D3R introduces two key technical innovations: (1) a motion-aware bundle adjustment (MA-BA) module that combines transformer-based learned priors with SAM2 for robust dynamic object segmentation, enabling more accurate camera pose refinement; and (2) an efficient Motion-Aware Gaussian Splatting (MA-GS) representation that uses control points with a deformation field MLP and linear blend skinning to model dynamic motion, significantly reducing computational cost while maintaining high-quality reconstruction.\nExtensive experiments on real-world dynamic datasets demonstrate that our approach achieves up to 1.8dB PSNR improvement over state-of-the-art methods, particularly in challenging scenarios with large dynamic objects, while reducing computational requirements by 5× compared to previous dynamic scene representations.",
+      "authors": [
+        "Mengqi Guo",
+        "Bo Xu",
+        "Yan Li",
+        "Gim Hee Lee"
+      ],
+      "primary_category": "Dynamic Rendering",
+      "categories": [
+        "Dynamic Rendering",
+        "4D Representation",
+        "Gaussian splatting",
+        "Motion-Aware"
+      ],
+      "published": "2025-09-18T17:40:29.448+00:00",
+      "link": "https://openreview.net/forum?id=FDX7EB9CDv",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-38gf07tmtr",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "PlanarGS: High-Fidelity Indoor 3D Gaussian Splatting Guided by Vision-Language Planar Priors",
+      "abstract": "Three-dimensional Gaussian Splatting (3DGS) has recently emerged as an efficient representation for novel-view synthesis, achieving impressive visual quality. However, in scenes dominated by large and low-texture regions, common in indoor environments, the photometric loss used to optimize 3DGS yields ambiguous geometry and fails to recover high-fidelity 3D surfaces. To overcome this limitation, we introduce PlanarGS, a 3DGS-based framework tailored for indoor scene reconstruction. Specifically, we design a pipeline for Language-Prompted Planar Priors (LP3) that employs a pretrained vision-language segmentation model and refines its region proposals via cross-view fusion and inspection with geometric priors. 3D Gaussians in our framework are optimized with two additional terms: a planar prior supervision term that enforces planar consistency, and a geometric prior supervision term that steers the Gaussians toward the depth and normal cues. We have conducted extensive experiments on standard indoor benchmarks. The results show that PlanarGS reconstructs accurate and detailed 3D surfaces, consistently outperforming state-of-the-art methods by a large margin. Project page: https://planargs.github.io",
+      "authors": [
+        "Xirui Jin",
+        "Renbiao Jin",
+        "Boying Li",
+        "Danping Zou",
+        "Wenxian Yu"
+      ],
+      "primary_category": "3D reconstruction",
+      "categories": [
+        "3D reconstruction",
+        "planar priors",
+        "3D gaussian splatting"
+      ],
+      "published": "2025-09-18T17:31:17.804+00:00",
+      "link": "https://openreview.net/forum?id=38GF07Tmtr",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-rkhudvy9qr",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "Understanding while Exploring: Semantics-driven Active Mapping",
+      "abstract": "Effective robotic autonomy in unknown environments demands proactive exploration and precise understanding of both geometry and semantics. In this paper, we propose ActiveSGM, an active semantic mapping framework designed to predict the informativeness of potential observations before execution. Built upon a 3D Gaussian Splatting (3DGS) mapping backbone, our approach employs semantic and geometric uncertainty quantification, coupled with a sparse semantic representation, to guide exploration. By enabling robots to strategically select the most beneficial viewpoints, ActiveSGM efficiently enhances mapping completeness, accuracy, and robustness to noisy semantic data, ultimately supporting more adaptive scene exploration. Our experiments on the Replica and Matterport3D datasets highlight the effectiveness of ActiveSGM in active semantic mapping tasks.",
+      "authors": [
+        "Liyan Chen",
+        "Huangying Zhan",
+        "Hairong Yin",
+        "Yi Xu",
+        "Philippos Mordohai"
+      ],
+      "primary_category": "Active Semantic Mapping",
+      "categories": [
+        "Active Semantic Mapping",
+        "Active Mapping",
+        "Gaussian Splatting",
+        "Exploration"
+      ],
+      "published": "2025-09-18T17:36:23.559+00:00",
+      "link": "https://openreview.net/forum?id=RkHUDvy9QR",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-shfhw4zqd6",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "EF-3DGS: Event-Aided Free-Trajectory 3D Gaussian Splatting",
+      "abstract": "Scene reconstruction from casually captured videos has wide real-world applications. Despite recent progress, existing methods relying on traditional cameras tend to fail in high-speed scenarios due to insufficient observations and inaccurate pose estimation. Event cameras, inspired by biological vision, record pixel-wise intensity changes asynchronously with high temporal resolution and low latency, providing valuable scene and motion information in blind inter-frame intervals. In this paper, we introduce the event cameras to aid scene construction from a casually captured video for the first time, and propose Event-Aided Free-Trajectory 3DGS, called EF-3DGS, which seamlessly integrates the advantages of event cameras into 3DGS through three key components. First, we leverage the Event Generation Model (EGM) to fuse events and frames, enabling continuous supervision between discrete frames. Second, we extract motion information through Contrast Maximization (CMax) of warped events, which calibrates camera poses and provides gradient-domain constraints for 3DGS. Third, to address the absence of color information in events, we combine photometric bundle adjustment (PBA) with a Fixed-GS training strategy that separates structure and color optimization, effectively ensuring color consistency across different views. We evaluate our method on the public Tanks and Temples benchmark and a newly collected real-world dataset, RealEv-DAVIS. Our method achieves up to 3dB higher PSNR and 40% lower Absolute Trajectory Error (ATE) compared to state-of-the-art methods under challenging high-speed scenarios.",
+      "authors": [
+        "Bohao Liao",
+        "Wei Zhai",
+        "Zengyu Wan",
+        "Zhixin Cheng",
+        "Wenfei Yang",
+        "Yang Cao",
+        "Tianzhu Zhang",
+        "Zheng-Jun Zha"
+      ],
+      "primary_category": "3D Gaussian Splatting (3DGS); Novel View Synthesis (NVS)",
+      "categories": [
+        "3D Gaussian Splatting (3DGS); Novel View Synthesis (NVS)"
+      ],
+      "published": "2025-09-18T17:42:06.842+00:00",
+      "link": "https://openreview.net/forum?id=shFhW4zqd6",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-vdv912fa3t",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "TrackingWorld: World-centric Monocular 3D Tracking of Almost All Pixels",
+      "abstract": "Monocular 3D tracking aims to capture the long-term motion of pixels in 3D space from a single monocular video and has witnessed rapid progress in recent years. However, we argue that the existing monocular 3D tracking methods still fall short in separating the camera motion from foreground dynamic motion and cannot densely track newly emerging dynamic subjects in the videos. To address these two limitations, we propose TrackingWorld, a novel pipeline for dense 3D tracking of almost all pixels within a world-centric 3D coordinate system. First, we introduce a tracking upsampler that efficiently lifts the arbitrary sparse 2D tracks into dense 2D tracks. Then, to generalize the current tracking methods to newly emerging objects, we apply the upsampler to all frames and reduce the redundancy of 2D tracks by eliminating the tracks in overlapped regions. Finally, we present an efficient optimization-based framework to back-project dense 2D tracks into world-centric 3D trajectories by estimating the camera poses and the 3D coordinates of these 2D tracks. Extensive evaluations on both synthetic and real-world datasets demonstrate that our system achieves accurate and dense 3D tracking in a world-centric coordinate frame.",
+      "authors": [
+        "Jiahao Lu",
+        "Weitao Xiong",
+        "Jiacheng Deng",
+        "Peng Li",
+        "Tianyu Huang",
+        "Zhiyang Dou",
+        "Cheng Lin",
+        "Sai-Kit Yeung",
+        "Yuan Liu"
+      ],
+      "primary_category": "deep learning; computer vision; 3D point tracking",
+      "categories": [
+        "deep learning; computer vision; 3D point tracking"
+      ],
+      "published": "2025-09-18T17:30:36.817+00:00",
+      "link": "https://openreview.net/forum?id=vDV912fa3t",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-htla6ao0jg",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "Instant4D: 4D Gaussian Splatting in Minutes",
+      "abstract": "Dynamic view synthesis has seen significant advances, yet reconstructing scenes\nfrom uncalibrated, casual video remains challenging due to slow optimization and\ncomplex parameter estimation. In this work, we present **Instant4D**, a monocular\nreconstruction system that leverages native 4D representation to efficiently process\ncasual video sequences within minutes, without calibrated cameras or depth sensors.\nOur method begins with geometric recovery through deep visual SLAM, followed\nby grid pruning to optimize scene representation. Our design significantly reduces\nredundancy while maintaining geometric integrity, cutting model size to under **10%**\nof its original footprint. To handle temporal dynamics efficiently, we introduce a\nstreamlined 4D Gaussian representation, achieving a **30×** speed-up and reducing\ntraining time to within two minutes, while maintaining competitive performance\nacross several benchmarks. Our method reconstruct a single video within 10\nminutes on the Dycheck dataset or for a typical 200-frame video. We further\napply our model to in-the-wild videos, showcasing its generalizability. Our project\nwebsite is published at https://instant4d.github.io/.",
+      "authors": [
+        "Zhanpeng Luo",
+        "Haoxi Ran",
+        "Li Lu"
+      ],
+      "primary_category": "4D Reconstruction",
+      "categories": [
+        "4D Reconstruction",
+        "Casual Video",
+        "Efficient"
+      ],
+      "published": "2025-09-18T17:33:13.011+00:00",
+      "link": "https://openreview.net/forum?id=HTLa6Ao0jG",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-3ipmm7clzx",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "ProDyG: Progressive Dynamic Scene Reconstruction via Gaussian Splatting from Monocular Videos",
+      "abstract": "Achieving truly practical dynamic 3D reconstruction requires online operation, global pose and map consistency, detailed appearance modeling, and the flexibility to handle both RGB and RGB-D inputs. However, existing SLAM methods typically merely remove the dynamic parts or require RGB-D input, while offline methods are not scalable to long video sequences, and current transformer-based feedforward methods lack global consistency and appearance details. To this end, we achieve online dynamic scene reconstruction by disentangling the static and dynamic parts within a SLAM system. The poses are tracked robustly with a novel motion masking strategy, and dynamic parts are reconstructed leveraging a progressive adaptation of a Motion Scaffolds graph. Our method yields novel view renderings competitive to offline methods and achieves on-par tracking with state-of-the-art dynamic SLAM methods.",
+      "authors": [
+        "Shi Chen",
+        "Erik Sandström",
+        "Sandro Lombardi",
+        "Siyuan Li",
+        "Martin R. Oswald"
+      ],
+      "primary_category": "Dynamic",
+      "categories": [
+        "Dynamic",
+        "scene reconstruction",
+        "dynamic scene reconstruction",
+        "4D reconstruction",
+        "Gaussian Splatting",
+        "SLAM",
+        "monocular",
+        "dynamic SLAM",
+        "pose estimation",
+        "mapping",
+        "tracking"
+      ],
+      "published": "2025-09-18T17:31:58.948+00:00",
+      "link": "https://openreview.net/forum?id=3iPmM7cLzx",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-63ljkcgmhe",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "VGGT-SLAM: Dense RGB SLAM Optimized on the SL(4) Manifold",
+      "abstract": "We present VGGT-SLAM, a dense RGB SLAM system constructed by incrementally and globally aligning submaps created from the feed-forward scene reconstruction approach VGGT using only uncalibrated monocular cameras. While related works align submaps using similarity transforms (i.e., translation, rotation, and scale), we show that such approaches are inadequate in the case of uncalibrated cameras. In particular,  we revisit the idea of reconstruction ambiguity, where given a set of uncalibrated cameras with no assumption on the camera motion or scene structure, the scene can only be reconstructed up to a 15-degrees-of-freedom projective transformation of the true geometry. This inspires us to recover a consistent scene reconstruction across submaps by optimizing over the SL(4) manifold, thus estimating 15-degrees-of-freedom homography transforms between sequential submaps while accounting for potential loop closure constraints. As verified by extensive experiments, we demonstrate that VGGT-SLAM achieves improved map quality using long video sequences that are infeasible for VGGT due to its high GPU requirements. Our code is available at https://github.com/MIT-SPARK/VGGT-SLAM.",
+      "authors": [
+        "Dominic Rosario Maggio",
+        "Hyungtae Lim",
+        "Luca Carlone"
+      ],
+      "primary_category": "RGB SLAM",
+      "categories": [
+        "RGB SLAM",
+        "Feed Forward Mapping",
+        "Pose Graph Optimization on Manifold"
+      ],
+      "published": "2025-09-18T17:39:48.314+00:00",
+      "link": "https://openreview.net/forum?id=63ljkCGMhE",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-5bfo9i4kj1",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "TreeSplat: Mergeable Tree for Deformable Gaussian Splatting",
+      "abstract": "Dynamic 3D scene reconstruction from multi-view videos demands representation to model complex deformations at scale. Current Gaussian Splatting based methods often either suffer from significant computation cost due to dense MLP-based modeling or explicit modeling deformation of each Gaussian independently. However, the dynamics of objects within a scene are typically hierarchical and exhibit structural correlations. To leverage these structural priors into the representation, we introduce **TreeSplat**, a **Tree** data structure for deformable Gaussian **Splat**ting. In TreeSplat, as the name suggests, motions of Gaussian are represented hierarchically within a tree. Each node learns coefficients for time-varying basis functions, defining a part of the motion. The full motion for any given Gaussian is then determined by accumulating these transformations along the tree path from its leaf node to the root node. This tree isn't predefined; instead, it is constructed adaptively alongside Gaussian densification, where cloning or splitting a Gaussian correspondingly creates new leaf nodes. One central property of TreeSplat is its mergeability; after optimization during training, the hierarchical motion parameters for each Gaussian can be efficiently consolidated. By performing this merging step before test time, we eliminate the need to traverse the tree explicitly for each Gaussian during rendering. This results in dramatically faster rendering over 200 FPS and compact storage, while maintaining state-of-the-art rendering quality. Experiments on diverse synthetic and real-world datasets validate these advantages.",
+      "authors": [
+        "Qiuhong Shen",
+        "Xingyi Yang",
+        "Xinchao Wang"
+      ],
+      "primary_category": "Dynamic 3D Scenes",
+      "categories": [
+        "Dynamic 3D Scenes",
+        "3D Gaussian Splatting"
+      ],
+      "published": "2025-09-18T17:29:05.32+00:00",
+      "link": "https://openreview.net/forum?id=5BfO9i4kj1",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-v56unbithp",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "HoliGS: Holistic Gaussian Splatting for Embodied View Synthesis",
+      "abstract": "We propose HoliGS, a novel deformable Gaussian splatting framework that addresses embodied view synthesis from long monocular RGB videos. Unlike prior 4D Gaussian splatting and dynamic NeRF pipelines, which struggle with training overhead in minute-long captures, our method leverages invertible Gaussian Splatting deformation networks to reconstruct large-scale, dynamic environments accurately. Specifically, we decompose each scene into a static background plus time-varying objects, each represented by learned Gaussian primitives undergoing global rigid transformations, skeleton-driven articulation, and subtle non-rigid deformations via an invertible neural flow. This hierarchical warping strategy enables robust free-viewpoint novel-view rendering from various embodied camera trajectories by attaching Gaussians to a complete canonical foreground shape (e.g., egocentric or third-person follow), which may involve substantial viewpoint changes and interactions between multiple actors. Our experiments demonstrate that HoliGS achieves superior reconstruction quality on challenging datasets while significantly reducing both training and rendering time compared to state-of-the-art monocular deformable NeRFs. These results highlight a practical and scalable solution for EVS in real-world scenarios. The source code will be released.",
+      "authors": [
+        "Xiaoyuan Wang",
+        "Yizhou Zhao",
+        "Botao Ye",
+        "Xiaojun Shan",
+        "Weijie Lyu",
+        "Lu Qi",
+        "Kelvin C.K. Chan",
+        "Yinxiao Li",
+        "Ming-Hsuan Yang"
+      ],
+      "primary_category": "Embodied AI",
+      "categories": [
+        "Embodied AI",
+        "Embodied View Synthesis",
+        "Gaussian Splatting"
+      ],
+      "published": "2025-09-18T17:28:21.605+00:00",
+      "link": "https://openreview.net/forum?id=V56unBiTHP",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-i64zlbup6u",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "MaterialRefGS: Reflective Gaussian Splatting with Multi-view Consistent Material Inference",
+      "abstract": "Modeling reflections from 2D images is essential for photorealistic rendering and novel view synthesis. Recent approaches enhance Gaussian primitives with reflection-related material attributes to enable physically based rendering (PBR) with Gaussian Splatting. However, the material inference often lacks sufficient constraints, especially under limited environment modeling, resulting in illumination aliasing and reduced generalization. In this work, we revisit the problem from a multi-view perspective and show that multi-view consistent material inference with more physically-based environment modeling is key to learning accurate reflections with Gaussian Splatting. To this end, we enforce 2D Gaussians to produce multi-view consistent material maps during deferred shading. We also track photometric variations across views to identify highly reflective regions, which serve as strong priors for reflection strength terms. To handle indirect illumination caused by inter-object occlusions, we further introduce an environment modeling strategy through ray tracing with 2DGS, enabling photorealistic rendering of indirect radiance. Experiments on widely used benchmarks show that our method faithfully recovers both illumination and geometry, achieving state-of-the-art rendering quality in novel views synthesis. Project Page: https://wen-yuan-zhang.github.io/MaterialRefGS.",
+      "authors": [
+        "Wenyuan Zhang",
+        "Jimin Tang",
+        "Weiqi Zhang",
+        "Yi Fang",
+        "Yu-Shen Liu",
+        "Zhizhong Han"
+      ],
+      "primary_category": "3D Gaussian Splatting",
+      "categories": [
+        "3D Gaussian Splatting",
+        "Novel view synthesis",
+        "Physically based rendering",
+        "Deferred shading"
+      ],
+      "published": "2025-09-18T17:29:27.658+00:00",
+      "link": "https://openreview.net/forum?id=I64ZLbUP6u",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-j1qkrvjnvf",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "Gaussian Herding across Pens: An Optimal Transport Perspective on Global Gaussian Reduction for 3DGS",
+      "abstract": "3D Gaussian Splatting (3DGS) has emerged as a powerful technique for radiance field rendering, but it typically requires millions of redundant Gaussian primitives, overwhelming memory and rendering budgets. Existing compaction approaches address this by pruning Gaussians based on heuristic importance scores, without global fidelity guarantee. To bridge this gap, we propose a novel optimal transport perspective that casts 3DGS compaction as global Gaussian mixture reduction. Specifically, we first minimize the composite transport divergence over a KD-tree partition to produce a compact geometric representation, and then decouple appearance from geometry by fine-tuning color and opacity attributes with far fewer Gaussian primitives. Experiments on benchmark datasets show that our method (i) yields negligible loss in rendering quality (PSNR, SSIM, LPIPS) compared to vanilla 3DGS with only 10\\% Gaussians; and (ii) consistently outperforms state-of-the-art 3DGS compaction techniques. Notably, our method is applicable to any stage of vanilla or accelerated 3DGS pipelines, providing an efficient and agnostic pathway to lightweight neural rendering.",
+      "authors": [
+        "Tao Wang",
+        "Mengyu Li",
+        "Geduo Zeng",
+        "Cheng Meng",
+        "Qiong Zhang"
+      ],
+      "primary_category": "3D Gaussian splatting",
+      "categories": [
+        "3D Gaussian splatting",
+        "model compaction",
+        "Gaussian mixture reduction",
+        "composite transport divergence",
+        "optimal transport"
+      ],
+      "published": "2025-09-18T17:38:39.092+00:00",
+      "link": "https://openreview.net/forum?id=j1QkrVjNVF",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-uvxqeigxfl",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "3D Gaussian Flats: Hybrid 2D/3D Photometric Scene Reconstruction",
+      "abstract": "Recent advances in radiance fields and novel view synthesis enable creation of realistic digital twins from photographs. However, current methods struggle with flat, texture-less surfaces, creating uneven and semi-transparent reconstructions, due to an ill-conditioned photometric reconstruction objective. Surface reconstruction methods solve this issue but sacrifice visual quality. We propose a novel hybrid 2D/3D representation that jointly optimizes constrained planar (2D) Gaussians for modeling flat surfaces and freeform (3D) Gaussians for the rest of the scene. Our end-to-end approach dynamically detects and refines planar regions, improving both visual fidelity and geometric accuracy. It achieves state-of-the-art depth estimation on ScanNet++ and ScanNetv2, and excels at mesh extraction without overfitting to a specific camera model, showing its effectiveness in producing high-quality reconstruction of indoor scenes.",
+      "authors": [
+        "Maria Taktasheva",
+        "Lily Goli",
+        "Alessandro Fiorini",
+        "Zhen Li",
+        "Daniel Rebain",
+        "Andrea Tagliasacchi"
+      ],
+      "primary_category": "gaussian splatting",
+      "categories": [
+        "gaussian splatting",
+        "novel view synthesis",
+        "planar reconstruction"
+      ],
+      "published": "2025-09-18T17:39:20.296+00:00",
+      "link": "https://openreview.net/forum?id=uVxQEIgXfL",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-tdt6hf7jk5",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "Motion Matters: Compact Gaussian Streaming for Free-Viewpoint Video Reconstruction",
+      "abstract": "3D Gaussian Splatting (3DGS) has emerged as a high-fidelity and efficient paradigm for online free-viewpoint video (FVV) reconstruction, offering viewers rapid responsiveness and immersive experiences. However, existing online methods face challenge in prohibitive storage requirements primarily due to point-wise modeling that fails to exploit the motion properties. To address this limitation, we propose a novel Compact Gaussian Streaming (ComGS) framework, leveraging the locality and consistency of motion in dynamic scene, that models object-consistent Gaussian point motion through keypoint-driven motion representation. By transmitting only the keypoint attributes, this framework provides a more storage-efficient solution. Specifically, we first identify a sparse set of motion-sensitive keypoints localized within motion regions using a viewspace gradient difference strategy. Equipped with these keypoints, we propose an adaptive motion-driven mechanism that predicts a spatial influence field for propagating keypoint motion to neighboring Gaussian points with similar motion. Moreover, ComGS adopts an error-aware correction strategy for key frame reconstruction that selectively refines erroneous regions and mitigates error accumulation without unnecessary overhead. Overall, ComGS achieves a remarkable storage reduction of over 159 × compared to 3DGStream and 14 × compared to the SOTA method QUEEN, while maintaining competitive visual fidelity and rendering speed. Project page: https://chenjiacong-1005.github.io/ComGS/.",
+      "authors": [
+        "Jiacong Chen",
+        "Qingyu Mao",
+        "Youneng Bao",
+        "Xiandong MENG",
+        "Fanyang Meng",
+        "Ronggang Wang",
+        "Yongsheng Liang"
+      ],
+      "primary_category": "Free-viewpoint video",
+      "categories": [
+        "Free-viewpoint video",
+        "3D Gaussian Splatting",
+        "Real-time transmission",
+        "4D reconstruction",
+        "Compression",
+        "Streaming"
+      ],
+      "published": "2025-09-18T17:41:20.814+00:00",
+      "link": "https://openreview.net/forum?id=tDT6HF7jK5",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-qejosm3qks",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "Dynamic Gaussian Splatting from Defocused  and Motion-blurred Monocular Videos",
+      "abstract": "This paper presents a unified framework that allows high-quality dynamic Gaussian Splatting from both defocused and motion-blurred monocular videos. Due to the significant difference between the formation processes of defocus blur and motion blur, existing methods are tailored for either one of them, lacking the ability to simultaneously deal with both of them. Although the two can be jointly modeled as blur kernel-based convolution, the inherent difficulty in estimating accurate blur kernels greatly limits the progress in this direction. In this work, we go a step further towards this direction. Particularly, we propose to estimate per-pixel reliable blur kernels using a blur prediction network that exploits blur-related scene and camera information and is subject to a blur-aware sparsity constraint. Besides, we introduce a dynamic Gaussian densification strategy to mitigate the lack of Gaussians for incomplete regions, and boost the performance of novel view synthesis by incorporating unseen view information to constrain scene optimization. Extensive experiments show that our method outperforms the state-of-the-art methods in generating photorealistic novel view synthesis from defocused and motion-blurred monocular videos. Our code is available at https://github.com/hhhddddddd/dydeblur.",
+      "authors": [
+        "Xuankai Zhang",
+        "Junjin Xiao",
+        "Qing Zhang"
+      ],
+      "primary_category": "Novel View Synthesis",
+      "categories": [
+        "Novel View Synthesis",
+        "Dynamic Gaussian Splatting",
+        "Deblur"
+      ],
+      "published": "2025-09-18T17:36:38.095+00:00",
+      "link": "https://openreview.net/forum?id=QeJOsm3qkS",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-ogc1qhaubj",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "Feed-Forward Bullet-Time Reconstruction of Dynamic Scenes from Monocular Videos",
+      "abstract": "Recent advancements in static feed-forward scene reconstruction have demonstrated significant progress in high-quality novel view synthesis. However, these models often struggle with generalizability across diverse environments and fail to effectively handle dynamic content. We present BTimer (short for Bullet Timer), the first motion-aware feed-forward model for real-time reconstruction and novel view synthesis of dynamic scenes. Our approach reconstructs the full scene in a 3D Gaussian Splatting representation at a given target (‘bullet’) timestamp by aggregating information from all the context frames. Such a formulation allows BTimer to gain scalability and generalization by leveraging both static and dynamic scene datasets. Given a casual monocular dynamic video, BTimer reconstructs a bullet-time scene within 150ms while reaching state-of-the-art performance on both static and dynamic scene datasets, even compared with optimization-based approaches.",
+      "authors": [
+        "Hanxue Liang",
+        "Jiawei Ren",
+        "Ashkan Mirzaei",
+        "Antonio Torralba",
+        "Ziwei Liu",
+        "Igor Gilitschenski",
+        "Sanja Fidler",
+        "Cengiz Oztireli",
+        "Huan Ling",
+        "Zan Gojcic",
+        "Jiahui Huang"
+      ],
+      "primary_category": "Dynamic scene reconstruction",
+      "categories": [
+        "Dynamic scene reconstruction",
+        "Generalizable Reconstruction",
+        "Reconstruction from Monocular Videos"
+      ],
+      "published": "2025-09-18T17:38:47.834+00:00",
+      "link": "https://openreview.net/forum?id=oGc1qHAUBJ",
+      "pdf_url": null,
+      "tags": [
+        "query:GS-SLAM"
+      ]
+    }
+  ],
+  "queries": [
+    {
+      "type": "intent_query",
+      "tag": "GS-SLAM",
+      "paper_tag": "query:GS-SLAM",
+      "query_text": "3D Gaussian Splatting for simultaneous localization and mapping",
+      "sim_scores": {
+        "openreview-neurips-2025-ewgzitwahh": {
+          "score": 0.01639344262295082,
+          "rank": 1
+        },
+        "openreview-neurips-2025-3ipmm7clzx": {
+          "score": 0.016129032258064516,
+          "rank": 2
+        },
+        "openreview-neurips-2025-zfneovqqkn": {
+          "score": 0.015873015873015872,
+          "rank": 3
+        },
+        "openreview-neurips-2025-pqcsyobzii": {
+          "score": 0.015384615384615385,
+          "rank": 5
+        },
+        "openreview-neurips-2025-iqu63cyi3z": {
+          "score": 0.014705882352941176,
+          "rank": 8
+        },
+        "openreview-neurips-2025-znsr3waluo": {
+          "score": 0.014492753623188406,
+          "rank": 9
+        },
+        "openreview-neurips-2025-sopsi570ap": {
+          "score": 0.014084507042253521,
+          "rank": 11
+        },
+        "openreview-neurips-2025-rrpyi2h0yn": {
+          "score": 0.013513513513513514,
+          "rank": 14
+        },
+        "openreview-neurips-2025-mgjmpnzgqo": {
+          "score": 0.013157894736842105,
+          "rank": 16
+        },
+        "openreview-neurips-2025-rkhudvy9qr": {
+          "score": 0.012987012987012988,
+          "rank": 17
+        },
+        "openreview-neurips-2025-ztvk8xnffy": {
+          "score": 0.01282051282051282,
+          "rank": 18
+        },
+        "openreview-neurips-2025-azlj6obedf": {
+          "score": 0.012658227848101266,
+          "rank": 19
+        },
+        "openreview-neurips-2025-0suihptncp": {
+          "score": 0.0125,
+          "rank": 20
+        },
+        "openreview-neurips-2025-5bfo9i4kj1": {
+          "score": 0.012345679012345678,
+          "rank": 21
+        },
+        "openreview-neurips-2025-yt8v2qfv5w": {
+          "score": 0.012048192771084338,
+          "rank": 23
+        },
+        "openreview-neurips-2025-25c8oc1pb2": {
+          "score": 0.011904761904761904,
+          "rank": 24
+        },
+        "openreview-neurips-2025-sl4kqwbkdq": {
+          "score": 0.011764705882352941,
+          "rank": 25
+        },
+        "openreview-neurips-2025-38gf07tmtr": {
+          "score": 0.011627906976744186,
+          "rank": 26
+        },
+        "openreview-neurips-2025-ksmgnl6pub": {
+          "score": 0.011363636363636364,
+          "rank": 28
+        },
+        "openreview-neurips-2025-j1qkrvjnvf": {
+          "score": 0.011111111111111112,
+          "rank": 30
+        },
+        "openreview-neurips-2025-uvxqeigxfl": {
+          "score": 0.010869565217391304,
+          "rank": 32
+        },
+        "openreview-neurips-2025-i64zlbup6u": {
+          "score": 0.010526315789473684,
+          "rank": 35
+        },
+        "openreview-neurips-2025-shfhw4zqd6": {
+          "score": 0.009345794392523364,
+          "rank": 47
+        },
+        "openreview-neurips-2025-jtf0hyfgil": {
+          "score": 0.009259259259259259,
+          "rank": 48
+        }
+      },
+      "ranked": [
+        {
+          "paper_id": "openreview-neurips-2025-25c8oc1pb2",
+          "score": 1.0,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-neurips-2025-ewgzitwahh",
+          "score": 1.0,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-neurips-2025-azlj6obedf",
+          "score": 0.9586435070306036,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-neurips-2025-38gf07tmtr",
+          "score": 0.9586435070306036,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-neurips-2025-vkjtyhatoa",
+          "score": 0.9185999185999183,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-neurips-2025-zfneovqqkn",
+          "score": 0.9185999185999183,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-neurips-2025-ksmgnl6pub",
+          "score": 0.8798076923076922,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-znsr3waluo",
+          "score": 0.8422090729783037,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-sopsi570ap",
+          "score": 0.8422090729783037,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-pqcsyobzii",
+          "score": 0.8057498057498057,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-rrpyi2h0yn",
+          "score": 0.8057498057498057,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-ztvk8xnffy",
+          "score": 0.7703788748564866,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-grpo8nttzk",
+          "score": 0.73604826546003,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-shfhw4zqd6",
+          "score": 0.73604826546003,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-0suihptncp",
+          "score": 0.702712746191007,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-yt8v2qfv5w",
+          "score": 0.6703296703296702,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-sl4kqwbkdq",
+          "score": 0.6388587937883712,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-5bfo9i4kj1",
+          "score": 0.608262108262108,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-j1qkrvjnvf",
+          "score": 0.578503688092729,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-jtf0hyfgil",
+          "score": 0.578503688092729,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-tdt6hf7jk5",
+          "score": 0.5495495495495496,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-3molquhfpv",
+          "score": 0.5495495495495496,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-gmic4ccyhn",
+          "score": 0.5213675213675214,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-mgjmpnzgqo",
+          "score": 0.49392712550607265,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-x2u8esisdb",
+          "score": 0.49392712550607265,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-iqu63cyi3z",
+          "score": 0.46719946719946726,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-i64zlbup6u",
+          "score": 0.46719946719946726,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-htla6ao0jg",
+          "score": 0.4411571334648256,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-qejosm3qks",
+          "score": 0.41577409931840303,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-v56unbithp",
+          "score": 0.3668882557771445,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-fdx7eb9cdv",
+          "score": 0.3668882557771445,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-3ipmm7clzx",
+          "score": 0.3433395872420263,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-ogc1qhaubj",
+          "score": 0.3433395872420263,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-rkhudvy9qr",
+          "score": 0.32035835650293487,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-uvxqeigxfl",
+          "score": 0.1933160472486314,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-63ljkcgmhe",
+          "score": 0.1933160472486314,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-vdv912fa3t",
+          "score": 0.1737891737891738,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-zwmq0msimg",
+          "score": 0.1360089186176142,
+          "star_rating": 3
+        }
+      ]
+    },
+    {
+      "type": "intent_query",
+      "tag": "GS-SLAM",
+      "paper_tag": "query:GS-SLAM",
+      "query_text": "Monocular 3D Gaussian splatting SLAM system for real time dense mapping",
+      "sim_scores": {
+        "openreview-neurips-2025-3ipmm7clzx": {
+          "score": 0.01639344262295082,
+          "rank": 1
+        },
+        "openreview-neurips-2025-pqcsyobzii": {
+          "score": 0.016129032258064516,
+          "rank": 2
+        },
+        "openreview-neurips-2025-ewgzitwahh": {
+          "score": 0.015873015873015872,
+          "rank": 3
+        },
+        "openreview-neurips-2025-63ljkcgmhe": {
+          "score": 0.015625,
+          "rank": 4
+        },
+        "openreview-neurips-2025-zfneovqqkn": {
+          "score": 0.015384615384615385,
+          "rank": 5
+        },
+        "openreview-neurips-2025-iqu63cyi3z": {
+          "score": 0.014925373134328358,
+          "rank": 7
+        },
+        "openreview-neurips-2025-rrpyi2h0yn": {
+          "score": 0.014705882352941176,
+          "rank": 8
+        },
+        "openreview-neurips-2025-rkhudvy9qr": {
+          "score": 0.014492753623188406,
+          "rank": 9
+        },
+        "openreview-neurips-2025-yt8v2qfv5w": {
+          "score": 0.013513513513513514,
+          "rank": 14
+        },
+        "openreview-neurips-2025-htla6ao0jg": {
+          "score": 0.013333333333333334,
+          "rank": 15
+        },
+        "openreview-neurips-2025-mgjmpnzgqo": {
+          "score": 0.013157894736842105,
+          "rank": 16
+        },
+        "openreview-neurips-2025-0suihptncp": {
+          "score": 0.012658227848101266,
+          "rank": 19
+        },
+        "openreview-neurips-2025-sopsi570ap": {
+          "score": 0.0125,
+          "rank": 20
+        },
+        "openreview-neurips-2025-znsr3waluo": {
+          "score": 0.012345679012345678,
+          "rank": 21
+        },
+        "openreview-neurips-2025-5bfo9i4kj1": {
+          "score": 0.012195121951219513,
+          "rank": 22
+        },
+        "openreview-neurips-2025-ztvk8xnffy": {
+          "score": 0.012048192771084338,
+          "rank": 23
+        },
+        "openreview-neurips-2025-25c8oc1pb2": {
+          "score": 0.011904761904761904,
+          "rank": 24
+        },
+        "openreview-neurips-2025-azlj6obedf": {
+          "score": 0.011494252873563218,
+          "rank": 27
+        },
+        "openreview-neurips-2025-sl4kqwbkdq": {
+          "score": 0.011111111111111112,
+          "rank": 30
+        },
+        "openreview-neurips-2025-uvxqeigxfl": {
+          "score": 0.010526315789473684,
+          "rank": 35
+        },
+        "openreview-neurips-2025-shfhw4zqd6": {
+          "score": 0.010309278350515464,
+          "rank": 37
+        },
+        "openreview-neurips-2025-j1qkrvjnvf": {
+          "score": 0.01020408163265306,
+          "rank": 38
+        },
+        "openreview-neurips-2025-x2u8esisdb": {
+          "score": 0.010101010101010102,
+          "rank": 39
+        },
+        "openreview-neurips-2025-ksmgnl6pub": {
+          "score": 0.009523809523809525,
+          "rank": 45
+        },
+        "openreview-neurips-2025-jtf0hyfgil": {
+          "score": 0.009345794392523364,
+          "rank": 47
+        },
+        "openreview-neurips-2025-38gf07tmtr": {
+          "score": 0.009259259259259259,
+          "rank": 48
+        },
+        "openreview-neurips-2025-ogc1qhaubj": {
+          "score": 0.00909090909090909,
+          "rank": 50
+        }
+      },
+      "ranked": [
+        {
+          "paper_id": "openreview-neurips-2025-3ipmm7clzx",
+          "score": 1.0,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-neurips-2025-ewgzitwahh",
+          "score": 1.0,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-neurips-2025-htla6ao0jg",
+          "score": 0.9586435070306036,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-neurips-2025-ksmgnl6pub",
+          "score": 0.9185999185999183,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-neurips-2025-zfneovqqkn",
+          "score": 0.8798076923076922,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-sopsi570ap",
+          "score": 0.8798076923076922,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-x2u8esisdb",
+          "score": 0.8422090729783037,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-v56unbithp",
+          "score": 0.8422090729783037,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-ztvk8xnffy",
+          "score": 0.8057498057498057,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-znsr3waluo",
+          "score": 0.8057498057498057,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-qejosm3qks",
+          "score": 0.7703788748564866,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-azlj6obedf",
+          "score": 0.7703788748564866,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-shfhw4zqd6",
+          "score": 0.73604826546003,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-vdv912fa3t",
+          "score": 0.73604826546003,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-jtf0hyfgil",
+          "score": 0.702712746191007,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-38gf07tmtr",
+          "score": 0.6703296703296702,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-25c8oc1pb2",
+          "score": 0.6703296703296702,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-rrpyi2h0yn",
+          "score": 0.6388587937883712,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-pqcsyobzii",
+          "score": 0.6388587937883712,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-0suihptncp",
+          "score": 0.608262108262108,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-63ljkcgmhe",
+          "score": 0.608262108262108,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-mgjmpnzgqo",
+          "score": 0.5495495495495496,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-grpo8nttzk",
+          "score": 0.5213675213675214,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-sl4kqwbkdq",
+          "score": 0.5213675213675214,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-iqu63cyi3z",
+          "score": 0.49392712550607265,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-gmic4ccyhn",
+          "score": 0.49392712550607265,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-vkjtyhatoa",
+          "score": 0.46719946719946726,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-3molquhfpv",
+          "score": 0.46719946719946726,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-yt8v2qfv5w",
+          "score": 0.4411571334648256,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-ogc1qhaubj",
+          "score": 0.4411571334648256,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-tdt6hf7jk5",
+          "score": 0.41577409931840303,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-5bfo9i4kj1",
+          "score": 0.3910256410256411,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-j1qkrvjnvf",
+          "score": 0.3668882557771445,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-fdx7eb9cdv",
+          "score": 0.32035835650293487,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-rkhudvy9qr",
+          "score": 0.32035835650293487,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-zwmq0msimg",
+          "score": 0.25462134764460337,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-i64zlbup6u",
+          "score": 0.21328671328671328,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-uvxqeigxfl",
+          "score": 0.1737891737891738,
+          "star_rating": 3
+        }
+      ]
+    },
+    {
+      "type": "intent_query",
+      "tag": "GS-SLAM",
+      "paper_tag": "query:GS-SLAM",
+      "query_text": "Novel view synthesis and camera tracking via Gaussian splatting",
+      "sim_scores": {
+        "openreview-neurips-2025-3ipmm7clzx": {
+          "score": 0.016129032258064516,
+          "rank": 2
+        },
+        "openreview-neurips-2025-v56unbithp": {
+          "score": 0.015873015873015872,
+          "rank": 3
+        },
+        "openreview-neurips-2025-zfneovqqkn": {
+          "score": 0.015384615384615385,
+          "rank": 5
+        },
+        "openreview-neurips-2025-sopsi570ap": {
+          "score": 0.014492753623188406,
+          "rank": 9
+        },
+        "openreview-neurips-2025-yt8v2qfv5w": {
+          "score": 0.014285714285714285,
+          "rank": 10
+        },
+        "openreview-neurips-2025-zwmq0msimg": {
+          "score": 0.014084507042253521,
+          "rank": 11
+        },
+        "openreview-neurips-2025-25c8oc1pb2": {
+          "score": 0.013888888888888888,
+          "rank": 12
+        },
+        "openreview-neurips-2025-znsr3waluo": {
+          "score": 0.0136986301369863,
+          "rank": 13
+        },
+        "openreview-neurips-2025-vdv912fa3t": {
+          "score": 0.012987012987012988,
+          "rank": 17
+        },
+        "openreview-neurips-2025-iqu63cyi3z": {
+          "score": 0.012658227848101266,
+          "rank": 19
+        },
+        "openreview-neurips-2025-qejosm3qks": {
+          "score": 0.0125,
+          "rank": 20
+        },
+        "openreview-neurips-2025-tdt6hf7jk5": {
+          "score": 0.012345679012345678,
+          "rank": 21
+        },
+        "openreview-neurips-2025-5bfo9i4kj1": {
+          "score": 0.012048192771084338,
+          "rank": 23
+        },
+        "openreview-neurips-2025-htla6ao0jg": {
+          "score": 0.011904761904761904,
+          "rank": 24
+        },
+        "openreview-neurips-2025-ztvk8xnffy": {
+          "score": 0.011764705882352941,
+          "rank": 25
+        },
+        "openreview-neurips-2025-ogc1qhaubj": {
+          "score": 0.011494252873563218,
+          "rank": 27
+        },
+        "openreview-neurips-2025-ewgzitwahh": {
+          "score": 0.011363636363636364,
+          "rank": 28
+        },
+        "openreview-neurips-2025-shfhw4zqd6": {
+          "score": 0.01098901098901099,
+          "rank": 31
+        },
+        "openreview-neurips-2025-fdx7eb9cdv": {
+          "score": 0.010752688172043012,
+          "rank": 33
+        },
+        "openreview-neurips-2025-x2u8esisdb": {
+          "score": 0.009900990099009901,
+          "rank": 41
+        },
+        "openreview-neurips-2025-grpo8nttzk": {
+          "score": 0.00980392156862745,
+          "rank": 42
+        },
+        "openreview-neurips-2025-uvxqeigxfl": {
+          "score": 0.009523809523809525,
+          "rank": 45
+        },
+        "openreview-neurips-2025-sl4kqwbkdq": {
+          "score": 0.009345794392523364,
+          "rank": 47
+        },
+        "openreview-neurips-2025-azlj6obedf": {
+          "score": 0.009259259259259259,
+          "rank": 48
+        }
+      },
+      "ranked": [
+        {
+          "paper_id": "openreview-neurips-2025-zwmq0msimg",
+          "score": 1.0,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-neurips-2025-v56unbithp",
+          "score": 1.0,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-neurips-2025-yt8v2qfv5w",
+          "score": 0.9586435070306036,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-neurips-2025-25c8oc1pb2",
+          "score": 0.9586435070306036,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-neurips-2025-znsr3waluo",
+          "score": 0.9185999185999183,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-neurips-2025-azlj6obedf",
+          "score": 0.9185999185999183,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-neurips-2025-sopsi570ap",
+          "score": 0.8798076923076922,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-zfneovqqkn",
+          "score": 0.8422090729783037,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-htla6ao0jg",
+          "score": 0.8057498057498057,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-ewgzitwahh",
+          "score": 0.8057498057498057,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-fdx7eb9cdv",
+          "score": 0.7703788748564866,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-0suihptncp",
+          "score": 0.73604826546003,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-qejosm3qks",
+          "score": 0.73604826546003,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-3molquhfpv",
+          "score": 0.702712746191007,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-grpo8nttzk",
+          "score": 0.6703296703296702,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-shfhw4zqd6",
+          "score": 0.6703296703296702,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-rrpyi2h0yn",
+          "score": 0.6388587937883712,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-ogc1qhaubj",
+          "score": 0.6388587937883712,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-3ipmm7clzx",
+          "score": 0.578503688092729,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-i64zlbup6u",
+          "score": 0.5495495495495496,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-vkjtyhatoa",
+          "score": 0.5495495495495496,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-38gf07tmtr",
+          "score": 0.5213675213675214,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-tdt6hf7jk5",
+          "score": 0.49392712550607265,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-ksmgnl6pub",
+          "score": 0.41577409931840303,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-uvxqeigxfl",
+          "score": 0.41577409931840303,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-sl4kqwbkdq",
+          "score": 0.3910256410256411,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-ztvk8xnffy",
+          "score": 0.3910256410256411,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-5bfo9i4kj1",
+          "score": 0.3433395872420263,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-mgjmpnzgqo",
+          "score": 0.29792429792429775,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-pqcsyobzii",
+          "score": 0.2760180995475112,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-iqu63cyi3z",
+          "score": 0.23371647509578536,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-x2u8esisdb",
+          "score": 0.21328671328671328,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-jtf0hyfgil",
+          "score": 0.1933160472486314,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-vdv912fa3t",
+          "score": 0.11772814998621459,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-gmic4ccyhn",
+          "score": 0.0823211875843454,
+          "star_rating": 2
+        },
+        {
+          "paper_id": "openreview-neurips-2025-j1qkrvjnvf",
+          "score": 0.06517094017094004,
+          "star_rating": 2
+        },
+        {
+          "paper_id": "openreview-neurips-2025-rkhudvy9qr",
+          "score": 0.0483743061062648,
+          "star_rating": 2
+        }
+      ]
+    },
+    {
+      "type": "intent_query",
+      "tag": "GS-SLAM",
+      "paper_tag": "query:GS-SLAM",
+      "query_text": "efficient visual SLAM with 3D Gaussian scene representations",
+      "sim_scores": {
+        "openreview-neurips-2025-3ipmm7clzx": {
+          "score": 0.01639344262295082,
+          "rank": 1
+        },
+        "openreview-neurips-2025-63ljkcgmhe": {
+          "score": 0.016129032258064516,
+          "rank": 2
+        },
+        "openreview-neurips-2025-ewgzitwahh": {
+          "score": 0.015384615384615385,
+          "rank": 5
+        },
+        "openreview-neurips-2025-fdx7eb9cdv": {
+          "score": 0.012195121951219513,
+          "rank": 22
+        },
+        "openreview-neurips-2025-jtf0hyfgil": {
+          "score": 0.012048192771084338,
+          "rank": 23
+        },
+        "openreview-neurips-2025-vdv912fa3t": {
+          "score": 0.011764705882352941,
+          "rank": 25
+        },
+        "openreview-neurips-2025-uvxqeigxfl": {
+          "score": 0.010416666666666666,
+          "rank": 36
+        },
+        "openreview-neurips-2025-rkhudvy9qr": {
+          "score": 0.010309278350515464,
+          "rank": 37
+        },
+        "openreview-neurips-2025-0suihptncp": {
+          "score": 0.009708737864077669,
+          "rank": 43
+        }
+      },
+      "ranked": [
+        {
+          "paper_id": "openreview-neurips-2025-ksmgnl6pub",
+          "score": 1.0,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-neurips-2025-htla6ao0jg",
+          "score": 1.0,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-neurips-2025-uvxqeigxfl",
+          "score": 0.9586435070306036,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-neurips-2025-ewgzitwahh",
+          "score": 0.9586435070306036,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-neurips-2025-0suihptncp",
+          "score": 0.9185999185999183,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-neurips-2025-38gf07tmtr",
+          "score": 0.9185999185999183,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-neurips-2025-znsr3waluo",
+          "score": 0.8798076923076922,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-zfneovqqkn",
+          "score": 0.8422090729783037,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-azlj6obedf",
+          "score": 0.8057498057498057,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-3ipmm7clzx",
+          "score": 0.8057498057498057,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-yt8v2qfv5w",
+          "score": 0.7703788748564866,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-shfhw4zqd6",
+          "score": 0.7703788748564866,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-gmic4ccyhn",
+          "score": 0.73604826546003,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-ztvk8xnffy",
+          "score": 0.702712746191007,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-grpo8nttzk",
+          "score": 0.702712746191007,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-sl4kqwbkdq",
+          "score": 0.6703296703296702,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-iqu63cyi3z",
+          "score": 0.6703296703296702,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-rkhudvy9qr",
+          "score": 0.6388587937883712,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-tdt6hf7jk5",
+          "score": 0.6388587937883712,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-vkjtyhatoa",
+          "score": 0.608262108262108,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-63ljkcgmhe",
+          "score": 0.5495495495495496,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-sopsi570ap",
+          "score": 0.5495495495495496,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-ogc1qhaubj",
+          "score": 0.5213675213675214,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-rrpyi2h0yn",
+          "score": 0.49392712550607265,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-zwmq0msimg",
+          "score": 0.49392712550607265,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-5bfo9i4kj1",
+          "score": 0.46719946719946726,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-x2u8esisdb",
+          "score": 0.46719946719946726,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-3molquhfpv",
+          "score": 0.4411571334648256,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-j1qkrvjnvf",
+          "score": 0.4411571334648256,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-25c8oc1pb2",
+          "score": 0.3910256410256411,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-jtf0hyfgil",
+          "score": 0.3668882557771445,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-mgjmpnzgqo",
+          "score": 0.3433395872420263,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-pqcsyobzii",
+          "score": 0.32035835650293487,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-v56unbithp",
+          "score": 0.29792429792429775,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-fdx7eb9cdv",
+          "score": 0.2760180995475112,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-qejosm3qks",
+          "score": 0.23371647509578536,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-i64zlbup6u",
+          "score": 0.1737891737891738,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-vdv912fa3t",
+          "score": 0.06517094017094004,
+          "star_rating": 2
+        }
+      ]
+    },
+    {
+      "type": "keyword",
+      "tag": "GS-SLAM",
+      "paper_tag": "keyword:GS-SLAM",
+      "query_text": "3D Gaussian splatting",
+      "sim_scores": {
+        "openreview-neurips-2025-gmic4ccyhn": {
+          "score": 0.01639344262295082,
+          "rank": 1
+        },
+        "openreview-neurips-2025-grpo8nttzk": {
+          "score": 0.016129032258064516,
+          "rank": 2
+        },
+        "openreview-neurips-2025-ewgzitwahh": {
+          "score": 0.015384615384615385,
+          "rank": 5
+        },
+        "openreview-neurips-2025-azlj6obedf": {
+          "score": 0.014925373134328358,
+          "rank": 7
+        },
+        "openreview-neurips-2025-ksmgnl6pub": {
+          "score": 0.014492753623188406,
+          "rank": 9
+        },
+        "openreview-neurips-2025-sopsi570ap": {
+          "score": 0.014285714285714285,
+          "rank": 10
+        },
+        "openreview-neurips-2025-pqcsyobzii": {
+          "score": 0.014084507042253521,
+          "rank": 11
+        },
+        "openreview-neurips-2025-sl4kqwbkdq": {
+          "score": 0.012987012987012988,
+          "rank": 17
+        },
+        "openreview-neurips-2025-yt8v2qfv5w": {
+          "score": 0.01282051282051282,
+          "rank": 18
+        },
+        "openreview-neurips-2025-znsr3waluo": {
+          "score": 0.012658227848101266,
+          "rank": 19
+        },
+        "openreview-neurips-2025-zwmq0msimg": {
+          "score": 0.0125,
+          "rank": 20
+        },
+        "openreview-neurips-2025-rrpyi2h0yn": {
+          "score": 0.012345679012345678,
+          "rank": 21
+        },
+        "openreview-neurips-2025-zfneovqqkn": {
+          "score": 0.012195121951219513,
+          "rank": 22
+        },
+        "openreview-neurips-2025-25c8oc1pb2": {
+          "score": 0.011904761904761904,
+          "rank": 24
+        },
+        "openreview-neurips-2025-x2u8esisdb": {
+          "score": 0.011764705882352941,
+          "rank": 25
+        },
+        "openreview-neurips-2025-ztvk8xnffy": {
+          "score": 0.011627906976744186,
+          "rank": 26
+        },
+        "openreview-neurips-2025-vkjtyhatoa": {
+          "score": 0.011235955056179775,
+          "rank": 29
+        },
+        "openreview-neurips-2025-0suihptncp": {
+          "score": 0.011111111111111112,
+          "rank": 30
+        },
+        "openreview-neurips-2025-mgjmpnzgqo": {
+          "score": 0.01098901098901099,
+          "rank": 31
+        },
+        "openreview-neurips-2025-iqu63cyi3z": {
+          "score": 0.010752688172043012,
+          "rank": 33
+        },
+        "openreview-neurips-2025-3molquhfpv": {
+          "score": 0.010526315789473684,
+          "rank": 35
+        },
+        "openreview-neurips-2025-jtf0hyfgil": {
+          "score": 0.01020408163265306,
+          "rank": 38
+        },
+        "openreview-neurips-2025-fdx7eb9cdv": {
+          "score": 0.009900990099009901,
+          "rank": 41
+        },
+        "openreview-neurips-2025-38gf07tmtr": {
+          "score": 0.00980392156862745,
+          "rank": 42
+        },
+        "openreview-neurips-2025-rkhudvy9qr": {
+          "score": 0.00909090909090909,
+          "rank": 50
+        }
+      }
+    },
+    {
+      "type": "keyword",
+      "tag": "GS-SLAM",
+      "paper_tag": "keyword:GS-SLAM",
+      "query_text": "Monocular visual SLAM using a single camera",
+      "sim_scores": {
+        "openreview-neurips-2025-63ljkcgmhe": {
+          "score": 0.01639344262295082,
+          "rank": 1
+        },
+        "openreview-neurips-2025-3ipmm7clzx": {
+          "score": 0.016129032258064516,
+          "rank": 2
+        },
+        "openreview-neurips-2025-vdv912fa3t": {
+          "score": 0.0136986301369863,
+          "rank": 13
+        },
+        "openreview-neurips-2025-ewgzitwahh": {
+          "score": 0.0125,
+          "rank": 20
+        },
+        "openreview-neurips-2025-fdx7eb9cdv": {
+          "score": 0.009523809523809525,
+          "rank": 45
+        }
+      }
+    },
+    {
+      "type": "keyword",
+      "tag": "GS-SLAM",
+      "paper_tag": "keyword:GS-SLAM",
+      "query_text": "RGB-D SLAM",
+      "sim_scores": {
+        "openreview-neurips-2025-3ipmm7clzx": {
+          "score": 0.01639344262295082,
+          "rank": 1
+        }
+      }
+    },
+    {
+      "type": "keyword",
+      "tag": "GS-SLAM",
+      "paper_tag": "keyword:GS-SLAM",
+      "query_text": "RGB-D SLAM based on 3D Gaussian Splatting",
+      "sim_scores": {
+        "openreview-neurips-2025-3ipmm7clzx": {
+          "score": 0.01639344262295082,
+          "rank": 1
+        },
+        "openreview-neurips-2025-63ljkcgmhe": {
+          "score": 0.016129032258064516,
+          "rank": 2
+        },
+        "openreview-neurips-2025-ewgzitwahh": {
+          "score": 0.015873015873015872,
+          "rank": 3
+        },
+        "openreview-neurips-2025-zfneovqqkn": {
+          "score": 0.015625,
+          "rank": 4
+        },
+        "openreview-neurips-2025-0suihptncp": {
+          "score": 0.014492753623188406,
+          "rank": 9
+        },
+        "openreview-neurips-2025-jtf0hyfgil": {
+          "score": 0.014285714285714285,
+          "rank": 10
+        },
+        "openreview-neurips-2025-pqcsyobzii": {
+          "score": 0.014084507042253521,
+          "rank": 11
+        },
+        "openreview-neurips-2025-azlj6obedf": {
+          "score": 0.013888888888888888,
+          "rank": 12
+        },
+        "openreview-neurips-2025-znsr3waluo": {
+          "score": 0.013513513513513514,
+          "rank": 14
+        },
+        "openreview-neurips-2025-rrpyi2h0yn": {
+          "score": 0.013157894736842105,
+          "rank": 16
+        },
+        "openreview-neurips-2025-htla6ao0jg": {
+          "score": 0.01282051282051282,
+          "rank": 18
+        },
+        "openreview-neurips-2025-sopsi570ap": {
+          "score": 0.0125,
+          "rank": 20
+        },
+        "openreview-neurips-2025-j1qkrvjnvf": {
+          "score": 0.012048192771084338,
+          "rank": 23
+        },
+        "openreview-neurips-2025-sl4kqwbkdq": {
+          "score": 0.011764705882352941,
+          "rank": 25
+        },
+        "openreview-neurips-2025-rkhudvy9qr": {
+          "score": 0.011627906976744186,
+          "rank": 26
+        },
+        "openreview-neurips-2025-5bfo9i4kj1": {
+          "score": 0.011363636363636364,
+          "rank": 28
+        },
+        "openreview-neurips-2025-yt8v2qfv5w": {
+          "score": 0.011235955056179775,
+          "rank": 29
+        },
+        "openreview-neurips-2025-uvxqeigxfl": {
+          "score": 0.011111111111111112,
+          "rank": 30
+        },
+        "openreview-neurips-2025-iqu63cyi3z": {
+          "score": 0.010869565217391304,
+          "rank": 32
+        },
+        "openreview-neurips-2025-25c8oc1pb2": {
+          "score": 0.010752688172043012,
+          "rank": 33
+        },
+        "openreview-neurips-2025-mgjmpnzgqo": {
+          "score": 0.01,
+          "rank": 40
+        },
+        "openreview-neurips-2025-shfhw4zqd6": {
+          "score": 0.009708737864077669,
+          "rank": 43
+        },
+        "openreview-neurips-2025-ztvk8xnffy": {
+          "score": 0.009433962264150943,
+          "rank": 46
+        },
+        "openreview-neurips-2025-x2u8esisdb": {
+          "score": 0.009345794392523364,
+          "rank": 47
+        }
+      }
+    },
+    {
+      "type": "keyword",
+      "tag": "GS-SLAM",
+      "paper_tag": "keyword:GS-SLAM",
+      "query_text": "Simultaneous Localization Mapping",
+      "sim_scores": {}
+    },
+    {
+      "type": "keyword",
+      "tag": "GS-SLAM",
+      "paper_tag": "keyword:GS-SLAM",
+      "query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation",
+      "sim_scores": {
+        "openreview-neurips-2025-zfneovqqkn": {
+          "score": 0.01639344262295082,
+          "rank": 1
+        },
+        "openreview-neurips-2025-iqu63cyi3z": {
+          "score": 0.016129032258064516,
+          "rank": 2
+        },
+        "openreview-neurips-2025-yt8v2qfv5w": {
+          "score": 0.015873015873015872,
+          "rank": 3
+        },
+        "openreview-neurips-2025-znsr3waluo": {
+          "score": 0.015625,
+          "rank": 4
+        },
+        "openreview-neurips-2025-25c8oc1pb2": {
+          "score": 0.015384615384615385,
+          "rank": 5
+        },
+        "openreview-neurips-2025-azlj6obedf": {
+          "score": 0.015151515151515152,
+          "rank": 6
+        },
+        "openreview-neurips-2025-5bfo9i4kj1": {
+          "score": 0.014705882352941176,
+          "rank": 8
+        },
+        "openreview-neurips-2025-v56unbithp": {
+          "score": 0.014492753623188406,
+          "rank": 9
+        },
+        "openreview-neurips-2025-mgjmpnzgqo": {
+          "score": 0.014285714285714285,
+          "rank": 10
+        },
+        "openreview-neurips-2025-i64zlbup6u": {
+          "score": 0.014084507042253521,
+          "rank": 11
+        },
+        "openreview-neurips-2025-ksmgnl6pub": {
+          "score": 0.013888888888888888,
+          "rank": 12
+        },
+        "openreview-neurips-2025-grpo8nttzk": {
+          "score": 0.0136986301369863,
+          "rank": 13
+        },
+        "openreview-neurips-2025-zwmq0msimg": {
+          "score": 0.013513513513513514,
+          "rank": 14
+        },
+        "openreview-neurips-2025-sl4kqwbkdq": {
+          "score": 0.012658227848101266,
+          "rank": 19
+        },
+        "openreview-neurips-2025-ztvk8xnffy": {
+          "score": 0.0125,
+          "rank": 20
+        },
+        "openreview-neurips-2025-j1qkrvjnvf": {
+          "score": 0.012195121951219513,
+          "rank": 22
+        },
+        "openreview-neurips-2025-rrpyi2h0yn": {
+          "score": 0.012048192771084338,
+          "rank": 23
+        },
+        "openreview-neurips-2025-uvxqeigxfl": {
+          "score": 0.011764705882352941,
+          "rank": 25
+        },
+        "openreview-neurips-2025-0suihptncp": {
+          "score": 0.011627906976744186,
+          "rank": 26
+        },
+        "openreview-neurips-2025-3ipmm7clzx": {
+          "score": 0.011494252873563218,
+          "rank": 27
+        },
+        "openreview-neurips-2025-tdt6hf7jk5": {
+          "score": 0.011363636363636364,
+          "rank": 28
+        },
+        "openreview-neurips-2025-gmic4ccyhn": {
+          "score": 0.010416666666666666,
+          "rank": 36
+        },
+        "openreview-neurips-2025-sopsi570ap": {
+          "score": 0.010309278350515464,
+          "rank": 37
+        },
+        "openreview-neurips-2025-3molquhfpv": {
+          "score": 0.01020408163265306,
+          "rank": 38
+        },
+        "openreview-neurips-2025-htla6ao0jg": {
+          "score": 0.009900990099009901,
+          "rank": 41
+        },
+        "openreview-neurips-2025-fdx7eb9cdv": {
+          "score": 0.009615384615384616,
+          "rank": 44
+        },
+        "openreview-neurips-2025-qejosm3qks": {
+          "score": 0.009523809523809525,
+          "rank": 45
+        },
+        "openreview-neurips-2025-ewgzitwahh": {
+          "score": 0.009259259259259259,
+          "rank": 48
+        },
+        "openreview-neurips-2025-vkjtyhatoa": {
+          "score": 0.009174311926605505,
+          "rank": 49
+        }
+      }
+    },
+    {
+      "type": "keyword",
+      "tag": "GS-SLAM",
+      "paper_tag": "keyword:GS-SLAM",
+      "query_text": "Visual SLAM methods for camera tracking and mapping",
+      "sim_scores": {
+        "openreview-neurips-2025-3ipmm7clzx": {
+          "score": 0.01639344262295082,
+          "rank": 1
+        },
+        "openreview-neurips-2025-63ljkcgmhe": {
+          "score": 0.016129032258064516,
+          "rank": 2
+        },
+        "openreview-neurips-2025-vdv912fa3t": {
+          "score": 0.015151515151515152,
+          "rank": 6
+        },
+        "openreview-neurips-2025-ewgzitwahh": {
+          "score": 0.014705882352941176,
+          "rank": 8
+        }
+      }
+    },
+    {
+      "type": "keyword",
+      "tag": "GS-SLAM",
+      "paper_tag": "keyword:GS-SLAM",
+      "query_text": "accurate camera pose tracking",
+      "sim_scores": {
+        "openreview-neurips-2025-vdv912fa3t": {
+          "score": 0.016129032258064516,
+          "rank": 2
+        },
+        "openreview-neurips-2025-3ipmm7clzx": {
+          "score": 0.013513513513513514,
+          "rank": 14
+        },
+        "openreview-neurips-2025-fdx7eb9cdv": {
+          "score": 0.010526315789473684,
+          "rank": 35
+        },
+        "openreview-neurips-2025-63ljkcgmhe": {
+          "score": 0.01,
+          "rank": 40
+        },
+        "openreview-neurips-2025-ewgzitwahh": {
+          "score": 0.009433962264150943,
+          "rank": 46
+        }
+      }
+    },
+    {
+      "type": "keyword",
+      "tag": "GS-SLAM",
+      "paper_tag": "keyword:GS-SLAM",
+      "query_text": "camera pose estimation",
+      "sim_scores": {
+        "openreview-neurips-2025-sopsi570ap": {
+          "score": 0.015873015873015872,
+          "rank": 3
+        },
+        "openreview-neurips-2025-ewgzitwahh": {
+          "score": 0.015384615384615385,
+          "rank": 5
+        },
+        "openreview-neurips-2025-shfhw4zqd6": {
+          "score": 0.014492753623188406,
+          "rank": 9
+        },
+        "openreview-neurips-2025-vdv912fa3t": {
+          "score": 0.013888888888888888,
+          "rank": 12
+        },
+        "openreview-neurips-2025-fdx7eb9cdv": {
+          "score": 0.013333333333333334,
+          "rank": 15
+        }
+      }
+    },
+    {
+      "type": "keyword",
+      "tag": "GS-SLAM",
+      "paper_tag": "keyword:GS-SLAM",
+      "query_text": "monocular SLAM",
+      "sim_scores": {
+        "openreview-neurips-2025-63ljkcgmhe": {
+          "score": 0.01639344262295082,
+          "rank": 1
+        },
+        "openreview-neurips-2025-htla6ao0jg": {
+          "score": 0.016129032258064516,
+          "rank": 2
+        },
+        "openreview-neurips-2025-3ipmm7clzx": {
+          "score": 0.015873015873015872,
+          "rank": 3
+        }
+      }
+    },
+    {
+      "type": "keyword",
+      "tag": "GS-SLAM",
+      "paper_tag": "keyword:GS-SLAM",
+      "query_text": "visual SLAM",
+      "sim_scores": {
+        "openreview-neurips-2025-htla6ao0jg": {
+          "score": 0.01639344262295082,
+          "rank": 1
+        }
+      }
+    },
+    {
+      "type": "keyword",
+      "tag": "GS-SLAM",
+      "paper_tag": "keyword:GS-SLAM",
+      "query_text": "visual SLAM with learned representations",
+      "sim_scores": {
+        "openreview-neurips-2025-63ljkcgmhe": {
+          "score": 0.016129032258064516,
+          "rank": 2
+        },
+        "openreview-neurips-2025-3ipmm7clzx": {
+          "score": 0.015873015873015872,
+          "rank": 3
+        },
+        "openreview-neurips-2025-rkhudvy9qr": {
+          "score": 0.01282051282051282,
+          "rank": 18
+        },
+        "openreview-neurips-2025-ewgzitwahh": {
+          "score": 0.011627906976744186,
+          "rank": 26
+        }
+      }
+    }
+  ],
+  "global_candidate_ids": [
+    "openreview-neurips-2025-ewgzitwahh",
+    "openreview-neurips-2025-3ipmm7clzx",
+    "openreview-neurips-2025-pqcsyobzii",
+    "openreview-neurips-2025-bkls9imrnz",
+    "openreview-neurips-2025-63ljkcgmhe",
+    "openreview-neurips-2025-gmic4ccyhn",
+    "openreview-neurips-2025-grpo8nttzk",
+    "openreview-neurips-2025-amz7uhdjir",
+    "openreview-neurips-2025-0knzasl9na",
+    "openreview-neurips-2025-zfneovqqkn",
+    "openreview-neurips-2025-iqu63cyi3z",
+    "openreview-neurips-2025-m3zxsdl2rk",
+    "openreview-neurips-2025-vdv912fa3t",
+    "openreview-neurips-2025-b1ncwzpne4",
+    "openreview-neurips-2025-htla6ao0jg",
+    "openreview-neurips-2025-8rksfl3gsk",
+    "openreview-neurips-2025-jugw5alhnf",
+    "openreview-neurips-2025-0nexr6ldig",
+    "openreview-neurips-2025-c0c943r6zj",
+    "openreview-neurips-2025-vzwjhxe8pf",
+    "openreview-neurips-2025-feugq6aikr",
+    "openreview-neurips-2025-y9adtccegi",
+    "openreview-neurips-2025-lf0w2gmnbg",
+    "openreview-neurips-2025-ig5mtz8etr",
+    "openreview-neurips-2025-gxgpjfjgmd",
+    "openreview-neurips-2025-6aaixhco6c",
+    "openreview-neurips-2025-sopsi570ap",
+    "openreview-neurips-2025-qug74vcsxf",
+    "openreview-neurips-2025-znsr3waluo",
+    "openreview-neurips-2025-zr2mdbrhjx",
+    "openreview-neurips-2025-89ziautowr",
+    "openreview-neurips-2025-yt8v2qfv5w",
+    "openreview-neurips-2025-azlj6obedf",
+    "openreview-neurips-2025-fdx7eb9cdv",
+    "openreview-neurips-2025-25c8oc1pb2",
+    "openreview-neurips-2025-crxzkxskow",
+    "openreview-neurips-2025-0suihptncp",
+    "openreview-neurips-2025-rkhudvy9qr",
+    "openreview-neurips-2025-ztvk8xnffy",
+    "openreview-neurips-2025-sl4kqwbkdq",
+    "openreview-neurips-2025-ytwrzp8mno",
+    "openreview-neurips-2025-edpklrzzvu",
+    "openreview-neurips-2025-6vodizmioy",
+    "openreview-neurips-2025-rrpyi2h0yn",
+    "openreview-neurips-2025-nz4mfzczix",
+    "openreview-neurips-2025-gnwajcaurv",
+    "openreview-neurips-2025-muxbo5f8ml",
+    "openreview-neurips-2025-uvxqeigxfl",
+    "openreview-neurips-2025-uxc87orcri",
+    "openreview-neurips-2025-bntezdplfh",
+    "openreview-neurips-2025-5bfo9i4kj1",
+    "openreview-neurips-2025-mgjmpnzgqo",
+    "openreview-neurips-2025-vcrc99edtz",
+    "openreview-neurips-2025-mlvqinh0aa",
+    "openreview-neurips-2025-beyzdkmehx",
+    "openreview-neurips-2025-di2aafnlrc",
+    "openreview-neurips-2025-jtf0hyfgil",
+    "openreview-neurips-2025-shfhw4zqd6",
+    "openreview-neurips-2025-u8aoixg1a4",
+    "openreview-neurips-2025-d4j2k5lknb",
+    "openreview-neurips-2025-05f6pdeps2",
+    "openreview-neurips-2025-0fzoqvoc0o",
+    "openreview-neurips-2025-ksmgnl6pub",
+    "openreview-neurips-2025-gqhuet0v6f",
+    "openreview-neurips-2025-ycpvp0577r",
+    "openreview-neurips-2025-6libpovfws",
+    "openreview-neurips-2025-ypvw5jvgux",
+    "openreview-neurips-2025-xkgkmfn4ja",
+    "openreview-neurips-2025-j1qkrvjnvf",
+    "openreview-neurips-2025-obovyrrsy2",
+    "openreview-neurips-2025-kk8cfku1u7",
+    "openreview-neurips-2025-4tp1suine5",
+    "openreview-neurips-2025-ybkddumtyn",
+    "openreview-neurips-2025-x2u8esisdb",
+    "openreview-neurips-2025-wumdbgme3y",
+    "openreview-neurips-2025-1enpxg8s4v",
+    "openreview-neurips-2025-zwmq0msimg",
+    "openreview-neurips-2025-t4irkwexhr",
+    "openreview-neurips-2025-fe91mhgeg2",
+    "openreview-neurips-2025-q3cu6ltlqe",
+    "openreview-neurips-2025-cb8jwne2vv",
+    "openreview-neurips-2025-t64fa2hczn",
+    "openreview-neurips-2025-vefpm6gw2s",
+    "openreview-neurips-2025-dgthokjau2",
+    "openreview-neurips-2025-apusekbw3h",
+    "openreview-neurips-2025-ckmlys7ipp",
+    "openreview-neurips-2025-p3z75i8lvq",
+    "openreview-neurips-2025-exikfm1q9r",
+    "openreview-neurips-2025-38gf07tmtr",
+    "openreview-neurips-2025-v56unbithp",
+    "openreview-neurips-2025-y0hymkkn2a",
+    "openreview-neurips-2025-wxo0dlsaif",
+    "openreview-neurips-2025-ryydcq2ilv",
+    "openreview-neurips-2025-s6k9l5yx8e",
+    "openreview-neurips-2025-i64zlbup6u",
+    "openreview-neurips-2025-2y2m0dzbfl",
+    "openreview-neurips-2025-e3ondq8e9r",
+    "openreview-neurips-2025-7llnwh0otf",
+    "openreview-neurips-2025-tdt6hf7jk5",
+    "openreview-neurips-2025-efdnv5xvvo",
+    "openreview-neurips-2025-bggftutzom",
+    "openreview-neurips-2025-sv1pbyc8zt",
+    "openreview-neurips-2025-n3armutfit",
+    "openreview-neurips-2025-bxelejg3ve",
+    "openreview-neurips-2025-bdzpnjic1y",
+    "openreview-neurips-2025-qejosm3qks",
+    "openreview-neurips-2025-91gzt22sef",
+    "openreview-neurips-2025-qnxwta7pzs",
+    "openreview-neurips-2025-fmcnnqjzrr",
+    "openreview-neurips-2025-3molquhfpv",
+    "openreview-neurips-2025-ogc1qhaubj",
+    "openreview-neurips-2025-kjwb8iao3l",
+    "openreview-neurips-2025-vkjtyhatoa",
+    "openreview-neurips-2025-q7ynqrewlq",
+    "openreview-neurips-2025-6lgychg6ep",
+    "openreview-neurips-2025-bnpio5iygc",
+    "openreview-neurips-2025-o8g0ppuoa1",
+    "openreview-neurips-2025-ebona3tt3k",
+    "openreview-neurips-2025-jobcakbcpc",
+    "openreview-neurips-2025-b9aj2awlki"
+  ],
+  "global_pool_lane_top_k": 30,
+  "global_pool_limit": 120,
+  "global_pool_guaranteed_per_lane": 2,
+  "global_pool_effective_size": 120,
+  "reranked_at": "2026-05-29T08:33:11.269815+00:00",
+  "llm_ranked": [
+    {
+      "paper_id": "openreview-neurips-2025-3ipmm7clzx",
+      "score": 10.0,
+      "evidence_en": "Monocular 3DGS SLAM system for dynamic scenes with pose tracking",
+      "evidence_cn": "用于动态场景的单目3DGS SLAM系统，包含位姿跟踪",
+      "canonical_evidence": "用于动态场景的单目3DGS SLAM系统，包含位姿跟踪",
+      "tldr_en": "ProDyG achieves online dynamic 3D reconstruction from monocular videos by disentangling static and dynamic parts within a SLAM system, using robust motion masking for pose tracking and progressive adaptation for dynamic modelling, supporting RGB and RGB-D inputs.",
+      "tldr_cn": "ProDyG提出了一种基于单目视频的在线动态场景重建方法，通过在SLAM系统中解耦静态和动态部分实现。该方法采用新颖的运动掩码策略鲁棒地跟踪相机位姿，并利用渐进式适应重建动态部分，同时支持RGB和RGB-D输入，显著提升了动态环境下的建图与定位能力。",
+      "title_zh": "ProDyG: 基于单目视频的渐进式动态场景高斯泼溅重建",
+      "motivation_cn": "现有SLAM方法大多仅去除动态物体或需要RGB-D输入，缺乏在线全局一致性和精细外观建模。",
+      "method_cn": "提出ProDyG，在SLAM系统中解耦静态与动态部分，利用运动掩码进行鲁棒位姿跟踪和渐进式动态重建。",
+      "result_cn": "实现了从单目视频的在线动态场景重建，位姿跟踪稳定，动态物体外观建模精细。",
+      "conclusion_cn": "ProDyG为单目动态场景SLAM提供了一种有效方案，推动了实时三维重建的实用性。",
+      "matched_requirement_id": "req-10",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Monocular 3D Gaussian splatting SLAM system for real time dense mapping"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-sl4kqwbkdq",
+      "score": 9.0,
+      "evidence_en": "Trains 3DGS from unposed images, enabling simultaneous localization and mapping",
+      "evidence_cn": "从未定位图像训练3DGS，实现同时定位与建图",
+      "canonical_evidence": "从未定位图像训练3DGS，实现同时定位与建图",
+      "tldr_en": "Deep Gaussian from Motion leverages a pre-trained 3D geometric foundation model to train 3DGS from unposed images, jointly optimizing camera poses and Gaussian parameters.",
+      "tldr_cn": "Deep Gaussian from Motion利用预训练的三维几何基础模型，从无姿态图像中训练3D高斯泼溅，联合优化相机位姿和高斯参数，实现高保真渲染与准确图像配准。",
+      "title_zh": "Deep Gaussian from Motion: 探索三维几何基础模型用于高斯泼溅",
+      "motivation_cn": "传统3DGS依赖SfM获取相机位姿，限制了其应对未定位图像的能力。",
+      "method_cn": "使用3D几何基础模型预测点图作为神经场景表示，初始化并微调3DGS，同时优化相机姿态和渲染质量。",
+      "result_cn": "无需SfM即可从无姿态图像重建高质量3DGS，实现准确的新视角合成。",
+      "conclusion_cn": "为3DGS在无定位图像上的应用开辟了新路径，推动了自定位重建的发展。",
+      "matched_requirement_id": "req-8",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "3D Gaussian Splatting for simultaneous localization and mapping"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-rrpyi2h0yn",
+      "score": 9.0,
+      "evidence_en": "joint optimization of vision priors and 3D Gaussian Splatting for novel view synthesis and surface reconstruction",
+      "evidence_cn": "视觉先验与三维高斯散点联合优化用于新视角合成与表面重建",
+      "canonical_evidence": "视觉先验与三维高斯散点联合优化用于新视角合成与表面重建",
+      "tldr_en": "Proposes Eve3D, which jointly optimizes vision model priors and 3D Gaussian Splatting in a mutually reinforcing loop, plus bundle adjustment, achieving SOTA surface reconstruction and novel view synthesis.",
+      "tldr_cn": "该论文提出了Eve3D框架，通过联合优化预训练视觉模型提供的先验信息与三维高斯散点（3DGS）主干网络，形成相互增强的循环。同时引入基于光束法平差的优化步骤，克服了标准3DGS的局部监督限制。在Tanks & Temples等数据集上取得了领先的表面重建和新视角合成效果，展示了视觉先验与3DGS结合的巨大潜力。",
+      "title_zh": "Eve3D：通过高斯散点提升视觉模型以增强三维表面重建",
+      "motivation_cn": "现有方法依赖不完美的视觉模型先验，未能充分联合优化先验与3DGS。",
+      "method_cn": "联合优化视觉先验与3DGS，并引入光束法平差实现全局优化。",
+      "result_cn": "在表面重建和新视角合成任务上达到最先进水平。",
+      "conclusion_cn": "Eve3D通过联合优化与全局约束，显著提升了三维重建质量。",
+      "matched_requirement_id": "req-1",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-shfhw4zqd6",
+      "score": 9.0,
+      "evidence_en": "integrates event cameras into 3D Gaussian Splatting for free-trajectory scene reconstruction with improved pose estimation",
+      "evidence_cn": "将事件相机融入三维高斯散点，实现自由轨迹场景重建与改进的姿态估计",
+      "canonical_evidence": "将事件相机融入三维高斯散点，实现自由轨迹场景重建与改进的姿态估计",
+      "tldr_en": "Proposes EF-3DGS, which seamlessly integrates event cameras into 3DGS for scene reconstruction from casually captured videos, addressing high-speed scenarios with inaccurate pose estimation, thus achieving joint novel view synthesis and camera tracking.",
+      "tldr_cn": "该论文首次将事件相机引入自由轨迹三维高斯散点（3DGS）重建中，以应对传统相机在高速场景下因观测不足和姿态估计不精确导致的失败。通过三个关键组件无缝集成事件相机优势，提高了场景重建和新视角合成的质量，同时改善了相机姿态估计，实现了类SLAM的建图与定位功能。",
+      "title_zh": "EF-3DGS：事件辅助的自由轨迹三维高斯散点",
+      "motivation_cn": "传统相机在高速场景下观测不足且姿态估计不准确，限制了3DGS重建效果。",
+      "method_cn": "引入事件相机并通过三个关键组件将其无缝集成到3DGS框架中。",
+      "result_cn": "在高速场景中显著提升了重建质量和相机姿态精度。",
+      "conclusion_cn": "EF-3DGS展示了事件相机与3DGS结合在自由轨迹重建与定位中的巨大潜力。",
+      "matched_requirement_id": "req-9",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Novel view synthesis and camera tracking via Gaussian splatting"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-htla6ao0jg",
+      "score": 9.0,
+      "evidence_en": "monocular system combining deep visual SLAM and 4D Gaussian splatting for dynamic scene reconstruction and novel view synthesis",
+      "evidence_cn": "结合深度视觉SLAM与四维高斯散点的单目系统，用于动态场景重建与新视角合成",
+      "canonical_evidence": "结合深度视觉SLAM与四维高斯散点的单目系统，用于动态场景重建与新视角合成",
+      "tldr_en": "Presents Instant4D, a monocular reconstruction system that uses deep visual SLAM for geometry recovery and a streamlined 4D Gaussian representation to reconstruct dynamic scenes from casual video in minutes, with significant model compression.",
+      "tldr_cn": "该论文提出了Instant4D单目重建系统，可从未校准的日常视频中快速重建动态场景。系统首先通过深度视觉SLAM恢复几何结构，然后采用高效的4D高斯表示进行优化，并通过网格剪枝大幅减少模型尺寸。该方法在几分钟内即可完成重建，压缩率高，同时保持了几何完整性，为动态场景的快速新视角合成提供了实用的解决方案。",
+      "title_zh": "Instant4D：分钟级四维高斯散点",
+      "motivation_cn": "未校准视频的动态场景重建存在优化慢、参数估计复杂等挑战。",
+      "method_cn": "结合深度视觉SLAM与剪枝后的精简4D高斯表示，实现分钟级重建。",
+      "result_cn": "模型尺寸减少到原来的10%以内，重建速度快且保持几何精度。",
+      "conclusion_cn": "Instant4D实现了高效的单目动态场景重建，推动了4D表示的实际应用。",
+      "matched_requirement_id": "req-composite-gs-slam",
+      "matched_query_tag": "query:gs-slam:composite",
+      "matched_query_text": "Papers central to 单目3DGS-SLAM系统相关论文, especially work that connects or combines: Using 3D Gaussian splatting for novel view synthesis and scene representation; Visual SLAM methods for camera tracking and mapping; accurate camera pose tracking; visual SLAM with learned representations; RGB-D SLAM based on 3D Gaussian Splatting; Monocular visual SLAM using a single camera; efficient visual SLAM with 3D Gaussian scene representations; 3D Gaussian Splatting for simultaneous localization and mapping; Novel view synthesis and camera tracking via Gaussian splatting; Monocular 3D Gaussian splatting SLAM system for real time dense mapping."
+    },
+    {
+      "paper_id": "openreview-neurips-2025-38gf07tmtr",
+      "score": 9.0,
+      "evidence_en": "Using 3D Gaussian splatting for indoor novel view synthesis and scene reconstruction",
+      "evidence_cn": "使用3D高斯泼溅进行室内新视角合成与场景重建",
+      "canonical_evidence": "使用3D高斯泼溅进行室内新视角合成与场景重建",
+      "tldr_en": "PlanarGS enhances indoor scene reconstruction with 3DGS by integrating vision-language planar priors to resolve ambiguity in low-texture regions.",
+      "tldr_cn": "针对3DGS在室内低纹理区域导致几何模糊的问题，PlanarGS提出利用视觉语言模型提取平面先验，通过跨视图融合和几何验证优化三维高斯表示，在室内场景中实现高保真的表面重建和新视角合成。",
+      "title_zh": "PlanarGS: 基于视觉语言平面先验的高保真室内三维高斯泼溅",
+      "motivation_cn": "3DGS在室内低纹理大区域中优化时几何模糊，无法恢复高保真表面。",
+      "method_cn": "设计语言提示平面先验(LP3)管道，利用预训练分割模型和跨视图融合精细化平面区域。",
+      "result_cn": "在室内数据集上实现了高保真表面重建。",
+      "conclusion_cn": "结合视觉语言先验显著提升了3DGS在室内低纹理场景的重建质量。",
+      "matched_requirement_id": "req-1",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-ztvk8xnffy",
+      "score": 9.0,
+      "evidence_en": "Dynamic 3D Gaussian splatting for novel view synthesis from monocular video",
+      "evidence_cn": "从单目视频使用动态三维高斯泼溅进行新视角合成",
+      "canonical_evidence": "从单目视频使用动态三维高斯泼溅进行新视角合成",
+      "tldr_en": "HAIF-GS tackles dynamic 3D scene reconstruction from monocular videos with consistent motion modeling via hierarchical and induced flow-guided Gaussian splatting.",
+      "tldr_cn": "针对单目视频动态场景重建中运动一致性不足的问题，HAIF-GS提出层次化与诱导流引导的高斯泼溅框架，通过稀疏锚点驱动的变形场实现结构化运动建模，解决了冗余更新和复杂非刚性变形的挑战，在动态场景渲染质量与效率上取得提升。",
+      "title_zh": "HAIF-GS: 层次化与诱导流引导的动态场景高斯泼溅",
+      "motivation_cn": "单目动态重建中存在冗余高斯更新、运动监督不足及复杂变形建模弱等问题。",
+      "method_cn": "构建锚点驱动的层次化变形表示，结合诱导流实现结构化和一致的运动建模。",
+      "result_cn": "在动态场景渲染中实现了更连贯高效的重建质量。",
+      "conclusion_cn": "通过层次化与流引导提高了三维高斯的运动建模能力。",
+      "matched_requirement_id": "req-1",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-uvxqeigxfl",
+      "score": 9.0,
+      "evidence_en": "Hybrid 2D/3D Gaussian representation for high-quality novel view synthesis and scene reconstruction",
+      "evidence_cn": "混合2D/3D高斯表示用于高质量新视角合成与场景重建",
+      "canonical_evidence": "混合2D/3D高斯表示用于高质量新视角合成与场景重建",
+      "tldr_en": "3D Gaussian Flats combines planar and freeform Gaussians to handle flat surfaces, achieving state-of-the-art depth estimation.",
+      "tldr_cn": "现有方法在平坦无纹理表面重建时会产生半透明不规则结果，3D Gaussian Flats提出混合2D平面高斯与3D自由高斯联合优化，动态检测并细化平面区域，在ScanNet++和ScanNet上达到最优深度估计，兼顾视觉保真度和几何精度。",
+      "title_zh": "3D Gaussian Flats: 混合2D/3D光度场景重建",
+      "motivation_cn": "平坦无纹理表面导致光度重建目标不适定，产生凹凸不平的半透明重建结果。",
+      "method_cn": "联合优化受约束的二维平面高斯与自由三维高斯，动态检测平面区域。",
+      "result_cn": "在ScanNet++和ScanNet上取得了最先进的深度估计性能。",
+      "conclusion_cn": "混合表示有效解决了平面区域的退化问题，提升了整体重建质量。",
+      "matched_requirement_id": "req-1",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-63ljkcgmhe",
+      "score": 9.0,
+      "evidence_en": "Dense RGB SLAM system using uncalibrated monocular cameras",
+      "evidence_cn": "使用未标定单目相机的稠密RGB SLAM系统",
+      "canonical_evidence": "使用未标定单目相机的稠密RGB SLAM系统",
+      "tldr_en": "VGGT-SLAM builds a monocular dense SLAM by aligning submaps from a feed-forward scene reconstructor, optimizing over SL(4) manifold.",
+      "tldr_cn": "VGGT-SLAM利用前馈场景重建方法VGGT产出的子图，在SL(4)流形上全局对齐，解决了未标定单目相机下15自由度投影模糊问题，构建了稠密RGB SLAM系统，不需三维高斯表示，直接实现相机跟踪和地图构建。",
+      "title_zh": "VGGT-SLAM: 在SL(4)流形上优化的稠密RGB SLAM",
+      "motivation_cn": "未标定单目相机下相似变换对齐不足以处理投影模糊。",
+      "method_cn": "基于VGGT前馈重建子图，通过SL(4)流形上的优化恢复一致场景。",
+      "result_cn": "实现了未标定单目相机下的稠密RGB SLAM系统。",
+      "conclusion_cn": "利用投影几何和流形优化克服了未标定相机的SLAM挑战。",
+      "matched_requirement_id": "req-6",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Monocular visual SLAM using a single camera"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-3molquhfpv",
+      "score": 9.0,
+      "evidence_en": "Novel view synthesis with hybrid explicit Gaussians and neural fields",
+      "evidence_cn": "使用显式高斯和神经场的混合辐射场进行新视角合成",
+      "canonical_evidence": "使用显式高斯和神经场的混合辐射场进行新视角合成",
+      "tldr_en": "HyRF reduces memory overhead of 3DGS by combining explicit Gaussians with neural fields, achieving high-quality novel view synthesis with better detail than pure compression methods.",
+      "tldr_cn": "HyRF解决了3D高斯溅射内存开销大的问题，通过将显式高斯和神经场结合，在保持高质量新视角合成的同时减少内存消耗，并比纯压缩方法更好地保留细节。",
+      "title_zh": "HyRF：面向内存高效高质量新视角合成的混合辐射场",
+      "motivation_cn": "3DGS虽能实时高质量新视角合成，但逐高斯参数导致内存开销巨大，现有压缩方法又难以保持高频细节。",
+      "method_cn": "提出HyRF，将场景分解为显式高斯和神经场，结合两者优势以表示辐射场。",
+      "result_cn": "HyRF在内存效率和重建质量上取得平衡，还原细节能力优于现有压缩方法。",
+      "conclusion_cn": "混合表示有效降低了3DGS内存需求，同时保持高质量渲染，适合内存敏感应用。",
+      "matched_requirement_id": "req-1",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-zwmq0msimg",
+      "score": 9.0,
+      "evidence_en": "Sparse-view novel view synthesis with 3DGS aided by video diffusion priors",
+      "evidence_cn": "使用视频扩散先验辅助3DGS进行稀疏视角的新视角合成",
+      "canonical_evidence": "使用视频扩散先验辅助3DGS进行稀疏视角的新视角合成",
+      "tldr_en": "This paper achieves novel view synthesis from very few views by generating plausible in-between views with a video diffusion model and using them to supervise 3DGS reconstruction.",
+      "tldr_cn": "本文从极少视图中合成新视角，先用视频扩散模型生成合理的中间视图作为伪监督，再用于训练3DGS重建欠观测区域，提升合成质量。",
+      "title_zh": "通过测试时自然视频补全从少量瞥见进行新视角合成",
+      "motivation_cn": "稀疏视角新视角合成中，视觉间隙过大导致难以恢复完整的3D几何，传统方法效果有限。",
+      "method_cn": "将任务重铸为测试时视频补全，利用预训练视频扩散模型生成中间伪视图，用不确定性感知机制融合到3DGS训练。",
+      "result_cn": "方法在极稀疏输入（如3-5张）下合成的视角连贯且逼真，优于仅用3DGS或神经场的方法。",
+      "conclusion_cn": "生成先验与3DGS结合可以处理极端稀疏数据的新视角合成，拓展了3D重建的边界。",
+      "matched_requirement_id": "req-1",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-znsr3waluo",
+      "score": 9.0,
+      "evidence_en": "Improves geometric representation for 3DGS novel view synthesis",
+      "evidence_cn": "提升3D高斯泼溅新视角合成的几何表示",
+      "canonical_evidence": "提升3D高斯泼溅新视角合成的几何表示",
+      "tldr_en": "Proposes VA-GS to enhance 3D Gaussian Splatting's geometric accuracy by incorporating edge-aware cues and a visibility-aware photometric alignment loss, improving surface reconstruction and multi-view consistency in novel view synthesis.",
+      "tldr_cn": "VA-GS针对3D高斯泼溅（3DGS）在新视角合成中几何表示不佳的问题，提出基于视角对齐的增强方法。该方法在渲染损失中融入边缘感知的图像线索，以改善表面边界的描绘；同时引入可见性感知的光度对齐损失，强制多视角几何一致性，从而显著提升表面重建精度和渲染质量。实验表明，VA-GS在多视角一致性和几何细节恢复上优于现有方法。",
+      "title_zh": "VA-GS: 通过视角对齐增强高斯泼溅的几何表示",
+      "motivation_cn": "3DGS的离散非结构化高斯导致仅靠图像渲染损失难以获得精确几何和一致多视角对齐。",
+      "method_cn": "提出VA-GS，在渲染损失中加入边缘感知图像提示，并引入可见性感知的光度对齐损失实现视角对齐。",
+      "result_cn": "在表面边界描绘和多视角一致性方面取得显著改善，提升了重建的几何精度。",
+      "conclusion_cn": "VA-GS有效增强了3DGS的几何表示能力，为高质量场景重建提供了新途径。",
+      "matched_requirement_id": "req-1",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-sopsi570ap",
+      "score": 9.0,
+      "evidence_en": "Jointly optimizes 3DGS and camera poses for indoor novel view synthesis",
+      "evidence_cn": "联合优化3D高斯泼溅和相机位姿以进行室内新视角合成",
+      "canonical_evidence": "联合优化3D高斯泼溅和相机位姿以进行室内新视角合成",
+      "tldr_en": "Nope-RoomGS optimizes 3DGS and camera poses jointly without initial pose input for indoor scenes, using a local-to-global paradigm to handle textureless areas and abrupt motion, achieving robust novel view synthesis.",
+      "tldr_cn": "针对室内纹理缺失和相机运动突变环境下，基于3D高斯泼溅（3DGS）的新视角合成严重依赖可靠的相机位姿估计的问题，提出Nope-RoomGS框架。该框架无需输入相机位姿，通过从局部到全局的优化范式，联合优化3DGS和相机位姿，有效应对纹理缺失和运动突变，实现高质量室内重建与相机追踪。",
+      "title_zh": "NopeRoomGS: 无相机位姿输入的室内3D高斯泼溅优化",
+      "motivation_cn": "室内环境中SfM估计的相机位姿不可靠，现有无位姿方法在突变运动下易失败。",
+      "method_cn": "提出Nope-RoomGS，采用局部到全局的优化范式，联合优化3D高斯场和相机位姿，无需外部位姿输入。",
+      "result_cn": "在纹理缺失和突变运动场景中，该方法实现了鲁棒的新视角合成和稳定的相机位姿恢复。",
+      "conclusion_cn": "Nope-RoomGS消除了对预计算位姿的依赖，为室内3DGS重建提供了一种灵活高效的方法。",
+      "matched_requirement_id": "req-9",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Novel view synthesis and camera tracking via Gaussian splatting"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-25c8oc1pb2",
+      "score": 8.0,
+      "evidence_en": "Proposes a hybrid 2D/3D Gaussian representation for improved novel view synthesis",
+      "evidence_cn": "提出混合2D/3D高斯表示以改进新视角合成",
+      "canonical_evidence": "提出混合2D/3D高斯表示以改进新视角合成",
+      "tldr_en": "EGGS combines 2D and 3D Gaussians to balance geometry and appearance in novel view synthesis, using hybrid rasterization and adaptive type exchange.",
+      "tldr_cn": "EGGS融合2D和3D高斯，通过混合光栅化和自适应类型交换，在保证高外观保真度的同时提升几何一致性，平衡新视角合成中的外观与几何。",
+      "title_zh": "EGGS: 可交换的2D/3D高斯泼溅实现几何-外观平衡的新视角合成",
+      "motivation_cn": "3DGS外观保真度高但多视图几何不一致，2DGS几何一致但纹理细节差。",
+      "method_cn": "提出可交换高斯表示，结合混合高斯光栅化与自适应类型交换，动态调整2D/3D高斯。",
+      "result_cn": "实现了外观保真度与多视图几何精度之间的良好平衡。",
+      "conclusion_cn": "为需要高几何精度的新视角合成应用提供了有效方案。",
+      "matched_requirement_id": "req-1",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-ogc1qhaubj",
+      "score": 8.0,
+      "evidence_en": "feed-forward 3D Gaussian Splatting for real-time novel view synthesis of dynamic scenes",
+      "evidence_cn": "前馈式三维高斯散点实现动态场景实时新视角合成",
+      "canonical_evidence": "前馈式三维高斯散点实现动态场景实时新视角合成",
+      "tldr_en": "Proposes the first motion-aware feed-forward model that reconstructs dynamic scenes in 3D Gaussian Splatting from monocular videos in real-time, achieving scalable and generalizable novel view synthesis.",
+      "tldr_cn": "该论文提出了首个运动感知的前馈模型BTimer，用于从单目视频中实时重建动态场景的三维高斯散点表示。通过聚合上下文帧信息，在指定时刻（子弹时间）重建完整场景，并利用静态和动态数据集实现扩展性和泛化性。实验证明该方法能高效生成高质量的新视角合成结果，为动态场景重建提供了新思路。",
+      "title_zh": "前馈式子弹时间动态场景单目视频重建",
+      "motivation_cn": "现有静态前馈重建模型难以泛化到动态场景，无法有效处理动态内容。",
+      "method_cn": "提出运动感知的前馈模型BTimer，在目标时刻聚合多帧信息，以三维高斯散点重建动态场景。",
+      "result_cn": "实现了实时动态场景重建与新视角合成，具有良好的泛化能力。",
+      "conclusion_cn": "BTimer首次将前馈模型用于动态场景重建，提升了效率与通用性。",
+      "matched_requirement_id": "req-1",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-ewgzitwahh",
+      "score": 8.0,
+      "evidence_en": "3D Gaussian Splatting camera relocalization network with pose refinement",
+      "evidence_cn": "基于三维高斯散点的相机重定位网络与姿态优化",
+      "canonical_evidence": "基于三维高斯散点的相机重定位网络与姿态优化",
+      "tldr_en": "Introduces a 3D Gaussian Splatting-based framework for scene-independent camera relocalization using a two-stage pipeline of 2D-3D correspondence and pose refinement, advancing visual localization.",
+      "tldr_cn": "该论文提出了一种新颖的基于三维高斯散点（3D GS）的RGB相机重定位框架。设计了两阶段流程：首先建立图像像素与三维高斯的2D-3D对应关系，然后利用3D GS渲染图像进行姿态精化。同时引入重定位网络GS-RelocNet，实现了场景无关的相机姿态估计。实验表明该方法能有效提升重定位精度，为视觉定位提供了新的可能性。",
+      "title_zh": "基于三维高斯散点的场景无关重定位与单向双向特征融合",
+      "motivation_cn": "三维高斯散点为视觉定位提供了新的场景表示，但现有方法尚未充分挖掘其潜力。",
+      "method_cn": "提出两阶段重定位框架：先由GS-RelocNet建立2D-3D对应，再基于渲染图像优化姿态。",
+      "result_cn": "在场景无关的重定位任务中实现了高精度相机姿态估计。",
+      "conclusion_cn": "该方法充分利用三维高斯散点，推动了视觉定位技术的发展。",
+      "matched_requirement_id": "req-3",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "accurate camera pose tracking"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-i64zlbup6u",
+      "score": 8.0,
+      "evidence_en": "Reflective Gaussian splatting for photorealistic novel view synthesis",
+      "evidence_cn": "反射高斯泼溅用于逼真新视角合成",
+      "canonical_evidence": "反射高斯泼溅用于逼真新视角合成",
+      "tldr_en": "MaterialRefGS enforces multi-view consistent material inference for Gaussian splatting to accurately render reflections.",
+      "tldr_cn": "针对高斯泼溅中反射材质推断约束不足导致的照明混叠和泛化性问题，MaterialRefGS从多视图一致性出发，结合物理环境建模，强制2D高斯产生一致材质，显著提升了反射场景的渲染真实感。",
+      "title_zh": "MaterialRefGS: 多视图一致材质推断的反射高斯泼溅",
+      "motivation_cn": "有限环境建模下材质推断缺乏足够约束，导致照明混叠和泛化差。",
+      "method_cn": "从多视图角度强制2D高斯产生一致材质，并结合物理环境建模。",
+      "result_cn": "实现了更准确的反射效果，提升了渲染真实感。",
+      "conclusion_cn": "多视图一致材质推断是学习准确反射的关键。",
+      "matched_requirement_id": "req-1",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-tdt6hf7jk5",
+      "score": 8.0,
+      "evidence_en": "Compact Gaussian streaming for novel view synthesis in free-viewpoint video",
+      "evidence_cn": "紧凑高斯流传输用于自由视点视频的新视角合成",
+      "canonical_evidence": "紧凑高斯流传输用于自由视点视频的新视角合成",
+      "tldr_en": "ComGS proposes keypoint-driven motion representation for compact Gaussian streaming, enabling efficient online free-viewpoint video reconstruction.",
+      "tldr_cn": "针对在线自由视点视频重建中巨大存储问题，ComGS利用运动局部性和一致性，通过关键点驱动的运动表示建模对象一致的高斯点运动，仅传输关键点属性，实现了存储高效的紧凑高斯流传输，在保持质量的同时大幅降低存储需求。",
+      "title_zh": "运动至关重要：面向自由视点视频重建的紧凑高斯流传输",
+      "motivation_cn": "在线FVV重建点式建模未利用运动特性，存储开销过大。",
+      "method_cn": "利用关键点驱动运动表示，建模对象一致的高斯点运动，仅传输关键点。",
+      "result_cn": "在保证高保真度的同时显著减少了存储需求。",
+      "conclusion_cn": "利用运动特性实现紧凑表示，推动了在线FVV的实际应用。",
+      "matched_requirement_id": "req-1",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-pqcsyobzii",
+      "score": 8.0,
+      "evidence_en": "Adaptive density control for 3DGS with directional consistency",
+      "evidence_cn": "具有方向一致性的3DGS自适应密度控制",
+      "canonical_evidence": "具有方向一致性的3DGS自适应密度控制",
+      "tldr_en": "DC4GS improves 3DGS's primitive splitting by using directional consistency of gradients, reducing the number of Gaussians by up to 30% without loss of rendering quality.",
+      "tldr_cn": "DC4GS利用梯度的方向一致性改进3DGS基元分裂策略，在保持渲染质量的条件下减少高达30%的高斯数量，提升内存效率。",
+      "title_zh": "DC4GS：方向一致性驱动的3D高斯溅射自适应密度控制",
+      "motivation_cn": "原始3DGS的自适应密度控制仅基于梯度大小，导致基元冗余，影响存储和效率。",
+      "method_cn": "DC4GS在基元分裂时引入梯度方向一致性约束，根据角度相干性决定是否分裂及最优分裂位置。",
+      "result_cn": "DC4GS显著减少了高斯基元数量（最多少30%），同时渲染质量与原始方法相当或更优。",
+      "conclusion_cn": "方向一致性驱动策略有效压缩了3DGS模型，提升了其在实际应用中的可部署性。",
+      "matched_requirement_id": "req-1",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-mgjmpnzgqo",
+      "score": 7.0,
+      "evidence_en": "Improves 3D Gaussian splatting rendering for novel view synthesis via screen-aligned primitives",
+      "evidence_cn": "通过屏幕对齐基元改善三维高斯泼溅的新视角合成渲染效果",
+      "canonical_evidence": "通过屏幕对齐基元改善三维高斯泼溅的新视角合成渲染效果",
+      "tldr_en": "SAP introduces screen-aligned primitives to achieve exact per-pixel sorting in 3DGS, eliminating popping artifacts.",
+      "tldr_cn": "针对3DGS因忽略高斯原语厚度和重叠交互导致的排序不准和伪影问题，SAP提出屏幕对齐的各向异性核，为每个视图生成与像平面平行的基元，实现实时的逐像素精确排序，提升了渲染质量。",
+      "title_zh": "SAP: 屏幕对齐基元实现泼溅中的精确排序",
+      "motivation_cn": "3DGS优化中忽略厚度和重叠导致排序不准，产生跳动伪影。",
+      "method_cn": "采用屏幕对齐各向异性核生成平行基元，单次全局排序即可正确深度顺序。",
+      "result_cn": "实现了实时逐像素正确排序，消除了渲染伪影。",
+      "conclusion_cn": "屏幕对齐基元有效解决了3DGS的排序精度问题。",
+      "matched_requirement_id": "req-1",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-qejosm3qks",
+      "score": 7.0,
+      "evidence_en": "Dynamic Gaussian splatting for novel view synthesis from degraded monocular video",
+      "evidence_cn": "从退化单目视频实现动态高斯泼溅的新视角合成",
+      "canonical_evidence": "从退化单目视频实现动态高斯泼溅的新视角合成",
+      "tldr_en": "This paper handles defocused and motion-blurred monocular videos for dynamic 3DGS reconstruction by estimating per-pixel blur kernels.",
+      "tldr_cn": "为解决散焦和运动模糊单目视频的动态场景重建难题，提出统一框架，通过预测网络估计逐像素可靠模糊核，结合场景与相机信息处理两种模糊，实现了高质量的动态高斯泼溅和新视角合成。",
+      "title_zh": "散焦与运动模糊单目视频下的动态高斯泼溅",
+      "motivation_cn": "散焦与运动模糊成因差异大，现有方法各自为政，难以同时处理。",
+      "method_cn": "利用模糊预测网络估计逐像素模糊核，联合处理两种模糊。",
+      "result_cn": "在退化视频上实现了高质量的动态高斯泼溅重建。",
+      "conclusion_cn": "统一模糊处理扩展了动态高斯泼溅的适用性。",
+      "matched_requirement_id": "req-1",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-x2u8esisdb",
+      "score": 7.0,
+      "evidence_en": "Monocular video-based 3D Gaussian scene reconstruction",
+      "evidence_cn": "从单目视频重建可变形3D高斯场景",
+      "canonical_evidence": "从单目视频重建可变形3D高斯场景",
+      "tldr_en": "DGS-LRM introduces a feed-forward model that predicts deformable 3D Gaussian splats from posed monocular videos, enabling real-time dynamic scene reconstruction.",
+      "tldr_cn": "DGS-LRM提出首个前馈方法，从单目带姿态视频预测可变形3D高斯溅射，实现实时动态场景重建，无需逐场景优化。",
+      "title_zh": "DGS-LRM：从单目视频实时重建可变形3D高斯",
+      "motivation_cn": "现有前馈重建方法限于静态场景，无法从单目视频捕捉动态物体运动，且训练数据和3D表示选择困难。",
+      "method_cn": "提出DGS-LRM，使用前馈网络直接预测可变形3D高斯，应对动态场景重建。",
+      "result_cn": "方法能从单目视频实时重建动态场景的3D高斯表示，渲染速度和效果兼具。",
+      "conclusion_cn": "DGS-LRM为动态场景的快速3D重建开辟了新途径，有望用于沉浸式内容生成。",
+      "matched_requirement_id": "req-1",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-yt8v2qfv5w",
+      "score": 7.0,
+      "evidence_en": "Large-scale scene reconstruction using 3DGS and view-aware representation",
+      "evidence_cn": "使用3DGS和视角感知表示的大规模场景重建",
+      "canonical_evidence": "使用3DGS和视角感知表示的大规模场景重建",
+      "tldr_en": "MixGS proposes a holistic optimization framework for large scene reconstruction, integrating camera poses and Gaussian attributes in a view-aware representation to preserve global coherence.",
+      "tldr_cn": "MixGS摒弃分治策略，提出整体优化框架，将相机位姿和高斯属性融入视角感知表示，实现全局一致且细节丰富的大规模场景重建。",
+      "title_zh": "通过混合高斯溅射的整体大规模场景重建",
+      "motivation_cn": "现有大规模重建方法依赖分治策略，易丢失全局信息且调参复杂。",
+      "method_cn": "提出MixGS，将相机位姿和高斯属性编码为视角感知表示，通过解码和混合操作整合全局与局部高斯。",
+      "result_cn": "MixGS无需场景分割即可整体优化大规模场景，重建质量较高且减少调参。",
+      "conclusion_cn": "混合高斯溅射可用于高效、高质的大规模场景重建，为AR/VR应用奠定基础。",
+      "matched_requirement_id": "req-1",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-rkhudvy9qr",
+      "score": 7.0,
+      "evidence_en": "3DGS-based active semantic mapping for exploration",
+      "evidence_cn": "基于3DGS的主动语义建图用于探索",
+      "canonical_evidence": "基于3DGS的主动语义建图用于探索",
+      "tldr_en": "ActiveSGM uses a 3D Gaussian Splatting map to guide active exploration by predicting information gain with semantic and geometric uncertainty, improving mapping completeness and accuracy.",
+      "tldr_cn": "ActiveSGM以3D高斯溅射地图为骨干，预测语义和几何不确定性来衡量信息量，主动选择最有益的观测视角，提升建图完整性和精度。",
+      "title_zh": "边探索边理解：语义驱动的主动建图",
+      "motivation_cn": "机器人在未知环境自主探索需要主动规划视角以高效获取完整精确的语义空间信息。",
+      "method_cn": "ActiveSGM基于3DGS建图，利用语义和几何不确定性量化评估候选观测的信息量，指导视角选择。",
+      "result_cn": "在Replica和Matterport数据集上，主动探索策略比随机或基线方法更快获得完整准确的3D语义地图。",
+      "conclusion_cn": "3DGS与主动语义建图结合提升了机器人探索效率和地图质量，对现实世界部署有重要意义。",
+      "matched_requirement_id": "req-8",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "3D Gaussian Splatting for simultaneous localization and mapping"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-vkjtyhatoa",
+      "score": 7.0,
+      "evidence_en": "Improves 3DGS densification strategy for better novel view synthesis",
+      "evidence_cn": "改进3DGS稠密化策略以提升新视角合成质量",
+      "canonical_evidence": "改进3DGS稠密化策略以提升新视角合成质量",
+      "tldr_en": "Reframes 3DGS densification by using a complexity-density consistent approach, leveraging loss-agnostic visual priors to allocate Gaussians more effectively for high-frequency details, improving novel view synthesis quality.",
+      "tldr_cn": "针对现有3D高斯泼溅（3DGS）中基于渲染损失的稠密化策略偏向低频区域、忽视高频细节的问题，提出基于复杂度-密度一致性的稠密化方法。该方法利用训练视图中的视觉先验识别复杂区域，无需依赖损失信号，更有效地分配高斯基元，从而提升纹理丰富区域的建模精度和新视角合成质量。",
+      "title_zh": "基于基元复杂度-密度一致性的高斯泼溅稠密化重塑",
+      "motivation_cn": "3DGS基于损失的稠密化常受低频主导，导致高频细节建模不足。",
+      "method_cn": "提出复杂度-密度一致的高斯泼溅（CD-GS），利用视觉先验识别复杂区域进行稠密化。",
+      "result_cn": "在纹理丰富区域实现了更精细的细节恢复，整体渲染质量优于现有3DGS方法。",
+      "conclusion_cn": "CD-GS通过挖掘视觉先验优化了高斯分配，为3DGS的稠密化提供了新视角。",
+      "matched_requirement_id": "req-1",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-grpo8nttzk",
+      "score": 7.0,
+      "evidence_en": "Addresses artifacts in sparse-view 3DGS novel view synthesis",
+      "evidence_cn": "解决稀疏视角下3D高斯泼溅新视角合成的伪影问题",
+      "canonical_evidence": "解决稀疏视角下3D高斯泼溅新视角合成的伪影问题",
+      "tldr_en": "Investigates and mitigates co-adaptation artifacts in sparse-view 3DGS by proposing a Co-Adaptation Score metric and a method to reduce Gaussian entanglement, improving novel view synthesis quality in sparse-view scenarios.",
+      "tldr_cn": "该工作研究了稀疏视角下3D高斯泼溅（3DGS）的新视角合成伪影问题，发现高斯间的过度纠缠导致训练视图过拟合而非学习真实场景分布，提出共适应评分（CA）进行量化，并设计方法减少高斯纠缠，从而提升稀疏视角设置下的渲染质量和泛化性。实验表明，该方法有效缓解了共适应现象，提升了新视角的视觉保真度。",
+      "title_zh": "量化并缓解稀疏视角下3D高斯泼溅的共适应问题",
+      "motivation_cn": "稀疏视角下3DGS产生伪影，原因在于高斯过度纠缠以适应训练视图，忽视真实场景分布。",
+      "method_cn": "提出共适应评分量化高斯纠缠，并设计抑制纠缠的方法以缓解稀疏视角合成伪影。",
+      "result_cn": "在稀疏视角条件下，新视角合成质量得到提升，伪影明显减少。",
+      "conclusion_cn": "揭示了3DGS中的共适应问题，提供了分析工具和缓解策略，对稀疏视角重建有指导意义。",
+      "matched_requirement_id": "req-1",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-0suihptncp",
+      "score": 7.0,
+      "evidence_en": "Uses Gaussian surfel representations for efficient sparse-view scene reconstruction",
+      "evidence_cn": "利用高斯面元表示实现高效稀疏视角场景重建",
+      "canonical_evidence": "利用高斯面元表示实现高效稀疏视角场景重建",
+      "tldr_en": "Proposes SurfelSplat, a feed-forward framework that generates pixel-aligned Gaussian surfel representations from sparse views for efficient and generalizable surface reconstruction, avoiding per-scene optimization.",
+      "tldr_cn": "针对传统3DGS优化方法需密集视图且耗时长的局限，提出SurfelSplat，一种前馈框架，从稀疏视角图像直接生成像素对齐的高斯面元表示，实现高效且可泛化的表面重建，无需逐场景优化，能快速推理生成精确几何，适用于稀疏视角输入。",
+      "title_zh": "SurfelSplat: 学习高效通用高斯面元表示用于稀疏视角表面重建",
+      "motivation_cn": "现有3DGS表面重建依赖密集视图和逐场景优化，耗时且无法泛化。",
+      "method_cn": "设计前馈网络SurfelSplat，从稀疏视图生成像素对齐的高斯面元表示，实现快速表面重建。",
+      "result_cn": "在稀疏视图输入下，高效重建出精确完整的表面，推理速度快。",
+      "conclusion_cn": "SurfelSplat为3DGS在表面重建任务中提供了高效且可推广的解决方案。",
+      "matched_requirement_id": "req-1",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-azlj6obedf",
+      "score": 7.0,
+      "evidence_en": "Enhances 3DGS novel view synthesis by leveraging source images for color modelling",
+      "evidence_cn": "利用源图像增强3DGS新视角合成的颜色建模",
+      "canonical_evidence": "利用源图像增强3DGS新视角合成的颜色建模",
+      "tldr_en": "Proposes Image-Based Gaussian Splatting (IBGS) that uses high-resolution source images to model fine details and view-dependent effects, improving novel view synthesis quality over standard 3DGS.",
+      "tldr_cn": "IBGS针对3D高斯泼溅（3DGS）仅使用低阶球谐函数难以捕捉空间变化颜色和视角相关效果的问题，提出基于图像的高斯泼溅方法，从邻近训练图像中学习残差颜色，与基础3DGS渲染结合，有效恢复高光及细节，提升新视角合成的真实感。",
+      "title_zh": "IBGS: 基于图像的3D高斯泼溅",
+      "motivation_cn": "3DGS的低阶球谐无法充分表达视角相关的高光和空间变化的颜色细节。",
+      "method_cn": "提出IBGS，将3DGS基础颜色与从源图像学习的残差组合，以丰富颜色表达。",
+      "result_cn": "在复杂场景中，新视角合成质量优于标准3DGS，高光和细节更逼真。",
+      "conclusion_cn": "IBGS通过直接利用源图像信息，简单有效地增强了3DGS的视觉质量。",
+      "matched_requirement_id": "req-1",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-ksmgnl6pub",
+      "score": 7.0,
+      "evidence_en": "Improves feed-forward 3DGS for efficient sparse-view scene reconstruction",
+      "evidence_cn": "改进前馈3DGS以实现高效稀疏视角场景重建",
+      "canonical_evidence": "改进前馈3DGS以实现高效稀疏视角场景重建",
+      "tldr_en": "Introduces a Fuse-and-Refine module for feed-forward 3DGS that fuses multi-view features and refines the 3D Gaussian parameters, reducing redundancies and improving efficiency for sparse-view scene reconstruction.",
+      "tldr_cn": "针对现有前馈3D高斯泼溅（3DGS）中像素对齐基元导致的重叠冗余以及难以泛化到动态场景的问题，提出融合-精炼模块，通过融合多视角特征并优化3D高斯参数，实现高效稀疏视图三维重建，提高表示效率和灵活性。该方法在减少冗余的同时，更好地支持动态场景扩展。",
+      "title_zh": "学习高效融合与精炼的前馈3D高斯泼溅",
+      "motivation_cn": "前馈3DGS像素对齐方式在多视图重叠时产生冗余，且难以处理动态内容。",
+      "method_cn": "提出融合-精炼模块，融合多视图信息并精炼高斯参数，消除冗余并增强表达能力。",
+      "result_cn": "在稀疏视图重建中，以更少的高斯数量实现更高质量和效率。",
+      "conclusion_cn": "融合-精炼策略提升了前馈3DGS的性能，为实时三维重建奠定了基础。",
+      "matched_requirement_id": "req-1",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-zfneovqqkn",
+      "score": 7.0,
+      "evidence_en": "Learns generalizable 3DGS without poses for novel view synthesis",
+      "evidence_cn": "学习无位姿的泛化3D高斯泼溅用于新视角合成",
+      "canonical_evidence": "学习无位姿的泛化3D高斯泼溅用于新视角合成",
+      "tldr_en": "Address the inherent ambiguities in self-supervised learning of 3D Gaussian splats from multi-view images, proposing geometrically consistent constraints to learn generalizable and pose-free scene representations for novel view synthesis.",
+      "tldr_cn": "该工作针对自监督学习3D高斯泼溅（3DGS）中的固有歧义，提出几何一致性约束来指导网络预测无位姿的泛化高斯表示，解决了仅靠视角合成损失无法恢复有意义几何的问题，实现了多视角图像下无需位姿的泛化新视角合成。方法在多个数据集上取得与有监督方法相当的结果，并支持无位姿输入。",
+      "title_zh": "几何一致的泛化高斯泼溅",
+      "motivation_cn": "仅靠视角合成损失不足以从多视图图像中自监督地学习有意义的3D高斯几何。",
+      "method_cn": "提出几何一致性损失，指导网络预测几何一致的3D高斯，实现无位姿泛化泼溅。",
+      "result_cn": "在无相机位姿条件下，泛化新视角合成质量接近有监督方法。",
+      "conclusion_cn": "几何一致性约束是学习泛化3DGS的关键，为自由视角重建提供新思路。",
+      "matched_requirement_id": "req-1",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-5bfo9i4kj1",
+      "score": 6.0,
+      "evidence_en": "hierarchical tree representation for deformable Gaussian Splatting, enabling dynamic scene reconstruction and representation",
+      "evidence_cn": "层次树结构用于形变高斯散点，实现动态场景重建与表示",
+      "canonical_evidence": "层次树结构用于形变高斯散点，实现动态场景重建与表示",
+      "tldr_en": "Introduces TreeSplat, which models Gaussian motions hierarchically in a tree to leverage structural correlations in dynamic scenes, improving deformation representation efficiency for Gaussian Splatting.",
+      "tldr_cn": "该论文针对动态三维场景重建中高斯散点（GS）方法计算成本高或独立建模的问题，提出了TreeSplat模型。利用树形数据结构分层表示高斯的运动，每个节点学习时变基函数系数。该方法利用场景动态的结构先验，更高效地表示复杂形变，为动态场景的GS重建提供了新的有效途径。",
+      "title_zh": "TreeSplat：可合并树结构的形变高斯散点",
+      "motivation_cn": "现有高斯散点动态场景重建方法缺乏对运动层次结构的有效利用。",
+      "method_cn": "采用树形结构分层表示高斯运动，学习时变基函数系数。",
+      "result_cn": "能高效建模复杂形变，在动态场景重建中表现出优势。",
+      "conclusion_cn": "TreeSplat利用结构化先验改进了形变高斯散点的表示与重建效率。",
+      "matched_requirement_id": "req-1",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-j1qkrvjnvf",
+      "score": 6.0,
+      "evidence_en": "Proposes global Gaussian reduction for compact 3DGS scene representation",
+      "evidence_cn": "提出全局高斯点缩减方法以实现紧凑的三维高斯场景表示",
+      "canonical_evidence": "提出全局高斯点缩减方法以实现紧凑的三维高斯场景表示",
+      "tldr_en": "Gaussian Herding uses optimal transport to globally reduce redundant 3DGS primitives while preserving fidelity.",
+      "tldr_cn": "针对3DGS大量冗余高斯原语导致内存与渲染负担大的问题，本工作从最优传输角度将压缩建模为全局高斯混合约减，通过KD树分区上的复合传输散度最小化生成紧凑几何表示，并解耦外观属性微调，显著减少高斯原语数量。",
+      "title_zh": "高斯汇聚：一种基于最优传输的全局高斯缩减方法",
+      "motivation_cn": "3DGS需要数百万冗余高斯原语，导致内存和渲染开销过大。",
+      "method_cn": "将3DGS压缩转化为全局高斯混合缩减，优化传输散度并解耦外观微调。",
+      "result_cn": "在保证全局保真度的同时大幅减少了高斯原语数量。",
+      "conclusion_cn": "最优传输为3DGS提供了一种全局保真的高效压缩方案。",
+      "matched_requirement_id": "req-1",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-fdx7eb9cdv",
+      "score": 6.0,
+      "evidence_en": "Pose-free dynamic novel view synthesis from monocular video with camera pose estimation",
+      "evidence_cn": "从单目视频中进行无姿态动态新视角合成并估计相机姿态",
+      "canonical_evidence": "从单目视频中进行无姿态动态新视角合成并估计相机姿态",
+      "tldr_en": "4D3R reconstructs dynamic scenes from monocular videos with unknown poses by estimating initial poses and geometry, then refining with motion-aware bundling.",
+      "tldr_cn": "4D3R从无姿态标注的单目视频重建动态场景，首先估计初始位姿和几何，再用运动感知的捆绑调整进行细化，实现高质量自由视点渲染。",
+      "title_zh": "4D3R：从单目视频中运动感知的动态场景神经重建与渲染",
+      "motivation_cn": "从单目视频进行动态场景新视角合成需要同时估计未知相机位姿和场景结构，现有方法难以兼顾。",
+      "method_cn": "提出4D3R，两阶段框架：先用3D基础模型估计位姿和几何，再通过运动感知细化实现姿态和场景联合优化。",
+      "result_cn": "4D3R在有挑战性的动态场景数据上实现了精确的位姿估计和逼真的新视角渲染。",
+      "conclusion_cn": "无姿态的动态神经渲染为移动端自由视点视频应用提供了可行的技术路线。",
+      "matched_requirement_id": "req-3",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "accurate camera pose tracking"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-jtf0hyfgil",
+      "score": 6.0,
+      "evidence_en": "3D Gaussian Splatting from monocular RGB for hand-object reconstruction",
+      "evidence_cn": "从单目RGB使用3D高斯溅射进行手物建模",
+      "canonical_evidence": "从单目RGB使用3D高斯溅射进行手物建模",
+      "tldr_en": "HOGS introduces an adaptive 3D Gaussian Splatting framework for reconstructing hands and objects from monocular images, generalizing across diverse environments.",
+      "tldr_cn": "HOGS提出适应性3D高斯溅射框架，从无约束单目RGB图像重建手和物体，无需密集3D标注，可推广到多样化环境。",
+      "title_zh": "通过3D高斯从单目RGB图像进行可泛化的手-物建模",
+      "motivation_cn": "现有手物建模方法依赖密集3D表面标注或局限于短序列，泛化性差。",
+      "method_cn": "HOGS融合视觉光度线索和物理结构先验，构建可适应3DGS框架，从单目图像重建手-物交互形状和外观。",
+      "result_cn": "HOGS在多种环境和运动模式下准确重建手和物体，泛化能力强于先前方法。",
+      "conclusion_cn": "3DGS结合物理先验为单目手物交互重建提供了可泛化的新思路。",
+      "matched_requirement_id": "req-1",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-gmic4ccyhn",
+      "score": 6.0,
+      "evidence_en": "Compresses 3DGS representation for efficient scene representation",
+      "evidence_cn": "压缩3DGS表示以实现高效场景表示",
+      "canonical_evidence": "压缩3DGS表示以实现高效场景表示",
+      "tldr_en": "Proposes optimizations to minimize the number of Gaussians in 3DGS while maintaining rendering quality, addressing storage and memory overhead for efficient scene representation.",
+      "tldr_cn": "针对3D高斯泼溅（3DGS）大量高斯带来的存储和内存开销问题，提出一种优化最小化高斯数量的方法，在保持渲染质量的同时大幅压缩场景表示，实现了存储与计算效率的平衡。该方法通过发现少数量高斯对压缩敏感，直接优化高斯数量而非仅压缩属性，达到了更高的压缩比和保持质量。",
+      "title_zh": "优化最小化3D高斯泼溅",
+      "motivation_cn": "3DGS表示需要大量高斯，造成存储和内存负担，压缩时过少高斯对属性压缩敏感。",
+      "method_cn": "提出优化最小化3DGS，在训练中直接最小化高斯数量并联合优化属性，实现高效压缩。",
+      "result_cn": "在显著减少高斯数量的同时，保持与原始3DGS相当的渲染质量。",
+      "conclusion_cn": "优化最小化3DGS为资源受限环境下的三维场景表示提供了高效方案。",
+      "matched_requirement_id": "req-1",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-v56unbithp",
+      "score": 4.0,
+      "evidence_en": "Uses 3D Gaussian splatting for novel view synthesis from monocular videos",
+      "evidence_cn": "使用3D高斯泼溅从单目视频进行新视角合成",
+      "canonical_evidence": "使用3D高斯泼溅从单目视频进行新视角合成",
+      "tldr_en": "HoliGS introduces a deformable Gaussian splatting framework for novel view synthesis from long monocular RGB videos, decomposing scenes into static background and dynamic objects with hierarchical warping.",
+      "tldr_cn": "HoliGS提出一种可变形高斯泼溅框架，从长单目RGB视频中合成新视角，将场景分解为静态背景和动态物体，通过层级形变实现鲁棒的自由视角渲染。",
+      "title_zh": "HoliGS: 面向具身体验视图合成的整体化高斯泼溅",
+      "motivation_cn": "现有4D高斯泼溅和动态NeRF难以高效处理分钟级长视频，训练开销大。",
+      "method_cn": "使用可逆高斯泼溅形变网络，将场景分解为静态背景与时变物体，通过全局刚性变换、骨骼驱动和非刚体形变进行层级建模。",
+      "result_cn": "在长视频捕获的大规模动态环境重建中实现准确的新视角合成。",
+      "conclusion_cn": "该方法为具身智能体的视觉感知提供了一种高效、可扩展的动态场景表示。",
+      "matched_requirement_id": "req-1",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-iqu63cyi3z",
+      "score": 4.0,
+      "evidence_en": "level-of-detail rendering for 3D Gaussian Splatting enables real-time large scene visualization, potentially benefiting efficient SLAM representations",
+      "evidence_cn": "三维高斯散点的细节层次渲染实现大规模场景实时可视化，有助于高效SLAM表示",
+      "canonical_evidence": "三维高斯散点的细节层次渲染实现大规模场景实时可视化，有助于高效SLAM表示",
+      "tldr_en": "Presents a level-of-detail method for 3D Gaussian Splatting that uses hierarchical representation and dynamic loading to achieve real-time rendering of large scenes on limited memory, improving efficiency.",
+      "tldr_cn": "该论文提出了一种用于三维高斯散点的细节层次（LOD）渲染方法，通过基于相机距离迭代选择最优高斯子集，并利用深度感知滤波、重要性剪枝和动态区块加载，在内存受限设备上实现大规模场景的实时渲染。该方法可有效降低渲染时间和内存开销，为高效三维场景表示提供了新方案，有可能应用于SLAM系统的实时可视化。",
+      "title_zh": "LODGE：大规模高斯散点的细节层次高效渲染",
+      "motivation_cn": "内存受限设备上大规模三维高斯散点场景的实时渲染面临挑战。",
+      "method_cn": "构建层次化LOD表示，根据相机距离动态选择高斯子集并分块加载。",
+      "result_cn": "显著减少了渲染时间和GPU内存使用，保持了视觉保真度。",
+      "conclusion_cn": "LODGE实现了大规模高斯散点场景的高效实时渲染，拓展了应用场景。",
+      "matched_requirement_id": "req-7",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "efficient visual SLAM with 3D Gaussian scene representations"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-vdv912fa3t",
+      "score": 4.0,
+      "evidence_en": "Dense 3D tracking with camera motion estimation from monocular video",
+      "evidence_cn": "从单目视频中进行密集3D跟踪并估计相机运动",
+      "canonical_evidence": "从单目视频中进行密集3D跟踪并估计相机运动",
+      "tldr_en": "TrackingWorld proposes a world-centric dense 3D tracking pipeline that separates camera motion from dynamic object motion, enabling tracking of all pixels.",
+      "tldr_cn": "TrackingWorld提出以世界为中心的密集3D跟踪框架，分离相机运动和前景物体运动，实现包括新出现目标在内的全像素跟踪。",
+      "title_zh": "TrackingWorld：以世界为中心的单目3D几乎全像素跟踪",
+      "motivation_cn": "现有单目3D跟踪难以分离相机和物体运动，且无法密集跟踪新出现的目标。",
+      "method_cn": "提出TrackingWorld，包含跟踪上采样器和世界坐标对齐模块，实现任意点长期3D跟踪。",
+      "result_cn": "在多个基准上，方法能够准确跟踪大量像素的3D轨迹，并处理新目标。",
+      "conclusion_cn": "世界中心范式为单目视频的长期3D理解提供了强大的表示基础。",
+      "matched_requirement_id": "req-3",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "accurate camera pose tracking"
+    }
+  ],
+  "llm_ranked_at": "2026-05-29T08:41:22.166305+00:00",
+  "display_min_score": 4.0,
+  "pruned_at": "2026-05-29T08:41:22.206684+00:00"
+}
