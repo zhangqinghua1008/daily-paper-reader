@@ -1,0 +1,531 @@
+Title: EpiDiffVO: Geometry-Aware Epipolar Diffusion for Robust Visual Odometry
+
+URL Source: https://arxiv.org/pdf/2605.19556v1
+
+Published Time: Wed, 20 May 2026 00:54:27 GMT
+
+Number of Pages: 8
+
+Markdown Content:
+> JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 1
+
+# EpiDiffVO: Geometry-Aware Epipolar Diffusion for Robust Visual Odometry 
+
+Prateeth Rao 
+
+Abstract —Estimating relative pose from image pairs fun-damentally requires only a minimal subset of geometrically consistent correspondences. However, most learning-based ap-proaches rely on dense matching or direct regression, leading to redundancy and reduced geometric interpretability. In this work, we propose a sparse epipolar matching framework that predicts a compact set of correspondences optimized for geometric consis-tency across varying temporal baselines. To address residual noise and misalignment, we introduce an epipolar diffusion process that models correspondence uncertainty and refines keypoints toward epipolar consistency. The refined correspondences, along with depth cues, are lifted into a graph representation forming a Steiner graph that encodes relational structure between points. A graph neural network learns a compact subset of informative cor-respondences, which are passed to a differentiable singular value decomposition solver for end-to-end geometric estimation. Rela-tive pose is recovered from the resulting essential matrix and eval-uated in a visual odometry setting on the TartanAir and KITTI SLAM datasets. Experimental results demonstrate that com-bining sparse matching, diffusion-based refinement, and graph-based subset selection reduces correspondence redundancy while maintaining robust pose estimation across challenging baselines. Code and implementation details will be made publicly available at: https://github.com/Prateeth8/Epipolar-Diffusion-Pose 
+
+Index Terms —Epipolar Geometry, Visual Odometry, Sparse Image Matching, DDPM, GNN, Sampson Loss, Steiner Graph. 
+
+I. I NTRODUCTION 
+
+# THE estimation of relative camera motion from image pairs is a foundational problem in visual odometry and robotics. Classical multi-view geometry shows that only a minimal set of correspondences is sufficient for pose recovery. However, modern learning-based approaches increasingly rely on dense and redundant matches, which introduces unnec-essary complexity further being sensitive to noise. Lack of matched correspondences is not an issue in Visual Odometry, but identifying a geometrically consistent subset that reliably constrains motion under real-world conditions such as wide baselines, motion blur, and viewpoint changes. A major source of failure in correspondence-based pipelines arises from deviations from ideal imaging assumptions. Real-world correspondences are affected by structured noise, in-cluding motion blur, illumination changes, calibration inac-curacies, and violations of strict epipolar alignment due to irregular spacing between images or dynamic objects in the scene. Existing methods typically treat these effects implicitly or assume simple noise models, limiting their ability to enforce geometric consistency under challenging conditions. As aresult, even high-quality matches may not align with the 
+
+Prateeth Rao is with the International Institute of Information Technology Bangalore, Bengaluru, India (e-mail: prateeth.rao@iiitb.ac.in). Manuscript received April 19, 2021; revised August 16, 2021. 
+
+underlying geometric constraints required for accurate pose estimation. Recent learning-based approaches often attempt to directly regress motion parameters or essential matrices from corre-spondences. While effective in some settings, such formula-tions obscure the underlying geometric structure and can lead to physically inconsistent predictions. This issue is particularly pronounced in monocular visual odometry, where translation is inherently ambiguous up to scale. Direct regression entangles correspondence selection with motion estimation, making it difficult to disentangle geometric validity from data-driven bi-ases and limiting generalization across diverse motion patterns. Most of the image matching algorithms treat matches in-dependently or rely on global aggregation mechanisms such as attention, without explicitly modeling the relational depen-dencies between correspondences. However, geometric consis-tency is inherently a structured property, where the validity of a match depends on its agreement with others. Ignoring this structure makes it difficult to identify minimal, informative subsets of correspondences required for robust pose estima-tion. These limitations suggest the need for a framework that (i) explicitly models structured uncertainty in correspondences, (ii) preserves geometric constraints without relying on direct regression, and (iii) leverages relational structure to identify minimal, informative subsets for pose estimation. In this work, we propose such a framework, combining probabilistic refine-ment, structured representation, and differentiable geometric estimation within a unified pipeline. The proposed perspective is particularly relevant for robotic and aerial navigation scenarios, where large inter-frame mo-tion, sparse texture, and environmental noise challenge con-ventional correspondence pipelines. We evaluate our approach on benchmarks such as TartanAir and TartanAir v2, demon-strating robustness under conditions representative of drone-based visual odometry. 
+
+Contributions of this paper are summarized as follows:  
+
+> •
+
+We introduce a sparse correspondence framework that prioritizes geometrically consistent matches over dense predictions for robust pose estimation.  
+
+> •
+
+We propose a diffusion-based keypoint realignment 
+
+strategy that models correspondence perturbations under an isotropic Gaussian process and refines matches to satisfy epipolar constraints.  
+
+> •
+
+We formulate correspondence aggregation as a 2D-3D Steiner graph construction , leveraging stereo depth to capture both global structure (via MST) and local consistency (via KNN) using transformers with attention modules.   
+
+> arXiv:2605.19556v1 [cs.CV] 19 May 2026 JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 2
+> •
+
+We design a multi-hypothesis geometric estimation pipeline that predicts multiple essential matrix candidates and recovers relative pose through a differentiable SVD-based solver. II. R ELATED WORK 
+
+This section reviews prior work spanning the evolution from classical image matching to deep and diffusion-based approaches, examines the role and assumptions of classical solvers in pose estimation, and concludes with graph-based learning methods for improved correspondence and pose esti-mation. 
+
+Image Matching : Image matching traditionally relies on feature-based and area-based methods to establish correspon-dences between images [1]. Feature-based approaches use keypoint detection, descriptor extraction, and nearest neigh-bour matching followed by geometric verification, while area-based methods directly compare image patches. Although feature-based methods are more robust to geometric variations, they suffer from combinatorial complexity and sensitivity to outliers. Area-based methods are computationally expensive and sensitive to illumination and noise [1]. These limitations motivate the use of learned representations for improved robustness and scalability [2]. 
+
+Deep Image Matching: Deep learning methods learn fea-ture representations and matching functions directly from data, improving robustness to viewpoint and appearance variations [3]. CNN-based approaches enable efficient feature extraction [4] [5] [6], while graph-based methods such as SuperGlue [7] and LightGlue [8] model matching as a context-aware attention problem with optimal assignment. Transformer-based methods like COTR [9] perform query-based correspondence prediction using global context. Dense matching approaches such as DKM [10] further extend this to continuous correspondence estimation. Despite improved performance, these methods often lack explicit geometric constraints. 
+
+Diffusion into Image Matching : Recent works model cor-respondence estimation as a diffusion process, where matches are iteratively refined from noisy initial states [11]. Classical non-linear diffusion methods perform edge-aware refinement of disparity [12], while modern approaches learn to denoise correspondence fields using deep networks. Diffusion-based methods improve robustness to occlusions, ambiguities, and large viewpoint changes by enforcing consistency over mul-tiple steps. Extensions such as DiffGlue [13] and keypoint-based diffusion [14] frameworks further integrate refinement into feature matching and pose estimation pipelines. 
+
+Classical Solvers : Classical solvers estimate geometric models such as the fundamental or essential matrix from correspondences using robust optimization techniques. These methods are critical for enforcing geometric consistency and computing camera pose. However, their performance depends heavily on the quality of input matches and they rely on handcrafted heuristics for outlier rejection. Despite advances in learning-based methods, classical solvers remain integral for reliable geometric estimation [15]. 
+
+Graph Construction and Learning: Graph-based ap-proaches formulate feature matching as a relational problem, where keypoints are nodes and edges encode spatial or descrip-tor relationships. Graph neural networks propagate contextual information to improve matching consistency, as seen in methods like SuperGlue [7] and seeded graph matching [16]. These approaches reduce ambiguity in challenging regions by leveraging global structure. Hybrid methods further integrate graph reasoning with geometric estimation for iterative refine-ment of correspondences [17]. III. P RELIMINARIES 
+
+The Preliminaries section presents the foundational concepts underlying the proposed framework, including: a) detection-free image matching, b) noise affecting epipolar alignment, c) minimal solvers for pose estimation, and d) Steiner tree-based graph construction. These subsections establish the mathemat-ical and theoretical basis for the proposed methodology. 
+
+A. Feature Map based Image Matching 
+
+Let I1, I 2 ∈ RH×W ×3 denote a stereo image pair, where 
+
+H = 480 and W = 640 . These images are passed through a feature extraction network M1 (ResNet-34) to obtain interme-diate feature maps: 
+
+F1 = M1(I1), F2 = M1(I2), (1) where F1, F 2 ∈ R H   
+
+> 24 ×W
+> 32 ×256
+
+.
+
+a) Score Matrix Computation: Feature maps are re-shaped into a sequence of feature vectors: 
+
+ˆF1 ∈ RN1×d, ˆF2 ∈ RN2×d, (2) where d = 256 , N1 = H 
+
+> 24
+
+· W 
+
+> 32
+
+and N2 = H 
+
+> 24
+
+· W 
+
+> 32
+
+.The similarity score matrix is computed using dot-product similarity: 
+
+S1 = ˆF1 ˆF ⊤ 
+
+> 2
+
+, (3) where S1 ∈ RN1×N2 .
+
+b) Sinkhorn Normalization: The score matrix is con-verted into a probabilistic matching matrix using Sinkhorn normalization: 
+
+P1 = Sinkhorn (S1), (4) where P1 is a doubly stochastic matrix: 
+
+P11 = 1, P ⊤ 
+
+> 1
+
+1 = 1. (5) 
+
+c) Thresholding: A confidence threshold τ = 0 .65 is applied to retain reliable correspondences: 
+
+M = {(i, j ) | P1(i, j ) > τ }. (6) 
+
+d) Positional Encoding: For each valid match (i, j ) ∈M, positional encodings are added: 
+
+˜F1(i) = ˆF1(i) + PE (i), ˜F2(j) = ˆF2(j) + PE (j), (7) where PE (·) denotes positional encoding. JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 3 
+
+> Fig. 1. Geometry Diffusion VO module: a) Sparse Epipolar Matcher for estimating initial subset of matched keypoints, b) Epipolar Diffusion and Graph Construction: Keypoint Realignment process using DDPM with depth upliftment based Steiner Graph Construction and c) Differential SVD based Pose estimation
+
+e) Patch Projection: Matched features are projected back to the image space as local patches: 
+
+P1 = {ϕ(I1, i )}, P2 = {ϕ(I2, j )}, (8) where ϕ(·) extracts a patch centered at the corresponding location. Each patch is flattened into a vector: 
+
+pk 
+
+> 1
+
+, p k 
+
+> 2
+
+∈ Rdp . (9) 
+
+f) Cosine Similarity Matching: Final matching scores are computed using cosine similarity: sim (pk 
+
+> 1
+
+, p k 
+
+> 2
+
+) = pk 
+
+> 1
+
+· pk
+
+> 2
+
+∥pk 
+
+> 1
+
+∥∥ pk 
+
+> 2
+
+∥ . (10) Top-K matches are selected: 
+
+Mfinal = TopK (sim (pk 
+
+> 1
+
+, p k 
+
+> 2
+
+)) . (11) 
+
+B. Noise Affecting Epipolar Alignment 
+
+Let I1 and I2 be a stereo-initialized image pair with corresponding keypoints x1, x2 ∈ R2. Under ideal conditions: 
+
+x⊤ 
+
+> 2
+
+Ex 1 = 0 (12) where E = [ t]×R.Observed correspondences are perturbed: 
+
+˜xi = xi + ϵi, i ∈ { 1, 2} (13) 
+
+ϵ = ϵproj + ϵmotion + ϵmatch + ϵcalib (14) 
+
+a) Projection Noise: Image measurements are affected by sensor noise, localization uncertainty, image formation alignments and projective geometry, typically modeled as isotropic Gaussian. 
+
+ϵproj ∼ N (0 , σ 2 
+
+> p
+
+I) (15)  
+
+> Fig. 2. Noise in Images during acquisition and motion exhibiting Isotropic Gaussian Noise.
+
+b) Motion Noise: Small perturbations in relative pose in-troduce nonlinear deviations in the epipolar geometry leading to incorrect measurements of estimated pose. 
+
+R′ = R exp([ δθ]×), t′ = t + δt (16) 
+
+E′ = [ t′]×R′ (17) 
+
+dS (x1, x2) = (x⊤ 
+
+> 2
+
+Ex 1)2
+
+(Ex 1)21 + ( Ex 1)22 + ( E⊤x2)21 + ( E⊤x2)22
+
+(18) 
+
+c) Matching Noise: Feature matching uncertainty in-troduces Non-uniform perturbations dependent on descriptor similarity. 
+
+ϵmatch ∼ N (0 , σ 2
+
+> m
+
+(d)I), σ2
+
+> m
+
+(d) = αd + β (19) 
+
+d) Calibration Noise: Imperfect calibration induces spa-tially varying distortions encoded from disparity maps in image measurements. 
+
+xdist = x  1 + k1r2 + k2r4 (20) JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 4
+
+ϵcalib = x(k′
+
+> 1
+
+r2 + k′
+
+> 2
+
+r4) − x(k1r2 + k2r4) (21) The resulting perturbation ϵ consists of both Gaussian and non-Gaussian components. We approximate this mixture using an isotropic Gaussian process, enabling a geometric DDPM formulation for epipolar alignment. 
+
+C. Minimal Solvers for Pose Estimation 
+
+Given corresponding points (xi
+
+> 1
+
+, xi
+
+> 2
+
+), the essential matrix E
+
+satisfies: 
+
+xi⊤ 
+
+> 2
+
+Ex i 
+
+> 1
+
+= 0 (22) Stacking N correspondences yields: 
+
+Ae = 0 (23) where e ∈ R9 is the vectorized form of E.
+
+a) 8-Point Method: For N ≥ 8, E is estimated by solving Ae = 0 followed by rank-2 enforcement via SVD. 
+
+b) 5-Point Method: For N = 5 , E is obtained from a constrained solution space satisfying det( E) = 0 and rank (E) = 2 .The relative pose (R, t) is recovered from E via SVD: 
+
+E = UΣV ⊤ (24) 
+
+R = UWV ⊤, t = u3 (25) yielding up to four solutions, resolved using chirality con-straints. 
+
+D. Steiner Graph Construction via 3D Reconstruction 
+
+Given matched keypoints (xi
+
+> 1
+
+, xi
+
+> 2
+
+) between images I1 and 
+
+I2, we lift correspondences to 3D using stereo disparity di:
+
+zi = f B di
+
+(26) where f is the focal length and B is the baseline. The corresponding 3D point in the camera frame is: 
+
+Pi = ziK−1 ˜xi 
+
+> 1
+
+(27) We construct a graph G = ( V, E) over 3D points: 
+
+V = {Pi ∈ R3} (28) Global connectivity is ensured via a Minimum Spanning Tree (MST) over Euclidean distances: 
+
+Emst = arg min 
+
+> T
+
+X
+
+> (i,j )∈T
+
+∥Pi − Pj ∥2 (29) which serves as a Steiner tree approximation. To preserve local geometric structure, k-nearest neighbor edges are added: 
+
+Eknn = {(i, j ) | j ∈ N k(i)} (30) The final graph is: 
+
+E = Emst ∪ E knn (31) This graph captures both global structure and local consis-tency for downstream geometric aggregation. 
+
+E. Pseudo Ground Truth Construction for Keypoints 
+
+Given the estimated matched keypoints x0 and x1, along with the ground truth relative pose between two frames, the pseudo ground truth correspondences are constructed using epipolar geometry constraints. The Essential matrix is computed from the ground truth rotation R and translation t as 
+
+E = [ t]×R (32) Using the camera intrinsic matrix K, the Fundamental matrix is obtained as 
+
+F = K−T EK −1 (33) For a keypoint x0 in the first image, the corresponding epipolar line in the second image is computed as 
+
+l1 = Fx 0 (34) Similarly, for a keypoint x1 in the second image, the corresponding epipolar line in the first image is 
+
+l0 = FT x1 (35) The pseudo ground truth keypoints are obtained by project-ing the estimated keypoints onto their corresponding epipolar lines: 
+
+xgt  
+
+> 1
+
+= x1 − lT 
+
+> 1
+
+x1
+
+l21x + l21y
+
+
+
+l1x
+
+l1y
+
+0
+
+ (36) 
+
+xgt  
+
+> 0
+
+= x0 − lT 
+
+> 0
+
+x0
+
+l20x + l20y
+
+
+
+l0x
+
+l0y
+
+0
+
+ (37) where (lx, l y ) denote the epipolar line coefficients. The corrected keypoints satisfy the epipolar constraint and serve as pseudo ground truth correspondences for supervision during training. IV. P ROPOSED METHODOLOGY 
+
+Minimal solvers require geometrically consistent correspon-dences; however, real-world matches are corrupted by noise, leading to instability in pose estimation. We address this by refining correspondences, lifting them to 3D, and aggregating them through a structured graph for robust essential matrix estimation. The overall pipeline is shown in Fig. 1.  
+
+> •
+
+Step 1: Sparse Epipolar Matching 
+
+Given input images I1 and I2, a sparse epipolar matcher produces corresponding keypoints (k1, k2).These matches are geometrically constrained but still affected by noise and mismatches, motivating further refinement.  
+
+> •
+
+Step 2: DDPM-based Keypoint Realignment 
+
+To correct misalignment, we model perturbations using a diffusion process under an isotropic Gaussian assumption. For keypoints k:
+
+kt = √¯αtk0 + √1 − ¯αtϵ, ϵ ∼ N (0 , I) (38) JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 5
+
+A denoising network predicts ϵθ (kt, t ) to obtain refined correspondences (k′
+
+> 1
+
+, k′
+
+> 2
+
+) that better satisfy epipolar ge-ometry.  
+
+> •
+
+Step 3: Stereo Depth and 3D Reconstruction 
+
+Using stereo disparity, refined keypoints are lifted to 3D points Pi ∈ R3 in the camera coordinate frame. This enables direct modeling of geometric relationships in Euclidean space.  
+
+> •
+
+Step 4: Steiner Graph Construction 
+
+A graph G is constructed over the 3D points (refer Sec. X). A Minimum Spanning Tree ensures global con-nectivity, while local KNN edges preserve neighborhood structure. This provides a structured representation of correspondences for aggregation.  
+
+> •
+
+Step 5: Essential Matrix Approximation and Relative Pose 
+
+Graph features are aggregated to estimate multiple essen-tial matrix candidates: 
+
+E ∈ RM ×9, M = 5 (39) Each Ei is reshaped to 3 × 3 and passed through a differentiable SVD layer (refer Sec. X) to recover relative pose (Rrel , trel ). Translation is obtained up to scale.  
+
+> •
+
+Step 6: Absolute Pose Estimation 
+
+Relative transformations are accumulated to obtain abso-lute pose. For each step k:
+
+T(k) 
+
+> rel
+
+=
+
+R(k) 
+
+> rel
+
+t(k)
+
+> rel
+
+0⊤ 1
+
+
+
+(40) 
+
+T(k) 
+
+> abs
+
+= T(k−1)  
+
+> abs
+
+T(k) 
+
+> rel
+
+(41) The resulting trajectory is evaluated using standard metrics of: a) Relative Pose : RRE, RTE, Sampson Loss and b) 
+
+Absolute Pose : ATE, APE and APE-R. 
+
+a) Image Matching module: As described in Fig-ure 1,Sparse Epipolar Image matching module draws inspira-tion from LoFTR [18] estimating fine feature maps F1 and F2
+
+which are propagated to estimate probability matching matrix 
+
+Pmatch .
+
+b) Matched Keypoint Epipolar Realignment with DDPM: 
+
+Top correspondences obtained from the Sparse Epipolar Matcher are refined by enforcing ideal epipolar geometric constraints under the assumption that the camera observations are corrupted by isotropic Gaussian noise, as illustrated in Figure 2. Ground truth poses provided in the KITTI SLAM dataset are utilized to project matched keypoints onto their corresponding epipolar lines, thereby constructing pseudo epipolar correspondences for training supervision. During the forward diffusion process, noise is progressively injected into the correspondence offsets, while additional stochastic perturbation is introduced to improve prediction stability. The reverse diffusion process consists of: (a) noise prediction and (b) correspondence realignment through itera-tive denoising of the keypoints. Further architectural details are provided in Supplementary Material Section 1. 
+
+c) Uplifted keypoint Steiner Graph, Graph Transformer and Pose Estimation: The re-aligned keypoints, along with depth estimated using the stereo SGBM module, are projected into 3D space to construct a 3D Steiner graph and a 2D keypoint proximity graph. A Graph Propagation Transformer consisting of self-attention and cross-attention layers is de-signed to learn geometric feature interactions across both graph domains. The learned representations are subsequently passed to a weighted Differentiable SVD module for es-timating the relative rotation matrix and translation vector. Additional architectural details are provided in Supplementary Material Section 2. V. R ESULTS 
+
+The Results section begins with the implementation details of the proposed architectures, including the experimental envi-ronment, GPU specifications, and training configurations. The section is further organized into: (a) Sparse Epipolar Image Matching, (b) Keypoint Realignment using the Transformer-based DDPM module, (c) Pose estimation evaluation against state-of-the-art methods and the proposed framework on the KITTI Seq-09 and TartanAir datasets, and (d) trajectory visu-alization of the proposed architecture on the TartanAir dataset. 
+
+A. Implementation Strategy 
+
+The proposed framework is implemented in PyTorch using the Kaggle Jupyter environment. Training was performed on NVIDIA Tesla P100 GPUs, while inference utilized NVIDIA Tesla T4 GPUs. The complete pipeline consists of three sequential stages: a) Sparse Epipolar Matching trained for 100 epochs, b) Diffusion-based Keypoint Realignment trained for 150 epochs, and c) Graph Learning with Differentiable Pose Estimation trained for 100 epochs. For all stages, the best-performing models were selected using validation loss with a saturation/convergence threshold. To minimize inter-stage dependency bias, each stage was optimized independently using dedicated objective functions. The Sparse Epipolar Matching stage uses Sampson loss to enforce geometric consistency between correspondences: 
+
+F1 = Lsamp (42) The Diffusion Realignment stage jointly optimizes geomet-ric refinement and denoising consistency using: 
+
+F2 = w1Lsamp + w2Lddpm + w3Lrec (43) The Graph Learning and Pose Estimation stage uses a com-posite objective for geometric aggregation and differentiable pose recovery: 
+
+F3 = w1Lalign + w2Lepi + w3Lsvd (44) where Lsamp denotes Sampson loss, Lddpm is the diffusion denoising objective, Lrec enforces reconstruction consistency, 
+
+Lalign represents geometric alignment loss, Lepi minimizes epipolar residuals, and Lsvd regularizes differentiable pose estimation. The Loss functions are further described in the Supplementary Material Section 3. JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 6
+
+0 1 2 3 4 5 6 7 8 9
+
+0
+
+2
+
+4
+
+6
+
+8
+
+Frame Number 
+
+> Sampson Error
+
+Initial Sparse Matches DDPM based Refinement   
+
+> Fig. 3. Comparison of correspondence sampson error from Sparse Epipolar Matcher outputss and after DDPM-based keypoint refinement across multiple frame pairs.
+> Fig. 4. Result Plots: a) Sparse Epipolar Image Matching and b) Transformer DDPM keypoint Realignment
+
+Training was performed on KITTI 2012 all training sequences till SEQ08 due to presence of ground truth pose, while infer-ence was performed on SEQ09 dataset. Additionally, a subset of the TartanAir dataset (last samples ˜ 250 frames) was used to further train the differentiable SVD module for improved inference generalization. Stage 1 uses consecutive to wide baseline initialization to learn sparse correspondences under maximal to minimal correlation conditions further refined with a spatial mask for incorrect matched correspondences. Stage 2 employs pseudo ground truth generated using estimated correspondences and ground truth poses from re-projecting correspondences on epipolar lines for diffusion-based refine-ment. Stage 3 uses SGBM-based stereo depth estimation with hole filling to generate dense disparity maps and 3D coordinates for scaled pose recovery in KiTTi 2012 SLAM dataset whereas corrected depths were provided by Tartan Air Dataset. 
+
+B. Sparse Image Matching and Keypoint Realignment 
+
+From the Fig 1, as described in section IV both Image matching and DDPM based keypoint realignment in reverse diffusion process by predicting isotropic gaussian noise align-ing to epipolar geometry to refine the keypoints as shown in Fig 4. The Figure 3 compares Sampson Loss from Sparse Epipolar matcher supervised by epipolar geometry constraints to Samp-son Loss obtained from the estimation of isotropic gaussian noise during reverse diffusion process used in refining matched keypoints. Thus from the plot DDPM module reduces Samp-son Loss for matched keypoints. 
+
+C. Relative and Absolute Pose Metrics Evaluation 
+
+The proposed methodology is evaluated on the SEQ09 of KiTTi Stereo SLAM and Tartan Air Neighborhood dataset on Relative and Absolute Pose Metrics. The following results have been presented in Table I and Table II. The inference metrics indicate that the estimated Essential matrix serves as the fundamental basis for both Absolute Pose estimation and Sampson error computation. From the KITTI evaluation results presented in Table I, it is observed that the Sparse Epipolar Matcher combined with RANSAC achieves superior performance for absolute pose estimation. In contrast, for the TartanAir dataset, despite exhibiting comparatively higher Sampson error values, the proposed approach demon-strates improved robustness in estimating the initial absolute pose, as shown in Table II. Since the proposed framework achieved the best overall performance on the TartanAir dataset, the corresponding tra-jectory visualization is presented in Figure 5. VI. C ONCLUSION 
+
+In this work, we presented a geometry-driven relative pose estimation framework combining Sparse Epipolar Matching, Transformer-based DDPM keypoint refinement, and a Graph Propagation Transformer integrated with a differentiable SVD solver. The proposed framework focuses on learning compact and geometrically consistent correspondences instead of rely-ing on dense matching or direct pose regression. Experimental evaluation on the KITTI and TartanAir datasets demonstrates that the proposed approach achieves the lowest Sampson error on the KITTI dataset while providing the most stable absolute pose estimation on the TartanAir dataset. The results fur-ther show that diffusion-based correspondence refinement and graph-based subset selection improve geometric consistency and reduce correspondence redundancy under challenging viewpoint and motion variations. VII. F UTURE WORK 
+
+Future work will focus on extending the proposed frame-work toward real-time Visual SLAM and Visual Odometry systems operating under dynamic and degraded environments. Additional directions include integrating event-based cameras and IMU fusion for robust motion estimation in high-speed scenarios, improving scale consistency through temporal graph propagation, and exploring lightweight graph transformer ar-chitectures for deployment on embedded robotic and au-tonomous navigation platforms. REFERENCES [1] J. Ma, X. Jiang, A. Fan, J. Jiang, and J. Yan, “Image matching from handcrafted to deep features: A survey,” Int. J. Comput. Vision , vol. 129, no. 1, p. 23–79, Jan. 2021. [Online]. Available: https://doi.org/10.1007/s11263-020-01359-2 [2] S. Xu, S. Chen, R. Xu, C. Wang, P. Lu, and L. Guo, “Local feature matching using deep learning: A survey,” Inf. Fusion , vol. 107, no. C, Jul. 2024. [Online]. Available: https://doi.org/10.1016/j.inffus. 2024.102344 [3] C. Leng, H. Zhang, B. Li, G. Cai, Z. Pei, and L. He, “Local feature descriptor for image matching: A survey,” IEEE Access , vol. 7, pp. 6424– 6434, 2019. [4] Q. Zhou, T. Sattler, and L. Leal-Taix´ e, “Patch2pix: Epipolar-guided pixel-level correspondences,” in 2021 IEEE/CVF Conference on Com-puter Vision and Pattern Recognition (CVPR) , 2021, pp. 4667–4676. JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 7
+
+TABLE I INFERENCE RESULTS ON THE KITT I SEQ09 TEST DATASET OVER THE FIRST 100 SAMPLES .
+
+Module Name RRE ( ◦) RTE (m) Sampson Loss ATE (m) APE (m) APE-R ( ◦)
+
+Sparse Epi Matcher + RANSAC 16.2001 0.2943 123.43759 26.0671 32.9066 99.5288 Sparse Epi Matcher + MAGSAC 19.3480 0.3181 146.18692 36.7278 46.2647 115.5531 Sparse Epi Matcher + MAGSAC++ 18.6822 0.3187 138.46090 33.7775 43.7449 117.5174 Sparse Epi Matcher + DSAC 17.2418 0.3218 139.83944 29.0708 35.4699 104.3801 Sparse Epi Matcher + DDPM + RANSAC 8.9481 0.2906 139.83966 28.2286 33.5058 98.3069 Sparse Epi Matcher + DDPM + MAGSAC 6.9297 0.2935 132.46495 36.8140 48.4406 125.7633 Sparse Epi Matcher + DDPM + MAGSAC++ 8.8009 0.3093 140.45212 46.2614 58.4247 119.5690 Sparse Epi Matcher + DDPM + DSAC 8.1603 0.2875 134.48266 33.8399 42.7565 129.1885 Deep Fundamental Matrix 1.0724 0.6937 140.8431 40.5094 46.7136 84.3638 
+
+Sparse Epi Matcher + DDPM + GraphDiffSVD 8.6926 0.2568 122.9859 27.2388 33.9787 116.5776 TABLE II TARTAN AIR NEIGHBOURHOOD INFERENCE OVER 100 SAMPLES 
+
+Module Name RRE ( ◦) RTE (m) Sampson Loss ATE (m) APE (m) APE-R ( ◦)
+
+Sparse Epi Matcher + RANSAC 5.0621 0.1493 28.45168 7.4902 7.9161 122.7500 Sparse Epi Matcher + MAGSAC 4.9927 0.1518 29.06684 7.7595 8.1806 127.8952 Sparse Epi Matcher + MAGSAC++ 5.0918 0.1465 35.71909 6.8685 7.2854 123.5199 Sparse Epi Matcher + DSAC 4.4116 0.1511 27.64794 7.9721 8.4190 122.9739 Sparse Epi Matcher + DDPM + RANSAC 5.2032 0.1465 33.82532 7.7132 8.2823 98.6421 Sparse Epi Matcher + DDPM + MAGSAC 5.3364 0.1467 27.95476 7.4155 7.8532 118.8436 Sparse Epi Matcher + DDPM + MAGSAC++ 5.1259 0.1478 29.37567 7.7961 8.2467 115.2226 Sparse Epi Matcher + DDPM + DSAC 5.0943 0.1457 29.85782 7.1940 7.6359 126.5704 Sparse Epi Matcher + DDPM + GraphDiffSVD 2.5485 0.2144 33.23149 5.5960 6.0302 79.6835 
+
+Fig. 5. Pose Estimation Evaluation (Absolute Pose) over defined methods in Table II : a) X-Z 2D trajectory of the models and b) 3D Cartesian Trajectory Plot [5] G. Potje, F. Cadar, A. Araujo, R. Martins, and E. R. Nascimento, “Xfeat: Accelerated features for lightweight image matching,” in 2024 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , 2024, pp. 2682–2691. [6] R. Timofte and L. Van Gool, “Sparse flow: Sparse matching for small to large displacement optical flow,” in 2015 IEEE Winter Conference on Applications of Computer Vision , 2015, pp. 1100–1106. [7] P.-E. Sarlin, D. DeTone, T. Malisiewicz, and A. Rabinovich, “Super-glue: Learning feature matching with graph neural networks,” in 2020 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , 2020, pp. 4937–4946. [8] P. Lindenberger, P.-E. Sarlin, and M. Pollefeys, “Lightglue: Local feature matching at light speed,” in 2023 IEEE/CVF International Conference on Computer Vision (ICCV) , 2023, pp. 17 581–17 592. [9] W. Jiang, E. Trulls, J. Hosang, A. Tagliasacchi, and K. M. Yi, “Cotr: Correspondence transformer for matching across images,” in 2021 IEEE/CVF International Conference on Computer Vision (ICCV) , 2021, pp. 6187–6197. [10] J. Edstedt, I. Athanasiadis, M. Wadenb¨ ack, and M. Felsberg, “Dkm: Dense kernelized feature matching for geometry estimation,” in 2023 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , 2023, pp. 17 765–17 775. [11] J. Nam, G. Lee, S. Kim, H. Kim, H. Cho, S. Kim, and S. Kim, “Diffusion model for dense matching,” in The Twelfth International Conference on Learning Representations , 2024. [Online]. Available: https://openreview.net/forum?id=Zsfiqpft6K [12] D. Scharstein and R. Szeliski, “Stereo matching with non-linear dif-fusion,” in Proceedings CVPR IEEE Computer Society Conference on Computer Vision and Pattern Recognition , 1996, pp. 343–350. [13] S. Zhang and J. Ma, “Diffglue: Diffusion-aided image feature JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 8
+
+matching,” in ACM Multimedia 2024 , 2024. [Online]. Available: https://openreview.net/forum?id=DVm3Bk2eHh [14] L. Xu, H. Qu, Y. Cai, and J. Liu, “6d-diff: A keypoint diffusion frame-work for 6d object pose estimation,” in 2024 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , 2024, pp. 9676– 9686. [15] J. M. Mart´ ınez-Otzeta, I. Rodr´ ıguez-Moreno, I. Mendialdua, and B. Sierra, “Ransac for robotic applications: A survey,” Sensors , vol. 23, no. 1, 2023. [Online]. Available: https://www.mdpi.com/1424-8220/23/ 1/327 [16] H. Chen, Z. Luo, J. Zhang, L. Zhou, X. Bai, Z. Hu, C.-L. Tai, and L. Quan, “Learning to match features with seeded graph matching network,” in 2021 IEEE/CVF International Conference on Computer Vision (ICCV) , 2021, pp. 6281–6290. [17] D. Barath, D. Mishkin, L. Cavalli, P.-E. Sarlin, P. Hruby, and M. Pollefeys, “Stereoglue: Robust estimation with single-point solvers,” in Computer Vision – ECCV 2024: 18th European Conference, Milan, Italy, September 29–October 4, 2024, Proceedings, Part LVII . Berlin, Heidelberg: Springer-Verlag, 2024, p. 421–441. [Online]. Available: https://doi.org/10.1007/978-3-031-72998-0 24 [18] J. Sun, Z. Shen, Y. Wang, H. Bao, and X. Zhou, “Loftr: Detector-free local feature matching with transformers,” in 2021 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , 2021, pp. 8918–8927. [19] Y. Jin, D. Mishkin, A. Mishchuk, J. Matas, P. Fua, K. M. Yi, and E. Trulls, “Image matching across wide baselines: From paper to practice,” Int. J. Comput. Vision , vol. 129, no. 2, p. 517–547, Feb. 2021. [Online]. Available: https://doi.org/10.1007/s11263-020-01385-0 [20] P.-E. Sarlin, A. Unagar, M. Larsson, H. Germain, C. Toft, V. Larsson, M. Pollefeys, V. Lepetit, L. Hammarstrand, F. Kahl, and T. Sattler, “Back to the feature: Learning robust camera localization from pixels to pose,” in 2021 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , 2021, pp. 3246–3256. [21] J. Chang, J. Yu, and T. Zhang, “Structured epipolar matcher for local feature matching,” in 2023 IEEE/CVF Conference on Computer Vision and Pattern Recognition Workshops (CVPRW) , 2023, pp. 6177–6186. [22] Q. Wang, X. Zhou, B. Hariharan, and N. Snavely, “Learning feature descriptors using camera pose supervision,” in Computer Vision – ECCV 2020: 16th European Conference, Glasgow, UK, August 23–28, 2020, Proceedings, Part I. Berlin, Heidelberg: Springer-Verlag, 2020, p. 757–774. [Online]. Available: https://doi.org/10.1007/ 978-3-030-58452-8 44

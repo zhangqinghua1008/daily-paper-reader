@@ -1,0 +1,348 @@
+Title: Sparse Code Uplifting for Efficient 3D Language Gaussian Splatting
+
+URL Source: https://arxiv.org/pdf/2605.13600v1
+
+Published Time: Thu, 14 May 2026 01:40:00 GMT
+
+Number of Pages: 19
+
+Markdown Content:
+# Sparse Code Uplifting for Efficient 3D Language Gaussian Splatting 
+
+Lovre Antonio Budimir 1,2, ∗ Yushi Guan 2,3 Steve Ryhner 2,3 
+
+Sven Lonˇ cari´ c1 Nandita Vijaykumar 2,3 
+
+> 1
+
+Faculty of Electrical Engineering and Computing, University of Zagreb 
+
+> 2
+
+Department of Computer Science, University of Toronto 
+
+> 3
+
+Vector Institute 
+
+## Abstract 
+
+3D Language Gaussian Splatting (3DLGS) augments 3D Gaussian Splatting with language-aligned visual features for open-vocabulary 3D scene understanding. A core challenge is efficiently associating high-dimensional vision-language embed-dings with millions of 3D Gaussians while preserving efficient feature rendering for text-based querying. Existing methods either store dense features directly on Gaussians, causing high storage costs and slow rendering, or learn compact representations through expensive per-scene optimization with repeated feature rasterization. No existing method simultaneously achieves fast 3D semantic re-construction, efficient storage, and fast rendering. We propose SCOUP (Sparse 
+
+CO de UP lifting), which addresses all three by decoupling language representation learning from 3D Gaussian optimization. Rather than working directly in 3D, we learn sparse codebook-based representations entirely using features associated with 2D image regions, associating each region with a sparse set of codebook coefficients. We then uplift these coefficients to 3D Gaussians with our weighted sparse aggregation using Gaussian-to-pixel associations, where each Gaussian accumulates coefficients over codebook atoms across views. Top-K filtering then extracts the most dominant multi-view coefficients per Gaussian, enabling efficient storage and fast rendering. Our method achieves up to 400× training speedup while being 3× more memory efficient during training compared to the state-of-the-art in rendering speed. Across multiple benchmarks, SCOUP matches or outperforms existing methods in open-vocabulary querying accuracy. 
+
+## 1 Introduction 
+
+3D Gaussian Splatting (3DGS) has emerged as a powerful tool that enables high-quality reconstruction of 3D scenes from multi-view 2D images [ 13 ]. 3DGS represents scene appearance and geometry with an explicit set of anisotropic Gaussians that can be rasterized in real time on modern GPUs. Beyond these visual and spatial properties, these 3D representations are increasingly extended with language-aligned visual features extracted from vision–language models (VLMs) such as CLIP [ 30 , 9]. This creates 3D Language Gaussian Splatting (3DLGS) scenes built on top of 3DGS that can be queried with arbitrary text prompts. Recent methods [ 28 , 33 , 22 ] demonstrate that 3DLGS enables open-vocabulary 3D understanding and language-guided interaction, with valuable applications in language-driven navigation, manipulation, and interaction in robotics and AR/VR settings [8, 10, 38, 36]. 
+
+> ∗Corresponding author: lovre-antonio.budimir@fer.unizg.hr Preprint.
+> arXiv:2605.13600v1 [cs.CV] 13 May 2026
+
+3DLGS aims to build a 3D representation that, when rendered, produces high-dimensional features comparable with text embeddings to enable open-vocabulary scene querying. Typical pipelines use SAM [ 17 ] to segment each scene image into regions, then CLIP [ 30 ] to generate 512 -dimensional embeddings per region [ 33 , 28 ]. These features are then optionally compressed (e.g., via a scene-specific autoencoder) before being used for training or directly uplifting to 3D Gaussians. The Gaussians’ location, covariance, and opacity are inherited from the pre-trained 3DGS [ 28 , 25 , 19 ]. During rendering, the features stored in each Gaussian are rasterized, and if compression was applied, an additional decoding step is required to recover the original feature for text-based feature comparison and querying [28, 22]. There are two major challenges in 3DLGS scene reconstruction and rendering. First, 3D semantic reconstruction can incur significant latency and/or memory usage depending on the technique used. One commonly adopted approach is to directly uplift high-dimensional features from 2D images to 3D Gaussians [ 25 , 5, 37 ], leveraging Gaussian-to-pixel associations readily available from the geometric and visibility priors of a pretrained 3DGS model. Despite being fast, this process can lead to high memory usage when Gaussian-pixel associations are complex, and the resulting 3DLGS model incurs high storage costs due to millions of Gaussians each storing a full high-dimensional feature vector. Alternatively, training-based methods that compress high-dimensional features using scene-specific autoencoders [ 28 ] successfully mitigate memory overhead, but incur significantly longer 3D reconstruction runtimes due to the computational burden of repeated feature rasterization during optimization. Second, rendering is typically slow due to either the need to rasterize high-dimensional features directly, or the need to decode rasterized low-dimensional features with a neural network [ 5 , 42 , 28 ]. LangSplatV2 [ 22 ] addresses this by associating each Gaussian with sparse coefficients over a shared high-dimensional codebook, replacing the expensive neural decoder with a single matrix multiplication between the coefficients and the codebook. LangSplatV2 uses the high-dimensional embeddings from 2D images as ground-truth supervision, jointly optimizing the codebook and sparse Gaussian coefficients. However, this results in slow training due to the difficulty of jointly optimizing the codebook and sparse coefficients alongside repeated rasterization during training. One alternative would be to first uplift high-dimensional features from 2D to 3D, then train the codebook and sparse coefficients against these uplifted 3D features. However, our investigations found this degrades accuracy as Gaussians associated with larger objects outnumber those associated with smaller ones. This causes larger objects to dominate the codebook updates, resulting in poor feature representation for small objects. In summary, existing works do not achieve fast 3D semantic reconstruction, efficient storage, and fast rendering simultaneously .Our goal in this work is to simultaneously enable fast 3D semantic reconstruction, efficient storage, and fast rendering for 3DLGS, while achieving state-of-the-art accuracy. We propose Sparse Co de 
+
+Up lifting (SCOUP) for efficient 3DLGS. Rather than optimizing language representations directly in 3D Gaussian space, our key idea is to first jointly train a shared high-dimensional codebook and sparse coefficients in CLIP’s native 2D space, where each SAM-segmented region is associated with a sparse set of codebook coefficients to reconstruct its CLIP embedding (Fig. 1(a)). We then uplift the learned 2D region coefficients to 3D Gaussians by our weighted sparse aggregation: by assigning all pixels within a region the same set of sparse coefficients, the Gaussian-to-pixel associations from a pretrained 3DGS model can be efficiently used to aggregate coefficients from 2D to 3D without any additional optimization. As each Gaussian aggregates contributions across multiple views, the accumulated coefficients implicitly form a semantic voting system: high-weight coefficients represent confident consensus, while low-weight coefficients represent multi-view noise. To denoise the uplifted coefficients, we retain only the top-K coefficients by total aggregated weight, filtering the rest to zero (Fig. 1(b)). This ensures each Gaussian stores only K coefficient weights, enabling efficient storage and fast rendering (Fig. 1(c)). Our method achieves fast 3D semantic reconstruction by exploiting three properties. First, SAM [ 17 ]segments each scene into only a limited number of regions, keeping the 2D coefficient optimization significantly smaller than optimizing coefficients directly in 3D across millions of Gaussians. Second, we avoid the expensive repeated rasterization required by existing works [ 22 , 42 , 28 ], which arises from optimizing coefficients associated with 3D Gaussians against 2D image embedding supervision. Third, the learned sparse coefficients are efficiently uplifted to 3D Gaussians requiring no additional optimization and no high-dimensional feature rasterization. Our 3D semantic reconstruction is also highly memory efficient: each Gaussian aggregates and stores only sparse coefficients instead of full high-dimensional feature vectors, avoiding the costly high-dimensional aggregation or optimization 2Figure 1: SCOUP reconstructs 3D semantic scene representations in three stages: (a) jointly optimizing a scene-aware codebook and sparse coefficient maps to represent dense 2D CLIP features; (b) efficiently uplifting only non-zero coefficients to 3D Gaussians and applying top-K filtering to enforce multi-view consistency by retaining only the most dominant coefficients across views. During inference (c), the sparse codes stored in each Gaussian enable fast language feature rendering, ensuring the best overall efficiency (d) for 3D Language Gaussian Splatting. across millions of Gaussians that prior works require. Our method also maintains or outperforms existing works in accuracy, as the codebook is trained to directly reconstruct 2D CLIP features, which is the representation that text embeddings are compared against at query time. Our sparse coefficient uplifting is nearly lossless given accurate Gaussian-to-pixel associations, and as we will demonstrate experimentally, treating multi-view aggregation as a voting system allows our top-K selection to act as an effective noise filter. By discarding low-weight coefficients, we intrinsically improve multi-view consistency and open-vocabulary querying performance. We demonstrate the effectiveness of our method across three datasets: LERF-OVS [ 14 ], 3D-OVS [ 24 ], and Mip-NeRF360 [ 2 ]. Compared to LangSplatV2, our method achieves more than 400 × 3D semantic reconstruction speedup while maintaining identical storage and rendering speed, and is 
+
+3× more efficient in training memory. Compared to the fastest uplifting-based methods [ 37 , 5], our reconstruction time remains under a minute, while rendering at least 3× faster (Fig. 1(d)). In terms of accuracy, we outperform LangSplatV2 [ 22 ] and VALA [ 37 ], the leading optimization-based and uplifting-based 3DLGS methods by +4.5% and +2.7% in mIoU, respectively, on open-vocabulary segmentation on LERF-OVS. In summary, our key contributions are: (1) To our knowledge, we propose the first framework that encodes 2D high-dimensional dense features into 2D sparse coefficient maps and uplifts them to a 3DGS scene for efficient 2D-to-3D and 3D-to-2D transfer and storage of language features. 
+
+(2) We propose two novel techniques: (i) 2D Sparse Coding that jointly trains a shared codebook and per-region sparse codes to reconstruct CLIP features and (ii) Sparse Code Uplifting formulated as a weighted voting process over 2D codebook atoms guided by 3DGS priors, followed by top-K consensus filtering for compact storage, efficient rendering and semantic noise reduction. (3) Our method achieves more than 400 × training speedup and uses a third of the training memory compared to LangSplatV2, while maintaining its rendering speed and storage, and matches or outperforms other baselines on 3D open-vocabulary querying across benchmarks. 32 Related Work 
+
+3D Gaussian Splatting. In contrast to the implicit representations used in Neural Radiance Fields (NeRFs) [ 26 ], 3D Gaussian Splatting (3DGS) [ 13 ] has emerged as a high-efficiency alternative for 3D scene reconstruction from 2D images. By representing 3D space through explicit anisotropic Gaussian primitives and leveraging a differentiable rasterization pipeline, 3DGS achieves real-time rendering speeds. This has motivated the research community to extend 3DGS capabilities to support various open-vocabulary tasks in 3D space, from editing [ 3 , 7, 15 , 39 , 40 ] and generating [ 4, 34 , 23 ] objects using textual prompts, to embedding language representations into 3DGS to support open-vocabulary querying [28, 42, 33]. 
+
+3D Language Gaussian Splatting. Transferring knowledge from 2D vision-language models (VLMs) [ 30 , 20 , 11 ] into 3D scene representations is a critical step for unlocking open-vocabulary capabilities. Due to the explicit nature of 3DGS, storing high-dimensional features within individual Gaussians has led to two primary paradigms for 2D-to-3D feature transfer: optimization-based [28, 42, 33, 6, 21, 22, 29, 35] and optimization-free [25, 12, 5, 37] methods. Optimization-based methods learn language features through a differentiable rasterization pipeline [ 13 ]. To speed up training and reduce the memory footprint, LangSplat [ 28 ] trains a scene-specific autoencoder to compress CLIP embeddings into a low-dimensional latent space, which is then used to distill knowledge into 3D Gaussians. While this extreme compression reduces memory requirements, decoding the rendered latent representations back to the original CLIP space results in slow inference and a loss of semantic information. LangSplatV2 [ 22 ] and LEGaussians [ 33 ] adopt codebook-based approaches where Gaussians reference a global feature dictionary. Specifically, LEGaussians quantizes 2D features into a discrete codebook, then learns compact per-Gaussian features that can be decoded to codebook-index predictions. In contrast, LangSplatV2 [ 22 ] represents each Gaussian as a weighted combination of multiple codebook entries. While this offers greater representational capacity than [ 33 ], LangSplatV2 suffers from the computationally costly joint op-timization of codebook entries and Gaussian coefficients through the rasterization pipeline. While codebook-based formulations have been explored in [ 29 , 35 , 1 , 22 , 33 ], no prior work leverages the codebook to construct 2D sparse coefficient maps. Recent works propose training-free feature uplifting to pre-trained 3DGS models by leveraging their geometric and visibility priors [ 25 , 12 , 5, 37 ]. LUDVIG [ 25 ] performs a weighted multi-view aggregation of 2D features with a reported speed of 2ms per image and feature dimension. Dr. Splat [ 12 ] uses a similar formulation but assigns language representations only to the most dominant Gaussians along a viewing ray. To reduce storage requirements and improve scalability, Dr. Splat utilizes Product Quantization (PQ) to store features as compact representations. Both [ 12 ] and [ 25 ]query objects directly in 3D space prior to rendering the results. VALA [ 37 ] speeds up feature uplifting by filtering out occluded and low-visibility Gaussians during the aggregation procedure, yet it uplifts and renders full-dimensional CLIP features. Occam’s LGS [ 5] adds support for arbitrary feature dimensionality uplifting with scene-specific autoencoders, as in LangSplat [ 28 ]. On the other hand, CF 3 [19 ] moves the autoencoder directly into 3D space, learning low-dimensional latent representations for every Gaussian, which increases semantic reconstruction time. To further improve the efficiency of 3DGS, methods like [ 19 ] and [ 25 ] rely on filtering or adaptive sparsification to reduce the memory footprint. In contrast, our method optimizes the CUDA implementation of feature uplifting [ 25 ] to support sparse codes, enabling efficient uplifting of high-dimensional language representations to a 3DGS scene and supporting LangSplatV2 level rendering throughput [ 22 ] in a fraction of the time. 
+
+## 3 Preliminaries 
+
+3D Gaussian Splatting (3DGS) represents a scene as a large collection of anisotropic 3D Gaus-sians [ 13 ]. Each Gaussian is defined by a 3D center coordinate μi ∈ R3, a 3D size scaling factor si ∈ R3, a rotation quaternion qi ∈ R4, a view -dependent color ci(v) ∈ R3 described via spherical - harmonic coefficients, and an opacity value oi ∈ R. All parameters are learnable and are collectively denoted as 
+
+Θ = { μi, si, qi, ci(·), o i }Ni=1 
+
+for a scene with N Gaussian points. 4Optimization of 3DGS parameters relies on a differentiable tile-based rasterizer to project 3D Gaussians onto a 2D image [ 13 ]. Following [ 18 , 13 ], given a camera pose with viewing direction v,the estimated color of pixel p in an image Iv ∈ RH×W ×3 is defined as: 
+
+Iv (p) = X
+
+> i∈N v,p
+
+ci(v) ei(v, p ), (1) where Nv,p denotes the set of Gaussians whose projected splats overlap pixel p, ordered from front to back along viewing ray v, and ei(v, p ) is the contribution weight of the i-th Gaussian in this ordered list. The weights are obtained via standard α-blending [43]: 
+
+ei(v, p ) = αi(v, p )
+
+> i−1
+
+Y
+
+> j=1
+
+ 1 − αj (v, p ), (2) where αi(v, p ) = oi G2Di (v, p ) is the alpha value of the i-th Gaussian given its opacity oi and projected 2D footprint G2Di (v, p ).
+
+Feature Uplifting [ 25 , 12 ] is a training-free direct registration of language features from 2D feature maps to the 3DGS scene. Following [ 25 ], Si denotes the set of all view-pixel pairs (v, p ) to which the i-th Gaussian contributes during rendering. The language feature vector fi ∈ R512 for the i-th Gaussian is defined as: 
+
+fi = 1
+
+Zi
+
+X
+
+> (v,p )∈S i
+
+ei(v, p )Fv (p), (3) where Zi = P 
+
+> (v,p )∈S i
+
+ei(v, p ) is the normalization factor, and Fv (p) ∈ RD is the semantic feature vector at pixel p in view v. Storing a full D-dimensional feature vector per Gaussian scales storage linearly with D, and directly replacing the color term ci(v) in (1) with fi similarly increases rendering time proportional to the feature dimension. 
+
+## 4 Methodology 
+
+4.1 2D Sparse Coefficient Maps 
+
+Following prior work [ 28 , 22 ], we extract high-dimensional 2D semantic feature maps using SAM [ 17 ]and CLIP [ 30 ]. Specifically, for each input image Iv , SAM generates a set of non-overlapping binary masks. Each masked region is encoded with CLIP to obtain a semantic feature vector, which is then assigned to all pixels within the corresponding mask, yielding a pixel-wise semantic feature map 
+
+Fv ∈ RH×W ×D . Following existing work, we repeat this process at three SAM granularity levels: fine, medium, and coarse, to capture multi-scale semantic information. For notational clarity, the remainder of this section describes our method with respect to a single semantic level. The semantic representation of a single 3D scene is highly redundant and occupies only a small subspace of the full CLIP feature space [ 33 ], making sparse coding a natural fit for compact scene-specific feature representation. Unlike autoencoder-based compression [ 28 , 42 ], which requires a neural decoder at render time, sparse coefficients can be decoded via a simple matrix multiplication with the codebook. We therefore encode dense 2D feature maps into 2D sparse coefficient maps, where each pixel is represented as a sparse convex combination of at most K basis vectors from a learned scene-aware codebook, restricting each pixel to at most K non-zero coefficient values. We formulate this as a 2D sparse coding problem, learning a scene-aware codebook C ∈ RL×D of L
+
+basis vectors. Each pixel-wise feature Fv (p) ∈ RD is approximated as a sparse convex combination of at most K basis vectors: 
+
+Fv (p) ≈ Wv (p) C, s.t. ∥Wv (p)∥0 ≤ K, Wv (p) ≥ 0, 1⊤Wv (p) = 1 , (4) where Wv (p) ∈ RL is the sparse coefficient vector at pixel p. Since CLIP features are constant within a SAM region, we parameterize coefficients per region rather than per pixel, so all pixels in a region share Wv (p). To enforce these constraints, we apply a normalized soft top-K softmax over learnable region-wise logits, optimizing these logits jointly with the codebook via a cosine reconstruction loss. Crucially, while LangSplatV2 [ 22 ] couples codebook learning with 3DGS optimization, our sparse coding operates entirely in image space, prior to 3D lifting, decoupling semantic compression from 5the 3DGS pipeline. This places the scene-aware codebook in the same 2D domain on which CLIP [ 30 ]is trained. The number of extracted masked regions is much smaller than the number of Gaussians, yielding fewer features to compress, while region-based CLIP supervision ensures that small and large objects contribute with more balance to the codebook optimization. 
+
+4.2 Sparse Coefficient Uplifting 
+
+By exploiting the sparsity of our 2D coefficient maps, we uplift only the K non-zero coefficient values to 3D Gaussians rather than full D-dimensional feature vectors. This bounds the computational cost of the lifting process strictly by K, independent of the original feature dimension D, yielding a D/K 
+
+speedup over dense feature uplifting ( K ≪ D). We reformulate the dense feature uplifting from (3) as sparse coefficient uplifting: 
+
+wi = 1
+
+Zi
+
+X
+
+> (v,p )∈S i
+
+ei(v, p ) Wv (p) (5) where wi ∈ RL is the aggregated coefficient vector assigned to the i-th 3D Gaussian. Since each 
+
+Wv (p) contains at most K non-zero elements, the weighted aggregation operates only over non-zero entries, reducing the time complexity of uplifting from O(|S i|D) in (3) to O(|S i|K) per Gaussian. As each viewpoint contributes a different set of active coefficient indices, the magnitude of each entry in wi reflects cross-view consensus: codebook atoms supported by many views accumulate large weights, while atoms activated by only a few remain small. We therefore restore strict sparsity by retaining the K dominant coefficients of wi and setting the rest to zero, treating top-K filtering as a semantic voting step that consolidates view-consistent signal and suppresses noisy contributions. The final sparse coefficient vector ˆwi is computed as: 
+
+ˆwi = Top K (wi)
+
+∥Top K (wi)∥1
+
+(6) where Top K (·) retains only the K dominant elements and the normalization ensures the resulting sparse weights sum to one. Note that this final normalization subsumes the per-Gaussian scalar Zi,which can therefore be omitted in practice. This filtering and contribution consolidation mechanism allows each 3D Gaussian to store only K coefficient values and their corresponding indices, resulting in a compact memory footprint, efficient rendering, and better multi-view consistency. 
+
+4.3 Sparse Coefficient Rendering 
+
+By storing only K non-zero coefficient values per Gaussian, rendering operates on sparse coefficients rather than full D-dimensional feature vectors, accessing only non-zero entries during weighted aggregation. Sparse coefficient rendering is defined as 
+
+ˆWv (p) = X
+
+> i∈N v,p
+
+ˆwi ei(v, p ), (7) where ˆWv (p) is the projected sparse coefficient map on the 2D plane for view v. This sparse aggregation is directly supported by the rendering pipeline of [ 22 ], which efficiently accesses only non-zero coefficient entries via their corresponding sparse indices. To recover a 2D semantic feature map of CLIP embeddings from the rendered sparse coefficient map, we perform a simple matrix multiplication with the scene-aware codebook C learned in Section 4.1: 
+
+Fv (p) ≈ ˆWv (p) C, (8) where the reconstructed Fv (p) can be directly compared with CLIP text embeddings to support open-vocabulary scene querying. We perform all steps of our pipeline independently for each of the three SAM semantic levels, and render all three sparse coefficient maps to 2D space simultaneously, following [22]. 6Figure 2: Qualitative results for open-vocabulary 3D object localization on the LERF dataset. Table 1: Quantitative comparisons of open-vocabulary 3D object localization and 3D semantic segmentation on the LERF dataset.                                                                                                          
+
+> Method 3D Object Localization (mAcc %)3D Semantic Segmentation (mIoU %)Ramen Teatime Kitchen Figurines Overall Ramen Teatime Kitchen Figurines Overall GS-Grouping [41] 32.4 69.5 50.0 44.6 49.1 26.4 54.0 31.3 34.6 36.6 LEGaussian [33] 69.0 79.7 63.6 57.1 67.4 20.2 32.3 22.3 23.4 24.6 GOI [29] 56.3 67.8 68.2 44.6 59.2 33.7 55.8 54.5 23.9 42.0 GAGS [27] 69.0 88.1 90.9 78.6 81.7 46.8 60.3 55.8 53.6 54.1 LangSplat [28] 73.2 88.1 95.5 80.4 84.3 51.2 65.1 44.5 44.7 51.4 LangSplatV2 [22] 74.7 93.2 86.4 82.1 84.1 51.8 72.2 59.1 56.4 59.9 Occam’s LGS [5] 74.7 93.2 81.8 80.4 82.5 51.0 70.2 65.3 58.6 61.3 VALA [37] 75.6 91.5 86.4 82.1 83.9 51.5 70.2 65.1 59.9 61.7
+> Ours 74.7 91.5 95.5 85.7 86.9 57.6 75.3 64.4 60.4 64.4
+
+## 5 Experiments 
+
+5.1 Datasets and Metrics 
+
+We evaluate our approach on three datasets for 3D open-vocabulary scene understanding. The 
+
+LERF-OVS [14 ] dataset consists of four in-the-wild scenes captured using the Polycam application on an iPhone. LangSplat [ 28 ] extends the LERF dataset by adding ground-truth segmentation masks and localization points for textual queries. Following previous works [ 28 , 22 ], we report localization accuracy for open-vocabulary localization and IoU for segmentation. We further evaluate segmentation on the Mip-NeRF360 [ 2 ] and 3D-OVS [ 24 ] datasets. For Mip-NeRF360, we use ground-truth annotations provided by GAGS [ 27 ] and report IoU on four indoor and outdoor scenes. For 3D-OVS, we report segmentation on five scenes with long-tail objects: bed, bench, room, sofa, and lawn. We also conduct a thorough analysis of semantic reconstruction runtime and memory requirements on all three datasets. 
+
+5.2 Implementation Details 
+
+The input to our model is a 3DGS scene trained for 30,000 iterations using only RGB images. Following [ 28 , 22 ], we extract language feature maps by generating segmentation masks with the SAM ViT-H model [ 17 ] at three hierarchical semantic levels, and encoding each mask with OpenCLIP ViT-B/16 [ 9] to obtain 512 -dimensional CLIP features. We train our 2D sparse coding algorithm at each semantic level for 4,000 epochs using the Adam optimizer [ 16 ] with a learning rate of 
+
+0.0007 , with codebook size L = 64 and K = 4 non-zero coefficients. The codebook is initialized with the k-means algorithm on CLIP-encoded masked regions. Once complete, we lift the sparse coefficient maps to 3D Gaussians using our sparse uplifting algorithm. For evaluation, we follow LangSplatV2 [ 22 ] to calculate similarity scores and generate relevancy masks between rendered language features and text queries from the CLIP text encoder. All experiments are conducted on an NVIDIA RTX A6000 GPU. 7Table 2: Quantitative 3D semantic segmentation results on Mip-NeRF360 and 3D-OVS datasets.                                                                                   
+
+> Mip-NeRF360 (mIoU %)3D-OVS (mIoU %)
+> Method Room Counter Garden Bonsai Overall Bed Bench Room Sofa Lawn Overall LEGaussian [33] 25.5 35.3 33.2 22.3 29.1 84.9 91.1 86.0 87.8 92.5 88.5 GOI [29] 60.3 46.6 59.8 67.3 58.5 89.4 92.8 91.3 85.6 94.1 90.6 LangSplat [28] 53.2 68.8 51.9 55.4 57.3 92.5 94.2 94.1 90.0 96.1 93.4 LangSplatV2 [22] 64.3 75.1 65.0 73.1 69.4 93.0 94.9 96.1 92.3 96.6 94.6 Occam’s LGS [5] -----96.8 95.8 96.5 88.8 97.0 95.0 Ours 66.5 82.3 57.4 71.7 69.5 87.7 94.9 95.1 88.2 97.2 92.6
+
+Figure 3: Qualitative results for open-vocabulary 3D object localization on LERF-OVS, Mip-NeRF360, and 3D-OVS datasets. 
+
+5.3 Quantitative Results on LERF-OVS Runtime and Memory Analysis. To evaluate the efficacy of the SCOUP framework, we recorded 3D semantic scene reconstruction runtimes, peak GPU memory allocation, and language feature rendering speeds across all three semantic levels. To ensure a rigorous evaluation, all baselines were re-measured locally on our GPU using synchronized CUDA clocks. As shown in Fig. 1(d), under these standardized conditions, our method achieves a rendering speed of 29 FPS for all three semantic levels in parallel, matching the throughput of LangSplatV2 [ 22 ]. Crucially, our approach is more than 400 × faster in reconstruction and 3× more memory efficient than LangSplatV2. While our reconstruction runtime is comparable to training-free methods like Occam’s LGS [ 5] and VALA [ 37 ], these alternatives store full CLIP embeddings into 3DGS. VALA additionally filters out roughly 90% of Gaussians, yet still renders 3× slower than SCOUP. In contrast, SCOUP stores only four coefficients and their indices per level on all Gaussians from the underlying 3DGS, achieving an optimal balance between reconstruction speed, memory overhead, and rendering performance. 
+
+Main Results. Table 1 presents the 3D open-vocabulary localization accuracy and segmentation IoU scores on the LERF dataset [ 14 ]. For the localization task, our method achieves superior performance on the "Figurines" scene while remaining highly competitive with state-of-the-art results across all other scenes, resulting in the highest overall localization accuracy. Regarding 3D open-vocabulary segmentation, our approach leads to substantial overall improvements, particularly on the "Ramen" and "Teatime" scenes, where it outperforms existing methods by a significant margin. Specifically, in a direct comparison with LangSplatV2 [ 22 ], our method achieves a +4 .5% gain in IoU score. This improvement is realized while maintaining the same high-speed rendering capabilities and requiring significantly less time for semantic scene reconstruction. 
+
+5.4 Quantitative Results on 3D-OVS and Mip-NeRF360 Main results. Table 2 shows 3D open-vocabulary segmentation results on the Mip-NeRF360 and 3D-OVS datasets. Our method achieves performance comparable to state-of-the-art baselines across the majority of scenes. The notable exception is the 3D-OVS: “Bed” scene, where performance is affected by a single query: “black leather shoe.” On this scene, SAM [ 17 ] occasionally fails to disentangle the “shoe” from the surrounding “white sheet” region in the preprocessing step of 3DLGS. 8Table 3: Semantic reconstruction runtime (2D →3D), peak allocated GPU memory during reconstruc-tion, and language rendering speed (3D →2D) for all three levels on 3D-OVS and Mip-NeRF360 datasets. Experiments were run on a NVIDIA RTX A6000.                        
+
+> Method 2D →3D (min) GPU Mem. (GB) 3D →2D (FPS) Mip-NeRF360 3D-OVS Mip-NeRF360 3D-OVS Mip-NeRF360 3D-OVS LangSplatV2 [22] 684 570 37.7 28.5 15 15 Ours 1.4 0.5 10.4 4.4 15 15
+
+Table 4: Ablation study evaluating the impact of dense feature uplifting, sparse code uplifting, and Top-K filtering on LERF-OVS dataset. Feature uplifting Sparse uplifting +Top-K mIoU (%) mAcc (%) 2D →3D (min) 3D →2D (FPS) Storage (GB)                   
+
+> ✓60.5 82.0 21.3 0.5 7.8 -✓60.0 81.2 0.7 22.0 1.0 -✓✓64.4 86.9 0.7 29.3 0.1
+
+Since the 3D-OVS evaluation set contains only a small number of test queries per scene, this single failure substantially lowers the reported mIoU. Excluding this query increases our method’s mean IoU for that scene to 96 .4% .
+
+Runtime and memory analysis. As shown in Table 3, SCOUP significantly outperforms LangSplatV2 [ 22 ] in both reconstruction runtime and GPU memory footprint while matching its state-of-the-art rendering speed. This unique combination of rapid 3D semantic reconstruction, low memory overhead, and high rendering performance makes our approach a highly practical system for real-world applications. 
+
+5.5 Ablation Study 
+
+In Table 4, we evaluate the impact of our Sparse Code Uplifting and Top-K Filtering components on the LERF-OVS dataset. Dense feature uplifting takes approximately 21 minutes on average across four scenes to uplift all three semantic levels. Our sparse uplifting drastically reduces this process to under 1 minute while maintaining performance comparable to full CLIP feature aggregation. Furthermore, applying Top-K filtering to the coefficients of each Gaussian after uplifting results in absolute performance gains of +3.9% and +4.9% in IoU score and mean accuracy, respectively, compared to using full CLIP embeddings. This demonstrates that Top-K filtering effectively acts as a denoising mechanism that improves multi-view consistency. We include further ablation studies in Appendix C and additional details on runtime analysis in Appendix D. 
+
+5.6 Qualitative results 
+
+In Fig. 2, we present qualitative results for open-vocabulary 3D object localization on the LERF-OVS dataset. While all two methods demonstrate strong performance in localizing target objects, SCOUP results in noticeably higher-confidence heatmaps and clearer object boundaries compared to LangSplatV2 [ 22 ]. Furthermore, Fig. 3 visualizes open-vocabulary 3D object segmentation on LERF-OVS Mip-NeRF360, and 3D-OVS. In contrast to the 3D codebook optimization in LangSplatV2 [ 22 ], in our 2D sparse coding, small and large objects contribute with more balance to the codebook learning process. This is particularly evident for challenging queries such as the “spatula” in the LERF-OVS kitchen scene and the “knife” in the Mip-NeRF360 counter scene. We include more qualitative results in Appendix G. 
+
+## 6 Conclusion 
+
+We present SCOUP, a framework for 3D Language Gaussian Splatting that achieves fast training, efficient storage, and fast rendering simultaneously by shifting sparse-code and codebook learning from 3D Gaussian space to 2D image space, then uplifting the learned sparse codes to the underlying 93D Gaussians through weighted sparse aggregation followed by top-K filtering, which suppresses multi-view inconsistencies. Compared to LangSplatV2, SCOUP achieves up to 400 × training speedup and 3× lower training memory while maintaining state-of-the-art rendering speed and preserving storage efficiency and accuracy across multiple benchmarks. By reducing per-scene semantic reconstruction from hours to under a minute, SCOUP lowers the practical barrier to deploying open-vocabulary 3D scene understanding in real-world applications. 
+
+## References 
+
+[1] Elena Alegret, Kunyi Li, Sen Wang, Siyun Liang, Michael Niemeyer, Stefano Gasperini, Nassir Navab, and Federico Tombari. GALA: Guided attention with language alignment for open vocabulary gaussian splatting. In Thirteenth International Conference on 3D Vision , 2026. URL 
+
+https://openreview.net/forum?id=qDUUGCGL4i .[2] Jonathan T. Barron, Ben Mildenhall, Dor Verbin, Pratul P. Srinivasan, and Peter Hedman. Mip-nerf 360: Unbounded anti-aliased neural radiance fields. 2022 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 5460–5469, 2021. [3] Yiwen Chen, Zilong Chen, Chi Zhang, Feng Wang, Xiaofeng Yang, Yikai Wang, Zhongang Cai, Lei Yang, Huaping Liu, and Guosheng Lin. Gaussianeditor: Swift and controllable 3d editing with gaussian splatting. 2024 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 21476–21485, 2023. [4] Zilong Chen, Feng Wang, Yikai Wang, and Huaping Liu. Text-to-3d using gaussian splatting. In 2024 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 21401–21412, 2024. doi: 10.1109/CVPR52733.2024.02022. [5] Jiahuan Cheng, Jan-Nico Zaech, Luc Van Gool, and Danda Pani Paudel. Occam’s lgs: An efficient approach for language gaussian splatting. In 36th British Machine Vision Conference 2025, BMVC 2025, Sheffield, UK, November 24-27, 2025 . BMVA, 2025. URL https:// bmva-archive.org.uk/bmvc/2025/assets/papers/Paper_694/paper.pdf .[6] Zhenqi Dai, Ting Liu, and Yanning Zhang. Efficient decoupled feature 3d gaussian splatting via hierarchical compression. In 2025 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 11156–11166, 2025. doi: 10.1109/CVPR52734.2025.01042. [7] Jiemin Fang, Junjie Wang, Xiaopeng Zhang, Lingxi Xie, and Qi Tian. Gaussianeditor: Editing 3d gaussians delicately with text instructions. 2024 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 20902–20911, 2023. [8] Chen Huang, Oier Mees, Andy Zeng, and Wolfram Burgard. Visual language maps for robot navigation. 2023 IEEE International Conference on Robotics and Automation (ICRA) , pages 10608–10615, 2022. [9] Gabriel Ilharco, Mitchell Wortsman, Ross Wightman, Cade Gordon, Nicholas Carlini, Rohan Taori, Achal Dave, Vaishaal Shankar, Hongseok Namkoong, John Miller, Hannaneh Hajishirzi, Ali Farhadi, and Ludwig Schmidt. Openclip, July 2021. URL https://doi.org/10.5281/ zenodo.5143773 . If you use this software, please cite it as below. [10] Krishna Murthy Jatavallabhula, Alihusein Kuwajerwala, Qiao Gu, Mohd Omama, Tao Chen, Shuang Li, Ganesh Iyer, Soroush Saryazdi, Nikhil Keetha, Ayush Tewari, Joshua B. Tenenbaum, Celso Miguel de Melo, Madhava Krishna, Liam Paull, Florian Shkurti, and Antonio Torralba. Conceptfusion: Open-set multimodal 3d mapping. Robotics: Science and Systems (RSS) , 2023. [11] Cijo Jose, Théo Moutakanni, Dahyun Kang, Federico Baldassarre, Timothée Darcet, Hu Xu, Daniel Li, Marc Szafraniec, Michaël Ramamonjisoa, Maxime Oquab, Oriane Siméoni, Huy V. Vo, Patrick Labatut, and Piotr Bojanowski. Dinov2 meets text: A unified framework for image-and pixel-level vision-language alignment. In 2025 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 24905–24916, 2025. doi: 10.1109/CVPR52734.2025. 02319. 10 [12] Kim Jun-Seong, GeonU Kim, Kim Yu-Ji, Yu-Chiang Frank Wang, Jaesung Choe, and Tae-Hyun Oh. Dr. splat: Directly referring 3d gaussian splatting via direct language embedding registration. In Proceedings of the Computer Vision and Pattern Recognition Conference , pages 14137–14146, 2025. [13] Bernhard Kerbl, Georgios Kopanas, Thomas Leimkuehler, and George Drettakis. 3d gaussian splatting for real-time radiance field rendering. ACM Transactions on Graphics (TOG) , 42:1 – 14, 2023. [14] Justin Kerr, Chung Min Kim, Ken Goldberg, Angjoo Kanazawa, and Matthew Tancik. Lerf: Language embedded radiance fields. 2023 IEEE/CVF International Conference on Computer Vision (ICCV) , pages 19672–19682, 2023. [15] Jiwook Kim, Seonho Lee, Jaeyo Shin, Jiho Choi, and Hyunjung Shim. Dreamcatalyst: Fast and high-quality 3d editing via controlling editability and identity preservation. ArXiv ,abs/2407.11394, 2024. [16] Diederik P. Kingma and Jimmy Ba. Adam: A method for stochastic optimization. In Yoshua Bengio and Yann LeCun, editors, 3rd International Conference on Learning Representations, ICLR 2015, San Diego, CA, USA, May 7-9, 2015, Conference Track Proceedings , 2015. URL 
+
+http://arxiv.org/abs/1412.6980 .[17] Alexander Kirillov, Eric Mintun, Nikhila Ravi, Hanzi Mao, Chloé Rolland, Laura Gustafson, Tete Xiao, Spencer Whitehead, Alexander C. Berg, Wan-Yen Lo, Piotr Dollár, and Ross B. Girshick. Segment anything. 2023 IEEE/CVF International Conference on Computer Vision (ICCV) , pages 3992–4003, 2023. [18] Georgios Kopanas, Julien Philip, Thomas Leimkühler, and George Drettakis. Point-based neural rendering with per-view optimization. Computer Graphics Forum , 40, 2021. [19] Hyunjoon Lee, Joonkyu Min, and Jaesik Park. Cf3: Compact and fast 3d feature fields. In 
+
+Proceedings of the IEEE/CVF International Conference on Computer Vision , pages 27906– 27916, 2025. [20] Boyi Li, Kilian Q Weinberger, Serge Belongie, Vladlen Koltun, and Rene Ranftl. Language-driven semantic segmentation. In International Conference on Learning Representations , 2022. URL https://openreview.net/forum?id=RriDjddCLN .[21] Hao Li, Roy Qin, Zhengyu Zou, Diqi He, Bohan Li, Bingquan Dai, Dingewn Zhang, and Junwei Han. Langsurf: Language-embedded surface gaussians for 3d scene understanding. arXiv preprint arXiv:2412.17635 , 2024. [22] Wanhua Li, Yujie Zhao, Minghan Qin, Yang Liu, Yuanhao Cai, Chuang Gan, and Hanspeter Pfister. Langsplatv2: High-dimensional 3d language gaussian splatting with 450+ fps. Advances in Neural Information Processing Systems , 2025. URL https://arxiv.org/abs/2507. 07136 .[23] Yixun Liang, Xin Yang, Jiantao Lin, Haodong Li, Xiaogang Xu, and Yingcong Chen. Lu-cidDreamer: Towards High-Fidelity Text-to-3D Generation via Interval Score Matching . In 2024 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) ,pages 6517–6526, Los Alamitos, CA, USA, June 2024. IEEE Computer Society. doi: 10.1109/CVPR52733.2024.00623. URL https://doi.ieeecomputersociety.org/10. 1109/CVPR52733.2024.00623 .[24] Kunhao Liu, Fangneng Zhan, Jiahui Zhang, Muyu Xu, Yingchen Yu, Abdulmotaleb El Saddik, Christian Theobalt, Eric P. Xing, and Shijian Lu. Weakly supervised 3d open-vocabulary segmentation. In Neural Information Processing Systems , 2023. [25] Juliette Marrie, Romain Menegaux, Michael Arbel, Diane Larlus, and Julien Mairal. Ludvig: Learning-free uplifting of 2d visual features to gaussian splatting scenes. In Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV) , 2025. 11 [26] Ben Mildenhall, Pratul P. Srinivasan, Matthew Tancik, Jonathan T. Barron, Ravi Ramamoorthi, and Ren Ng. Nerf: Representing scenes as neural radiance fields for view synthesis. In ECCV ,2020. [27] Yuning Peng, Haiping Wang, Yuan Liu, Chenglu Wen, Zhen Dong, and Bisheng Yang. Gags: Granularity-aware feature distillation for language gaussian splatting. ArXiv , abs/2412.13654, 2024. [28] Minghan Qin, Wanhua Li, Jiawei Zhou, Haoqian Wang, and Hanspeter Pfister. Langsplat: 3d language gaussian splatting. 2024 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 20051–20060, 2023. [29] Yansong Qu, Shaohui Dai, Xinyang Li, Jianghang Lin, Liujuan Cao, Shengchuan Zhang, and Rongrong Ji. Goi: Find 3d gaussians of interest with an optimizable open-vocabulary semantic-space hyperplane. In Proceedings of the 32nd ACM International Conference on Multimedia ,MM ’24, page 5328–5337, New York, NY, USA, 2024. Association for Computing Machinery. ISBN 9798400706868. doi: 10.1145/3664647.3680852. URL https://doi.org/10.1145/ 3664647.3680852 .[30] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel Goh, Sandhini Agar-wal, Girish Sastry, Amanda Askell, Pamela Mishkin, Jack Clark, Gretchen Krueger, and Ilya Sutskever. Learning transferable visual models from natural language supervision. In Interna-tional Conference on Machine Learning , 2021. [31] Johannes Lutz Schönberger and Jan-Michael Frahm. Structure-from-motion revisited. In 
+
+Conference on Computer Vision and Pattern Recognition (CVPR) , 2016. [32] Johannes Lutz Schönberger, Enliang Zheng, Marc Pollefeys, and Jan-Michael Frahm. Pixelwise view selection for unstructured multi-view stereo. In European Conference on Computer Vision (ECCV) , 2016. [33] Jin-Chuan Shi, Miao Wang, Hao-Bin Duan, and Shao-Hua Guan. Language embedded 3d gaussians for open-vocabulary scene understanding. 2024 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 5333–5343, 2023. [34] Jiaxiang Tang, Jiawei Ren, Hang Zhou, Ziwei Liu, and Gang Zeng. Dreamgaussian: Generative gaussian splatting for efficient 3d content creation. arXiv preprint arXiv:2309.16653 , 2023. [35] Lei Tian, Xiaomin Li, Liqian Ma, Hao Yin, Zirui Zheng, Hefei Huang, Taiqing Li, Huchuan Lu, and Xu Jia. Ccl-lgs: Contrastive codebook learning for 3d language gaussian splatting. In 
+
+Proceedings of the IEEE/CVF International Conference on Computer Vision , pages 9855–9864, 2025. [36] Xuechang Tu, Lukas Radl, Michael Steiner, Markus Steinberger, Bernhard Kerbl, and Fernando de la Torre. Vrsplat: Fast and robust gaussian splatting for virtual reality. Proc. ACM Comput. Graph. Interact. Tech. , 8(1), May 2025. doi: 10.1145/3728311. URL https://doi.org/10. 1145/3728311 .[37] Sen Wang, Kunyi Li, Siyun Liang, Elena Alegret, Jing Ma, Nassir Navab, and Stefano Gasperini. Visibility-aware language aggregation for open-vocabulary segmentation in 3d gaussian splatting. 
+
+ArXiv , abs/2509.05515, 2025. [38] Yixuan Wang, Mingtong Zhang, Zhuoran Li, Tarik Kelestemur, Katherine Driggs-Campbell, Jiajun Wu, Li Fei-Fei, and Yunzhu Li. D 3fields: Dynamic 3d descriptor fields for zero-shot generalizable rearrangement. In 8th Annual Conference on Robot Learning , 2024. [39] Hanyuan Xiao, Yingshu Chen, Huajian Huang, Haolin Xiong, Jing Yang, Pratusha Prasad, and Yajie Zhao. Localized gaussian splatting editing with contextual awareness. In 2025 IEEE/CVF Winter Conference on Applications of Computer Vision (WACV) , pages 5207–5217, 2025. doi: 10.1109/WACV61041.2025.00509. [40] Ziyang Yan, Lei Li, Yihua Shao, Siyu Chen, Wuzong Kai, Jenq-Neng Hwang, Hao Zhao, and Fabio Remondino. 3dsceneeditor: Controllable 3d scene editing with gaussian splatting. arXiv preprint arXiv:2412.01583 , 2024. 12 [41] Mingqiao Ye, Martin Danelljan, Fisher Yu, and Lei Ke. Gaussian grouping: Segment and edit anything in 3d scenes. In ECCV , 2024. [42] Shijie Zhou, Haoran Chang, Sicheng Jiang, Zhiwen Fan, Zehao Zhu, Dejia Xu, Pradyumna Chari, Suya You, Zhangyang Wang, and Achuta Kadambi. Feature 3dgs: Supercharging 3d gaussian splatting to enable distilled feature fields. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 21676–21685, 2024. [43] M. Zwicker, H. Pfister, J. van Baar, and M. Gross. Ewa volume splatting. In Proceedings Visualization, 2001. VIS ’01. , pages 29–538, 2001. doi: 10.1109/VISUAL.2001.964490. 13 Algorithm 1 Sparse Code Uplifting 
+
+for Gaussian point i ∈ N do 
+
+Initialize wi ∈ RL as the zero vector 
+
+end for for frame v ∈ V do for pixel p ∈ Ωv do 
+
+(indices {j1, . . . , j K }, coefficients {cj1 , . . . , c jK }) ← TopK( Wv (p)) 
+
+for Gaussian point i ∈ N v,p do for each j ∈ { j1, . . . , j K } do 
+
+wi[j] ← wi[j] + cj · ei(v, p )
+
+end for end for end for end for for Gaussian point i ∈ N do if wi̸ = 0 then 
+
+ˆwi = Top K (wi)/∥Top K (wi)∥1
+
+end if end for 
+
+Table 5: Comparison for varying L. We report mean accuracy (%) and mean IoU (%) on LERF dataset.          
+
+> L32 64 128
+> mean Accuracy (%) 77.2 86.9 85.1 mean IoU (%) 60.6 64.4 65.5
+
+Table 6: Comparison for varying K. We re-port mean accuracy (%) and mean IoU (%) on LERF dataset.          
+
+> K248
+> mean Accuracy (%) 82.9 86.9 78.1 mean IoU (%) 62.5 64.4 63.8
+
+## A Algorithm 
+
+The proposed sparse code uplifting procedure is summarized in Algorithm 1. 
+
+## B Additional Evaluation Details 
+
+We follow [ 28 , 22 ] to compute relevancy scores between rendered language features and text queries. Specifically, the relevancy score between the rendered language feature at pixel position p, denoted by Fv (p), and the CLIP text embedding of the query, tquery , is defined as 
+
+R(p) = min 
+
+> k
+
+exp( α · Fv (p) · tquery )exp( α · Fv (p) · tquery ) + exp( α · Fv (p) · tk
+
+> canon
+
+) , (9) where α is a temperature parameter set to 10, and tk 
+
+> canon
+
+is the CLIP embedding of a predefined canonical phrase selected from “object,” “things,” “stuff,” and “texture.” For relevancy map post-processing, we follow LangSplatV2 [ 22 ], modifying only the mask thresholds and the average-pooling kernel size. We use thresholds of 0.6, 0.45, and 0.3 on LERF [ 14 ], Mip-NeRF360 [ 2], and 3D-OVS [ 24 ], respectively, and set the average-pooling kernel size to 7 for all three datasets. 
+
+## C Additional Ablation Studies 
+
+C.1 Sparse Coding Parameters 
+
+In Table 5 and Table 6, we ablate the codebook size ( L) and sparsity level ( K) on the LERF-OVS dataset, respectively. We find that L = 64 provides the best balance between open-vocabulary performance and rendering efficiency, as larger codebooks introduce additional decoding overhead. Furthermore, setting K = 4 during both 2D sparse coding and Top-K filtering yields the highest mean 14 Table 7: Effect of entropy-based Gaussian filtering on the LERF-OVS dataset. Filtering strategy mIoU (%) mAcc (%) No filtering 64.4 86.9 
+
+Remove 50% of the highest-entropy Gaussians by H(wi) 61.0 86.5 Remove 50% of the lowest-entropy Gaussians by H(wi) 33.1 78.2 accuracy, indicating that a larger K introduces semantic ambiguity. While these optimal parameters are consistent with those reported in LangSplatV2 [ 22 ], our framework learns the codebook entirely in the 2D domain. 
+
+C.2 Entropy-based Analysis of Top-K Filtering 
+
+In Table 7, we study whether entropy can be used to assess the importance of Gaussians before Top-K filtering. For each Gaussian, we compute the entropy of its coefficient distribution as 
+
+H(wi) = −
+
+> L
+
+X
+
+> l=1
+
+wi,l log wi,l . (10) We then filter out 50% of the Gaussians based on their entropy values to evaluate their contribution to open-vocabulary 3D object localization and segmentation. The results indicate that Gaussians with low-entropy coefficients are considerably more important. Since low entropy reflects a more confident and concentrated distribution during multi-view aggre-gation, these Gaussians provide more reliable semantic cues. Removing 50% of the low-entropy Gaussians leads to a substantial drop in mean IoU and mean accuracy. By contrast, removing 50% of the high-entropy Gaussians results in only a minor performance decrease. These results support the consensus interpretation underlying our Top-K filtering: Gaussians whose aggregated coefficients are concentrated on a few atoms encode more reliable multi-view semantics than those with diffuse distributions. 
+
+## D Detailed Runtime Analysis 
+
+In Fig. 4 (left), we compare our 2D Sparse Coding algorithm against the MLP autoencoder used in LangSplat [ 28 ]. Our approach is over 10 × faster at encoding CLIP language embeddings for each SAM-segmented region while avoiding the information loss typically associated with MLP-based compression. Furthermore, we analyze the scalability of our sparse code uplifting on the LERF-OVS dataset. As shown in Fig. 4 (right), uplifting sparse coefficient maps requires only 2.5 seconds and 1.5 seconds per semantic level on the Teatime and Ramen scenes, respectively, regardless of the feature dimensionality. This indicates that approximately 80% of the total computational runtime in 3D semantic reconstruction stems from the 2D sparse coding of the feature maps, a step we can efficiently compute prior to the uplifting process. 
+
+## E Multi-View Consistency from 2D Sparse Coding 
+
+In Fig. 5, we evaluate the multi-view consistency of three types of features on the coarse semantic level of the Teatime scene from LERF-OVS [ 14 ]: ground-truth CLIP features, decoded features from the 2D autoencoder of LangSplat [ 28 ], and decoded features from the 2D sparse coding method used in SCOUP. To measure multi-view consistency, we use sparse 3D points from COLMAP [ 31 , 32 ]that we used to initialize 3DGS training. For each sparse 3D point, we identify its corresponding 2D observations in multiple views and compute the cosine similarity between the associated 2D features. The results indicate that 2D sparse coding improves feature consistency across views by increasing the cosine similarity between matched 2D features. By contrast, the MLP autoencoder may lead to a loss of semantic information due to the aggressive compression of CLIP embeddings, resulting in smaller cosine similarity between corresponding 2D features. These results justify our adoption of 15 ramen teatime kitchen figurines overall             
+
+> Scene
+> 0
+> 2
+> 4
+> 6
+> 8
+> 10
+> Runtime (minutes)
+> 3.1
+> 5.1 5.5
+> 9.8
+> 5.9
+> 0.3 0.4 0.4 0.7 0.5
+> 2D Encoding Time Analysis Across Scenes
+> MLP AE
+> Sparse coding 4816 32 64 128 256 512
+> Feature dimension
+> 21
+> 22
+> 23
+> 24
+> 25
+> 26
+> 27
+> 28
+> Feature uplifting (s)
+> Feature uplifting (Ramen)
+> Sparse uplifting (Ramen)
+> Feature uplifting (Teatime)
+> Sparse uplifting (Teatime)
+
+Figure 4: Left: 2D encoding runtime of the MLP autoencoder from LangSplat [ 28 ] compared to our 2D sparse coding. Right: sparse coefficient uplifting runtime of SCOUP compared to full-dimensional feature uplifting on the LERF-OVS dataset (NVIDIA RTX A6000 GPU). 0.60 0.65 0.70 0.75 0.80 0.85 0.90 0.95 1.00 
+
+> Cosine similarity
+> 0
+> 2
+> 4
+> 6
+> 8
+> 10
+> 12
+> 14
+> Density
+> CLIP embeddings
+> Sparse Coding
+> MLP AE
+
+Figure 5: Comparison of multi-view consistency among ground-truth CLIP features, decoded MLP autoencoder features from LangSplat [ 28 ], and decoded sparse coding features from SCOUP on the 
+
+Teatime scene from the LERF [14] dataset. 2D sparse coding, as it preserves semantic structure across views more faithfully than the autoencoder baseline, while also improving training efficiency, as shown in Appendix D. 
+
+## F Limitations and Broader Impact 
+
+Despite its efficiency, SCOUP inherits the computational overhead of the large visual foundation models used for pre-processing. Specifically, the heavy feature extraction required by SAM and CLIP remains a bottleneck in pre-processing. Furthermore, since our sparse feature uplifting relies on 3DGS priors optimized for visual appearance, objects with high transparency pose a challenge. Gaussians representing transparent surfaces often have lower opacity values, leading to less confident semantic heatmaps on objects like glass, as shown in Fig. 6. Along with the computational overhead of VLMs, our method inherits their semantic biases, which propagate to the downstream task. At the same time, SCOUP’s efficiency carries a positive environ-mental impact: it makes per-scene open-vocabulary 3D reconstruction substantially cheaper, reducing semantic reconstruction time from hours to under a minute and lowering memory and GPU utilization during training. 
+
+## G Additional Qualitative Results 
+
+We present additional qualitative examples of open-vocabulary 3D semantic localization on the LERF-OVS [14] dataset in Fig. 7. 16 Figure 6: Limitation of direct feature uplifting in 3DLGS. 
+
+Figure 7: Additional qualitative results for open-vocabulary 3D object localization on the LERF-OVS dataset. We present additional qualitative examples of open-vocabulary 3D semantic segmentation on the LERF-OVS [ 14 ], Mip-NeRF360 [ 2], and 3D-OVS [ 24 ] datasets in Fig. 8, Fig. 9, and Fig. 10, respectively. 17 Figure 8: Additional qualitative results for open-vocabulary 3D object segmentation on the LERF-OVS dataset. 
+
+Figure 9: Additional qualitative results for open-vocabulary 3D object segmentation on the Mip-NeRF360 dataset. 18 Figure 10: Additional qualitative results for open-vocabulary 3D object segmentation on the 3D-OVS dataset. 19

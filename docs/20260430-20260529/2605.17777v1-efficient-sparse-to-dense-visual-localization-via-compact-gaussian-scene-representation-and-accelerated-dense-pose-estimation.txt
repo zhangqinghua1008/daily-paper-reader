@@ -1,0 +1,170 @@
+Title: Efficient Sparse-to-Dense Visual Localization via Compact Gaussian Scene Representation and Accelerated Dense Pose Estimation
+
+URL Source: https://arxiv.org/pdf/2605.17777v1
+
+Published Time: Tue, 19 May 2026 02:09:11 GMT
+
+Number of Pages: 3
+
+Markdown Content:
+1
+
+## Efficient Sparse-to-Dense Visual Localization via Compact Gaussian Scene Representation and Accelerated Dense Pose Estimation 
+
+Zizhuo Li, Songchu Deng, Linfeng Tang, and Jiayi Ma 
+
+Dear Editor, This letter presents LiteLoc, a novel and efficient localizer built on 3D Gaussian Splatting (3DGS). Previous state-of-the-art (SoTA) sparse-to-dense localizer, STDLoc, has shown remarkable local-ization capability but suffers from severe storage redundancy and computational latency. By revisiting its design decisions, we derive two simple yet highly effective improvements that cumulatively make LiteLoc much more efficient in both memory and computation, while also being easier to train. One key observation is that the color field, inherited directly from Feature 3DGS, is functionally useless for localization. Yet, its reconstruction of high-frequency photometric details necessitates excessive Gaussian primitives, result-ing in a tightly coupled color–feature representation with significant memory overhead and sub-optimal feature field optimization. To resolve this, we propose a color-free decoupled feature field that constructs a compact Gaussian scene representation by retaining only task-essential feature attributes, thereby eliminating ≈ 94% of redundant storage with no loss of localization-relevant information. We further find that the primary computational bottleneck lies in the dense Perspective-n-Point (PnP) solver where most matches contribute saturated geometric constraints with diminishing accuracy gains. Accordingly, we propose a condensing strategy that distills any dense matches into a subset of 5% representative matches , enabling a nearly 19 × speedup in robust estimation with negligible performance drop. Extensive experiments show that LiteLoc surpasses STDLoc in multiple scenes with considerable efficiency benefits, opening up exciting prospects for latency-sensitive visual localization. 
+
+Introduction: Visual localization, estimating the 6-DoF camera pose of a query image in a pre-built scene map, is essential for augmented reality, autonomous driving, and robotics [1]. An ap-propriate scene representation is pivotal to the accuracy, robustness, and scalability of visual localization. Traditional feature matching (FM) [2]-based methods [5], [6] rely on the sparse 3D point cloud reconstructed via Structure-from-Motion (SfM) [3], where each 3D point is associated with local descriptors [4]. During localization, keypoints are extracted from the query image and matched either with reference images or directly with the 3D point cloud, followed by pose estimation using a PnP solver based on established 2D-3D matches. While effective in texture-rich environments, such methods degrade markedly in texture-poor scenarios due to insufficient reliable matches. Moreover, this paradigm is inherently storage-intensive, as retaining 3D points, descriptors, and co-visibility relationships incurs a substantial memory burden, especially for large-scale scenes. Alternatives encode scene information into deep neural networks, regressing either absolute poses (APR) [19] or dense scene coor-dinates (SCR) [7]–[9]. The APR paradigm often suffers from limited 
+
+Corresponding author: Jiayi Ma. Zizhuo Li and Songchu Deng contributed equally to this work. This work was supported by the National Natural Science Foundation of China under Grant 62276192. Zizhuo Li and Songchu Deng are with the Electronic Information School, Wuhan University, Wuhan 430072, China. Linfeng Tang is with the School of Robotics, Wuhan University, Wuhan 430072, China. Jiayi Ma is with the Electronic Information School and the School of Robotics, Wuhan University, Wuhan 430072, China (e-mail: jyma2010@gmail.com). Coupled Color-Feature                 
+
+> Gaussian Scene Representation
+> Decoupled Feature
+> Gaussian Scene Representation
+> # of Gs -----------775.2k
+> Memories -------940.4MB
+> Training Time --1.7h
+> # of Gs -----------48.9k
+> Memories -------50.4MB
+> Training Time --0.7h
+> Training Images
+> Extracted Dense
+> Feature Maps
+> Rasterization
+> Rendered Image
+> Rendered Dense
+> Feature Map
+> Gaussian Color Field
+> Gaussian Feature Field
+> Rasterization
+> Coupled
+> Dense Feature
+> Extractor
+> Sub-Optimal Feature
+> Field Optimization
+> Redundant Storage
+> Rendered Dense
+> Feature Map
+> Compact Gaussian
+> Feature Field
+> No Redundancy Optimal Feature
+> Field Optimization
+> Task-Focused Compact Scene Representation
+> 15.9
+> ×fewer
+> 18.7
+> ×reduction
+> 2.4
+> ×faster
+> Task-Irrelevant
+> Color Attributes
+
+Fig. 1. Coupled Color–Feature vs. Decoupled Feature Gaussian Fields. 
+
+accuracy and generalization to unseen views. The SCR paradigm excels in small-scale indoor weak-texture environments by predicting dense matches, yet falls short of handling large-scale outdoor scenes due to its fixed network capacity. Recently, implicit scene represen-tations like NeRF [10]–[13] and explicit ones like 3DGS [14], [15] have emerged as powerful tools for visual localization, where their high-fidelity novel view synthesis capability is leveraged for data augmentation and iterative pose refinement. Building on this line of research, most recently, STDLoc [14] stands out by introducing a full sparse-to-dense pipeline based on Feature 3DGS [16]. Specif-ically, in the mapping stage, STDLoc constructs a feature-distilled 3D Gaussian scene representation by jointly optimizing geometric parameters, color attributes, and high-dimensional features for each Gaussian primitive. At inference time, given a query image, sparse 2D–3D correspondences are established by directly matching detected 2D keypoints with sampled 3D landmark Gaussians, for coarse pose initialization. Then, the localization accuracy is improved by aligning the query image’s dense feature map to the trained feature field through dense matching. By doing so, STDLoc is robust to illumination changes and viewpoint variations. Despite its encouraging localization accuracy, STDLoc is intrinsi-cally haunted by two critical efficiency bottlenecks. First, STDLoc adopts the standard Feature 3DGS, which employs a coupled repre-sentation where color and feature attributes share the same Gaussian primitives. However, (1) the color field is functionally irrelevant for visual localization, as pose estimation relies on geometric constraints provided by 2D–3D matches rather than photometric appearance; and (2) a pronounced frequency mismatch exists: high-frequency photometric details entail excessively dense Gaussian primitives, compelling the storage of redundant high-dimensional embeddings for the inherently low-frequency feature field. This coupling leads to prohibitive memory overhead and sub-optimal feature field opti-mization, as shown in Fig. 1. Second, at the pose refinement stage, tens of thousands spatially correlated dense matches are fed into the PnP solver. Practically, most of them provide highly saturated geo-metric constraints, yielding marginal accuracy gains while imposing a substantial computational burden on the robust estimator. To address these limitations, we present LiteLoc, an innovative and efficient sparse-to-dense localizer with compact 3DGS scene representation and accelerated dense refinement. First, we introduce a color-free decoupled feature field tailored for localization. By re-moving all color-related attributes, such as spherical harmonics (SH) coefficients, from 3D Gaussians, LiteLoc allows the Gaussian density to align the intrinsic low-frequency structure of the feature field rather than the high-frequency color field. This avoids binding large feature embeddings to photometrically driven Gaussians and reduces storage by ≈ 94% without sacrificing localization-relevant information, as shown in Fig. 1. Second, we deploy a dense match condensing mechanism. Instead of solving PnP on all spatially correlated dense matches, LiteLoc performs joint geometric-feature clustering to retain only an ≈ 5% subset of representative matches that preserve geomet-
+
+> arXiv:2605.17777v1 [cs.CV] 18 May 2026
+
+2Query Image   
+
+> Query Feature Map Dense Feature Extractor Rendered Depth Map / Dense Feature Map
+> Compact Gaussian Feature Field Scene-Specific Detector
+> Rasterization Sampled Gaussian Landmarks
+> Detected Sparse Features
+> Sparse Stage Dense Stage
+> …Downsampling  MNN Matching
+> 1/8 Resolution Feature Map
+> Patch Cropping
+> 8×8
+> MNN Matching
+> PnP PnP
+> Condensing
+
+Fig. 2. The framework of our LiteLoc. Zoom in for better visualization. 
+
+ric diversity, as shown in Fig. 2. This removes saturated constraints and accelerates robust pose estimation by ≈ 19 × while maintaining accuracy. Together, these designs empower LiteLoc with significantly lower memory footprint, faster inference, and improved localization accuracy over STDLoc across challenging benchmarks like 7-Scenes. 
+
+Methodology: 1) Pipeline Overview : As shown in Fig. 2, LiteLoc inherits the sparse-to-dense hierarchical localization architecture of STDLoc [14]. The pipeline consists of a mapping phase, where a 3D Gaussian scene representation G is constructed, followed by a two-stage localization phase. In the sparse stage, to ensure reliable matching against Gaussian primitives, the matching-oriented sampling strategy [14] is first employed to filter out ambiguous primitives and select a subset of discriminative landmarks ˜G that are multi-view consistent and evenly distributed. Then, given a query image Iq , a generic local feature descriptor, such as SuperPoint [4], is utilized to generate a dense query feature map, followed by a scene-specific detector [14]—trained in a self-supervised manner by projecting sampled landmarks onto training views—to detect sparse local features. These features are matched against the landmarks 
+
+˜G via cosine similarity to establish sparse 2D-3D correspondences 
+
+Msparse , which are then used to solve the coarse pose ξsparse via a PnP solver. In the subsequent dense stage, utilizing ξsparse , we render both a dense feature map ˆFs and a depth map ˆD from the Gaussian feature field. The rendered features ˆFs are aligned with the query’s feature map through coarse-to-fine matching to establish dense 2D-2D correspondences Mdense , which are lifted to 2D-3D using ˆD to solve for the final refined pose ξdense . The dense stage allows for iterative pose refinement to achieve higher accuracy. While following this paradigm, LiteLoc fundamentally reconstructs the scene representation and accelerates the dense solver as follows. 2) Color-free Decoupled Feature Field : As shown in Fig. 1, STD-Loc adopts a coupled Gaussian representation [16], parameterizing each primitive as Θi = {xi, q i, s i, α i, c i, f i}. Here, xi, q i, s i, α i
+
+represent position, rotation, scaling, and opacity, respectively; ci
+
+denotes the SH coefficients for modeling view-dependent color; and 
+
+fi is the feature. This representation entangles geometric optimiza-tion with both high-frequency photometric reconstruction and low-frequency feature field consistency. Yet, we observe that recon-structing photometric details via ci necessitates excessive primitives, forcing the storage of redundant high-dimensional embeddings for the inherently low-frequency feature field. To address this, LiteLoc introduces a color-free decoupled feature field, as shown in Fig. 1. We construct a compact Gaussian field parameterized solely by 
+
+Θ′
+
+i = {xi, q i, s i, α i, f i}, explicitly discarding ci. To ensure stability and robustness in the feature field training and rendering, the feature map ˆF is rendered via L2-normalized alpha blending: 
+
+ˆF = norm X
+
+i∈N 
+
+norm (fi)αii−1Y
+
+j=1 
+
+(1 − αj )
+
+!
+
+, (1) where norm (·) denotes L2 normalization and N is the set of Gaussians associated with a pixel, sorted in front-to-back order. We supervise the field with SuperPoint feature map Fgt using 
+
+TABLE I LOCALIZATION RESULTS ON 7-S CENES . T HE BEST , SECOND -BEST AND THIRD -BEST RESULTS ARE HIGHLIGHTED .                                                                                                                                                          
+
+> Method Chess Fire Heads Office Pumpkin RedKitchen Stairs Avg. ↓[cm/°] FM  AS (SIFT) 3/0.87 2/1.01 1/0.82 4/1.15 7/1.69 5/1.72 4/1.01 3.71/1.18 HLoc (SP+SG) 2.39/0.84 2.29/0.91 1.13/0.77 3.14/0.92 4.92/1.30 4.22/1.39 5.05/1.41 3.31/1.08 SCR  DSAC* 0.50 /0.17 0.78 /0.29 0.50 /0.34 1.19/0.35 1.19/0.29 0.72 /0.21 2.65 /0.78 1.07 /0.35 ACE 0.55/0.18 0.83/0.33 0.53/ 0.33 1.05 /0.29 1.06 /0.22 0.77/ 0.21 2.89/0.81 1.10/ 0.34
+> NeuMap 2/0.81 3/1.11 2/1.17 3/0.98 4/1.11 4/1.33 4/1.12 3.14/0.95 NeRF/GS DFNet+NeFeS 50 2/0.57 2/0.74 2/1.28 2/0.56 2/0.55 2/0.57 5/1.28 2.43/0.79 CROSSFIRE 1/0.40 5/1.90 3/2.30 5/1.60 3/0.80 2/0.80 12/1.90 4.43/1.38 PNeRFLoc 2/0.80 2/0.88 1/0.83 3/1.05 6/1.51 5/1.54 32/5.73 7.29/1.76 NeRFMatch 0.95/0.30 1.11/0.41 1.34/0.92 3.09/0.87 2.21/0.60 1.03/0.28 9.26/1.74 2.71/0.73 STDLoc 0.46 /0.15 0.57 /0.24 0.45 /0.26 0.86 /0.24 0.93 /0.21 0.63 /0.19 1.42 /0.41 0.76 /0.24
+> LiteLoc (Ours) 0.45 /0.13 0.49 /0.20 0.40 /0.25 0.75 /0.20 0.88 /0.20 0.62 /0.14 1.50 /0.40 0.73 /0.22
+> LiteLoc (w/o Cond.) 0.46/0.14 0.47/0.20 0.40/0.25 0.74/0.20 0.88/0.20 0.62/0.14 1.49/0.39 0.72/0.22
+
+TABLE II LOCALIZATION RESULTS ON CAMBRIDGE LANDMARKS .                                                                                                                   
+
+> Method Court King’s Hospital Shop St. Mary’s Avg. ↓[cm/°] FM  AS (SIFT) 24/0.13 13 /0.22 20/0.36 4/0.21 8/ 0.25 13.8/0.23 HLoc (SP+SG) 17.7/0.11 11 /0.20 15 .1/0.31 4.2/0.20 7/0.22 11 .0/0.21
+> SCR  DSAC* 33/0.21 17.9/0.31 21.1/0.40 5.2/0.24 15.4/0.51 18.5/0.33 ACE (Poker) 27.9/0.14 18.6/0.33 25.7/0.51 5.1/0.26 9.5/0.33 17.4/0.31 NeuMap 6/0.10 14/ 0.19 19/0.36 6/0.25 17/0.53 12.4/0.29 NeRF/GS DFNet+NeFeS 50 -37/0.54 52/0.88 15/0.53 37/1.14 35.3/0.77 CROSSFIRE -47/0.70 43/0.70 20/1.20 39/1.40 37.3/1.00 PNeRFLoc 81/0.25 24/0.29 28/0.37 6/0.27 40/0.55 35.8/0.35 NeRFMatch 19.6/ 0.09 12 .5/0.23 20.9/0.38 8.4/0.40 10.9/0.35 14.5/0.29 STDLoc 15 .7/0.06 15.0/ 0.17 11 .9/0.21 3.0/0.13 4.7/0.14 10 .1/0.14
+> LiteLoc (Ours) 7.92 /0.05 15.41/ 0.16 9.02 /0.19 4.66/0.26 7.67 /0.31 8.90 /0.19
+> LiteLoc (w/o Cond.) 7.96/0.05 15.90/0.18 9.14/0.21 4.60/0.25 7.60/0.31 9.04/0.20
+
+Lf = ∥Fgt − ˆF ∥1. This decoupling allows the Gaussian density to adapt strictly to the feature structure rather than appearance, reducing storage overhead by ≈ 90% . Also, liberating the geometry from high-frequency color constraints facilitates better optimization convergence for the feature field, leading to a more robust scene representation. 3) Dense Match Condensing : In the dense stage, STDLoc performs a coarse-to-fine matching process between the rendered feature map 
+
+ˆFs and the query feature map. Matches are first established at a low resolution ( i.e. , 1/8 scale) by computing a dual-softmax probability matrix on the correlation of coarse features, followed by mutual near-est neighbor (MNN) selection. These coarse matches are then refined to pixel-level precision by correlating local windows ( i.e. , 8 × 8)in the high-resolution feature maps. This process typically yields a massive set of dense correspondences Mdense (often |M| > 10 4), as shown in Fig. 2. Feeding this entire set into a PnP solver causes high latency due to saturated geometric constraints. Thus, we propose a condensing strategy to distill these raw matches into a minimal set of representative ones. Specifically, we embed the dense correspon-dences into a joint 4D geometric space formed by the 2D coordinates of the query and rendered views. We partition this space into K
+
+distinct regions {C k }Kk=1 via K-means clustering. The correspondence nearest to the centroid of each cluster is selected as the representative proxy Mkcluster = ( uk , ¯uk ), effectively pruning spatial redundancy while preserving geometric distribution. The proxy point ¯uk in the rendered view is back-projected to a 3D point Pk using the rendered depth ˆD. Consequently, the pose estimation is formulated as solving the optimal rigid transformation ξ∗ = {R∗, t ∗} that minimizes the robust reprojection error over these proxies: 
+
+R∗, t ∗ = arg min 
+
+R,t KX
+
+k=1 
+
+ρ (∥uk − π(RP k + t)∥2) , (2) where π(·) denotes the perspective projection function and ρ(·) is the robust kernel. We set K = 1024 ≈ 0.05 |M| as a cost-effective default, which balances geometric coverage and computational effi-ciency, achieving nearly a 19 × speedup in robust estimation while maintaining high-precision localization. Empirically, the condensing strategy remains robust to varying K across diverse scenes. 
+
+Experiments: 1) Training and Localization Details : LiteLoc is 3
+
+TABLE III ABLATION STUDY AND EFFICIENCY ANALYSIS ON 7-S CENES .                                                                 
+
+> Method Design Accuracy (%) ↑Storage ↓Time (ms) ↓
+> Decoup. Cond. 5cm 5 ◦2cm 2 ◦#Gs (k) Mem (MB) Rast. Clus. PnP Total 1Total 4
+> STDLoc ✗✗99.1 90.9 759.4 929.5 16.4 -96.4 230.2 613.1 STDLoc w/ Cond. ✗✓99.1 90.7 759.4 929.5 16.4 8.8 5.2 147.5 283.3
+> LiteLoc w/o Cond. ✓✗99.6 92.4 57.0 58.8 9.3 -96.5 257.8 619.8
+> LiteLoc (Ours) ✓✓99.6 92.2 57.0 ↓92% 58.8 ↓94% 9.3 ↓43% 8.8 5.1 ↓95% 174.5 ↓24% 287.3 ↓53%
+
+trained per-scene following STDLoc [14]. The decoupled feature field is optimized for 50000 steps with learning rate 0.001; the remaining training settings follow STDLoc. At inference, to adapt the matching-oriented sampling strategy of STDLoc to LiteLoc’s compact Gaussian field, we reduce the number of nearest neighbors to 6, ultimately sampling 16384 anchors to maintain spatial coverage. Dense pose refinement is iterated 4/1 times on 7-Scenes/Cambridge Landmarks. For dense match condensing, K-means clustering is performed using FAISS [17] on CPU, with at most 5 iterations. All experiments are conducted on one NVIDIA RTX 4090 GPU. 2) Benchmarks and Metrics : We evaluate LiteLoc on 7-Scenes [18] and Cambridge Landmarks [19] datasets, and report the median 
+
+translation and rotation errors (cm/ ◦) per scene. 3) Baselines : We compare against FM-based methods (e.g. ,AS [5], HLoc [6]), SCR-based methods ( e.g. , DSAC* [7], ACE [8], NeuMap [9]), and recent NeRF/GS-based localizers [10]–[14]. 4) Indoor Localization on 7-Scenes : Table I shows that LiteLoc achieves the best overall accuracy among NeRF/GS-based methods on 7-Scenes, reducing the average error from 0.76/0.24 (STDLoc) to 0.73/0.22. Notably, LiteLoc yields consistent gains across most scenes ( e.g. , Chess, Fire, Heads, Office, Pumpkin, RedKitchen), while maintaining comparable performance on Stairs. These results indicate that removing photometric attributes and compacting the feature field does not compromise pose accuracy; instead, it can even improve robustness by producing a cleaner, task-focused scene representation. 5) Outdoor Localization on Cambridge Landmarks : As shown in Table II, LiteLoc also performs competitively on large-scale outdoor localization. Compared with STDLoc (Avg. 10.1/0.14), LiteLoc re-duces the average translation error to 8.9cm, while maintaining a comparable rotation error (0.19 ◦). LiteLoc achieves the best transla-tion accuracy on Court and Hospital, and remains strong on King’s and St. Mary’s, demonstrating that the proposed efficiency-oriented redesign remains effective on outdoor scenes. 6) Ablations and Efficiency Analysis : Table III validates the con-tribution of each design choice and quantifies the resulting efficiency gains. Since LiteLoc mainly targets the dense refinement bottleneck, we explicitly decompose the dense-stage runtime into rasterization, clustering, and PnP. We also report the total localization runtime ,including the sparse stage and either a single dense refinement iter-ation (Total 1) or four dense refinement iterations (Total 4), matching the evaluation protocol on 7-Scenes. Notably, the overall inference cost scales with the number of dense refinement iterations. 
+
+(i) Decoupled Feature Field. Enabling decoupling alone dramati-cally compresses the scene representation: the number of Gaussians is reduced from 759.4k to 57.0k and storage from 929.5MB to 58.8MB, while simultaneously improving accuracy (from 99.1/90.9 to 99.6/92.4 under 5cm 5 ◦/2cm 2 ◦). This compact representation also reduces rasterization time from 16.4ms to 9.3ms. However, without condensing, the dense PnP stage remains the dominant bottleneck, resulting in limited end-to-end speedup. 
+
+(ii) Dense Match Condensing. Applying dense match condensing alone directly targets the dominant bottleneck in STDLoc. The dense PnP time is reduced from 96.4ms to 5.2ms, with a modest clustering overhead of 8.8ms. As a result, the total runtime per iteration (Total 1)decreases from 230.2ms to 147.5ms, and the full four-iteration runtime (Total 4) drops from 613.1ms to 283.3ms, while preserving localization accuracy (99.1/90.7). 
+
+(iii) Full LiteLoc. Combining both designs, LiteLoc achieves high accuracy (99.6/92.2) with only 58.8MB storage (94% reduction), while reducing the total runtime to 174.5ms for a single dense itera-tion and 287.3ms for four iterations. The dense solver is accelerated by nearly 19 × (PnP: 96.4 →5.1 ms), leading to a 53% reduction in full inference time (Total 4). Overall, LiteLoc strikes a satisfying balance between efficiency and accuracy on practical visual localization. 
+
+Conclusion: This letter introduces LiteLoc, an efficient sparse-to-dense visual localization framework powered by 3DGS. By leverag-ing a color-free decoupled feature field and a dense match condensing strategy, LiteLoc substantially reduces storage overhead and infer-ence latency without compromising accuracy. Extensive experiments demonstrate the effectiveness of LiteLoc for practical localization. REFERENCES 
+
+[1] C. Chen, B. Wang, C. X. Lu, N. Trigoni, A. Markham, “Deep learning for visual localization and mapping: A survey,” IEEE TNNLS , vol. 34, no. 9, pp. 5346–5365, 2023. [2] Y. Lu, J. Ma, X. Mei, J. Huang, X.-P. Zhang, “Feature matching via topology-aware graph interaction model,” IEEE/CAA JAS , vol. 11, no. 1, pp. 113–130, 2024. [3] J. L. Schonberger, J.-M. Frahm, “Structure-from-motion revisited,” In CVPR , pp. 4104–4113, 2016. [4] D. DeTone, T. Malisiewicz, A. Rabinovich, “Superpoint: Self-supervised interest point detection and description,” In CVPR , pp. 224–236, 2018. [5] T. Sattler, B. Leibe, L. Kobbelt, “Efficient & effective prioritized matching for large-scale image-based localization,” IEEE TPAMI , vol. 39, pp. 1744–1756, 2016. [6] P.-E. Sarlin, C. Cadena, R. Siegwart, M. Dymczyk, “From coarse to fine: Robust hierarchical localization at large scale,” In CVPR , pp. 12716– 12725, 2019. [7] E. Brachmann, C. Rother, “Visual camera re-localization from RGB and RGB-D images using DSAC,” IEEE TPAMI , vol. 44, pp. 5847–5865, 2021. [8] E. Brachmann, T. Cavallari, V. A. Prisacariu, “Accelerated coordinate encoding: Learning to relocalize in minutes using RGB and poses,” In CVPR , pp. 5044–5053, 2023. [9] S. Tang, S. Tang, A. Tagliasacchi, P. Tan, Y. Furukawa, “Neumap: Neural coordinate mapping by auto-transdecoder for camera localization,” In CVPR , pp. 929–939, 2023. [10] S. Chen, Y. Bhalgat, X. Li, J.-W. Bian, K. Li, Z. Wang, V. A. Prisacariu, “Neural refinement for absolute pose regression with feature synthesis,” 
+
+In CVPR , pp. 20987–20996, 2024. [11] A. Moreau, N. Piasco, M. Bennehar, D. Tsishkou, B. Stanciulescu, A. de La Fortelle, “Crossfire: Camera relocalization on self-supervised features from an implicit representation,” In ICCV , pp. 252–262, 2023. [12] B. Zhao, L. Yang, M. Mao, H. Bao, Z. Cui, “Pnerfloc: Visual localization with point-based neural radiance fields,” In AAAI , pp. 7450–7459, 2024. [13] Q. Zhou, M. Maximov, O. Litany, L. Leal-Taix´ e, “The nerfect match: Exploring NeRF features for visual localization,” In ECCV , pp. 108–127, 2024. [14] Z. Huang, H. Yu, Y. Shentu, J. Yuan, G. Zhang, “From Sparse to Dense: Camera Relocalization with Scene-Specific Detector from Feature Gaus-sian Splatting,” In CVPR , pp. 27059–27069, 2025. [15] F. Khatib, D. Moran, G. Trostianetsky, Y. Kasten, M. Galun, R. Basri, “GSVisLoc: Generalizable Visual Localization for Gaussian Splatting Scene Representations,” In ICCVW , 2025. [16] S. Zhou, H. Chang, S. Jiang, Z. Fan, Z. Zhu, D. Xu, P. Chari, S. You, Z. Wang, A. Kadambi, “Feature 3DGS: Supercharging 3D Gaussian Splatting to enable distilled feature fields,” In CVPR , pp. 21676–21685, 2024. [17] M. Douze, A. Guzhva, C. Deng, J. Johnson, G. Szilvasy, P.-E. Mazar´ e, M. Lomeli, L. Hosseini, H. J´ egou, “The Faiss library,” IEEE TBD , 2025. [18] J. Shotton, B. Glocker, C. Zach, S. Izadi, A. Criminisi, A. Fitzgibbon, “Scene coordinate regression forests for camera relocalization in RGB-D images,” In CVPR , pp. 2930–2937, 2013. [19] A. Kendall, M. Grimes, R. Cipolla, “PoseNet: A convolutional network for real-time 6-DoF camera relocalization,” In ICCV , pp. 2938–2946, 2015.

@@ -1,0 +1,488 @@
+Title: Disambiguating 2D-3D Correspondences in Gaussian Splatting-based Feature Fields for Visual Localization
+
+URL Source: https://arxiv.org/pdf/2605.07351v1
+
+Published Time: Mon, 11 May 2026 00:47:30 GMT
+
+Number of Pages: 17
+
+Markdown Content:
+# Disambiguating 2D-3D Correspondences in Gaussian Splatting-based Feature Fields for Visual Localization 
+
+Miso Lee Sangeek Hyun Yerim Jeon Jae-Pil Heo ∗
+
+Sungkyunkwan University 
+
+{dlalth557, hsi1032, 1357j, jaepilheo}@skku.edu 
+
+## Abstract 
+
+While Gaussian Splatting-based Feature Fields (GSFFs) have shown promise for visual localization, this paper highlights that photometrically optimized GSFFs are inherently ill-suited for 2D-3D matching. The volumetric extent of each Gaussian induces many-to-one pixel-to-point mappings that destabilize PnP-based pose estimation, while photometric optimization gives rise to superfluous Gaussians devoid of multi-view consistency. To address these issues, we propose SplitGS-Loc , a localization-specialized GSFFs construction framework that disambiguates 2D-3D correspondences by exploiting Gaussian attributes. Our key design, Mixture-of-Gaussians-based splitting, decomposes each Gaussian into smaller Gaussians, replacing ambiguous many-to-one with precise one-to-one correspondences. In parallel, we exploit composition weights from GS rasterization to select Gaussians that significantly and consistently contribute across multiple views and aggregate discriminative features through strong pixel-Gaussian associations, enforcing multi-view consistency. The resulting compact yet discriminative feature fields enable stable PnP convergence, achieving state-of-the-art performance on localization benchmarks. Extensive experiments validate that SplitGS-Loc extends the utility of photometric GSFFs to accurate and efficient localization by exploiting Gaussian attributes, without per-scene training or iterative pose refinement. 
+
+## 1 Introduction 
+
+Visual localization is a fundamental computer vision task that estimates the camera pose from an image, providing the foundation for autonomous driving, robotics, and AR/VR systems. When a predefined 3D map is given, the camera pose can be obtained by matching 2D pixels with 3D points and using Perspective-n-Points (PnP) [ 1 ] with RANSAC [ 2]. Nowadays, as more expressive 3D rep-resentations like Gaussian Splatting (GS) [ 3] and 3D feature fields [ 4– 6] have been actively explored, localization performance has been further advanced with GS-based Feature Fields (GSFFs) [ 7– 9]. GSFFs are usually constructed by adding features to Gaussians with feature rendering loss [ 6– 8], or jointly optimizing colors and features [ 5, 9]. This allows camera pose refinement through 2D-2D matching between query image features and rendered image features. Recently, STDLoc [ 9] enables direct 2D-3D matching by sampling both query image features and GSFFs, reducing the computational overhead during inference. However, it demands hours of multi-stage optimization per scene; even after optimizing GSFFs, a scene-specific detector is required to align 2D keypoints with sampled Gaussians as GSFFs alone are not suitable for 2D-3D matching. Moreover, to achieve high localization accuracy, it further stores the full GSFFs and performs iterative dense feature-based pose refinement. Thus, although STDLoc establishes an effective sparse-to-dense localization pipeline, it still relies on additional query-side detection and dense 2D-2D refinement.     
+
+> ∗Corresponding author Preprint.
+> arXiv:2605.07351v1 [cs.CV] 8 May 2026 SplitGS -Loc (Ours)
+> PlugGS -Loc (Ours)
+> STDLoc (CVPR'25)
+> GLACE (CVPR'24)
+> Poker (CVPR'23)
+> ACE (CVPR'23)
+> Mapping Time (min)
+> 5
+> Avg. of Median Error (cm)
+> 120 5
+> 10
+> 15
+> 20
+> 25
+> 10 15 20 110
+> 30
+> Map Size (MB)
+
+(b) Experimental Results (a) Motivation for SplitGS -Loc 
+
+> (ii) PnP Stabilization
+> via Gaussian Splitting
+> Converge
+> (i) Pixel –Gaussian Matching
+> Ambiguity in PnP
+> Accumulated
+> Reprojection Errors
+> Input
+> 2D –3D
+> Matches
+
+Figure 1: Motivation and experimental results. (a) Each 3D Gaussian covers a volumetric region and can thus correspond to multiple image pixels. However, PnP takes 2D-3D point correspondences as input; when each Gaussian is approximated by a single 3D point (e.g., its center), this leads to many-to-one correspondences. We resolve this by decomposing Gaussians into smaller ones, increasing valid one-to-one correspondences and stabilizing PnP-based localization. (b) The figure illustrates the trade-off between mapping efficiency and localization accuracy on Cambridge Landmarks [ 10 ]. While recent GSFFs-based methods achieve superior accuracy but sacrifice mapping efficiency, whereas our proposed frameworks attain a favorable balance by disambiguating pixel-Gaussian correspondences. We discover that this inefficiency can be resolved by directly addressing the photometrically optimized Gaussians for 2D-3D matching. First, we reveal that the volumetric extent of Gaussians entails a structural mismatch with PnP, which requires strict point-to-point correspondences as input. As illustrated in Fig. 1 (a), when multiple 2D pixels correspond to the same Gaussian and are all mapped to a single 3D point, these many-to-one correspondences lead to geometric inconsistency. Consequently, PnP with RANSAC becomes unstable and ultimately outputs a suboptimal pose. In addition, numerous redundant Gaussians are spawned to capture view-dependent photometric effects [ 3, 11 , 12 ]. Hence, they serve no meaningful role in 2D-3D matching under novel viewpoints due to the lack of multi-view consistency. To this end, we propose a localization-specialized GSFFs construction framework, SplitGS-Loc ,which disambiguates pixel-Gaussian correspondences by utilizing Gaussian attributes. Central to our approach is Mixture-of-Gaussians-based splitting, which decomposes each Gaussian along its major axis. This fast, deterministic, and feature-independent decomposition yields fine-grained Gaussians that serve as the foundation for stable 2D-3D matching. Yet, for those Gaussians to produce valid one-to-one matches at inference, each must be paired with its own distinctive feature. This motivates us to devise a direct feature lifting pipeline, PlugGS-Loc, which exploits composition weights derived from the rasterization process. Specifically, given training views and photometric GS, it proceeds to identify salient Gaussians that significantly and consistently contribute to pixel rasterization across multiple views, and then assign to each selected Gaussian a pixel-level feature aggregated through strong pixel-Gaussian associations. This prevents feature blurring due to rendering-based optimization [13, 14] and enforces multi-view consistency. Altogether, SplitGS-Loc disambiguates 2D-3D correspondences in GSFFs by alleviating many-to-one matching ambiguity through Gaussian decomposition and assigning a distinctive feature to each split Gaussian. As a result, we achieve state-of-the-art performance across various indoor and outdoor scenes [ 10 , 15 ]. Extensive experiments demonstrate that reducing many-to-one pixel-Gaussian matches leads to stable PnP convergence, yielding faster runtime and better accuracy. From a broader perspective, this work reframes GSFFs from exhaustive 3D maps to deployable ones, restoring the balance between performance and practicality as illustrated in Fig. 1 (b). 
+
+## 2 Related Work 
+
+Classical methods follow a multi-stage pipeline [ 16 – 22 ]. Given a query image, (i) similar reference views are first retrieved from an image database [ 23 , 24 ], (ii) local feature extraction and matching [ 25 –27 ] are performed between the query and retrieved images, (iii) the resulting 2D-2D correspondences 2are lifted to 2D-3D correspondences, as each reference image is registered to a 3D map via Structure-from-Motion (SfM), and (iv) the camera pose is estimated using the Perspective-n-Point (PnP) [ 1]algorithm within a RANSAC loop [2]. Although this pipeline provides strong performance, it relies on a large-scale image database and 3D map, together with multiple stages. 
+
+Deep learning-based methods have been developed in response to the need for efficiency in practical applications, aiming toward more streamlined pipelines. Scene Coordinate Regression (SCR) methods [ 28 – 31 ] train a network to predict a 3D scene coordinate for each pixel, thereby enabling PnP-based pose estimation without an image database or SfM map. Several approaches [ 10 , 32 , 33 ]further accelerate the inference stage by directly regressing the camera pose from a 2D image, making them independent of the PnP+RANSAC stage. While these Absolute Pose Regression (APR) methods achieve fast inference, they trade localization accuracy for inference speed and require scene-specific training, thus limiting their scalability to real-world multi-scene applications [ 34 , 30 , 35 ]. Recent works have attempted to overcome these limitations by accelerating per-scene training to a matter of minutes [30, 31, 36] or by optimizing a single model that can handle multiple scenes [37–39]. 
+
+NeRF-based methods were initially introduced to bridge the gap between efficiency and accuracy in APR, either by augmenting training data via novel view synthesis [ 40 , 41 ] or by aligning query features with implicit features [ 42 , 43 ] from NeRF [ 44 – 46 ]. Beyond utilizing it for APR, several works leverage rendered depth and features from NeRF to reintroduce PnP-based pose estimation, achieving strong accuracy with compact maps [43, 47, 48]. 
+
+GS-based methods have further advanced localization accuracy upon explicit 3D Gaussian rep-resentations. Leveraging the real-time, high-fidelity photometric rendering of GS, fast and robust pose refinement has become readily available [ 49 – 52 ]. In parallel, as 3D feature fields [ 4, 6 , 5]embed preprocessed 3D features aligned with 2D ones, GS-based feature fields (GSFFs) naturally support feature rendering-based pose refinement. Notably, STDLoc [ 9] treats GSFFs as the predefined 3D map itself, employing Gaussians not only for feature rendering but directly for 2D-3D feature matching, thereby establishing an end-to-end localization pipeline upon GSFFs. However, this entails hours of per-scene training, and the resulting feature fields are not inherently suited for 2D-3D matching. We attribute this to redundant Gaussians and ambiguous pixel-Gaussian correspondences induced by photometric optimization, both undermining direct 2D-3D matching. In contrast, we construct localization-specialized GSFFs that resolve these issues through composition weight-based feature lifting and Mixture-of-Gaussians-based splitting, without per-scene training. 
+
+## 3 Method 
+
+3.1 Preliminary 
+
+3D Gaussian Splatting (3DGS) [ 3] extends 3D point clouds into an explicit set of 3D Gaussian primitives G = {gn}Ng
+
+> n=1
+
+, where Ng denotes the number of Gaussians, supporting efficient differ-entiable volumetric rendering. Each 3D Gaussian is parameterized by a mean μ, an anisotropic covariance Σ = RSS ⊤R⊤ (with R and S representing rotation and scale, respectively), an opacity 
+
+α, and spherical harmonic (SH) color coefficients c. For the j-th pixel in i-th image Iij , the rendered color is computed as ˆIij = P 
+
+> n
+
+w(gn, I ij ) cn, where w(gn, I ij ) denotes the weight assigned to each Gaussian during the rasterization process, reflecting both the accumulated transmittance along the ray and its opacity. We hereafter refer to this term as the composition weight. Building upon the photometric 3DGS framework, GS-based Feature Fields (GSFFs) [ 5, 6] augment each Gaussian gn with a feature vector zn. A common formulation is to optimize zn by supervising the rendered feature map ˆfij = P 
+
+> n
+
+w(gn, I ij ) zn against the corresponding pixel-level features fij 
+
+extracted by a 2D image encoder, so that the resulting feature field is aligned with the encoder’s feature space. However, we argue that these approaches are less effective for direct matching, as rendering-based optimization causes feature blurring by distributing gradients over hundreds of Gaussians per ray [ 13 , 14 ], thereby weakening 2D-3D correspondences for PnP. Accordingly, we adopt a direct feature lifting pipeline inspired by recent open-vocabulary semantic segmentation works [14, 53], but tailor it for scalable and robust visual localization. 3Given Data    
+
+> Images & Poses
+> RGB 3DGS
+> (i) Weight Aggregation (ii) Gaussian Sampling
+> (iii) Feature Registration
+> Equation 5.
+> Pixel -level Feature Aggregation
+> Equation 4.
+> Weight -based Scoring
+> View 2
+> View 1
+> Iterate training views
+> Equation 1.
+> Gaussians Primarily
+> Rasterized to a Pixel
+> Equation 2.
+> Representative Image -Gaussian Weight
+> from Pixel -Gaussian Weights
+> 1
+> Weight
+> 1
+> Weight
+> 0
+> 1
+> Score
+> 0
+> =++
+> Equation 3.
+> Informative
+> Weight Sets
+> Feature
+> Extractor
+
+Figure 2: PlugGS-Loc pipeline. The figure illustrates how to construct GSFFs for localization when pretrained RGB 3DGS and training views are given. (i) For each view Ii, we render and identify Gaussians primarily rasterized above the weight threshold τ in Eq. 1 for each pixel, and select a representative image-Gaussian weight among them for memory efficiency as in Eq. 2. After iterating overall training views, the resulting informative weight sets defined in Eq. 3 serve as the core of both (ii) Gaussian Sampling and (iii) Feature Registration. The former selects essential Gaussians, while the latter assigns multi-view aggregated features to those Gaussians. Note that the entire process is streamlined and thus can be completed within a minute per scene. 
+
+3.2 PlugGS-Loc Weight aggregation. To identify Gaussians that are suitable for 2D-3D matching, we first gather the set of Gaussians primarily rasterized to the corresponding pixel Iij by applying a threshold τ on their composition weights: 
+
+ˆGij = {gn ∈ G | w(gn, I ij ) ≥ τ }. (1) Intuitively, this preserves Gaussians that contribute more than τ (e.g., τ = 0 .1 → 10%) of the total composition weight for the pixel Iij . However, storing all of them requires a huge amount of memory, which is infeasible in practice. Instead, we exploit only the maximum composition weight over all pixels in the view, forming one representative weight for each image-Gaussian pair. For each Gaussian gn and training image Ii, it is defined as: 
+
+˜w(gn, I i) := 
+
+(max 
+
+> j
+
+ w(gn, I ij ), if ∪ ˆGij ̸ = ∅,
+
+0, otherwise. (2) In essence, ˜w(gn, I i) captures the strongest pixel-Gaussian contribution in a view Ii as illustrated in Fig. 2. We then iterate all training images to collect multi-view contributions, finally obtaining a compact and informative weight set for each Gaussian as: 
+
+Wn = { ˜w(gn, I i) | ˜w(gn, I i) > 0}. (3) 
+
+{W n}Ng 
+
+> n=1
+
+lay the foundation for both Gaussian sampling and feature registration, supporting the streamlined GSFFs construction pipeline. Note that only non-zero weights are considered, so Gaus-sians with Wn = ∅ are excluded in the next step. 
+
+Gaussian sampling. As exhaustive 2D-3D matching becomes computationally expensive with numerous Gaussians (and as many of them are redundant due to photometric optimization), it is essential to prune superfluous ones. Following STDLoc [ 9 ], we define each local 3D region by randomly sampling anchor Gaussians to cover the scene and grouping their k-nearest neighbors in terms of the L2 distance between Gaussian centers. Then, we score each Gaussian’s importance and retain only the one with the highest score within each local region. Unlike STDLoc [ 9 ], we utilize the informative weight set Wn to measure the importance of each Gaussian as 
+
+ψ(gn) = 1
+
+|W n|
+
+X
+
+> ˜w∈W n
+
+˜w, (4) where |W n| denotes the cardinality of Wn. This weight-based criterion favors Gaussians that highly contribute to rasterization across multiple views. As a consequence of this weight-based scoring and sampling within local regions, multi-view consistent Gaussians become uniformly distributed in the scene, supporting robust matching in novel views while maintaining a compact map. 4Feature registration. Instead of rendering-based optimized zn, we adopt ¯zn, which is computed as a weighted sum of the corresponding pixel features as follows: 
+
+¯zn = X
+
+> (i,j ∗)∈P n
+
+¯wij ∗ ¯fij ∗ , (5) where Pn = {(i, j ∗) | w(gn, I ij ∗ ) = ˜w(gn, I i)} is a set of pixel indices that correspond to Wn,
+
+¯w denotes the softmax-normalized weight within Wn, and ¯f denotes pixel-level image feature f
+
+normalized along the channel dimension. It enables us to obtain multi-view aggregated representations, finally constructing GSFFs within a minute. In summary, PlugGS-Loc efficiently identifies the most informative Gaussians and associates them with features exhibiting strong pixel-Gaussian correspondence, resulting in robust 2D-3D matching for localization. 
+
+3.3 SplitGS-Loc 
+
+SplitGS-Loc is built on the key insight that photometrically optimized Gaussians are ill-suited for 2D-3D matching since their volumetric extent induces a structural mismatch with PnP. A Gaussian can be associated with several pixels, but since PnP requires point-to-point correspondences as input, many-to-one matches inevitably accumulate reprojection errors and thus produce suboptimal results. To address the issue, we introduce a Mixture-of-Gaussians-based splitting strategy that decomposes each Gaussian along its major axis, the direction most prone to ambiguity. 
+
+Mixture of Gaussians and 3DGS. A Gaussian distribution, omitting the index n for notational simplicity, can be formulated as p(x) ∼ N (μ, Σ) , which extends to a mixture as 
+
+p(x) = 
+
+> K
+
+X
+
+> k=1
+
+λkN (x|μk, Σk), (6) where the components form a linear combination with coefficients λk satisfying P 
+
+> k
+
+λk = 1 . In 3DGS, this corresponds to distributing a Gaussian’s opacity α across its components such that the 
+
+k-th child carries opacity λkα. The covariance, as introduced in Sec. 3.1, is given by Σ = RSS ⊤R⊤,with the scale matrix S = diag( sx, s y , s z ) describing the radii of the Gaussian ellipsoid along the x-, 
+
+y-, and z-axes, respectively. Since a multivariate Gaussian factorizes into independent components along its principal axes, we hereafter consider a mixture of 1D Gaussians. 
+
+Mixture-of-Gaussians-based splitting. In order to reduce the pixel-Gaussian matching ambiguity, particularly along the major direction with the highest ambiguity tendency, we decompose each 3D Gaussian by symmetrically adding two side components along its major axis. Formally, in the canonical space and considering only the major axis x such that ˜p(x) ∼ N (0 , s 2), ˜p(x) can be represented as a mixture of Gaussians: 
+
+˜p(x) ≈ ˜q(x) = λq −(x) + λoqo(x) + λq +(x), (7) where s denotes the standard deviation ( i.e., scale) along the selected major axis, 2λ + λo = 1 , and each component is defined as: 
+
+q−(x) ∼ N (−βs, σ 2),qo(x) ∼ N (0 , σ 2 
+
+> o
+
+),q+(x) ∼ N (+ βs, σ 2),
+
+(8) where β > 0 controls the side offsets, and σ2, σ 2 
+
+> o
+
+are the component variances. Based on this formulation, the parameters are derived by matching the first four moments of ˜p(x) and 
+
+˜q(x). Moment matching determines λo = 23 , λ = 16 , and σ2 = σ2 
+
+> o
+
+= (1 − β2 
+
+> 3
+
+)s2 for any β ∈ (0 , √3) .Under this configuration, the side components are positioned along the ellipsoid’s major axis at ±βs ,spanning a wider extent of the original distribution and thus reducing the pixel-Gaussian matching ambiguity. For the remaining axes, the child Gaussians follow the original distribution, and are finally transformed back to the original coordinate frame. Note that this process runs with one million Gaussians in under one second. A detailed derivation is provided in the appendix. 5Table 1: Localization results on Cambridge Landmarks [ 10 ]. We report median translation and rotation errors. Best results in bold for per-scene training-based methods and training-free methods, respectively. For all GS-based methods, mapping time includes vanilla RGB 3DGS [ 3 ] training time (about 6min), and map size includes per-scene optimized networks and feature fields on top of 3DGS (∼80MB). + denotes the version with iterative camera pose refinement using GS-CPR [49]. Mapping Time Pose Refine Size (MB) Great Court King’s College Old Hospital Shop Facade St. M. Church Average (cm/ ◦)FM  AS (SIFT) [17] 0 ∼200 24/0.13 13/0.22 20/0.36 4/0.21 8/0.25 13.8/0.23 HLoc (SP+SG) [19, 26] 0 ∼800 17.7/0.11 11.0/0.20 15.1/0.31 4.2/0.20 7.0/0.22 11.0/0.21 PixLoc [21] 0 ✓ ∼600 30/0.14 14/0.24 16/0.32 5/0.23 10/0.34 15.0/0.25 SCR  DSAC* [29] 15h 28 34/0.2 18/0.3 21/0.4 5/0.3 15/0.6 19/0.4 ACE [30] 5min 4 43/0.2 28/0.4 31/0.6 5/0.3 18/0.6 25/0.4 GLACE [31] 20min 13 19/0.1 19/0.3 17/0.4 4/0.2 9/0.3 14/0.3 Neural Scene Representation (Per-scene Training-based) NeRF  CROSSFIRE [43] 15h ✓ 50 N/A 47/0.7 43/0.7 20/1.2 39/1.4 N/A PNeRFLoc [47] hrs ✓ ∼50 81/0.25 24/0.29 28/0.37 6/0.27 40/0.55 35.8/0.35 NeRFMatch [48] hrs ✓ ∼55 19.6/0.09 12.5/0.23 20.9/0.38 8.4/0.40 10.9/0.35 14.5/0.29 GS GSplatLoc [8] hrs ✓ >100 N/A 31/0.49 16/0.68 4/0.34 14/0.42 N/A GSFFs-PR [8] hrs ✓ >100 N/A 17/0.26 18/0.36 4/0.25 8/0.26 N/A STDLoc [9] 2h 16 13.1 /0.08 15.2/0.17 18.6/0.36 3.5/0.17 5.3/0.19 11.1/0.19 STDLoc (PR) [9] 2h ✓ 415 15.7/ 0.06 15.0/0.17 11.9/0.21 3.0/0.13 4.7 /0.14 10.1/0.14                                                               
+
+> GSVisLoc +[49, 50] hrs ✓∼80 N/A 23/0.3 22/0.42 8/0.29 14/0.45 N/A RAP +[49, 51] hrs ✓∼80 22/0.15 15/0.23 18/0.38 5/0.23 9/0.23 13.8/0.24 GS-RelocNet [52] hrs >100 N/A 11/0.19 13/0.26 4/0.18 7/0.15 N/A GS-RelocNet (PR) [52] hrs ✓>100 N/A 9/0.15 10/0.19 3/0.15 5/ 0.13 N/A Neural Scene Representation (Per-scene Training-free) GS  GS-RelocNet (PR) [52] 6min ✓∼80 N/A 12 /0.18 13/0.25 5/0.19 7/0.20 N/A
+> PlugGS-Loc (Ours) 7min 16 11.7/0.08 15.9/0.18 16.7/0.37 2.9/0.13 6.0/0.21 10.6/0.20
+> SplitGS-Loc (Ours) 7min 97 9.3/0.06 14.1/ 0.17 13.8/0.29 2.5/0.12 3.8/0.13 8.7/0.15
+
+Integration of splitting strategy and PlugGS-Loc. Once splitting strategy is applied, the resulting child Gaussians are seamlessly integrated into the PlugGS-Loc to transform dense GS into localization-specialized GSFFs. Regarding Gaussian sampling, however, directly applying Eq. 4 to child Gaussians would undermine the one-to-one correspondences established by splitting. This is because multiple child Gaussians within the same local region would collapse into a single representative. To prevent this, we temporarily aggregate the child Gaussians only at the sampling stage, applying the new score aggregated into the original Gaussian, defined as: 
+
+¯ψ(gn) = 13
+
+ ψ(gn− ) + ψ(gno ) + ψ(gn+ ), (9) where gn− , gno , and gn+ are child Gaussians split from the original Gaussian gn. Then, sampling and scoring are performed based on the original Gaussians’ centers {μn}Ng 
+
+> n=1
+
+and aggregated scores 
+
+{ ¯ψ(gn)}Ng
+
+> n=1
+
+, and corresponding child Gaussians of the selected parents are finally preserved. Sub-sequently, they are independently paired with different pixel features during feature registration; therefore, the salient region once represented by a single descriptor is described by multiple fine-grained ones. As a result, SplitGS-Loc yields compact yet more discriminative GSFFs, mitigating the pixel-Gaussian matching ambiguity, thus enabling accurate matching and stable PnP convergence. 
+
+## 4 Experiment 
+
+4.1 Experimental setup Datasets. We conducted experiments on Cambridge Landmarks [ 10 ] and 7Scenes [ 15 ] datasets. Cambridge Landmarks consists of five outdoor scenes, with scene scales ranging from 875 m2 to 
+
+7600 m2. In contrast, 7Scenes includes seven indoor scenes whose scales range from 1m2 to 18 m2.For the ground-truth camera poses, we adopted the SfM-based annotations reported by [ 54 ], as the D-SLAM-based ground truths are unreliable for neural rendering [49]. 
+
+Implementation details. We basically follow the setting of STDLoc [ 9]. For the weight aggregation, the weight threshold τ in Eq. 1 is fixed at 0.1 across all scenes to avoid per-scene optimization. We 6Table 2: Localization results on 7Scenes [ 15 ]. We report median translation and rotation errors. Best results in bold for per-scene training-based methods and training-free methods, respectively. For all GS-based methods, mapping time includes vanilla RGB 3DGS [ 3 ] training time (about 6min), and map size includes per-scene optimized networks and feature fields on top of 3DGS ( ∼175MB). +
+
+denotes the version with iterative camera pose refinement using GS-CPR [49]. Mapping Time Pose Refine Size (MB) Chess Fire Heads Office Pumpkin Kitchen Stairs Average (cm/ ◦)FM  AS (SIFT) [17] 0 ∼200 3/0.87 2/1.01 1/0.82 4/1.15 7/1.69 5/1.72 4/1.01 3.7/1.18 HLoc (SP+SG) [19, 26] 0 ∼2000 2.4/0.84 2.3/0.91 1.1/0.77 3.1/0.92 4.9/1.30 4.2/1.39 5.1/1.41 3.3/1.08 PixLoc [21] 0 ✓ ∼1000 2/0.80 2/0.73 1/0.82 3/0.82 4/1.21 3/1.20 5/1.30 2.9/0.98 SCR  DSAC* [29] 15h 28 0.5/0.17 0.8/0.29 0.5/0.34 1.2/0.35 1.2/0.29 0.7/0.21 2.7/0.78 1.1/0.35 ACE [30] 5min 4 0.6/0.18 0.8/0.33 0.5/0.33 1.1/0.29 1.1/0.22 0.8/0.21 2.9/0.81 1.1/0.34 Neural Scene Representation (Per-scene Training-based) NeRF  CROSSFIRE [43] 5h ✓ 50 1/0.4 5/1.9 3/2.3 5/1.6 3/0.8 2/0.8 12/1.9 4.4/1.38 PNeRFLoc [47] hrs ✓ ∼50 2/0.80 2/0.88 1/0.83 3/1.05 6/1.51 5/1.54 32/5.73 7.3/1.76 NeRFMatch [48] hrs ✓ ∼55 1.0/0.30 1.1/0.41 1.3/0.92 3.1/0.87 2.2/0.60 1.0/0.28 9.3/1.74 2.7/0.73 GS GSplatLoc [7] hrs ✓ >200 0.4/0.16 1.0/0.32 1.1/0.62 1.9/0.4 1.8/0.35 2.7/0.55 8.8/2.34 2.5/0.68 GSFFs-PR [8] hrs ✓ >200 0.4/0.19 0.6/0.26 0.5/0.36 1.0/0.31 1.3/0.38 0.6/0.23 25/0.63 4.2/0.34 STDLoc [9] 2h 16 1.0/0.21 0.9/0.30 0.6/0.30 1.4/0.30 1.2/0.22 1.4/0.23 2.7/0.71 1.3/0.32 STDLoc (PR) [9] 2h ✓ 888 0.5/0.15 0.6/0.24 0.5/ 0.26 0.9/0.24 0.9/0.21 0.6/0.19 1.4/0.41 0.8/0.24 GSVisLoc + [49, 50] hrs ✓ >200 0.4/0.13 0.6/0.24 0.5/0.34 1.0/0.26 0.9/0.21 0.7/0.18 4.7/0.96 1.3/0.33 RAP + [49, 51] hrs ✓ ∼175 0.3/0.11 0.5/0.21 0.4 /0.27 0.6/0.16 0.8/0.20 0.5/0.12 1.1/0.32 0.6/0.20                                                                          
+
+> GS-RelocNet [52] hrs >200 0.4/0.17 0.6/0.24 0.4 /0.30 0.9/0.24 1.0/0.28 0.6/0.22 1.4/0.39 0.8/0.26 GS-RelocNet (PR) [52] hrs ✓>200 0.4/0.15 0.6/ 0.21 0.4/0.26 0.9/0.24 0.9/0.21 0.6/0.18 1.3/0.35 0.7/0.23 Neural Scene Representation (Per-scene Training-free) GS GS-RelocNet [52] 6min ∼175 1.3/0.81 1.2/0.65 0.7/0.73 1.6/0.89 2.7/1.01 2.5/1.10 2.1/1.00 1.7/0.88 GS-RelocNet (PR) [52] 6min ✓∼175 1.0/0.72 1.0/0.64 0.6/0.70 1.4/0.82 2.2/0.93 2.0/1.02 1.9/0.92 1.4/0.82
+> PlugGS-Loc (Ours) 7min 16 0.9/0.18 0.9/0.31 0.7/0.30 1.4/0.30 1.6/0.27 1.3/0.23 1.8/0.50 1.2/0.30
+> SplitGS-Loc (Ours) 7min 88 0.7/0.16 0.7/0.29 0.6/ 0.26 1.2/0.25 1.4/0.25 1.0/0.18 1.6/0.47 1.0/0.26
+> SplitGS-Loc +(Ours) 7min ✓∼175 0.3/0.11 0.4/0.18 0.4 /0.27 0.6/0.16 0.9/0.20 0.4/0.12 0.9/0.28 0.6/0.19
+
+pre-filter superfluous Gaussians via proposed weight aggregation process before PlugGS-Loc and SplitGS-Loc to obtain a clean weight set. In SplitGS-Loc, the number of anchor Gaussians retained during sampling is doubled to ensure sufficient spatial coverage. The splitting factor β in Eq. 8 is set to 1.4 to extend the side components further along the major axis while preserving the approximation quality under the positive semi-definiteness constraint. For feature aggregation and inference, we use the same image feature extractor and PnP+RANSAC algorithm as STDLoc, SuperPoint [ 27 ] and PoseLib [55], respectively. All experiments are conducted on a single NVIDIA GeForce RTX 4090. 
+
+Metrics. Our GSFFs construction on top of a pre-trained 3DGS completes within a minute, where the reported mapping time additionally includes RGB 3DGS [ 3] training time (about 6min) shared across all GS-based methods for fair comparison. Mapping time and map sizes are estimated according to the data required at inference. Details are provided in the appendix. 
+
+4.2 Comparative results 
+
+Our proposed frameworks show superior performance on both indoor and outdoor scenes as shown in Tab. 2 and Tab. 1. Notably, SplitGS-Loc achieves remarkable performance on the largest scene, GreatCourt, without per-scene training or pose refinement. These results demonstrate that accurate localization can be achieved without relying on heavy GSFFs or iterative refinement, moving toward a streamlined solution for real-world visual localization: smaller, faster, yet more precise. 
+
+4.3 Ablation studies Weight threshold τ . We conduct an ablation on the weight threshold τ that determines the im-portance of each Gaussians, testing values of 0.01 , 0.05 , 0.1, 0.2, as depicted in Fig. 3 (a). When the pruning is too mild, features that have weak pixel-Gaussians associations are aggregated together, resulting in blurred representations and thus degraded localization accuracy. This reflects a limitation inherent to rendering-based GSFFs optimization as discussed in Sec. 3.1, where volumetric rendering disperses gradients across numerous Gaussians per ray and weakens feature discriminativeness. Conversely, when the pruning is too aggressive, the absolute number of remaining Gaussians and their spatial coverage become insufficient for stable pose estimation. Meanwhile, our methods are robust to this hyperparameter within a reasonable range, with 0.05 performing on par with 0.1.7SplitGS-Loc          
+
+> Weight Threshold τ
+> 0.2 0.1 0.01
+> (a) Ablation on Weight Threshold τ
+> 0.05
+> STDLoc
+> SplitGS-Loc
+> Map Size (MB)
+> Avg. of Median TE (cm)
+> 100 75 50 25
+> (c) Ablation on Map Size
+> 11
+> 9
+> 10
+> 13
+> 8
+> 12
+> (b) Ablation on Beta β
+> SplitGS-Loc
+> Beta β
+> Avg. of Median TE (cm)
+> 1.6 1.4 0.8 0.6 1.0 1.2
+> 9.8
+> 9.0
+> 9.4
+> 10.6
+> 8.6
+> 10.2
+> 3
+> Feasible Region
+> Avg. of Median TE (cm)
+> 9.8
+> 9.0
+> 9.4
+> 10.6
+> 8.6
+> 10.2
+> (
+
+Figure 3: Ablation on mapping hyperparameters. We compare the average per-scene median translation error under varying weight thresholds τ , splitting factor β, and the map size on Cambridge Landmarks [ 10 ]. (a) Mild pruning causes feature blurring and aggressive pruning limits coverage of the scene, bringing suboptimal results. (b) Localization accuracy increases monotonically with β
+
+within the feasible region, suggesting that wider separation of child Gaussians more effectively allevi-ates pixel-Gaussian matching ambiguity. (c) SplitGS-Loc scales consistently beyond the saturation by effective densification at the level of detail. Table 3: Alternative methods. We compare alternative designs for SplitGS-Loc on Cambridge Landmarks [ 10 ]. (a) Our GSFFs and sampling strategy bring complementary improvements without training. (b) Replacing Gaussian attributes with position-only alternatives degrades accuracy. 
+
+(a) Ablation with STDLoc [9]. GSFFs Sampling Average (cm/ ◦)STDLoc Cosine Similarity 13.1/0.22 STDLoc Eq. 4 12.8/0.22 Ours Cosine Similarity 9.6/0.17 Ours Eq. 9 8.7/0.15 
+
+(b) Ablation on Gaussian Attributes. Feature Aggregation Densification Average (cm/ ◦)Projection+Average - 14.1/0.26 PlugGS-Loc (Ours) - 10.6/0.20 Ours NN Upsampling 10.0/0.18 SplitGS-Loc (Ours) Eq. 7, Eq. 8 8.7/0.15 
+
+Splitting factor β. Fig. 3 (b) illustrates the effect of the splitting factor β that controls the side offsets of child Gaussians. Localization accuracy improves monotonically as β increases within the feasible region ( β ∈ (0 , √3) ), where the positive semi-definiteness constraint is satisfied. This suggests that, once the moment matching approximation holds, placing child Gaussians further apart along the major axis more effectively reduces pixel-Gaussian matching ambiguity. 
+
+Component ablation. Tab. 3 (a) provides a separate ablation using STDLoc [ 9 ] as the baseline, independently swapping the GSFFs and the sampling strategy. Our GSFFs yields a significant accuracy improvement from 13.1cm/0.22 ◦ to 9.6cm/0.17 ◦, demonstrating that the proposed framework is not only efficient but also more effective. In parallel, our weight-based sampling strategy brings additional consistent improvement, achieving the best performance of 8.7cm/0.15 ◦. The result confirms that the composition weight acts as a unified criterion that simultaneously guides feature registration and Gaussian sampling, collectively enabling a more accurate and efficient GSFFs construction. 
+
+4.4 Analysis Map capacity. Larger maps generally lead to better performance, similar to how dense reconstruction-based pipelines outperform sparse ones. Accordingly, the key questions are (i) how they perform under the same map capacity and (ii) how effectively the performance scales with increasing map size. To examine this, as illustrated in Fig. 3 (c), we compare direct 2D-3D matching pipelines using similar map sizes between STDLoc [ 9 ] and proposed SplitGS-Loc. For fairness, we exclude any scene-specific post-training and adjust the number of sampled Gaussians to approximate the same map size, using 3 × 213 , 3 × 214 , 3 × 215 samples for STDLoc, and 213 , 214 , 215 (one third) for SplitGS-Loc as each Gaussian is further divided into three child Gaussians. Fig. 3 (c) shows that merely increasing the number of sampled Gaussians faces an inherent limitation: the performance saturates. By contrast, our SplitGS-Loc exhibits sustained improvements as the map size increases, highlighting the efficacy of our splitting strategy. 8Table 4: PnP convergence. We investigate the correlation between PnP convergence and accuracy on Cambridge Landmarks [ 10 ], comparing STDLoc [ 9 ] and our SplitGS-Loc under efficient (a,c) and default (b,d) setting. By mitigating the pixel-Gaussian matching ambiguity, SplitGS-Loc produces fewer many-to-one inputs and more valid inliers, achieving the best accuracy with stable convergence. Direct 2D-3D Matching RANSAC Min. Iter. RANSAC Max. Iter. # of PnP Many-to-one ( ↓)# of PnP Final Inliers ( ↑)Runtime ( ↓)(ms) Average ( ↓)(cm / ◦)(a) STDLoc 10 2 10 3 313 362 54.4 12.8/0.21 (b) STDLoc 10 3 10 5 313 367 314.4 11.2/0.20 (c) SplitGS-Loc (Ours) 10 2 10 3 199 447 54.8 8.9/ 0.15        
+
+> (d) SplitGS-Loc (Ours) 10 310 5199 450 215.5 8.7/0.15
+
+Advantages of Gaussian attributes. We investigate the advantages of leveraging Gaussian at-tributes for localization. Tab. 3 (b) presents results when Gaussian attributes are replaced with geometry-only alternatives under the same pipeline. First, we replace our rasterization-based pipeline with Projection+Average. Our method filters strong pixel-Gaussian correspondences via composi-tion weights and aggregates features through soft assignment, whereas Projection+Average directly projects Gaussian centers onto training views and uniformly averages the nearest keypoint descriptors. This leads to a significant median error increase from 10.6cm/0.20 ◦ to 14.1cm/0.26 ◦; composition weights derived from opacity and transmittance naturally account for occlusion and visibility, whereas geometric projection alone cannot. Besides, replacing our Gaussian Splitting with k-nearest neighbor upsampling ( k = 3 ) results in 10.0cm/0.18 ◦, which inserts new Gaussians at midpoint positions between each Gaussian and its nearest neighbors with linearly interpolated features, compared to 8.7cm/0.15 ◦ for SplitGS-Loc. This suggests that proposed Mixture-of-Gaussians-based splitting guided by scale enables more accurate densification. In summary, exploiting composition weights and volumetric attributes during mapping yields substantially more discriminative feature fields. 
+
+PnP convergence. Tab. 4 presents a PnP convergence analysis of direct 2D-3D matching-based methods under different RANSAC settings. While STDLoc (a, b) struggles to reach consensus due to redundant many-to-one matches, our SplitGS-Loc (c, d) mitigates the pixel-Gaussian matching ambiguity, reducing many-to-one inputs from 313 to 199. This contributes to obtaining more inliers, better accuracy, and faster convergence: from 314ms to 215ms under the same setting. This stable convergence in turn yields robustness under an efficient setting: while STDLoc suffers a notable accuracy drop from 11.2cm to 12.8 cm (b vs a), SplitGS-Loc remains stable about 8.7cm (d vs c), suggesting that its robustness stems from overall high-quality matches. 
+
+Limitation. While the proposed framework refines photometrically optimized Gaussians, it is not entirely independent of the quality of original Gaussians. As such, scenes with severe illumination changes or sparse trajectories over large-scale environments lie beyond what can be meaningfully examined with current GS techniques, as GS struggles to converge in such settings. Nonetheless, given the rapid progress of neural scene representation research, extending to such challenging real-world conditions would be an interesting direction for future work. 
+
+## 5 Conclusion 
+
+Recent years have seen significant progress in Gaussian Splatting-based representations, and their potential for visual localization continues to broaden. Yet photometrically optimized GSFFs are fun-damentally ill-suited for 2D-3D matching, as redundant Gaussians and many-to-one pixel-Gaussian correspondences undermine both matching robustness and PnP convergence. This work has pro-posed SplitGS-Loc, which resolves these limitations effectively by exploiting Gaussian attributes for localization-specialized GSFFs construction, eliminating the need for per-scene multi-stage opti-mization. By disambiguating pixel-Gaussian correspondences, it ensures stable PnP convergence and sustained accuracy gains as the map scales, achieving state-of-the-art performance at a fraction of the cost that prior pipelines require. Beyond localization accuracy, this work reinforces long-standing goals in visual localization: efficiency and practicality. 9References 
+
+[1] Xiao-Shan Gao, Xiao-Rong Hou, Jianliang Tang, and Hang-Fei Cheng. Complete solution classification for the perspective-three-point problem. IEEE transactions on pattern analysis and machine intelligence ,25(8):930–943, 2003. [2] Martin A Fischler and Robert C Bolles. Random sample consensus: a paradigm for model fitting with applications to image analysis and automated cartography. Communications of the ACM , 24(6):381–395, 1981. [3] Bernhard Kerbl, Georgios Kopanas, Thomas Leimkühler, and George Drettakis. 3d gaussian splatting for real-time radiance field rendering. ACM Trans. Graph. , 42(4):139–1, 2023. [4] Justin Kerr, Chung Min Kim, Ken Goldberg, Angjoo Kanazawa, and Matthew Tancik. Lerf: Language embedded radiance fields. In Proceedings of the IEEE/CVF international conference on computer vision ,pages 19729–19739, 2023. [5] Shijie Zhou, Haoran Chang, Sicheng Jiang, Zhiwen Fan, Zehao Zhu, Dejia Xu, Pradyumna Chari, Suya You, Zhangyang Wang, and Achuta Kadambi. Feature 3dgs: Supercharging 3d gaussian splatting to enable distilled feature fields. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 21676–21685, 2024. [6] Minghan Qin, Wanhua Li, Jiawei Zhou, Haoqian Wang, and Hanspeter Pfister. Langsplat: 3d language gaus-sian splatting. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition ,pages 20051–20060, 2024. [7] Gennady Sidorov, Malik Mohrat, Denis Gridusov, Ruslan Rakhimov, and Sergey Kolyubin. Gsplatloc: Grounding keypoint descriptors into 3d gaussian splatting for improved visual localization. In 2025 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) , pages 12601–12607. IEEE, 2025. [8] Maxime Pietrantoni, Gabriela Csurka, and Torsten Sattler. Gaussian splatting feature fields for (privacy-preserving) visual localization. In Proceedings of the Computer Vision and Pattern Recognition Conference ,pages 1082–1092, 2025. [9] Zhiwei Huang, Hailin Yu, Yichun Shentu, Jin Yuan, and Guofeng Zhang. From sparse to dense: Camera relocalization with scene-specific detector from feature gaussian splatting. In Proceedings of the Computer Vision and Pattern Recognition Conference , pages 27059–27069, 2025. [10] Alex Kendall, Matthew Grimes, and Roberto Cipolla. Posenet: A convolutional network for real-time 6-dof camera relocalization. In Proceedings of the IEEE international conference on computer vision ,pages 2938–2946, 2015. [11] Ziyi Yang, Xinyu Gao, Yang-Tian Sun, Yi-Hua Huang, Xiaoyang Lyu, Wen Zhou, Shaohui Jiao, Xiaojuan Qi, and Xiaogang Jin. Spec-Gaussian: Anisotropic view-dependent appear-ance for 3D gaussian splatting. In Advances in Neural Information Processing Systems , vol-ume 37, 2024. URL https://proceedings.neurips.cc/paper_files/paper/2024/hash/ 708e0d691a22212e1e373dc8779cbe53-Abstract-Conference.html .[12] Alex Hanson, Allen Tu, Vasu Singla, Mayuka Jayawardhana, Matthias Zwicker, and Tom Goldstein. Pup 3d-gs: Principled uncertainty pruning for 3d gaussian splatting. In Proceedings of the Computer Vision and Pattern Recognition Conference , pages 5949–5958, 2025. [13] Yanmin Wu, Jiarui Meng, Haijie Li, Chenming Wu, Yahao Shi, Xinhua Cheng, Chen Zhao, Haocheng Feng, Errui Ding, Jingdong Wang, et al. Opengaussian: Towards point-level 3d gaussian-based open vocabulary understanding. Advances in Neural Information Processing Systems , 37:19114–19138, 2024. [14] Kim Jun-Seong, GeonU Kim, Kim Yu-Ji, Yu-Chiang Frank Wang, Jaesung Choe, and Tae-Hyun Oh. Dr. splat: Directly referring 3d gaussian splatting via direct language embedding registration. In Proceedings of the Computer Vision and Pattern Recognition Conference , pages 14137–14146, 2025. [15] Jamie Shotton, Ben Glocker, Christopher Zach, Shahram Izadi, Antonio Criminisi, and Andrew Fitzgibbon. Scene coordinate regression forests for camera relocalization in rgb-d images. In Proceedings of the IEEE conference on computer vision and pattern recognition , pages 2930–2937, 2013. [16] Yunpeng Li, Noah Snavely, and Daniel P Huttenlocher. Location recognition using prioritized feature matching. In European conference on computer vision , pages 791–804. Springer, 2010. 
+
+10 [17] Torsten Sattler, Bastian Leibe, and Leif Kobbelt. Efficient & effective prioritized matching for large-scale image-based localization. IEEE transactions on pattern analysis and machine intelligence , 39(9): 1744–1756, 2016. [18] Torsten Sattler, Akihiko Torii, Josef Sivic, Marc Pollefeys, Hajime Taira, Masatoshi Okutomi, and Tomas Pajdla. Are large-scale 3d models really necessary for accurate visual localization? In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition , pages 1637–1646, 2017. [19] Paul-Edouard Sarlin, Cesar Cadena, Roland Siegwart, and Marcin Dymczyk. From coarse to fine: Robust hierarchical localization at large scale. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 12716–12725, 2019. [20] Martin Humenberger, Yohann Cabon, Nicolas Guerin, Julien Morat, Vincent Leroy, Jérôme Revaud, Philippe Rerole, Noé Pion, Cesar De Souza, and Gabriela Csurka. Robust image retrieval-based visual localization using kapture. arXiv preprint arXiv:2007.13867 , 2020. [21] Paul-Edouard Sarlin, Ajaykumar Unagar, Mans Larsson, Hugo Germain, Carl Toft, Viktor Larsson, Marc Pollefeys, Vincent Lepetit, Lars Hammarstrand, Fredrik Kahl, et al. Back to the feature: Learning robust camera localization from pixels to pose. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 3247–3257, 2021. [22] Khang Truong Giang, Soohwan Song, and Sungho Jo. Learning to produce semi-dense correspondences for visual localization. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 19468–19478, 2024. [23] Akihiko Torii, Relja Arandjelovic, Josef Sivic, Masatoshi Okutomi, and Tomas Pajdla. 24/7 place recogni-tion by view synthesis. In Proceedings of the IEEE conference on computer vision and pattern recognition ,pages 1808–1817, 2015. [24] Relja Arandjelovic, Petr Gronat, Akihiko Torii, Tomas Pajdla, and Josef Sivic. Netvlad: Cnn architecture for weakly supervised place recognition. In Proceedings of the IEEE conference on computer vision and pattern recognition , pages 5297–5307, 2016. [25] David G Lowe. Distinctive image features from scale-invariant keypoints. International journal of computer vision , 60(2):91–110, 2004. [26] Paul-Edouard Sarlin, Daniel DeTone, Tomasz Malisiewicz, and Andrew Rabinovich. Superglue: Learning feature matching with graph neural networks. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 4938–4947, 2020. [27] Daniel DeTone, Tomasz Malisiewicz, and Andrew Rabinovich. Superpoint: Self-supervised interest point detection and description. In Proceedings of the IEEE conference on computer vision and pattern recognition workshops , pages 224–236, 2018. [28] Eric Brachmann and Carsten Rother. Learning less is more-6d camera localization via 3d surface regression. In Proceedings of the IEEE conference on computer vision and pattern recognition , pages 4654–4662, 2018. [29] Eric Brachmann and Carsten Rother. Visual camera re-localization from rgb and rgb-d images using dsac. 
+
+IEEE transactions on pattern analysis and machine intelligence , 44(9):5847–5865, 2021. [30] Eric Brachmann, Tommaso Cavallari, and Victor Adrian Prisacariu. Accelerated coordinate encoding: Learning to relocalize in minutes using rgb and poses. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 5044–5053, 2023. [31] Fangjinhua Wang, Xudong Jiang, Silvano Galliani, Christoph Vogel, and Marc Pollefeys. Glace: Global local accelerated coordinate encoding. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 21562–21571, 2024. [32] Alex Kendall and Roberto Cipolla. Geometric loss functions for camera pose regression with deep learning. In Proceedings of the IEEE conference on computer vision and pattern recognition , pages 5974–5983, 2017. [33] Samarth Brahmbhatt, Jinwei Gu, Kihwan Kim, James Hays, and Jan Kautz. Geometry-aware learning of maps for camera localization. In Proceedings of the IEEE conference on computer vision and pattern recognition , pages 2616–2625, 2018. 
+
+11 [34] Torsten Sattler, Qunjie Zhou, Marc Pollefeys, and Laura Leal-Taixe. Understanding the limitations of cnn-based absolute camera pose regression. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 3302–3312, 2019. [35] Siyan Dong, Shuzhe Wang, Shaohui Liu, Lulu Cai, Qingnan Fan, Juho Kannala, and Yanchao Yang. Reloc3r: Large-scale training of relative camera pose regression for generalizable, fast, and accurate visual localization. In Proceedings of the Computer Vision and Pattern Recognition Conference , pages 16739–16752, 2025. [36] Shuai Chen, Tommaso Cavallari, Victor Adrian Prisacariu, and Eric Brachmann. Map-relative pose regression for visual re-localization. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 20665–20674, 2024. [37] Yoli Shavit, Ron Ferens, and Yosi Keller. Coarse-to-fine multi-scene pose regression with transformers. 
+
+IEEE Transactions on Pattern Analysis and Machine Intelligence , 2023. [38] Tao Xie, Zhiqiang Jiang, Shuozhan Li, Yukun Zhang, Kun Dai, Ke Wang, Ruifeng Li, and Lijun Zhao. Ufvl-net: A unified framework for visual localization across multiple indoor scenes. IEEE Transactions on Instrumentation and Measurement , 72:1–16, 2023. [39] Miso Lee, Jihwan Kim, and Jae-Pil Heo. Activating self-attention for multi-scene absolute pose regression. 
+
+Advances in Neural Information Processing Systems , 37:38508–38529, 2024. [40] Shuai Chen, Zirui Wang, and Victor Prisacariu. Direct-posenet: Absolute pose regression with photometric consistency. In 2021 International Conference on 3D Vision (3DV) , pages 1175–1185. IEEE, 2021. [41] Arthur Moreau, Nathan Piasco, Dzmitry Tsishkou, Bogdan Stanciulescu, and Arnaud de La Fortelle. Lens: Localization enhanced by nerf synthesis. In Conference on Robot Learning , pages 1347–1356. PMLR, 2022. [42] Shuai Chen, Xinghui Li, Zirui Wang, and Victor A Prisacariu. Dfnet: Enhance absolute pose regression with direct feature matching. In European Conference on Computer Vision , pages 1–17, 2022. [43] Arthur Moreau, Nathan Piasco, Moussab Bennehar, Dzmitry Tsishkou, Bogdan Stanciulescu, and Arnaud de La Fortelle. Crossfire: Camera relocalization on self-supervised features from an implicit representation. In Proceedings of the IEEE/CVF International Conference on Computer Vision , pages 252–262, 2023. [44] Ben Mildenhall, Pratul P Srinivasan, Matthew Tancik, Jonathan T Barron, Ravi Ramamoorthi, and Ren Ng. Nerf: Representing scenes as neural radiance fields for view synthesis. In European Conference on Computer Vision , pages 405–421. Springer, 2020. [45] Ricardo Martin-Brualla, Noha Radwan, Mehdi SM Sajjadi, Jonathan T Barron, Alexey Dosovitskiy, and Daniel Duckworth. Nerf in the wild: Neural radiance fields for unconstrained photo collections. In 
+
+Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 7210–7219, 2021. [46] Thomas Müller, Alex Evans, Christoph Schied, and Alexander Keller. Instant neural graphics primitives with a multiresolution hash encoding. ACM transactions on graphics (TOG) , 41(4):1–15, 2022. [47] Boming Zhao, Luwei Yang, Mao Mao, Hujun Bao, and Zhaopeng Cui. Pnerfloc: Visual localization with point-based neural radiance fields. In Proceedings of the AAAI Conference on Artificial Intelligence ,volume 38, pages 7450–7459, 2024. [48] Qunjie Zhou, Maxim Maximov, Or Litany, and Laura Leal-Taixé. The nerfect match: Exploring nerf features for visual localization. In European Conference on Computer Vision , pages 108–127, 2024. [49] Changkun Liu, Shuai Chen, Yash Sanjay Bhalgat, Siyan HU, Ming Cheng, Zirui Wang, Victor Adrian Prisacariu, and Tristan Braud. GS-CPR: Efficient camera pose refinement via 3d gaussian splatting. In The Thirteenth International Conference on Learning Representations , 2025. URL https://openreview. net/forum?id=mP7uV59iJM .[50] Fadi Khatib, Dror Moran, Guy Trostianetsky, Yoni Kasten, Meirav Galun, and Ronen Basri. Generaliz-able visual localization for gaussian splatting scene representations. In Proceedings of the IEEE/CVF International Conference on Computer Vision Workshops , 2025. [51] Sihang Li, Siqi Tan, Bowen Chang, Jing Zhang, Chen Feng, and Yiming Li. Adversarial exploitation of data diversity improves visual localization. In International Conference on Computer Vision (ICCV) , 2025. 
+
+12 [52] Junyi Wang, Yuze Wang, Wantong Duan, Meng Wang, and Yue Qi. 3d gaussian splatting based scene-independent relocalization with unidirectional and bidirectional feature fusion. In The Thirty-ninth Annual Conference on Neural Information Processing Systems , 2025. URL https://openreview.net/forum? id=ewgZItWaHh .[53] Juliette Marrie, Romain Ménégaux, Michael Arbel, Diane Larlus, and Julien Mairal. Ludvig: Learning-free uplifting of 2d visual features to gaussian splatting scenes. In Proceedings of the IEEE/CVF International Conference on Computer Vision , pages 7440–7450, 2025. [54] Eric Brachmann, Martin Humenberger, Carsten Rother, and Torsten Sattler. On the Limits of Pseudo Ground Truth in Visual Camera Re-Localisation. In Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV) , 2021. [55] Viktor Larsson and contributors. PoseLib - Minimal Solvers for Camera Pose Estimation, 2020. URL 
+
+https://github.com/vlarsson/PoseLib .
+
+13 A Derivation of the Splitting Parameters 
+
+This section provides a detailed derivation of the mixture parameters obtained by matching the first four moments. As mentioned in the main paper, we define a parent 1D Gaussian distribution in the canonical space as ˜p(x) ∼ N (0 , s 2), and approximate it by a symmetric three-component mixture 
+
+˜q(x) as: 
+
+˜p(x) ≈ ˜q(x) = λq −(x) + λoqo(x) + λq +(x),q−(x) ∼ N (−βs, σ 2),qo(x) ∼ N (0 , σ 2 
+
+> o
+
+),q+(x) ∼ N (+ βs, σ 2).
+
+Here λ, λ o ∈ (0 , 1) are mixture weights satisfying 2λ + λo = 1 , and β > 0 controls the side offsets. 
+
+Balanced Splitting. The purpose of splitting is to densify the 3DGS such that, after rendering, pixel-Gaussian associations become more localized and less ambiguous. From this perspective, an important requirement for the approximation ˜q(x) is that the three components q−(x), qo(x), and 
+
+q+(x) share the spatial extent of the original density in a balanced manner. If the central component 
+
+qo(x) were given a substantially larger variance than the side components, most of the probability mass would remain concentrated around the original mean. Then, the side components would contribute negligibly and tend to be pruned by the subsequent weight aggregation process. Conversely, if the side components q−(x) and q+(x) were overly spread, the mixture would deviate from the original Gaussian and degrade the approximation quality. To avoid these issues, we first impose σo = σ,thereby reducing the degrees of freedom and biasing the solution toward our final goal, fine-grained localization. 
+
+Moment Matching. Since both distributions are symmetric around the origin, all odd-order mo-ments are zero. In the following, we therefore describe how to match the second and fourth moments. For a univariate Gaussian random variable Z ∼ N (m, v ), the second and fourth moments are 
+
+E[Z2] = v + m2, E[Z4] = 3 v2 + 6 vm 2 + m4. (10) To match the second-order moments of ˜p(x) and ˜q(x), the following constraint is imposed: 
+
+E˜p[x2] = E˜q [x2]. (11) Since ˜p(x) ∼ N (0 , s 2), we have 
+
+E˜p[x2] = s2. (12) For the mixture ˜q(x), the second moment can be written as 
+
+E˜q [x2] = λ Eq− [x2] + λo Eqo [x2] + λ Eq+ [x2]= 2 λ(σ2 + β2s2) + λoσ2. (13) Substituting Eq. 12 and Eq. 13 into Eq. 11 yields 
+
+s2 = 2 λ(σ2 + β2s2) + λoσ2. (14) In parallel, the fourth-order moment matching between ˜p(x) and ˜q(x) is enforced by requiring 
+
+E˜p[x4] = E˜q [x4]. (15) The fourth moment of ˜p(x) is 
+
+E˜p[x4] = 3 s4, (16) and for ˜q(x), we have                
+
+> E˜q[x4] = λEq−[x4] + λoEqo[x4] + λEq+[x4]= 2 λ 3σ4+ 6 σ2(βs )2+ ( βs )4+λo
+>  3σ4.(17)
+
+From Eq. 16 and Eq. 17 together with Eq. 15, 
+
+3s4 = 2 λ 3σ4 + 6 σ2(βs )2 + ( βs )4 + λo
+
+ 3σ4. (18) 1For simplicity, we introduce the dimensionless variable U = σ2/s 2. Using 2λ + λo = 1 , the second-order constraint in Eq. 14 then becomes 
+
+(1 − λo)( U + β2) + λoU = 1 , (19) and the fourth-order constraint in Eq. 18 becomes 
+
+(1 − λo) U 2 + 2 U β 2 + β4
+
+3
+
+ + λoU 2 = 1 . (20) Solving Eq. 19 for U gives 
+
+U = 1 − (1 − λo)β2. (21) We then expand the left-hand side of Eq. 20 as 
+
+(1 − λo) (U + β2)2 − 23 β4 + ( λoU 2 − 1) = 0 , (22) and substitute Eq. 21 into the left and right terms of Eq. 22 as 
+
+(1 − λo) (U + β2)2 − 23 β4
+
+=(1 − λo)(1 + 2 λoβ2 + λ2 
+
+> o
+
+β4 − 23 β4),
+
+(23) and λoU 2 − 1=λo
+
+ 1 − 2(1 − λo)β2 + (1 − λo)2β4 − 1=(1 − λo)( −1 − 2λoβ2 + λoβ4 − λ2 
+
+> o
+
+β4),
+
+(24) respectively. Combining Eq. 23 and Eq. 24 yields 
+
+(1 − λo)( − 23 β4 + λoβ4) = 0 , (25) and finally we obtain a polynomial in λo,
+
+β4
+
+3 (3 λo − 2)( λo − 1) = 0 . (26) The λo = 1 corresponds to the degenerate case λ = 0 , where the side components vanish and no splitting occurs. We therefore take λo = 2 /3, and U = σ2/s 2 = 1 − β2/3. The covariance matrix is required to be positive semi-definite, which in our setting is equivalent to σ2 > 0, i.e., 
+
+1 − β2/3 > 0 and hence β ∈ (0 , √3) . Under this feasible range, we set β = 1 .4, which places the side components further apart along the major axis while satisfying the positive semi-definiteness constraint, as validated by the ablation study in the main paper. 
+
+## B Mapping time 
+
+Per-stage Processing Time. Tab. A1 reports the processing time of each stage in SplitGS-Loc, including Gaussian splitting, pre-filtering, weight aggregation, Gaussian sampling, and feature registration. Each stage is averaged across the Cambridge Landmarks [ 10 ]. If image features are precomputed, the feature registration cost can be further reduced; however, we do not account for this optimization, assuming only raw datasets are provided. Table A1: Per-stage processing time. 
+
+Stage Time (s) Gaussian Splitting 0.4 Pre-filtering 10.6 Weight Aggregation 9.8 Gaussian Sampling 10.2 Feature Registration 33.4 Total 64.4 262 41 34 26 189 77 51 44                                                             
+
+> 16.4 15.1 14.1 14.5
+> 0.01 0.05 0.1 0.2
+> KingsCollege
+> Valid GS (%) #feats/GS TE (cm)
+> Weight Threshold τ
+> 54 36 29 22 156 70 45 39
+> 9.3 9.4 9.3 10
+> 0.01 0.05 0.1 0.2
+> GreatCourt
+> Valid GS (%) #feats/GS TE (cm)
+> Weight Threshold τ
+> 55 31 25 18 177 85 58 53
+> 17.0
+> 14.0 13.8
+> 15.8
+> 0.01 0.05 0.1 0.2
+> OldHospital
+> Valid GS (%) #feats/GS TE (cm)
+> Weight Threshold τ
+> 60 39 31 22 29 15 11 10
+> 3.0 2.7 2.5 2.9
+> 0.01 0.05 0.1 0.2
+> ShopFacade
+> Valid GS (%) #feats/GS TE (cm)
+> Weight Threshold τ
+> 75 63 57 50 102 51 35 33
+> 4.6
+> 43.8
+> 4.9
+> 0.01 0.05 0.1 0.2
+> StMarysChurch
+> Valid GS (%) #feats/GS TE (cm)
+> Weight Threshold τ
+
+Figure A1: Analysis of weight thresholding in SplitGS-Loc. Mapping Time. We set a SfM output as a zero across all methods and measure additional per-scene training (or post-processing) time. Accordingly, for all GS-based methods, the mapping time includes the time required to train the RGB 3DGS [ 3] (approximately 6 minutes per scene), even though it is not trained exclusively for localization. Although we make considerable effort to ensure a fair comparison across methods, achieving a fully fair comparison of mapping times is difficult in practice, since the mapping times of each method are highly sensitive to hardware, implementation details, and training schedules. For this reason, when a paper explicitly reports mapping times, we prioritize those published numbers [30, 43, 9]. For methods that employ a scene-specific model for pose initialization before pose refinement, we treat the training time of the initialization module as the per-scene mapping time. This is aligned with the protocol adopted in CROSSFIRE [ 43 ], which first introduced the neural scene representation-based relocalization, where the training time of the absolute pose regression model is included in the overall mapping cost. This also supports a fair comparison with direct 2D-3D matching pipelines such as STDLoc [ 9] and ours, which do not rely on any pose priors. For the remaining works, which provide no evidence of training completed in under an hour but involve multiple optimization epochs, we estimate their per-scene mapping process likely requires several hours. 
+
+Map size. Map sizes for scene coordinate regression and feature matching-based methods are referenced from ACE [ 30 ] and GLACE [ 31 ], while those for NeRF-based methods are standardized following the specifications in CROSSFIRE [ 43 ] and NeRFMatch [ 48 ]. For 3DGS-based methods, the map size is estimated approximately according to the data required at inference time: (i) if photometric rendering is required, the full RGB 3DGS is counted, (ii) if feature rendering is required, the full GSFFs are included, and (iii) for direct 2D-3D matching-based methods, only the 3D points and corresponding features are considered. 
+
+## C Quantitative Analysis 
+
+This section extends the ablation on the weight threshold in Sec. 4.3 by providing a detailed analysis of how the primary Gaussian selection in Eq. 1 transforms a full photometric GS into localization-specialized GSFFs. Fig. A1 reports three statistics from the weight threshold τ : (i) the ratio of Gaussians whose informative weight set Wn (Eq. 3) is non-empty (Valid GS), (ii) the average number of multi-view features aggregated per valid Gaussian, i.e., the average cardinality of the non-empty sets (feats/GS), and (iii) the median translation errors. Although the scenes differ in terms of trajectories as well as environmental changes, we observe several trends that remain broadly consistent across scenes. First, even when preserving Gaussians that contribute at least 1% to any pixel ( τ = 0 .01 ), about 40% of the Gaussians are excluded across the scenes. This result indicates that the photometric GS contains substantial redundancy from the perspective of solving the matching task, which requires strong correspondences. 3─ GT  ─ Pred (~25cm, ~2 °) ─ Pred (~50cm, ~5 °) ─ Pred (Outliers)  
+
+> (a) PlugGS -Loc (b) SplitGS -Loc
+> 3D Point Cloud and Test Trajectory
+> Test Images in a Close -view Trajectory
+
+Figure A2: Localization results of PlugGS-Loc and SplitGS-Loc on GreatCourt. 
+
+Subsequently, we validate that simply aggregating a large number of multi-view features into each Gaussian does not directly guarantee improved localization accuracy in most scenes. Rather, as discussed in the main paper, maintaining a sufficient valid Gaussian ratio, i.e., adequate spatial coverage of the scene, is critical. Finally, despite the diversity across scenes, the effective range of τ values does not vary dramatically. This suggests that the proposed composition weight-based GSFFs construction framework can be applied to new scenes without per-scene tuning of the weight threshold. 
+
+## D Qualitative Analysis 
+
+Fig. A2 presents localization results on GreatCourt, the largest and most challenging outdoor scene in the Cambridge Landmarks dataset [ 10 ]. We color each predicted camera pose according to its translation and rotation errors, following common recall thresholds in large-scale visual localization: green for poses within (25 cm , 2◦), yellow for poses within (50 cm , 5◦), and red otherwise. Despite being entirely training-free, PlugGS-Loc produces stable pose predictions along most of the trajectory. Nevertheless, it becomes less reliable when the camera observes the foreground at very close range, as shown in Fig. A2. This originates from pixel-Gaussian matching ambiguity discussed in Fig. 1. When photometrically optimized Gaussians are directly used for localization, those close to the camera tend to cover larger image regions and thus become associated with many pixels, exacerbating many-to-one pixel-Gaussian correspondences and destabilizing PnP convergence. Adopting SplitGS-Loc as introduced in Sec. 3.3 stabilizes pose estimation for these challenging views, as illustrated in Fig. A2. 4

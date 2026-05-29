@@ -1,0 +1,60 @@
+{
+  "version": 2,
+  "extractor": "papercropper",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2605.03678v1/fig-001.webp",
+      "caption": "",
+      "page": 0,
+      "index": 1,
+      "width": 1696,
+      "height": 375,
+      "label": "Figure"
+    },
+    {
+      "url": "assets/figures/arxiv/2605.03678v1/fig-002.webp",
+      "caption": "",
+      "page": 0,
+      "index": 2,
+      "width": 1831,
+      "height": 1238,
+      "label": "Figure"
+    },
+    {
+      "url": "assets/figures/arxiv/2605.03678v1/fig-003.webp",
+      "caption": "",
+      "page": 0,
+      "index": 3,
+      "width": 1849,
+      "height": 1068,
+      "label": "Figure"
+    },
+    {
+      "url": "assets/figures/arxiv/2605.03678v1/fig-004.webp",
+      "caption": "",
+      "page": 0,
+      "index": 4,
+      "width": 1675,
+      "height": 981,
+      "label": "Figure"
+    },
+    {
+      "url": "assets/figures/arxiv/2605.03678v1/fig-005.webp",
+      "caption": "",
+      "page": 0,
+      "index": 5,
+      "width": 1572,
+      "height": 1133,
+      "label": "Figure"
+    },
+    {
+      "url": "assets/figures/arxiv/2605.03678v1/fig-006.webp",
+      "caption": "",
+      "page": 0,
+      "index": 6,
+      "width": 1646,
+      "height": 1092,
+      "label": "Figure"
+    }
+  ]
+}

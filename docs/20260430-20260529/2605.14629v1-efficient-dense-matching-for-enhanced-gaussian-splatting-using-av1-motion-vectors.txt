@@ -1,0 +1,178 @@
+Title: Efficient Dense Matching for Enhanced Gaussian Splatting Using AV1 Motion Vectors
+
+URL Source: https://arxiv.org/pdf/2605.14629v1
+
+Published Time: Fri, 15 May 2026 00:54:57 GMT
+
+Number of Pages: 6
+
+Markdown Content:
+## EFFICIENT DENSE MATCHING FOR ENHANCED GAUSSIAN SPLATTING USING AV1 MOTION VECTORS 
+
+## Julien Zouein, Vibhoothi Vibhoothi, Franc ¸ois Piti´ e, Anil Kokaram 
+
+## Sigmedia Group, Dept. of Electronic and Electrical Engineering, Trinity College Dublin , Ireland 
+
+## {zoueinj, vibhootv, pitief, anil.kokaram }@tcd.ie 
+
+ABSTRACT 
+
+3D Gaussian Splatting (3DGS) has emerged as a prominent framework for real-time, photorealistic scene reconstruc-tion, offering significant speed-ups over Neural Radiance Fields (NeRF). However, the fidelity of 3DGS represen-tations remains heavily dependent on the quality of the initial point cloud. While standard Structure-from-Motion (SfM) pipelines using COLMAP provide adequate initial-isation, they often suffer from high computational costs and sparsity in textureless regions, which degrades subse-quent reconstruction accuracy and convergence speed. In this work, we introduce an AV1-based feature detection and matching pipeline that significantly reduces SfM pro-cessing overhead. By leveraging motion vectors inherent to the AV1 video codec, we bypass computationally ex-pensive exhaustive matching while maintaining geometric robustness. Our pipeline produces substantially denser point clouds, with up to eight times as many points as classi-cal SfM. We demonstrate that this enhanced initialisation directly improves 3DGS performance, yielding an 9-point increase in VMAF and a 63% average reduction in training time required to reach baseline quality. The project page: 
+
+https://sigmedia.tv/AV1-3DGS.github.io/ 
+
+Index Terms — Structure from Motion, AV1, Motion Vectors, Gaussian Splatting 
+
+1. INTRODUCTION 
+
+The field of 3D scene reconstruction has recently undergone a paradigm shift with the introduction of 3D Gaussian Splat-ting (3DGS) [1]. By combining the utility of explicit geomet-ric representations with differentiable rendering, 3DGS offers real-time rendering speeds and high-fidelity view synthesis, addressing the primary computational bottlenecks of Neural Radiance Fields (NeRF [2]). Despite these capabilities, 3DGS quality is intrinsically linked to the underlying geometry provided during initial-isation. Standard workflows rely on sparse point clouds generated via Structure from Motion (SfM). When we are 
+
+> This work was funded by the Horizon CL4 2022, EU Project Emerald, 101119800; and YouTube & Google Faculty Awards.
+
+generating 3DGS from a video captured from a mobile de-vice/camera, the point cloud can be sparse. When these initial clouds are overly sparse, which is common in texture-less regions or complex indoor environments, the resulting 3DGS models frequently exhibit visual artefacts such as blurred boundaries, floaters, and geometric inconsistencies. Furthermore, the conventional approach to mitigating sparsity involves computationally intensive dense matching strategies, which hinder rapid content creation and scalability. In this paper, we propose a framework that enhances the initialisation of 3D scenes by bridging the gap between sparse SfM and heavy dense matching. We propose gener-ating point-correspondences for SfM by extracting motion directly from a compressed video bitstream using AV1 [3] encoding in commonly available hardware. By repurposing video coding metadata in this way, we can generate high-density geometry at a fraction of the computational cost of traditional methods. The primary contributions of this work are: 1. An end-to-end SfM pipeline that leverages AV1 motion vectors to generate dense point clouds without exhaus-tive matching in pixel-domain. 2. Improved 3DGS rendering quality (+9 points in VMAF) by exploiting dense point clouds from our new pipeline. 
+
+2. RELATED WORK 
+
+Structure from Motion (SfM) serves as the geometric foun-dation for most modern 3D reconstruction frameworks, rang-ing from classical photogrammetry to Neural Radiance Fields (NeRF) [2] and 3D Gaussian Splatting (3DGS) [1]. While these rendering techniques have evolved to achieve real-time performance, their visual fidelity remains critically dependent on the density and accuracy of the initial point cloud. Con-sequently, the primary computational bottleneck has shifted to the pre-processing stage, the feature extraction and match-ing front-ends. To address this, recent research has focused on either optimising these geometric pipelines [4, 5, 6] or exploring alternative data sources, such as compressed video bitstreams [7, 8], to accelerate scene understanding. 
+
+> arXiv:2605.14629v1 [eess.IV] 14 May 2026
+
+Feature Learning and Matching. Traditional SfM pipelines, such as COLMAP [9], typically rely on hand-crafted fea-tures like SIFT [10]. While robust, these are computationally intensive to extract and match exhaustively. Deep learning offers powerful alternatives for both extraction (e.g., Super-Point [4], DISK [11]) and matching (e.g., SuperGlue [12], LightGlue [5]). While LoFTR [13], an end-to-end model, by-passes detection entirely (jointly performs feature extraction and the matching process). Although these learned methods provide superior invariance to viewpoint changes, they incur significant GPU costs. Similarly, while recent global SfM solvers like GLOMAP [6] improve the scalability of the re-construction back-end, they still depend on these expensive front-ends. Regardless of whether the solver is incremental or global, the computational burden of correspondence gen-eration remains a limiting factor, motivating the search for more efficient proxies. 
+
+Improving Dense 3D Reconstruction. While NeRF [2] and Instant-NGP [14] made significant improvements for view synthesis, 3DGS [1] has emerged as the dominant approach for real-time, high-fidelity rendering. However, 3DGS is sen-sitive to its initialisation state. Sparse point clouds frequently result in visual artefacts such as floaters and blurred geome-try. Although methods exist to improve the quality of point clouds specifically for 3DGS [15], they typically operate as a post-processing step, adding further computational over-head. Our approach addresses this by improving the density of the SfM output itself, ensuring robust initialisation without additional processing. 
+
+Using Compression Data for Visual Tasks: To bypass the cost of pixel-domain processing, researchers have in-creasingly utilised metadata from video codecs. In 2010, Pourazad et al. [7] used H.264 motion vectors for depth es-timation in 2D-to-3D conversion. More recently, in 2023, MoV-SLAM [8] demonstrated that hardware-encoded H.264 motion vectors could drive a real-time visual SLAM system on low-power devices (30 FPS on a Raspberry Pi 4), outper-forming ORB-SLAM3 [16] in specific contexts. But in both of these cases, the image data is still used to validate can-didate matches extracted from compressed domain motion. That implies that the cost of matching is still high. Zouein 
+
+et al . presented a new matching process [17], relying on Motion Vectors extracted from AV1 to generate keypoints matches, without having to process pixels. This therefore reduces computation and processing time. We discuss this in the next section. 
+
+3. 3D POINT-CLOUD GENERATION WITH AV1 
+
+Extending the work initiated by Zouein et al. [17], we em-ploy the AV1-based matching pipeline and combine it with COLMAP incremental mapping to generate point clouds. 
+
+Matching: Zouein et al. in their work [17] use AV1 video codec. Because they are using AV1, they upsample the mo-tion field (using zero order hold) from non-uniform blocks to yield a motion vector for every 4 × 4 blocks. Matches that are persistent across many frames are more likely to be useful for point cloud reconstruction, and so they build motion trajecto-ries by accumulating motion vectors themselves. They termi-nate a trajectory when the cosine difference between motion-compensated vectors is greater than some threshold, since that indicates loss of track. The resulting matches are dense, and they retain matches only if they persist across more than 3 frames along a trajectory. The reason why this is computa-tionally efficient is not only that there is no need to use image data itself, but also that hardware AV1 encoding can be used to generate point correspondences in real time, even with very high resolution footage. 
+
+3D Gaussian Splats: As discussed, in this work we generate 3D point clouds by incorporating the matches into COLMAP [9] incremental mapping process. This results in the camera path through our video sequence as well as a single point cloud in 3D space. That single point cloud is presented to the official 3DGS implementation 1 including the camera geometry. We train the Gaussian models using 50% of our input frames, and use this to synthesise frames at the same location of the remaining observed frames. 
+
+Assessing Quality: We place greater emphasis on qual-ity evaluation in 3D space and the final synthesised images. 3D point cloud quality evaluation ideally requires some kind of ground truth point cloud. This is not available for the real video sequences we use in this work. To mitigate this prob-lem somewhat, we use the output of the classical pipeline with Exhaustive matching as “pseudo-ground truth”. This is the default in Gaussian Splatting. Clearly, this introduces a prob-lem when the pseudo-ground truth actually does not perform well. Therefore, comparison of synthesised images provides the ultimate evaluation metric. Hence we synthesised pictures at timestamps for which we already have ground truth im-ages, and as discussed before, we do not use those locations in training the 3DGS technique. To more completely assess the impact of competing fea-ture and matching combinations we assess our AV1-based ini-tialisation against four configurations: (1) SIFT [10] features with Exhaustive matching; (2) SIFT features with Sequential 
+
+matching; (3) DISK [11] features with LightGlue [5] (DISK) and (4) SuperPoint [4] features with SuperGlue [12] (SP). Finally, we note that while dense optical flow and KLT front-ends exist, they require pixel-domain estimation at in-ference time. In contrast, this approach reuses motion already computed by the encoder; we therefore restrict our compari-son to standard SfM feature/matcher families. 
+
+> 1https://github.com/graphdeco-inria/gaussian-splatting
+
+4. EXPERIMENTAL SETUP 
+
+Our evaluation focuses on the downstream impact of these denser point clouds on 3DGS performance. Hence we com-pare output from proposed AV1-based pipeline against state-of-the-art SfM techniques. The SfM pipeline (COLMAP) was executed on a 12th Gen Intel Core i7-12700K CPU and 64GB RAM. Deep learning-based feature extraction (used in Disk, Superpoint) used an NVIDIA RTX A4000 GPU running Ubuntu 22.04. Hardware-accelerated encoding was performed on a NVIDIA RTX 6000 Ada, whilst the 3DGS training was conducted on an NVIDIA RTX PRO 6000 Blackwell. Following[18] which validated Motion Vectors quality, we use hardware AV1 encoding (NVENC-AV1, Ada Lovelace) via FFmpeg 
+
+n6.0-22 , using single intra-frame and backward reference frames only (S3-SCC-03 [19, 20]). 2
+
+For Gaussian Splatting, we use the official implementa-tion (Kerbl et al. [21]). As our dataset comprises primar-ily large outdoor scenes, we used the flags --position lr init and --position lr final to optimise both training and rendering. To ensure a rigorous testing process, we en-force the 50/50 train-test split described in Section 3. 
+
+4.1. Dataset 
+
+Our dataset comprises seven video sequences categorised by their source and content characteristics. To represent com-plex urban environments with rapid ego-motion, we use two driving sequences from the KITTI Odometry dataset [22]: the initial 231 frames of Seq. 00 (1241 ×376) and the first 131 frames of Seq. 10 (1226 ×370). To incorporate hand-held urban scenes, we include three sequences captured us-ing an iPhone 15 Pro at 10fps: Paris Seq. 1 (117 frames, 1080 ×1920), Paris Seq. 2 (122 frames, 1920 ×1080), and Dublin Seq. 1 (329 frames, 1080 ×1920). Finally, to analyse the reconstruction of fine details, we introduce two high-resolution sequences (2160 ×3840, 10fps) captured specifi-cally for this study: Boston Seq. 1 (55 frames), which captures a bas-relief exhibiting intricate high-frequency geometry, and 
+
+Nature (67 frames), which focuses on complex organic tex-tures such as foliage. 
+
+4.2. Evaluation Metrics 
+
+To assess point cloud fidelity we use reprojection error and report two other metrics discussed more clearly in the supple-mentary material (Hausdorff and Chamfer distances). To assess the quality of the rendered images using Gaus-sian Splatting, we employ a suite of classical and percep-tual picture quality metrics. We report PSNR and SSIM as standard measures of fidelity. To specifically address video                  
+
+> 2FFmpeg command: ffmpeg -i $input vid -c:v av1 nvenc -tune hq -preset p1 -rc constqp -qp qp -g 9999 -b ref mode 0-bf 0output.ivf
+
+quality, we also report VMAF [23], an important perceptual quality metric widely adopted in the streaming video industry. We also include LPIPS [24], a metric based on deep network activation functions that correlates well with human percep-tual similarity; for LPIPS, lower scores indicate better perfor-mance. None of these actually measures sharpness which is an important indicator of the ability of 3D reconstruction to reproduce texture. Therefore we include the Q-metric [25], a non-reference sharpness metric with good correlation with perceptual sharpness. 
+
+5. RESULTS AND DISCUSSIONS 
+
+Figure 1 shows point clouds generated from our pipeline (bot-tom) compared to the baseline (top) for Paris Seq. 1. See sup-plementary material for further examples. Clearly our point cloud is denser (621k versus 48k points) and captures more of the fine quality texture information. For this particular se-quence, the mean reprojection error was 0.51 compared with 0.56 for baseline. This observation is also supported by Haus-dorff and Chamfer distances. However, as discussed pre-viously, this favourable comparison is biased by our denser point cloud. Much better evidence is contained in our picture quality results discussed next. Table 1 summarises picture quality performance across all seven video sequences at two critical training milestones: 30,000 (30k) and 42,000 (42k) iterations. These results demonstrate that the proposed AV1-SfM method consis-tently outperforms both classical and learning-based base-lines across different quality metrics. Our method achieves a PSNR of 27.51 dB at the 42k iteration, representing an improved quality metric score compared to learning-based feature matchers such as Disk [11] (27.19 dB) and Super-Point [4] (25.25 dB). This performance gap is much more pronounced in perceptual metrics; AV1-SfM yields an LPIPS score of 0.195, a notable improvement over the 0.289 ob-served with SuperPoint and the 0.256 with the baseline. 
+
+Convergence and Geometric Debt. A primary contribution of this work is the marked improvement in convergence effi-ciency, as visualised in the evolution of VMAF (Figure 2). In both urban Kitti (Figure 2 top row) and organic Nature (Fig-ure 2 bottom row) sequences, the AV1-SfM curves (green) ex-hibit a higher initial state compared to all other methods. This “head start” is attributed to the reduction of what we term “ge-ometric debt”. In standard 3DGS workflows, the optimiser spends thousands of iterations generating new Gaussians to fill the structural voids left by sparse SfM. By providing high-density initialisation at the start, AV1-SfM allows the GPU to focus its computational budget on refining colour and covari-ance parameters immediately. This results in a 63% reduction in the total training time required to reach baseline quality (averaged over all sequences). 
+
+Impact on Perceptual Metrics. By analysing Figure 2, we observe an improvement on perceptual quality. In the Na-Table 1 . Comparison of Structure-from-Motion (SfM) methods across reconstruction iterations for 3D Gaussian Splatting (3DGS). Metrics represent the mean performance across all seven test sequences. The proposed AV1-SfM method consistently outperforms traditional and learning-based baselines across all metrics. We achieve higher quality scores at 30k iterations than most baselines achieve at 42k, demonstrating improved convergence efficiency. 
+
+Method Iterations PSNR-Y (dB) ↑ SSIM (dB) ↑ LPIPS ↓ VMAF ↑ ∆ Q ↓
+
+Average Exhaustive 30k / 42k 26.22 / 26.31 8.36 / 8.44 0.256 / 0.251 69.91 / 71.56 1.89 / 1.75 Sequential 30k / 42k 27.03 / 27.14 8.81 / 8.89 0.236 / 0.229 74.77 / 75.75 1.10 / 1.00 SuperPoint (SP) [4] 30k / 42k 25.11 / 25.25 7.68 / 7.77 0.296 / 0.289 62.94 / 64.23 2.30 / 2.09 Disk [11] 30k / 42k 27.09 / 27.19 8.81 / 8.91 0.238 / 0.230 75.72 / 76.76 1.01 / 0.90 AV1-SfM (Ours) 30k / 42k 27.48 / 27.51 9.24 / 9.27 0.198 / 0.195 78.26 / 78.86 0.68 / 0.66 
+
+Fig. 1 . Visual comparison of reconstructed 3D point clouds for Paris Seq. 1. Top: Baseline COLMAP reconstruction using SIFT features with Exhaustive matching (48k points). Bottom: Our proposed AV1-based pipeline (621k points). While the overall scene structure remains consistent, our method produces a significantly denser point cloud, effec-tively capturing finer geometric details. ture sequence, characterised by complex, fine-grained foliage, the VMAF gap (Figure 2c-d) is notably wide. The disparity between Kitti and Nature test /sequences suggests that while methods like DISK and Sequential matching may reach com-parable VMAF for kitti, they fail to achieve the same level of perceptual quality for complex scenes. Specifically, our method reaches a VMAF score within the first 1,000 sec-onds of training that the baseline exhaustive matching can-not achieve even after a full 4,000-second cycle. The superior VMAF and SSIM scores suggest that our framework is par-ticularly adept at preserving high-frequency textural details. 
+
+Geometric Consistency using Q-Metric. To evaluate struc-tural integrity, we employ the Q-metric (lower is better), which measures the sharpness of 3DGS. This, in turn, pro-vides diagnostic insight into geometric consistency. We 100 200 300 400 500 600 700             
+
+> Time (s)
+> 20
+> 40
+> 60
+> 80
+> 100
+> VMAF
+> Disk
+> Exhaustive
+> Sequential
+> SP
+> AV1-SfM 100 200 300 400 500 600 700
+> Time (s)
+> 20
+> 30
+> 40
+> 50
+> 60
+> 70
+> 80
+> 90
+> 100
+> VMAF
+> Disk Test
+> Exhaustive Test
+> Sequential Test
+> SP Test
+> AV1-SfM Test 1000 2000 3000 4000
+> Time (s)
+> 40
+> 50
+> 60
+> 70
+> 80
+> 90
+> VMAF
+> Disk
+> Exhaustive
+> Sequential
+> SP
+> AV1-SfM 1000 2000 3000 4000
+> Time (s)
+> 40
+> 45
+> 50
+> 55
+> 60
+> VMAF
+> Disk Test
+> Exhaustive Test
+> Sequential Test
+> SP Test
+> AV1-SfM Test
+
+Fig. 2 . Evolution of VMAF value during training. Top row: Train (left)-Test (right) results with Kitti Seq 00, Bottom row: Same for Nature Test Sequence. Our technique reaches higher quality in less training time than other matching techniques. measure the difference between ˆQ using each technique with 
+
+Qref from the ground truth image i.e. ∆Q = |Qref − ˆQ| Our framework achieves the lowest error ( ∆Q = 0 .66 at 42k), whereas the Exhaustive matching approach yields a signifi-cantly higher error ( ∆Q = 1 .75 ). High Q-metric scores in traditional pipelines often stem from the low density of 3D points in repetitive areas, forcing Gaussian splats to expand incoherently to “fill the space”. We also observe consistently high VMAF plateaus in the training process (Figure 2). The stability of the Q-metric, coupled with a plateauing VMAF score in training for our method, confirms that AV1 motion vectors provide a reliable geometric backbone. 
+
+Visual Analysis. The visual evidence presented in Figure 3 reinforces these findings. In the Boston Seq. 1 sequence, our method is the only one to faithfully reconstruct minute pavement inscriptions that are smoothed over by alternative techniques. Similarly, in the Nature sequence, classic SIFT-Exhaustive Sequential SP Disk AV1-SfM (ours) Ground Truth             
+
+> ∆Q = 0.01 / LPIPS=0.18 ∆Q=0.11 / LPIPS=0.18 ∆Q=0.14 / LPIPS=0.25 ∆Q=0.14 / LPIPS=0.21 ∆Q=0.25 / LPIPS=0.11
+> ∆Q=1.23 / LPIPS=0.41 ∆Q=1.34 / LPIPS=0.42 ∆Q=1.35 / LPIPS=0.45 ∆Q=0.97 / LPIPS=0.39 ∆Q=1.04 / LPIPS=0.33
+> ∆Q=0.21 / LPIPS=0.24 ∆Q=0.21 / LPIPS=0.21 ∆Q=0.58 / LPIPS=0.33 ∆Q=0.53 / LPIPS=0.42 ∆Q=0.06 / LPIPS=0.08
+
+Fig. 3 . Visualisation of a 512 ×512 patch from sequence Boston Vid 1 (Test Set, iteration 30000), a 512 ×512 patch from sequence Nature (Test set, iteration 30000) and a 256 ×256 patch from sequence Paris Seq 1 (Test Set, iteration 30000). AV1-SfM shows better details and texture reconstruction than any other technique. ∆Q and LPIPS values for each patch are specified. based reconstructions fail to capture the individual structure of leaves, resulting in a generalised, blurred appearance. Fur-thermore, our approach demonstrates superior handling of textureless patches, such as those in Paris Seq 1 . In con-trast, standard 3DGS struggles with these regions by over-extending splats (leading to a ‘bloated’ appearance). This indicates that the dense point cloud generated via AV1 is not just a faster alternative, but a more robust one for complex, real-world environments. Our method consistently achieves the lowest LPIPS value in all patches. ∆Q shows coherent results; however, it also shows that this metric cannot be used “alone”, as it does not fully represent perceptual quality. The analysis of the train-test split reveals a smaller ‘gen-eralisation gap’ for our framework. As the initialisation is ge-ometrically accurate, the model learns the actual scene struc-ture rather than over-fitting to training view intensities. This leads to more stable performance on unseen test frames, with fewer visual artefacts when the virtual camera moves outside the primary training trajectory. This effectively bridges the gap between sparse SfM and expensive dense matching. 
+
+6. CONCLUSION 
+
+In this work, we introduced a new pipeline that uses AV1 mo-tion vectors to initialise 3DGS. By repurposing compressed video metadata, we generate dense geometric seeds without the computational cost of exhaustive matching. Our experi-ments demonstrate that this enhanced density directly trans-lates to superior rendering fidelity, achieving higher percep-tual quality (VMAF: 78.86 v/s 71.56, Q-metric: 0.66 vs 1.75) while reducing training time by 63% compared to standard baselines (Exhaustive matching). This approach effectively improves the creation of photorealistic digital twins from User Generated Content (UGC), bridging the gap between efficient video coding and immersive 3D reconstruction. 
+
+7. REFERENCES 
+
+[1] Bernhard Kerbl, Georgios Kopanas, Thomas Leimk¨ uhler, and George Drettakis, “3d gaussian splatting for real-time radiance field rendering,” ACM Transactions on Graphics , vol. 42, no. 4, July 2023. [2] Ben Mildenhall, Pratul P. Srinivasan, Matthew Tancik, Jonathan T. Barron, Ravi Ramamoorthi, and Ren Ng, “Nerf: representing scenes as neural radiance fields for view synthesis,” Commun. ACM , vol. 65, no. 1, pp. 99–106, Dec. 2021. [3] Jingning Han, Bohan Li, Debargha Mukherjee, Ching-Han Chiang, Adrian Grange, Cheng Chen, Hui Su, Sarah Parker, Sai Deng, Urvang Joshi, Yue Chen, Yunqing Wang, Paul Wilkins, Yaowu Xu, and James Bankoski, “A technical overview of av1,” Proceedings of the IEEE , vol. 109, no. 9, pp. 1435–1462, 2021. [4] Daniel DeTone, Tomasz Malisiewicz, and Andrew Ra-binovich, “Superpoint: Self-supervised interest point detection and description,” in Proceedings of the IEEE Conference on Computer Vision and Pattern Recogni-tion (CVPR) Workshops , June 2018. [5] Philipp Lindenberger, Paul-Edouard Sarlin, and Marc Pollefeys, “Lightglue: Local feature matching at light speed,” in Proceedings of the IEEE/CVF international conference on computer vision , 2023, pp. 17627–17638. [6] Linfei Pan, D´ aniel Bar´ ath, Marc Pollefeys, and Jo-hannes L Sch¨ onberger, “Global structure-from-motion revisited,” in European Conference on Computer Vision .Springer, 2024, pp. 58–77. [7] Mahsa T. Pourazad, Panos Nasiopoulos, and Rabab Kreidieh Ward, “Conversion of h.264-encoded 2d video to 3d format,” 2010 Digest of Technical Pa-pers International Conference on Consumer Electronics (ICCE) , pp. 63–64, 2010. [8] Richard N.C. Turner, Natasha Kholgade Banerjee, and Sean Banerjee, “Mov-slam: Using motion vectors for real-time single-cpu visual slam,” in 2023 Seventh IEEE International Conference on Robotic Computing (IRC) ,2023, pp. 51–58. [9] Johannes Lutz Sch¨ onberger and Jan-Michael Frahm, “Structure-from-motion revisited,” in Conference on Computer Vision and Pattern Recognition (CVPR) ,2016. [10] David G. Lowe, “Distinctive image features from scale-invariant keypoints,” Int. J. Comput. Vision , vol. 60, no. 2, pp. 91–110, Nov. 2004. [11] Michał Tyszkiewicz, Pascal Fua, and Eduard Trulls, “Disk: Learning local features with policy gradient,” 
+
+Advances in neural information processing systems , vol. 33, pp. 14254–14265, 2020. [12] Paul-Edouard Sarlin, Daniel DeTone, Tomasz Mal-isiewicz, and Andrew Rabinovich, “Superglue: Learn-ing feature matching with graph neural networks,” in 
+
+Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , June 2020. [13] Jiaming Sun, Zehong Shen, Yuang Wang, Hujun Bao, and Xiaowei Zhou, “Loftr: Detector-free local fea-ture matching with transformers,” in Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , 2021, pp. 8922–8931. [14] Thomas M¨ uller, Alex Evans, Christoph Schied, and Alexander Keller, “Instant neural graphics primitives with a multiresolution hash encoding,” ACM Transac-tions on Graphics , vol. 41, no. 4, pp. 1–15, July 2022. [15] Dongrui Dai and Yuxiang Xing, “Eap-gs: Efficient aug-mentation of pointcloud for 3d gaussian splatting in few-shot scene reconstruction,” 2025 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) ,pp. 16498–16507, 2025. [16] Carlos Campos, Richard Elvira, Juan J. Gomez Ro-driguez, Jose M. M. Montiel, and Juan D. Tardos, “Orb-slam3: An accurate open-source library for visual, vi-sual–inertial, and multimap slam,” IEEE Transactions on Robotics , vol. 37, no. 6, pp. 1874–1890, Dec. 2021. [17] Julien Zouein, Hossein Javidnia, Franc ¸ois Piti´ e, and Anil Kokaram, “Leveraging av1 motion vectors for fast and dense feature matching,” in 2025 IEEE 4th Inter-national Conference on Intelligent Reality (ICIR) , 2025, pp. 1–4. [18] Julien Zouein, Vibhoothi Vibhoothi, and Anil Kokaram, “Av1 motion vector fidelity and application for efficient optical flow,” in 2025 Picture Coding Symposium (PCS) ,2025, pp. 1–5. [19] 3GPP Technical Specification Group TSG SA, “5G Video Codec Characteristics,” TR 26.955, Release 17 ,2022. [20] X. Zhao, Z. (Ryan) Lei, A. Norkin, T. Daede, A. Tourapis, V. Vibhoothi, V. L. Pham, D. Hoang, A. Kuusela, and M. Golam Sarwer, “AOM Com-mon Test Conditions v8.0,” Alliance for Open Me-dia, Codec Working Group Output Document , vol. CWG/F384o, 2025, https://aomedia.org/ docs/CWG-F384o_AV2_CTC_v8.pdf .[21] Bernhard Kerbl, Georgios Kopanas, Thomas Leimk¨ uhler, and George Drettakis, “3d gaussian splatting for real-time radiance field rendering,” ACM Transactions on Graphics , vol. 42, no. 4, July 2023. [22] Andreas Geiger, Philip Lenz, and Raquel Urtasun, “Are we ready for autonomous driving? the kitti vision benchmark suite,” in Conference on Computer Vision and Pattern Recognition (CVPR) , 2012. [23] Joe Yuchieh Lin, Tsung-Jung Liu, Eddy Chi-Hao Wu, and C.-C Jay Kuo, “A fusion-based video quality as-sessment (FVQA) index,” in Signal and Information Processing Association Annual Summit and Conference (APSIPA) , 2014. [24] Richard Zhang, Phillip Isola, Alexei A Efros, Eli Shechtman, and Oliver Wang, “The unreasonable ef-fectiveness of deep features as a perceptual metric,” in 
+
+Proceedings of the IEEE conference on computer vision and pattern recognition , 2018, pp. 586–595. [25] Xiang Zhu and Peyman Milanfar, “A no-reference sharpness metric sensitive to blur and noise,” in 2009 International Workshop on Quality of Multimedia Expe-rience , 2009, pp. 64–69.

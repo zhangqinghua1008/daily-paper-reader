@@ -1,0 +1,928 @@
+Title: ULF-Loc: Unbiased Landmark Feature for Robust Visual Localization with 3D Gaussian Splatting
+
+URL Source: https://arxiv.org/pdf/2605.04730v1
+
+Published Time: Thu, 07 May 2026 01:00:24 GMT
+
+Number of Pages: 18
+
+Markdown Content:
+# ULF-Loc: Unbiased Landmark Feature for Robust Visual Localization with 3D Gaussian Splatting 
+
+## Yingdong Gu 1* Shaocheng Yan 1∗ Zhenjun Zhao 2 Yuan Kou 3,4
+
+## Jianxin Luo 3,4 Pengcheng Shi 1 Jiayuan Li 1†
+
+> 1
+
+Wuhan University 2University of Zaragoza 3The First Surveying and Mapping Institute of Hunan Province 
+
+> 4
+
+The Hunan Engineering Research Center of 3D Real Scene Construction and Application Technology 
+
+{guyingdong, shaochengyan, shipc 2021, ljy whu 2012 }@whu.edu.cn 
+
+## Abstract 
+
+Visual localization is a core technology for augmented real-ity and autonomous navigation. Recent methods combine the efficient rendering of 3D Gaussian Splatting (3DGS) with feature-based localization. These methods rely on di-rect matching between 2D query features and the 3D Gaus-sian feature field, but this often results in mismatches due to an inherent bias in the learned Gaussian feature. We theoretically analyze the feature learning process in 3DGS, revealing that the widely adopted α-blending optimization inherently introduces bias into 3D point features. This bias stems from the entanglement between individual Gaussians and their neighboring Gaussians, making the learned fea-tures unsuitable for precise matching tasks. Motivated by these findings, we propose ULF-Loc, an unbiased landmark feature framework that replaces biased feature optimization with geometry-weighted feature fusion. We further intro-duce keypoint-consensus landmark sampling to select reli-able Gaussians and local geometric consistency verification to reject mismatches caused by rendering artifacts. On the Cambridge Landmarks dataset, ULF-Loc reduces the mean median translation error by 17% compared to the state-of-the-art, while achieving superior efficiency with only 1/10 the training time and 1/6 the GPU memory of STDLoc. Our code is accessible at ULF-Loc .
+
+## 1. Introduction 
+
+Visual localization serves as a core technology for applica-tions such as augmented reality and autonomous robot navi-gation [20], aiming to estimate the 6-DoF camera pose from a single image precisely. Early visual localization methods [30, 43, 45, 61] rely on structure-from-motion (SfM) [48] to build 3D scene repre- 
+
+> *Equal contribution, †Corresponding author.
+
+sentations. Within this representation, the localization pro-cess usually includes three core steps, beginning with fea-ture extraction from query and database images, proceed-ing to establish 2D-3D correspondences between query key-points and the pre-constructed sparse 3D scene model, and concluding with pose estimation using a robust estimator [14, 17, 24]. These approaches achieve high-precision lo-calization in texture-rich environments but face limitations in weakly-textured or large-scale scenes. Subsequently, some approaches [5, 10, 20, 60] have ex-plored using neural networks to encode scene information. Absolute Pose Regression (APR) [10, 49] methods train scene-specific pose regressors to predict camera poses. De-spite the advantage of fast inference, such methods suffer from limited generalization capability, and their accuracy generally falls short of structure-based approaches [11]. In contrast, Scene Coordinate Regression (SCR) [5, 56, 60] methods regress 3D coordinates per pixel to establish dense 2D-3D correspondences for pose estimation. Although SCR achieves higher accuracy in indoor scenes, the require-ment for large amounts of high-quality 3D supervision data makes it challenging to scale training data [15]. Rendering-based visual localization has emerged with the development of Neural Radiance Fields (NeRF) [33]. Early methods estimated camera poses by optimizing pho-tometric losses through inverse rendering [66, 68], but the slow training speed of NeRF limited their real-time applica-tion. With its competitive rendering capability, 3D Gaussian Splatting (3DGS) [21] has become an effective alternative. Recent research attempts to combine 3DGS’s rendering ef-ficiency with the robustness of feature matching [18, 53]. However, these methods exhibit deficiencies in the core fea-ture learning mechanism. Specifically, optimizing feature consistency via α-blending introduces inherent bias into 3D point features . This bias occurs because the α-blending process forces each Gaussian’s feature to compensate for the collective contribution of neighboring Gaussians. Con-1
+
+> arXiv:2605.04730v1 [cs.CV] 6 May 2026
+
+sequently, the learned feature deviates from its true value, fundamentally compromising 2D-3D matching accuracy. Meanwhile, learning high-dimensional descriptors for each Gaussian primitive significantly increases training and stor-age overhead [67]. Furthermore, the blurring and artifacts in Gaussian rendering degrade the matching quality of meth-ods [18, 29] that refine poses via rendered-to-query image matching, thereby limiting their final pose accuracy. To address the above limitations, we present ULF-Loc, a visual localization framework based on 3D Gaussian Splat-ting that constructs Unbiased Landmark Features for robust camera pose estimation. Our core philosophy departs from the prevailing paradigm of optimizing feature fields through 
+
+α-blending. Instead, we construct a sparse set of reliable 3D landmarks and endow them with unbiased and viewpoint-invariant features for robust 2D-3D matching, achieving highly accurate and efficient localization. Our key contri-butions can be summarized as follows: • We present a theoretical analysis demonstrating that learning feature fields in 3DGS via α-blending introduces inherent bias into 3D point features. This bias stems from the entanglement of a Gaussian’s feature with its neigh-boring Gaussians, fundamentally compromising the accu-racy of subsequent 2D-3D matching. • We introduce an unbiased feature construction pipeline that comprises Keypoint-Consensus Landmark Sam-pling for selecting geometrically stable landmarks and Geometry-Weighted Feature Fusion for direct multi-view feature aggregation. This approach effectively avoids the bias inherent in α-blending. • We design a coarse-to-fine localization framework that utilizes our unbiased landmark feature for initial pose es-timation. During the pose refinement step, we introduce the Local Geometric Consistency Verification (LGCV) module to detect and reject mismatches caused by render-ing artifacts, thereby enhancing the final pose accuracy. 
+
+## 2. Related Works 
+
+Structure-based visual localization. Structure-based methods [30, 37, 43, 45, 46, 61] remain a mainstream ap-proach in visual localization. Early methods relied on hand-crafted features [31], recent deep learning-based extrac-tors and matchers [13, 16, 25, 42, 44, 54] have signifi-cantly improved repeatability and discriminability. Hierar-chical methods like HLoc [43] balance accuracy and speed by combining image retrieval for coarse localization with fine-grained matching in localized regions. By effectively leveraging scene geometry, structure-based methods deliver high-precision pose estimation. 
+
+Regression-based visual localization. Regression-based methods can be divided into two main paradigms: Absolute Pose Regression (APR) [1, 9–11, 20, 27, 34, 39, 49] and Scene Coordinate Regression (SCR) [3, 5, 6, 8, 26, 56, 60]. APR methods utilize end-to-end networks for direct pose estimation. Recent approaches, such as Marepo [11], em-bed pose regressors in scene-specific maps to accelerate training. Despite achieving rapid inference after training, APR methods exhibit inherent limitations in precision and generalization [50]. SCR methods establish dense 2D-3D correspondences by regressing 3D coordinates per pixel. DSAC* [3] introduces the first differentiable RANSAC [17] for end-to-end training. Subsequent work, ACE [5], pro-poses a training strategy that shortens the mapping time to a few minutes. Methods like NeuMap [56] and ACE-G [6] enhance generalization capability by decoupling the coordi-nate regressor from scene mapping. SCR typically achieves superior accuracy compared to APR in indoor scenes. How-ever, its reliance on a large amount of high-quality 3D su-pervised data limits its application in some scenarios. 
+
+Rendering-based visual localization. Neural Radiance Fields (NeRF) [33] employ implicit scene representations for novel view synthesis. This capability has been adapted to visual localization, giving rise to inverse rendering-based pose optimization methods. Among them, iNeRF [66] ac-complishes pose refinement by backpropagating photomet-ric error. Subsequent research has shifted towards feature-space optimization for enhanced robustness [35, 68, 69]. For instance, PNeRFLoc [68] and NeRFMatch [69] lever-age internal NeRF features to establish 2D-3D correspon-dences and optimize poses by minimizing reprojection er-rors. Another research direction utilizes neural rendering as a training data augmentation tool [9, 10, 34, 39], improving the generalization of both APR and SCR approaches. Gaussian-based methods emerge as an efficient NeRF al-ternative, achieving real-time rendering performance. Sev-eral works [2, 55] have extended inverse rendering concepts from iNeRF [66] to 3DGS [21]. However, these approaches remain sensitive to initial pose conditions. In a comple-mentary direction, 6DGS [32] proposes a one-shot pose estimation method to avoid iterative refinement, and GS-CPR [29] leverages 3DGS to render high-quality images for refining regression-based localization results. Recent research focuses on combining the rendering efficiency of 3DGS with the robustness of feature matching [18, 53, 67]. GSplatLoc [53] and STDLoc [18] construct Gaussian fea-ture fields by optimizing feature consistency between ren-dered and pre-trained features through α-blending, follow-ing the paradigm of [40, 51, 70]. The camera pose is then solved via 2D-3D feature matching. Nevertheless, our theo-retical and experimental analysis reveals that the method in-troduces inherent biases into the 3D point features, making them unsuitable for high-precision matching. Furthermore, learning high-dimensional descriptors per Gaussian primi-tive substantially increases training overhead and memory consumption, posing challenges for real-time deployment. 2Figure 1. Overview of ULF-Loc. ULF-Loc first constructs a set of landmarks ˜G with unbiased features via K.C. Sampling and GWFF. The camera pose is estimated in a coarse-to-fine manner: it computes an initial pose Pcoarse by matching landmarks to 2D keypoints, then refines it to Pf ine through dense feature matching. During refinement, the LGCV rejects mismatches caused by rendering artifacts. 
+
+## 3. Method 
+
+We present a full visual localization framework based on 3D Gaussian Splatting. While previous methods rely on Feature-3DGS to construct 3D features for matching, we demonstrate that such features are inherently biased. We first review Feature-3DGS (Sec. 3.1) and theoretically re-veal the bias in its optimized 3D features, analyzing its im-pact on feature matching performance (Sec. 3.2). Based on this analysis, Sec. 3.3 introduces our framework, which in-cludes three key components: Keypoint-Consensus Land-mark Sampling, Geometry-Weighted Feature Fusion, and Local Geometric Consistency Verification. The overall structure of our framework is illustrated in Fig. 1. 
+
+3.1. Preliminary on Feature Gaussian 
+
+Feature-based 3D Gaussian Splatting augments the standard 3DGS representation by attaching a high-dimensional fea-ture vector to each Gaussian primitive. This augmentation allows the model to directly render dense 2D feature maps via α-blending. The feature value Fs(u) of a feature map pixel u is rendered as: 
+
+Fs(u) = X 
+
+> i∈N (u)
+
+fiαiTi, (1) where Ti = Q
+
+> j<i
+
+(1 −αj ) is the accumulated transmittance, 
+
+N (u) is the set of sorted Gaussians overlapping with the pixel u, fi is the feature vector of the i-th Gaussian, and αi
+
+is its blending weight. The optimization objective combines both photometric constraint Lrgb and feature constraint Lf :
+
+L = Lrgb + γLf with Lf = ∥Ft(I) − Fs( ˆI)∥1, (2) where I represents the ground truth image, and ˆI denotes the rendered image. The latent embedding Ft(I) is ex-tracted from the ground truth image using a pre-trained fea-ture extractor (e.g., CLIP [41] or SAM [22]), while Fs( ˆI)
+
+represents the rendered feature map. This representation has been adopted in recent localiza-tion methods [18, 53, 67] for direct 2D-3D feature match-ing. These methods fundamentally assume the optimized 3D features are reliable for precise correspondence estab-lishment. However, this assumption is flawed. In the following section, we systematically analyze the inherent bias in the feature optimization process and demonstrate its detrimental effects on matching performance. 
+
+3.2. Deviation Analysis of Gaussian Feature Fields 
+
+To analyze the inherent bias introduced during the 3DGS optimization process, we decompose the feature rendering process. Assuming that, the target Gaussian is at position t
+
+in N (uk), we isolate its individual contribution to the ren-dered feature Fs(uk) (from Eq. (1)) at pixel uk in view k:
+
+Fs(uk) = ftαtTt + X  
+
+> i∈N (uk),i ̸=t
+
+fiαiTi. (3) We define the target’s cumulative weight as wk = αtTt,and aggregate the remaining terms into a normalized back-ground feature  Bk = ( P   
+
+> i∈N (uk),i ̸=t
+
+fiαiTi)/(1 − wk).3This yields the equivalent formulation: 
+
+Fs(uk) = wkft + (1 − wk)Bk. (4) This decomposition separates the rendered feature into the target Gaussian’s contribution and the combined back-ground features. Next, we model the relationship between the 2D features and the underlying 3D feature. We assume the 2D feature f 2Dk in view k should preserve the charac-teristics of the true (but unknown) 3D feature μ, in practice exhibits variations due to viewpoint changes and other fac-tors. We therefore express this relationship as f 2Dk = μ+ϵk,where ϵk ∼ N (0 , Σ) represents the independent variation across views. Based on this relationship and Eq. (4), 3DGS optimization seeks the optimal f ∗ 
+
+> t
+
+that minimizes the dis-crepancy between Fs(uk) and f 2Dk across views. The ex-pected bias of this optimal solution relative to the true fea-ture μ is derived as (Please refer to the Appendix for full derivation): 
+
+bias = E[f ∗ 
+
+> t
+
+] − μ = E
+
+ 1 − wk
+
+wk
+
+(μ − Bk)
+
+
+
+. (5) This formulation reveals that unbiased estimation requires meeting two strict conditions: (1) full contribution (wk =1 across all views), where the target Gaussian completely dominates rendering without any background interference; or (2) background consistency (Bk = μ for all views), where the aggregated background features exactly match the target feature. However, practical scenarios violate both conditions. Partial occlusions and viewpoint varia-tions make wk < 1 inevitable. Meanwhile, Bk—being an average of multiple different Gaussians—rarely equals the specific target feature μ. Therefore, bias is fundamentally inherent in Feature-3DGS representations. To address the above limitations, we propose con-structing the feature field through weighted feature fusion. This method directly aggregates multi-view observations by computing a weighted average of 2D features from all visi-ble viewpoints for each 3D Gaussian primitive : 
+
+f f us =
+
+> K
+
+X
+
+> k=1
+
+wkf 2D  
+
+> k
+
+with 
+
+> K
+
+X
+
+> k=1
+
+wk = 1 , (6) where K denotes the number of visible views for the target point. This linear fusion ensures an unbiased feature esti-mate, E[f f us ] = μ, theoretically avoiding the inherent bias introduced by α-blending optimization. To empirically evaluate feature representation quality, we introduce a consistency metric for Gaussian primitives. For each primitive gi, we compute its projected coordinates 
+
+(ui, v i) in every visible view I ∈ V i and extract correspond-ing 2D features from pre-computed feature maps Ft(I).The feature distance is then computed as: 
+
+D(gi) = 1 − 1
+
+|V i|
+
+X
+
+> I∈V i
+
+⟨fi, F t(I)[ ui, v i]⟩, (7) 0.0 0.2 0.4 0.6 0.8 1.0  
+
+> Feature Distance
+> 0
+> 1
+> 2
+> 3
+> Probability Density
+> Feature 3DGS
+> Feature Fusion
+> Figure 2. Feature Distance Distributions on 7Scenes Chess.
+> Our feature fusion yields a sharply peaked distribution at small distances, indicating superior 2D-3D consistency, while Feature-3DGS shows a broad distribution, revealing its inherent bias.
+
+where fi is the 3D feature of gi (from Feature-3DGS [70] or our feature fusion). Fig. 2 shows the feature distance distributions, where smaller distances correspond to better 2D-3D feature consistency, which serves as empirical evi-dence for the improved matching capability. Our approach produces a sharply peaked distribution at small distances, indicating strong 2D-3D consistency. In contrast, Feature-3DGS exhibits a broad distribution toward larger distances. This clear contrast confirms that our method provides more compact and reliable features for 2D-3D matching. 
+
+3.3. Visual Localization 
+
+3.3.1. Keypoint-Consensus Landmark Sampling 
+
+While excellent for rendering, the dense Gaussian repre-sentations in 3DGS contain significant redundancy for vi-sual localization. Direct matching against all primitives is computationally prohibitive and susceptible to poorly-conditioned Gaussians in textureless or occluded regions. To address these limitations, we propose a Keypoint-Consensus Landmark Sampling (K.C. Sampling) strategy that distills the dense Gaussian set into a sparse collec-tion of reliable landmarks for robust 2D-3D matching. Our key insight is that reliable matching candidates must exhibit strong multi-view consistency [65]. For each Gaussian gi,we quantify this by a consensus score Si, computed by pro-jecting its center to all training views and checking its align-ment with the detected 2D keypoints: 
+
+Si = X
+
+> v∈V
+
+I
+
+
+
+min  
+
+> k∈K v
+
+∥P iv − k∥ ≤ τD
+
+
+
+, (8) where Piv is the projected 2D coordinate of gi in view v,
+
+Kv represents the 2D keypoints in that view, τD is the dis-tance threshold, and I[·] is the indicator function. This scor-ing mechanism ensures geometric stability and distinctive-ness by selecting Gaussians that project consistently near 2D keypoints across views. 4We subsequently employ Random k-Nearest Neighbor (k-NN) sampling guided by consensus scores to ensure spa-tial uniformity and high discriminability from various per-spectives. We denote this set of sampled Gaussians as scene landmarks ˜G. Please refer to Algorithm 1 in the Appendix. 
+
+3.3.2. Geometry-Weighted Feature Fusion 
+
+Building upon deviation analysis of Gaussian feature fields, we propose a Geometry-Weighted Feature Fusion (GWFF) strategy to compute stable features for visual localization. The core challenge is to create 3D landmark features that are discriminative and viewpoint invariant, so as to achieve reliable 2D-3D matching from different query perspectives. Real-world surfaces exhibit non-Lambertian reflectance properties, where appearance changes substantially with viewing angle. Consequently, the appearance of 3D Gaussian landmark varies significantly with the viewpoint. These view-dependent appearance changes are captured by the feature extractor, leading to inconsistent and poten-tially unreliable 2D features f 2Dk . To recover a stable and viewpoint-invariant 3D feature from these volatile 2D ob-servations, we employ a geometry-weighted feature fusion scheme. For landmark ˜gi in view k, the weight is defined as: 
+
+wi,k = ni · di,k , (9) where ni is the surface normal of ˜gi, derived from its min-imum scale factor direction and disambiguated to satisfy 
+
+ni · di,k > 0, and di,k = ( Ck − μi)/∥Ck − μi∥ is the normalized viewing direction from Gaussian center μi to camera center Ck. Final features are obtained by normal-izing weights across visible views and aggregating features following Eq. (6). The fusion process is shown in Fig. 3. Compared to Feature-3DGS, our method produces fea-tures that better approximate true 3D characteristics with stronger viewpoint invariance, significantly improving 2D-3D matching robustness across diverse viewpoints. 
+
+3.3.3. Coarse-to-Fine Camera Localization 
+
+We adopt a coarse-to-fine localization framework. Benefit-ing from the K.C. Sampling and GWFF, we first estimate an initial pose via sparse feature matching, then refine it through dense matching using rendered imagery. 
+
+Initial Pose Estimation . In the coarse localization stage, given a query image  Iq , we extract a fixed number of 2D keypoints  Kq and their corresponding feature descriptors using the feature extractor  F. By computing cosine similar-ities between keypoint descriptors and landmark Gaussian features, we match each query feature to the most similar landmark feature, forming the sparse set Mcoarse . So, we can use the RANSAC+PnP [17, 24] algorithm to estimate the 6-DoF initial pose  Pcoarse .
+
+Pose Refinement. After obtaining the initial pose  Pcoarse ,we render an RGB image  ˆIs and a depth map  ˆDs from the        
+
+> Figure 3. Geometry-Weighted Feature Fusion. For each land-mark Gaussian (center μi), we compute fusion weights based on the cosine similarity between its normal niand viewing directions
+> di,k from multiple cameras. Query Image Render Image
+> ℳ𝐀
+
+𝐀 𝐀 
+
+𝐀 𝐀 𝐀 𝐀 
+
+𝐀 𝐀 
+
+𝐀 𝐀 
+
+𝐀 𝐀      
+
+> Local Local
+> Figure 4. Local Geometric Consistency Verification. Each match pair (xi, y i)forms triangular pairs with its k-NN. Each tri-angular pair is then checked for two geometric constraints.
+
+Gaussian scene  G. We then extract feature maps from both the rendered image  ˆIs and the query image  Iq using  F for dense feature matching. Inspired by [18, 54, 63], we adopt a coarse-to-fine multi-resolution matching strategy and intro-duce a mismatch rejection algorithm to mitigate the impact of blur and artifacts in Gaussian rendering. In the coarse matching stage, we compute a cosine simi-larity matrix on coarse feature maps (1/8 scale of the query image), apply dual-softmax to obtain a probability matrix 
+
+Pc, and establish coarse correspondences  Mc via mutual nearest neighbor (MNN) search. However, this stage typ-ically contains numerous mismatches due to blur and arti-facts in Gaussian rendering [7]. To address this, we pro-pose a topology-based correspondence pruning algorithm called Local Geometric Consistency Verification (LGCV). As shown in Fig. 4, for each candidate match (xi, y i) ∈Mc, we construct triangle pairs within its K-neighborhood: 
+
+Ti = (△xixj xk , △yiyj yk ) | j, k ∈ N K (i) . Under the lo-cal rigidity assumption [19, 64], we introduce two topolog-ical consistency checks for each inlier match: • Angular consistency: | cos θx − cos θy | < 1 − τa, where 
+
+θx, θ y are corresponding angles in the two triangles and 
+
+τa is the angular threshold. • Scale consistency: max( |sa − sb|, |sa − sc|, |sb − sc|) <τs, where sa, s b, s c are side-length ratios ( s = lx/l y for 5Table 1. Localization Results on 7Scenes. We report the median translation and rotation errors ( cm /°) for each scene. For HLoc and DVLAD+R2D2, the top 10 images were retrieved using their default settings. The last column reports the average over all 7 scenes.                                                                                                                                                                          
+
+> Methods Chess Fire Heads Office Pumpkin RedKitchen Stairs Avg. ↓
+> FM AS (SIFT) [47] 3/0.87 2/1.01 1/0.82 4/1.15 7/1.69 5/1.72 4/1.01 3.71/1.18 HLoc (SP+SG) [43] 2.39/0.84 2.29/0.91 1.13/0.77 3.14/0.92 4.92/1.30 4.22/1.39 5.05/1.41 3.31/1.08 DVLAD+R2D2 [57] 2.56/0.88 2.21/0.86 0.98/0.75 3.48/1.00 4.79/1.28 4.21/1.44 4.60/1.27 3.26/1.07 APR DFNet [9] 3/1.12 6/2.30 4/2.29 6/1.54 7/1.92 7/1.74 12/2.63 6/1.93 PMNet [27] 3/1.26 4/1.76 2/1.68 6/1.69 7/1.96 8/2.23 11/2.97 6/1.93 Marepo [11] 1.9/0.83 2.3/0.92 2.1/1.24 2.9/0.93 2.5/0.88 2.9/0.98 5.9/1.48 2.9/1.04 SCR DSAC* [3] 0.50/0.17 0.78/0.29 0.50/0.34 1.19/0.35 1.19/0.29 0.72/0.21 2.65/0.78 1.07/0.35 ACE [5] 0.55/0.18 0.83/0.33 0.53/0.33 1.05/0.29 1.06/0.22 0.77/0.21 2.89/0.81 1.10/0.34 NeuMap [56] 2/0.81 3/1.11 2/1.17 3/0.98 4/1.11 4/1.33 4/1.12 3.14/0.95 GLACE [60] 0.6/0.18 0.9/0.34 0.6/0.34 1.1/0.29 0.9 /0.23 0.8/0.20 3.2/0.93 1.2/0.36 NeRF/GS DFNet+NeFeS 50 [10] 2/0.57 2/0.74 2/1.28 2/0.56 2/0.55 2/0.57 5/1.28 2.4/0.79 HR-APR [28] 2/0.55 2/0.75 2/1.45 2/0.64 2/0.62 2/0.67 5/1.30 2.4/0.85 PNeRFLoc [68] 2/0.80 2/0.88 1/0.83 3/1.05 6/1.51 5/1.54 32/5.73 7.29/1.76 NeRFMatch [69] 0.95/0.30 1.11/0.41 1.34/0.92 3.09/0.87 2.21/0.60 1.03/0.28 9.26/1.74 2.71/0.73 MCLoc [58] 2/0.8 3/1.4 3/1.3 4/1.3 5/1.6 6/1.6 6/2.0 4.1/1.43 GSplatLoc [53] 0.39 /0.13 0.91/0.29 0.94/0.50 1.41/0.32 1.41/0.26 1.32/0.29 3.44/0.82 1.40/0.37 GSFFs-PR Feature [38] 0.4/0.19 0.6/0.26 0.5/0.36 1.0/0.31 1.3/0.38 0.6 /0.23 25.1/0.63 4.2/0.34 STDLoc [18] 0.46/0.15 0.57/0.24 0.45/0.26 0.86/0.24 0.93/0.21 0.63/0.19 1.42/0.41 0.8/0.24 ACE+GS-CPR [29] 0.5/0.15 0.6/0.25 0.4/0.28 0.9/0.26 1.0/0.23 0.7/0.17 1.4/0.42 0.8/0.25 Ours 0.42/ 0.11 0.44 /0.19 0.36 /0.21 0.73 /0.20 0.92/ 0.18 0.65/ 0.13 1.38 /0.36 0.7 /0.20
+
+corresponding edges) and τs is the scale threshold. We then evaluate the geometric consistency of each match by counting how many triangle pairs satisfy both con-straints. Matches with insufficient support are discarded, yielding refined matches M′
+
+> c
+
+.In the fine matching stage, we crop corresponding  8 × 8
+
+local feature patches from the fine feature maps based on 
+
+M′
+
+> c
+
+. Using the same procedure, we obtain the final refined matches  Mf via MNN. Finally, we lift the 2D matches to 3D using the depth map  ˆDs and compute the final pose 
+
+Pf ine  via the RANSAC+PnP [17, 24]. The pose refinement process allows iteration to achieve higher accuracy. 
+
+## 4. Experiments 
+
+4.1. Experimental Setup 
+
+Datasets. We evaluate our method on three public bench-marks. 7Scenes [52] is a standard indoor RGB-D dataset containing seven distinct scenes, each consisting of multi-ple sequences. 12Scenes [59] provides more complex in-door environments, where we follow the common practice [8, 29] of using its first sequence for testing. The Cam-bridge Landmarks [20] is a large-scale outdoor dataset that presents real-world challenges, including illumination vari-ations and motion blur. 
+
+Baseline and Metrics. To evaluate the localization accu-racy of our method, we compare it against four representa-tive categories of visual localization approaches: (1) Fea-ture Matching (FM): including AS [47], HLoc [43], and DVLAD [57]; (2) Absolute Pose Regression (APR): includ-ing DFNet [9], PMNet [27], and Marepo [11]; (3) Scene Coordinate Regression (SCR): including DSAC* [3], ACE [5], NeuMap [56], and GLACE [60]; (4) NeRF/GS: includ-ing PNeRFLoc [68], MCLoc [58], GSplatLoc [53], GSFFs-PR [38], STDLoc [18], and GS-CPR [29]. For evaluation, we adopt the commonly used median translation and rota-tion error, along with the recall rate, defined as the percent-age of test images localized within a cm and b°. 
+
+Implementation Details. For the 7Scenes and 12Scenes, we utilize the SfM pseudo ground truth poses provided by [4]. For Cambridge Landmarks, we adopt the ground truth from [20]. Our training follows the original 3DGS [21], with each scene trained for 30,000 iterations after initializa-tion. We employ SuperPoint [13] as the feature extractor. All experiments are conducted on a single NVIDIA RTX 4090 GPU. During sampling, we set the distance threshold 
+
+τD = 1 pixel, landmarks to 20,000, and nearest neighbors to 32. For localization, query images use 2,048 keypoints with Poselib [14, 23] as the pose solver. For LGCV, default values for angular threshold  τa and scale threshold  τs are 0.9659 and 0.1, respectively; the number of nearest neigh-bors is 8; and the support score threshold is 4. 
+
+4.2. Visual Localization Accuracy 
+
+Results on the 7Scenes. Tab. 1 presents the median trans-lation and rotation errors ( cm /°) on 7Scenes. Our method achieves the best performance in most scenes, attaining the lowest average error (0.7 cm /0.2°). It reduces the average 6Table 2. Recall on 7Scenes, 12Scenes and Cambridge Land-marks Datasets. We use [a/b] to represent the average percentage of frames below (a cm /b°). For 7Scenes and 12Scenes, we adopt stricter thresholds of 2 cm /2° and 1 cm /1° due to the saturated per-formance of existing methods on 5 cm /5°. 
+
+Methods 7Scenes 12Scenes Cambridge [5/5] [2/2] [1/1] [5/5] [2/2] [1/1] [50/5] [15/5] HLoc (SP + SG) [43] 95.7 84.5 - - - - - -DVLAD+R2D2 [57] 95.7 87.2 - - - - - -Marepo [11] 84.0 33.7 6.2 95.0 50.4 9.9 - -DSAC* [3] 97.8 80.7 - 99.8 96.7 - - -ACE [5] 97.1 83.3 56.3 100 97.2 75.0 78.7 43.1 GLACE [60] 95.6 82.2 57.1 100 97.5 78.6 91.0 62.8 GSpIatLoc [53] 78.0 - 34.6 91.9 70.3 45.4 - -STDLoc [18] 99.1 90.9 72.8 98.4 97.2 90.1 95.4 70.8 Marepo+GS-CPR [29] 99.4 89.6 59.8 98.9 90.9 72.7 - -ACE+GS-CPR [29] 99.9 92.9 66 100 98.7 87.1 84.6 56.8 Ours 99.5 93.2 75.0 99.2 98.8 94.1 93.7 72.0 
+
+Table 3. Localization Results on 12Scenes. We report the median translation and rotation errors ( cm /°). Due to space constraints, we present results on 4 scenes (Please refer to full results in the Appendix). The last column reports the average over all 12 scenes. 
+
+Methods Apartment 2 Office 2 Avg. ↓
+
+living luke 5a 5b APR Marepo [11] 1.8/0.9 2.3/1.3 2.0/0.9 2.9/1.1 2.1/1.04 SCR SCRNet [26] 4.2/1.8 4.4/1.4 3.6/1.5 3.4/1.2 3.0/1.22 SCRNet-ID [36] 3.0/1.2 3.7/1.3 3.3/1.2 3.8/1.3 2.8/1.12 DSAC* [3] - - - - 0.5/0.25 ACE [5] 0.59/0.23 0.76/0.27 0.86/0.33 0.82/0.28 0.7/0.26 GLACE [60] 0.60/0.24 0.69/0.31 0.79/0.31 0.80/0.25 0.7/0.25 NeRF-SCR [8] 2.0/0.8 2.6/1.0 2.5/0.9 2.6/0.8 2.0/0.76 NeRF/GS PNeRFLoc [68] 1.4/0.5 8.1/3.3 - 2.8/0.9 2.8/1.08 SplatLoc [67] 1.2/0.5 1.5/0.6 1.4/0.6 1.5/0.5 1.2/0.50 GSplatLoc [53] 0.54/0.19 1.84/0.31 3.66/0.37 0.94/0.27 1.4/0.26 GSFFs-PR Feature [38] 0.4/0.21 0.6/0.27 0.9/0.41 1.1/0.41 0.6/0.27 Marepo+GS-CPR [29] 0.59/0.25 1.04/0.45 0.69/0.27 0.99/0.28 0.7/0.28 ACE+GS-CPR [29] 0.50/0.20 0.64/0.27 0.68/0.27 0.57/0.19 0.5/0.21 STDLoc [18] 0.31/0.13 0.49/0.20 0.58/0.24 0.57/0.22 0.4/0.18 Ours 0.26 /0.12 0.41 /0.17 0.47 /0.22 0.38 /0.16 0.3 /0.15 
+
+median translation error by approximately 36% compared to the top-performing SCR method ACE [5]. Tab. 2 reports the recall rates at 5 cm /5°, 2 cm /2°, and 1 cm /1° thresholds on 7Scenes. Our method achieves the best results at both the 2 cm /2° and 1 cm /1°, with a recall of 75% at 1 cm /1°, outperforming the SOTA methods ACE+GS-CPR [29] and STDLoc [18] by 9% and 2.2%, respectively. 
+
+Results on the 12Scenes. Tab. 3 reports the median transla-tion and rotation errors on 12Scenes. The results show that our method achieves the best performance in all scenes and obtains the lowest average median error (0.3 cm /0.15°). Re-call rates in Tab. 2 show that our method achieves relatively high recall under both lenient and strict metrics. At the 1cm /1° metric, our method reaches a recall of 94.1%, sur-passing ACE+GS-CPR [29] and STDLoc [18] by 7% and 4%, respectively, demonstrating its superior performance in 
+
+Table 4. Localization Results on Cambridge Landmarks Dataset. We report the median translation and rotation errors (cm /°). For HLoc, the top 10 images were retrieved using their de-fault settings. The last column reports the average of all 5 scenes.                                                                                                                             
+
+> Methods Court College Hospital Shop Church Avg. ↓
+> FM  AS (SIFT) [47] 24/0.13 13/0.22 20/0.36 4/0.21 8/0.25 14/0.23 HLoc (SP+SG) [43] 17.7/0.11 11.0 /0.20 15.1/0.31 4.2/0.20 7.0/0.22 11.0/0.21 pixLoc [45] 30/0.1 14/0.2 16/0.3 5/0.2 10/0.3 15/0.2 APR DFNet [9] -73/2.37 200/2.98 67/2.21 137/4.02 119/2.90 LENS [34] -33/0.5 44/0.9 27/1.6 53/1.6 39/1.2 PMNet [27] -31/0.55 44/0.79 17/0.86 31/0.96 31/0.79 SCR DSAC* [3] 33.0/0.21 17.9/0.31 21.1/0.40 5.2/0.24 15.4/0.51 18.5/0.33 ACE(Poker) [5] 28/0.1 18/0.3 25/0.5 5/0.3 9/0.3 17/0.3 NeuMap [56] 6/0.10 14/0.19 19/0.36 6/0.25 17/0.53 12/0.29 GLACE [60] 19/0.1 19/0.3 17/0.4 4/0.2 9/0.3 14/0.3 NeRF/GS CROSSFIRE [35] -47/0.7 43/0.7 20/1.2 39/1.4 37/1.0 DFNet+NeFeS 50 [10] -37/0.54 52/0.88 15/0.53 37/1.14 35/0.77 HR-APR [28] -36/0.58 53/0.89 13/0.51 38/1.16 35/0.78 NeRFMatch [69] 19.6/0.09 12.5/0.23 20.9/0.38 8.4/0.40 10.9/0.35 14.5/0.29 MCLoc [58] -31/0.42 39/0.73 12/0.45 26/0.88 27/0.62 GSplatLoc [53] -31/0.49 16/0.68 4/0.34 14/0.42 16/0.48 GSFFs-PR Feature [38] -17/0.26 18/0.36 4/0.25 8/0.26 12/0.30 STDLoc [18] 15.7/0.06 15.0/ 0.17 11.9/0.21 3.0/ 0.13 4.7/0.14 10.1/0.14 ACE+GS-CPR [29] -20/0.29 21/0.40 5/0.24 13/0.40 15/0.33 Ours 7.49/ 0.04 17.03/0.19 10.26 /0.19 2.83 /0.14 3.65 /0.11 8.3 /0.13
+
+Table 5. Training Time and Memory Usage on 7Scenes Heads. 
+
+Methods Training Time ↓ Memory ↓
+
+PNeRFLoc [68] 58 mins 6396 MB GSplatLoc [53] 1.5 hours 6986 MB STDLoc [18] 50 mins 6566 MB Ours 5 mins 1086 MB 
+
+high-precision visual localization. 
+
+Results on the Cambridge Landmarks. Tab. 4 shows the localization results on the outdoor dataset, while Tab. 2 fur-ther reports the recall rates at 50 cm /5° and 15 cm /5°. The results indicate that our method achieves the best or second-best median errors in all scenes and yields the state-of-the-art average median error. The average median translation error is improved by 30% and 17% compared to the SCR method NeuMap [56] and the GS method STDLoc [18], re-spectively. Notably, many methods fail to function properly in the Court scene due to large-scale and appearance varia-tions. In contrast, our method maintains superior localiza-tion accuracy (7.49 cm /0.04°), demonstrating its robustness in complex environments. 
+
+4.3. Memory Usage and Time Analysis 
+
+As shown in Tab. 5, ULF-Loc significantly reduces training time and memory consumption compared to other feature-field based methods, with a 10x speedup and 1/6 the GPU memory over STDLoc [18]. This efficiency stems from our core design, which avoids the costly paradigm of learning a high-dimensional descriptor for each Gaussian. Instead, by constructing unbiased features for a sparse set of landmarks, we eliminate the primary source of training and memory overhead while maintaining superior pose accuracy. 74.4. Ablation Study 
+
+In this section, we conduct ablation studies to validate the effectiveness of each component in the system. 
+
+Table 6. Ablation Study on Cambridge Landmarks. We report the recall rates for the 50 cm /5° and 15 cm /5°, and use [a/b] to represent the average percentage of frames below (a cm /b°).                                                                 
+
+> Case Sampling Feature LGCV Initial Pose Final Pose [50/5] [15/5] [50/5] [15/5] #1 RS Blending w/o 79.7 47.2 89.3 68.2 #2 RS+K.C. Blending w/o 87.1 60.2 90.6 68.9 #3 FPS GWFF w/o 72.1 33.5 86.1 63.7 #4 FPS+K.C. GWFF w/o 85.2 54.1 92.0 69.5 #5 RS GWFF w/o 86.2 52.6 90.9 69.6 #6 RS+K.C. GWFF w/o 89.4 63.1 91.7 70.9 #7 RS+K.C. GWFF w/o W w88.7 61.9 93.2 70.6 #8 RS+K.C. GWFF w89.4 63.1 93.7 72.0
+
+Effects of the Gaussian Landmarks Number. We evalu-ate how the number of landmarks affects localization per-formance in our sampling algorithm (Sec. 3.3.1). For each dataset, we select one scene to determine the optimal num-ber of landmarks. As summarized in Fig. 5, our algorithm achieves high recall with a small number of Gaussian land-marks ( ∼ 1,000), significantly reducing complexity ver-sus direct primitive matching. The recall rates saturate at 20,000, which we set as the default sampling value. 
+
+Effectiveness of Keypoint-Consensus Sampling. We val-idate our Keypoint-Consensus (K.C.) Landmark Sampling (Sec. 3.3.1) using recall rates at 50 cm /5° and 15 cm /5° on the Cambridge Landmarks dataset. Evaluate the perfor-mance of our method by comparing it with random sam-pling (RS) and farthest point sampling (FPS). We also report the initial pose estimation results to visually reflect the im-pact of sampling strategies on 2D-3D matching. As shown in Tab. 6, comparisons between (#1 and #2), (#3 and #4), as well as (#5 and #6) indicate that the Keypoint-Consensus Sampling strategy significantly enhances the quality of sam-pled landmarks. By selecting Gaussian landmarks with high multi-view 2D keypoint alignment and uniform spatial dis-tribution, our method enhances matching accuracy and ad-vances localization performance. 
+
+Effectiveness of Geometry-Weighted Feature Fusion. 
+
+Tab. 6 shows the impact of the Gaussian primitive fea-ture obtained by different methods on localization perfor-mance. ‘Blending’ represents the method from [70], which obtains Gaussian features by biased α-blending optimiza-tion. ‘GWFF’ is our proposed Geometry-Weighted Feature Fusion in Sec. 3.3.2, and ‘GWFF w/o W’ indicates no ge-ometric weighting. All methods use SuperPoint [13] as the feature extractor. Comparing (#1 and #5), as well as (#2 and #6), it can be seen that Gaussian features optimized by 
+
+α-blending have limited accuracy. In contrast, our GWFF 0.5 1 2 5 10 15 20 25 Number of Primitives / k 60 70 80 90 100 Recall / % 
+
+> Chess_2cm2° Court_2m5° Apt1_kitchen_1cm1°
+
+Figure 5. Recall Rate for Different Numbers of Landmarks. 
+
+Figure 6. Qualitative Comparison of LGCV. LGCV enhances the accuracy of pose estimation by eliminating mismatches. 
+
+achieves better localization results by obtaining unbiased and accurate 3D features. Further comparison between (#7 and #8) shows that the geometry-weighted mechanism ef-fectively improves performance, as it fully considers the im-pact of viewpoint variation on 3D feature representation. 
+
+Efficacy of Local Geometric Consistency Verification. 
+
+We validate the proposed Local Geometric Consistency Verification (LGCV) for mismatch removal. As shown in Tab. 6, comparison between (#6 and #8) demonstrates that LGCV significantly improves localization accuracy during the pose refinement stage. As Fig. 6 illustrates, rendering artifacts from motion blur and weak textures complicate matching. Our method addresses this by verifying local ge-ometric consistency of matches, effectively removing mis-matches and enhancing localization performance. 
+
+## 5. Conclusion 
+
+We present ULF-Loc, a visual localization framework that tackles the inherent feature bias in 3DGS. Our theoretical analysis reveals that the widely adopted α-blending opti-mization introduces an inherent bias into 3D point features. To overcome this, we introduce a novel pipeline comprising Keypoint-Consensus Landmark Sampling and Geometry-Weighted Feature Fusion for robust matching, together with Local Geometric Consistency Verification for pose refine-ment. Extensive experiments show that ULF-Loc achieves SOTA accuracy while significantly reducing training time and memory usage. This work establishes a more reliable and practical paradigm for visual localization with 3DGS. 8ULF-Loc: Unbiased Landmark Feature for Robust Visual Localization with 3D Gaussian Splatting 
+
+# Supplementary Material 
+
+In this supplementary material, we first present a the-oretical analysis of the inherent feature bias in Feature-3DGS [70], where Appendix A.1 establishes the problem setup and Appendix A.2 derives the bias expression un-der a simplified model. A more rigorous analysis under joint optimization is then provided in Appendix A.3, con-firming the fundamental limitations of α-blending. Subse-quently, Appendix B offers the pseudo-code for our key algorithmic components: Keypoint-Consensus Landmark Sampling (B.1) and the highly efficient, GPU-parallelizable Local Geometric Consistency Verification (B.2). Finally, a comprehensive set of experiments is detailed in Appendix C, encompassing the formal definitions of evaluation met-rics (C.1), the use of semantic segmentation for enhancing 3DGS reconstruction (C.2), complete quantitative results on the 12Scenes (C.3) and Cambridge Landmarks (C.4) datasets, the localization speed comparison (C.5), ablation experiments on LGCV parameters (C.6), extensive qualita-tive visualizations (C.7), and a dedicated analysis of failure cases (C.8). 
+
+## A. Theoretical Analysis of Feature Bias 
+
+A.1. Problem Setup and Notation 
+
+Consider a 3D feature point with feature vector denoted as 
+
+μ ∈ RD . Its 2D projection features across K training views are {f 2Dk ∈ RD }Kk=1 . We assume that the 2D feature f 2Dk
+
+in view k should preserve the characteristics of the true (but unknown) 3D feature μ, yet in practice exhibits variations due to viewpoint changes and other factors. We thus model this relationship as: 
+
+f 2Dk = μ + ϵk, (10) where ϵk represents view-independent variation, satisfying 
+
+ϵk ∼ N (0 , Σ) with Σ = diag (σ21 , . . . , σ 2 
+
+> D
+
+). Our objective is to analyze the bias of features obtained by Feature-3DGS. 
+
+A.2. Bias Analysis under Simplified Model 
+
+In Feature-3DGS, the rendered feature Fs(uk) at pixel uk in view k is computed via α-blending of multiple Gaussians: 
+
+Fs(uk) = X  
+
+> i∈N (uk)
+
+fiαiTi, (11) where Ti = Q
+
+> j<i
+
+(1 −αj ) is the accumulated transmittance, 
+
+N (uk) is the set of sorted Gaussians overlapping with pixel 
+
+uk, fi is the feature vector of the i-th Gaussian, and αi is its blending weight. As described in the main paper, to analyze the inherent bias in the 3DGS optimization process, we decompose the feature rendering process. Assuming that the target Gaus-sian is at position t in N (uk), we isolate its individual con-tribution: 
+
+Fs(uk) = ftαtTt + X  
+
+> i∈N (uk),i ̸=t
+
+fiαiTi. (12) Defining the target’s cumulative weight as wk = αtTt and aggregating the remaining terms into a normalized neigh-borhood feature Bk = ( P   
+
+> i∈N (uk),i ̸=t
+
+fiαiTi)/(1 − wk),we obtain the equivalent formulation: 
+
+Fs(uk) = wkft + (1 − wk)Bk. (13) Feature-3DGS optimizes the features of each Gaussian primitive by minimizing the feature loss Lf . Here, we em-ploy the L2 loss: 
+
+Lf =
+
+> K
+
+X
+
+> k=1
+
+∥wkft + (1 − wk)Bk − f 2Dk ∥22. (14) 
+
+To simplify and intuitively analyze the feature bias, we consider a randomly selected training view k and assume achieving perfect fitting in this view: 
+
+wkft + (1 − wk)Bk = f 2Dk . (15) Solving for the optimal feature f ∗ 
+
+> t
+
+in this view yields: 
+
+f ∗ 
+
+> t
+
+= f 2Dk − (1 − wk)Bk
+
+wk
+
+, wk̸ = 0 . (16) Substituting f 2Dk = μ + ϵk:
+
+f ∗ 
+
+> t
+
+= μwk
+
+− (1 − wk)Bk
+
+wk
+
++ ϵk
+
+wk
+
+. (17) Since both wk and Bk are random variables, we com-pute the expectation E[f ∗ 
+
+> t
+
+] using conditional expectation (E[E[X|Y, Z ]] = E[X]). First, conditioning on wk and Bk:
+
+E[f ∗ 
+
+> t
+
+|wk, B k] = μwk
+
+− (1 − wk)Bk
+
+wk
+
+, (18) Then, taking the overall expectation: 
+
+E[f ∗ 
+
+> t
+
+] = Ewk ,B k
+
+ μwk
+
+− (1 − wk)Bk
+
+wk
+
+
+
+. (19) 9The expected bias of this optimal solution relative to the true feature μ is: 
+
+bias = E[f ∗ 
+
+> t
+
+] − μ = Ewk ,B k
+
+ 1 − wk
+
+wk
+
+(μ − Bk)
+
+
+
+. (20) This result aligns with Eq. (5) in the main paper, con-firming the inherent bias in 3DGS feature learning. The bias expression reveals two critical insights: • Bias amplification from low contribution. The factor 
+
+(1 − wk)/w k amplifies the bias when the target Gaus-sian’s contribution to pixel rendering is partial ( wk < 1). This amplification becomes particularly severe when wk
+
+approaches zero, corresponding to cases where the Gaus-sian is heavily occluded or has very low opacity. • Neighborhood feature entanglement. The term (μ −
+
+Bk) quantifies the discrepancy between the true feature and the aggregated neighborhood features, meaning that each Gaussian’s optimized feature deviates from its in-trinsic characteristic μ to compensate for neighborhood context. Notably, the bias vanishes only under two ideal conditions: (1) when wk = 1 (complete dominance of the target Gaus-sian), or (2) when Bk = μ (perfect neighborhood consis-tency). In practice, occlusions, viewpoint variations, and scene complexity prevent these conditions from being met, making bias an inherent limitation of α-blending in 3DGS. 
+
+A.3. Rigorous Analysis under Joint Optimization 
+
+The previous simplified analysis provides an intuitive un-derstanding of the source of bias. However, the actual optimization process in 3DGS involves joint optimization across all views. To establish a more rigorous theoretical foundation, we reanalyze the feature bias problem within the joint optimization framework. Specifically, we obtain the optimal feature f ∗ 
+
+> t
+
+by min-imizing the loss function Lf (corresponding to Eq. (14)). According to the first-order necessary condition in opti-mization theory, the partial derivative of the loss function with respect to ft should be zero at the extremum: 
+
+∂Lf
+
+∂f t
+
+= 2 
+
+> K
+
+X
+
+> k=1
+
+wk
+
+ wkft + (1 − wk)Bk − f 2Dk
+
+ = 0 .
+
+(21) Solving this yields the optimal feature f ∗ 
+
+> t
+
+:
+
+f ∗ 
+
+> t
+
+=
+
+PKk=1 wk
+
+ f 2Dk − (1 − wk)Bk
+
+PKk=1 w2
+
+> k
+
+,
+
+> K
+
+X
+
+> k=1
+
+w2 
+
+> k
+
+> 0.
+
+(22) Substituting f 2Dk = μ + ϵk:
+
+f ∗ 
+
+> t
+
+= μ PKk=1 wk + PKk=1 wkϵk − PKk=1 wk(1 − wk)Bk
+
+PKk=1 w2
+
+> k
+
+.
+
+(23) Similarly, to compute the expectation E[f ∗ 
+
+> t
+
+], we employ conditional expectation. First, conditioning on the sets 
+
+{wk}Kk=1 and {Bk}Kk=1 :
+
+E[f ∗ 
+
+> t
+
+|{ wk}, {Bk}] = μ PKk=1 wk − PKk=1 wk(1 − wk)Bk
+
+PKk=1 w2
+
+> k
+
+.
+
+(24) Then, taking the overall expectation: 
+
+E[f ∗ 
+
+> t
+
+] = E{wk },{Bk }
+
+"
+
+μ PKk=1 wk − PKk=1 wk(1 − wk)Bk
+
+PKk=1 w2
+
+> k
+
+#
+
+.
+
+(25) The expected bias of the optimal solution relative to the true feature μ is bias = E[f ∗ 
+
+> t
+
+] − μ, namely: 
+
+bias = E{wk },{Bk }
+
+" PKk=1 wk(1 − wk)( μ − Bk)
+
+PKk=1 w2
+
+> k
+
+#
+
+.
+
+(26) Compared to the simplified single-view analysis in Eq. (20), the rigorous joint optimization yields a more com-plex but structurally similar bias expression in Eq. (26), confirming that the feature bias is inherent to the α-blending process in 3DGS. This theoretical understanding motivates our proposed Geometry-Weighted Feature Fusion (GWFF) approach, which avoids α-blending optimization altogether and directly constructs unbiased features through multi-view aggregation. 
+
+## B. Pseudo-code of K.C. Sampling and LGCV 
+
+B.1. Keypoint-Consensus Landmark Sampling 
+
+We present the pseudo-code of the Keypoint-Consensus Landmark Sampling (K.C. Sampling) algorithm in Algo-rithm 1. This algorithm implements an efficient sampling strategy for selecting representative landmarks from Gaus-sian primitives through a two-stage process. First, it com-putes consensus scores by evaluating Gaussian projections against 2D keypoints across multiple views. Second, it ap-plies random sampling with local KNN search to ensure ge-ometric stability and uniform distribution. 
+
+B.2. Local Geometric Consistency Verification 
+
+We present the pseudo-code of the Local Geometric Consis-tency Verification (LGCV) algorithm in Algorithm 2. This algorithm is implemented in a tensor-operation style, which enables the full utilization of GPU parallel computing capa-bilities. Consequently, it achieves high computational effi-ciency and can rapidly process large-scale point set data. 
+
+## C. More Experiments 
+
+C.1. Evaluation Metrics 
+
+We provide the formal definitions of the evaluation metrics used in the main paper. The rotation and translation errors 10 Algorithm 1: Keypoint-Consensus Landmark Sampling 
+
+Require: Gaussians G; Feature Extractor F; Training Views V; Distance Threshold τD ; Landmark Number 
+
+n; Nearest Neighbors k
+
+Ensure: Sampled landmarks ˜G 
+
+> 1:
+
+S ← 0|G| % Consensus score per Gaussian  
+
+> 2:
+
+˜G ← ∅  
+
+> 3:
+
+for v ∈ V do  
+
+> 4:
+
+Pv ← Project (G.center , v ) 
+
+> 5:
+
+Iv ← { i | P iv within image bounds of Iv } 
+
+> 6:
+
+Kv ← F (Iv ) % Extract 2D Keypoints in view v 
+
+> 7:
+
+for i ∈ I v do  
+
+> 8:
+
+dmin ← min k∈K v ∥P iv − k∥ 
+
+> 9:
+
+if dmin ≤ τD then  
+
+> 10:
+
+S[i] ← S [i] + 1  
+
+> 11:
+
+end if  
+
+> 12:
+
+end for  
+
+> 13:
+
+end for  
+
+> 14:
+
+A ← RandomSample (G, n ) 
+
+> 15:
+
+for a ∈ A do  
+
+> 16:
+
+Na ← kNN (a, G, k ) 
+
+> 17:
+
+g∗ ← arg max g∈N a S[g] 
+
+> 18:
+
+˜G ← ˜G ∪ { g∗} 
+
+> 19:
+
+end for  
+
+> 20:
+
+return ˜G
+
+between the estimated and ground-truth camera poses are calculated as follows: 
+
+∆ ˆR = arccos trace ( ˆR⊤R) − 12
+
+!
+
+, (27) 
+
+∆ˆ t = ∥ˆt − t∥2, (28) where ˆR and ˆt represent the estimated rotation matrix and translation vector, while R and t denote the corresponding ground-truth values. 
+
+C.2. Semantic Segmentation for Building 3DGS 
+
+Following the practice in [18, 29], we employ semantic segmentation during training on the Cambridge Landmarks dataset to enhance 3DGS reconstruction quality. We uti-lize Mask2Former [12] to precisely isolate dynamic objects (e.g., vehicles and pedestrians) and sky regions from the static background, as visualized in Fig. A. The segmenta-tion masks are utilized during the 3DGS reconstruction pro-cess to exclude these transient elements, leading to cleaner and more consistent 3D representations. The removal of dy-namic objects reduces the formation of ghosting artifacts, while the exclusion of sky regions eliminates unnecessary geometry in areas lacking structural information. 
+
+Algorithm 2: Local Geometric Consistency Verification 
+
+Require: Source Points X ∈ RN ×2; Target Points Y ∈
+
+RN ×2; Nearest Neighbors K; Angular Threshold τa;Scale Threshold τs; Support Score Threshold τsupport 
+
+Ensure: Valid match mask Mvalid ∈ BN 
+
+> 1:
+
+I ← KNN (X, K ) 
+
+> 2:
+
+% Gather neighbor coordinates: N × K × 2 
+
+> 3:
+
+Xn ← gather (X, I ), Yn ← gather (Y, I ) 
+
+> 4:
+
+% Compute relative vectors: N × K × 2 
+
+> 5:
+
+∆X ← Xn − X[: , None , :] , ∆Y ← Yn − Y [: , None , :]  
+
+> 6:
+
+% Normalize unit vectors  
+
+> 7:
+
+ˆX ← normalize (∆ X, dim = −1)  
+
+> 8:
+
+ˆY ← normalize (∆ Y, dim = −1)  
+
+> 9:
+
+% Pairwise cosine similarities: N × K × K 
+
+> 10:
+
+AX ← matmul ( ˆX, ˆX⊤) , AY ← matmul ( ˆY , ˆY ⊤) 
+
+> 11:
+
+% Angular consistency mask  
+
+> 12:
+
+Mangle ← | AX − AY | < (1 − τa) 
+
+> 13:
+
+% Scale ratios: N × K 
+
+> 14:
+
+R ← ∥ ∆Y ∥2/(∥∆X∥2 + ϵ) 
+
+> 15:
+
+% Expand dimensions  
+
+> 16:
+
+Rk ← R[: , :, None ], Rj ← R[: , None , :]  
+
+> 17:
+
+% N × K × K × 3 
+
+> 18:
+
+Rtriplet ← stack ([ Rk, R j , R k ⊙ Rj , −1)  
+
+> 19:
+
+% Scale consistency mask  
+
+> 20:
+
+Mscale ← var (Rtriplet , dim = −1) < τ s 
+
+> 21:
+
+S ← sum (Mangle ∧ Mscale , dim = (1 , 2))  
+
+> 22:
+
+return Mvalid ← S ≥ τsupport 
+
+Figure A. Visualization of Segmentation Masks. From left to right: query images, segmentation masks, and rendered images. 
+
+C.3. Complete Localization Results on 12Scenes 
+
+We present the complete localization results on 12Scenes in Tab. A, supplementing the four scenes shown in the main paper due to space constraints. 11 Table A. Localization Results on 12Scenes. We report the median translation and rotation errors ( cm /°) for each scene. The last column reports the average over all 12 scenes.                                                                                                                                                                                                                     
+
+> Methods Apartment 1 Apartment 2 Office 1 Office 2 Avg. ↓
+> kitchen living bed kitchen living luke gates362 gates381 lounge manolis 5a 5b APR Marepo [11] 1.9/1.2 1.7/0.9 2.0/1.0 2.1/1.1 1.8/0.9 2.3/1.3 1.7/0.9 2.4/1.2 1.9/1.0 1.9/0.9 2.0/0.9 2.9/1.1 2.1/1.04 SCR SCRNet [26] 2.3/1.3 2.4/0.8 3.3/1.5 2.1/1.0 4.2/1.8 4.4/1.4 2.6/0.8 3.4/1.4 2.7/0.9 1.8/1.0 3.6/1.5 3.4/1.2 3.0/1.22 SCRNet-ID [36] 2.6/1.4 2.0/0.8 2.0/0.8 1.8/0.9 3.0/1.2 3.7/1.3 2.1/1.0 2.9/1.2 3.4/1.1 2.6/1.2 3.3/1.2 3.8/1.3 2.8/1.12 DSAC* [3] ------------0.5/0.25 ACE [5] 0.53/0.27 0.60/0.19 0.49/0.20 0.63/0.26 0.59/0.23 0.76/0.27 0.69/0.22 0.81/0.32 0.84/0.21 0.76/0.28 0.86/0.33 0.82/0.28 0.7/0.26 GLACE [60] 0.49/0.27 0.59/0.19 0.49/0.22 0.58/0.27 0.60/0.24 0.69/0.31 0.67/0.22 0.72/0.28 0.67/0.20 0.65/0.28 0.79/0.31 0.80/0.25 0.7/0.25 NeRF-SCR [8] 0.9/0.5 2.1/0.6 1.6/0.7 1.2/0.5 2.0/0.8 2.6/1.0 2.0/0.8 2.7/1.2 1.8/0.6 1.6/0.7 2.5/0.9 2.6/0.8 2.0/0.76 NeRF/GS PNeRFLoc [68] 1.0/0.6 1.5/0.5 1.2/0.5 0.8/0.4 1.4/0.5 8.1/3.3 1.6/0.7 8.7/3.2 2.3/0.8 1.1/0.5 -2.8/0.9 2.8/1.08 SplatLoc [67] 0.8/0.4 1.1/0.4 1.2/0.5 1.0/0.5 1.2/0.5 1.5/0.6 1.1/0.5 1.2/0.5 1.6/0.5 1.1/0.5 1.4/0.6 1.5/0.5 1.2/0.50 GSplatLoc [53] 1.31/0.24 0.68/0.21 1.42/0.24 0.67/0.26 0.54/0.19 1.84/0.31 1.82/0.26 1.99/0.26 0.64/0.22 0.78/0.27 3.66/0.37 0.94/0.27 1.4/0.26 GSFFs-PR Feature [38] 0.3/0.20 0.3/0.18 0.4/0.17 0.7/0.42 0.4/0.21 0.6/0.27 0.5/0.23 0.5/0.27 0.8/0.29 0.5/0.22 0.9/0.41 1.1/0.41 0.6/0.27 Marepo+GS-CPR [29] 0.67/0.35 0.40/0.19 0.41/0.21 0.45/0.25 0.59/0.25 1.04/0.45 0.86/0.35 0.52/0.26 0.76/0.20 0.48/0.22 0.69/0.27 0.99/0.28 0.7/0.28 ACE+GS-CPR [29] 0.46/0.22 0.44/0.17 0.44/0.18 0.40/0.19 0.50/0.20 0.64/0.27 0.57/0.20 0.56/0.24 0.71/0.21 0.51/0.20 0.68/0.27 0.57/0.19 0.5/0.21 STDLoc [18] 0.26 /0.17 0.36/0.17 0.31/0.16 0.28/0.18 0.31/0.13 0.49/0.20 0.40/ 0.14 0.36/0.17 0.47/0.15 0.34/0.17 0.58/0.24 0.57/0.22 0.4/0.18 Ours 0.29/0.19 0.29 /0.14 0.29 /0.12 0.25 /0.17 0.26 /0.12 0.41 /0.17 0.35 /0.14 0.31 /0.14 0.43 /0.13 0.32 /0.15 0.47 /0.22 0.38 /0.16 0.3 /0.15
+
+Table B. Recall on Cambridge Landmarks Dataset. We report the average recall (%) under different thresholds. 
+
+Methods Cambridge Landmarks Avg. ↑[50 cm /5 ◦] Avg. ↑[15 cm /5 ◦] Avg. ↑[10 cm /5 ◦]HLoc(SP+SG) [43] 91.4 64.8 52.0 ACE [5] 78.7 43.1 31.5 GLACE [60] 91.0 62.8 47.6 STDLoc [18] 95.4 70.8 59.9 GLACE+GS-CPR [29] 92.5 65.5 50.7 ACE+GS-CPR [29] 84.6 56.8 42.6 Ours 93.7 72.0 62.2 
+
+C.4. Additional Results on Cambridge Landmarks 
+
+Tab. B extends the Cambridge Landmarks evaluation from the main paper by reporting recall rates under the more stringent 10 cm /5° threshold and adding comparisons with the structure-based method HLoc [43]. Our method achieves a recall of 62.2% at this challenging threshold, ex-ceeding HLoc [43] by 10.2% and STDLoc [18] by 2.3%. These results demonstrate the particular advantage of our approach in high-precision localization. 
+
+C.5. Comparison of Localization Speed 
+
+We evaluate the computational efficiency of different meth-ods by measuring their localization speed in frames per sec-ond (FPS). As illustrated in Fig. B, our method achieves a competitive speed of 4.4 FPS while maintaining superior localization accuracy. This represents a significant speed advantage over GSplatLoc [53] (0.6 FPS) and NeRFMatch [69] (2.2 FPS), while being comparable to STDLoc [18] (3.9 FPS). The speed-accuracy comparison reveals that our approach strikes an optimal balance, delivering both high precision and practical efficiency. 0 1 2 3 4 5
+
+Speed (FPS) 
+
+6
+
+9
+
+12 
+
+15 
+
+18 
+
+> Translation Error (cm)
+> STDLoc
+> CVPR2025
+> ACE+GS-CPR
+> ICLR2025
+> GSplatLoc
+> IROS2025
+> NeRFMatch
+> ECCV2024
+> Ours
+
+Figure B. Average Median Translation Error and Speed Com-parison on Cambridge Landmarks. 
+
+Table C. LGCV Parameters Ablation on the Count Scene. We report the inlier rate after removing mismatches with different pa-rameter settings. The horizontal axis represents the scale threshold 
+
+τs, and the vertical axis represents the angular threshold τa.
+
+Inlier Rate (%) τs = 0.05 τs = 0.1 τs = 0.2 τs = 0.3 τs = 0.4 
+
+τa = 0.8059 64.7 65.3 56.3 44.9 35.2 
+
+τa = 0.8559 70.9 71.5 64.9 62.1 39.6 
+
+τa = 0.9059 70.6 73.4 70.0 66.6 58.4 
+
+τa = 0.9659 70.3 73.6 72.7 70.0 61.9 
+
+τa = 0.9759 69.7 71.8 72.3 71.0 64.5 
+
+τa = 0.9859 67.7 68.7 71.9 70.5 63.0 
+
+C.6. Ablation Study on LGCV Parameters 
+
+We conduct the ablation study of LGCV parameters on the Cambridge Landmarks Court scene. We evaluate the per-formance by reporting the inlier rate (%) after mismatch removal. The results under different parameter combina-tions of the angular threshold τa and the scale threshold τs
+
+are summarized in Tab. C. The experimental results reveal a clear trend: both overly lenient and overly strict thresh-12 old settings lead to a degradation in the inlier rate. Specifi-cally, when the thresholds are too lenient (e.g., τa = 0 .8059 ,
+
+τs = 0 .4), the geometric constraints are insufficient to fil-ter out all incorrect matches, resulting in a lower inlier rate. Conversely, when the thresholds are too strict (e.g., 
+
+τa = 0 .9859 , τs = 0 .05 ), the algorithm rejects a certain number of correct matches along with the outliers, thereby reducing the total number of valid correspondences and ul-timately impairing the subsequent pose estimation. The ablation study identifies an optimal parameter range that balances the thoroughness of mismatch rejection with the preservation of correct matches. Based on these findings, we set τa = 0 .9659 and τs = 0 .1 for all experiments in the main paper. 
+
+C.7. Qualitative Visualizations 
+
+We present extensive qualitative evaluations on the 7Scenes, 12Scenes, and Cambridge Landmarks datasets in Fig. C. Each visualization is organized into four columns showing different stages of our localization pipeline. The first col-umn displays the original query image. The second column visualizes 2D-3D correspondences by transforming them into 2D-2D matches. We render the sampled Gaussian land-marks after solving the initial pose to depict match quality. The third column presents the rendered image using this ini-tial pose. The final column stitches the query image and the rendered image of the final pose to represent the localization result. The visual results confirm the effectiveness of our K.C. sampling strategy and unbiased landmark features in gen-erating reliable 2D-3D correspondences. Across all tested scenes, our method produces consistently high-quality matches that lead to accurate initial pose estimates. The rendered images in the third column closely match the cor-responding query images, demonstrating the accuracy of these initial pose estimates. The precise alignment achieved in the final column further validates the high localization ac-curacy of our approach, demonstrating robust performance in both indoor and outdoor environments. 
+
+C.8. Failure Case Analysis 
+
+Fig. D shows some failure cases of our localization ap-proach. The results indicate that our approach consistently achieves accurate initial pose estimation across these cases, demonstrating the robustness of the K.C. sampling strat-egy and the effectiveness of unbiased landmark features. These features, combined with high-quality Gaussian land-marks, enable reliable 2D-3D matching even in complex environments. However, the pose refinement stage occa-sionally fails due to limitations inherent in 3D Gaussian Splatting reconstruction [21, 62]. Specifically, we observe that floating artifacts near camera positions (a common is-sue in neural rendering techniques) produce erroneous ren-derings that mislead the image matching-based pose refine-ment stage, ultimately leading to incorrect pose estimation results. These failure cases indicate that employing a more robust refinement method could be a promising direction for future work. 
+
+## Acknowledgments 
+
+This work was supported in part by the National Key Re-search and Development Program of China under Grant 2025YFB3910300, in part by the Xiong’an New Area Sci-ence and Technology Innovation Special Program under Grant 2025XAGG0042, and in part by the Joint Fund of Hunan Provincial Natural Science Foundation Project De-partment (2025JJ80022). 13 Figure C. More Qualitative Visualizations on 7Scenes, 12Scenes, and Cambridge Landmarks. 
+
+14 Figure D. Failure Cases Visualization. Initial pose estimation succeeds with robust 2D-3D matching, but the refinement stage fails due to floating artifacts. 
+
+15 References 
+
+[1] Eduardo Arnold, Jamie Wynn, Sara Vicente, Guillermo Garcia-Hernando, Aron Monszpart, Victor Prisacariu, Dani-yar Turmukhambetov, and Eric Brachmann. Map-free visual relocalization: Metric pose relative to a single image. In 
+
+European Conference on Computer Vision , pages 690–708. Springer, 2022. 2 [2] Kazii Botashev, Vladislav Pyatov, Gonzalo Ferrer, and Sta-matios Lefkimmiatis. Gsloc: Visual localization with 3d gaussian splatting. In 2024 IEEE/RSJ International Confer-ence on Intelligent Robots and Systems (IROS) , pages 5664– 5671. IEEE, 2024. 2 [3] Eric Brachmann and Carsten Rother. Visual camera re-localization from rgb and rgb-d images using dsac. IEEE transactions on pattern analysis and machine intelligence ,44(9):5847–5865, 2021. 2, 6, 7, 12 [4] Eric Brachmann, Martin Humenberger, Carsten Rother, and Torsten Sattler. On the limits of pseudo ground truth in vi-sual camera re-localisation. In Proceedings of the IEEE/CVF International Conference on Computer Vision , pages 6218– 6228, 2021. 6 [5] Eric Brachmann, Tommaso Cavallari, and Victor Adrian Prisacariu. Accelerated coordinate encoding: Learning to relocalize in minutes using rgb and poses. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 5044–5053, 2023. 1, 2, 6, 7, 12 [6] Leonard Bruns, Axel Barroso-Laguna, Tommaso Cavallari, Sowmya Munukutla, Victor Adrian Prisacariu, Eric Brach-mann, et al. Ace-g: Improving generalization of scene coor-dinate regression through query pre-training. arXiv preprint arXiv:2510.11605 , 2025. 2 [7] Kangjie Chen, Yingji Zhong, Zhihao Li, Jiaqi Lin, Youyu Chen, Minghan Qin, and Haoqian Wang. Quantifying and alleviating co-adaptation in sparse-view 3d gaussian splat-ting. arXiv preprint arXiv:2508.12720 , 2025. 5 [8] Le Chen, Weirong Chen, Rui Wang, and Marc Pollefeys. Leveraging neural radiance fields for uncertainty-aware vi-sual localization. In 2024 IEEE International Conference on Robotics and Automation (ICRA) , pages 6298–6305. IEEE, 2024. 2, 6, 7, 12 [9] Shuai Chen, Xinghui Li, Zirui Wang, and Victor APrisacariu. Dfnet: Enhance absolute pose regression with direct feature matching. In European Conference on Com-puter Vision , pages 1–17. Springer, 2022. 2, 6, 7 [10] Shuai Chen, Yash Bhalgat, Xinghui Li, Jia-Wang Bian, Kejie Li, Zirui Wang, and Victor Adrian Prisacariu. Neural refine-ment for absolute pose regression with feature synthesis. In 
+
+Proceedings of the IEEE/CVF Conference on Computer Vi-sion and Pattern Recognition , pages 20987–20996, 2024. 1, 2, 6, 7 [11] Shuai Chen, Tommaso Cavallari, Victor Adrian Prisacariu, and Eric Brachmann. Map-relative pose regression for visual re-localization. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 20665– 20674, 2024. 1, 2, 6, 7, 12 [12] Bowen Cheng, Ishan Misra, Alexander G Schwing, Alexan-der Kirillov, and Rohit Girdhar. Masked-attention mask transformer for universal image segmentation. In Proceed-ings of the IEEE/CVF conference on computer vision and pattern recognition , pages 1290–1299, 2022. 11 [13] Daniel DeTone, Tomasz Malisiewicz, and Andrew Rabi-novich. Superpoint: Self-supervised interest point detection and description. In Proceedings of the IEEE conference on computer vision and pattern recognition workshops , pages 224–236, 2018. 2, 6, 8 [14] Yaqing Ding, Jian Yang, Viktor Larsson, Carl Olsson, and Kalle ˚ Astr¨ om. Revisiting the p3p problem. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 4872–4880, 2023. 1, 6 [15] Siyan Dong, Shuzhe Wang, Shaohui Liu, Lulu Cai, Qingnan Fan, Juho Kannala, and Yanchao Yang. Reloc3r: Large-scale training of relative camera pose regression for generalizable, fast, and accurate visual localization. In Proceedings of the Computer Vision and Pattern Recognition Conference , pages 16739–16752, 2025. 1 [16] Mihai Dusmanu, Ignacio Rocco, Tomas Pajdla, Marc Polle-feys, Josef Sivic, Akihiko Torii, and Torsten Sattler. D2-net: A trainable cnn for joint description and detection of local features. In Proceedings of the ieee/cvf conference on computer vision and pattern recognition , pages 8092–8101, 2019. 2 [17] Martin A Fischler and Robert C Bolles. Random sample consensus: a paradigm for model fitting with applications to image analysis and automated cartography. Communications of the ACM , 24(6):381–395, 1981. 1, 2, 5, 6 [18] Zhiwei Huang, Hailin Yu, Yichun Shentu, Jin Yuan, and Guofeng Zhang. From sparse to dense: Camera relocaliza-tion with scene-specific detector from feature gaussian splat-ting. In Proceedings of the Computer Vision and Pattern Recognition Conference , pages 27059–27069, 2025. 1, 2, 3, 5, 6, 7, 11, 12 [19] Xingyu Jiang, Yifan Xia, Xiao-Ping Zhang, and Jiayi Ma. Robust image matching via local graph structure consensus. 
+
+Pattern Recognition , 126:108588, 2022. 5 [20] Alex Kendall, Matthew Grimes, and Roberto Cipolla. Posenet: A convolutional network for real-time 6-dof cam-era relocalization. In Proceedings of the IEEE international conference on computer vision , pages 2938–2946, 2015. 1, 2, 6 [21] Bernhard Kerbl, Georgios Kopanas, Thomas Leimk¨ uhler, and George Drettakis. 3d gaussian splatting for real-time radiance field rendering. ACM Trans. Graph. , 42(4):139–1, 2023. 1, 2, 6, 13 [22] Alexander Kirillov, Eric Mintun, Nikhila Ravi, Hanzi Mao, Chloe Rolland, Laura Gustafson, Tete Xiao, Spencer White-head, Alexander C Berg, Wan-Yen Lo, et al. Segment any-thing. In Proceedings of the IEEE/CVF international confer-ence on computer vision , pages 4015–4026, 2023. 3 [23] Viktor Larsson and contributors. PoseLib - Minimal Solvers for Camera Pose Estimation, 2020. 6 [24] Vincent Lepetit, Francesc Moreno-Noguer, and Pascal Fua. Epnp: An accurate o(n) solution to the pnp problem. Inter-national journal of computer vision , 81(2):155–166, 2009. 1, 5, 6 
+
+16 [25] Vincent Leroy, Yohann Cabon, and J´ erˆ ome Revaud. Ground-ing image matching in 3d with mast3r. In European Confer-ence on Computer Vision , pages 71–91. Springer, 2024. 2 [26] Xiaotian Li, Shuzhe Wang, Yi Zhao, Jakob Verbeek, and Juho Kannala. Hierarchical scene coordinate classification and regression for visual localization. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 11983–11992, 2020. 2, 7, 12 [27] Jingyu Lin, Jiaqi Gu, Bojian Wu, Lubin Fan, Renjie Chen, Ligang Liu, and Jieping Ye. Learning neural volumetric pose features for camera localization. In European Conference on Computer Vision , pages 198–214. Springer, 2024. 2, 6, 7 [28] Changkun Liu, Shuai Chen, Yukun Zhao, Huajian Huang, Victor Prisacariu, and Tristan Braud. Hr-apr: Apr-agnostic framework with uncertainty estimation and hierarchical re-finement for camera relocalisation. In 2024 IEEE Inter-national Conference on Robotics and Automation (ICRA) ,pages 8544–8550. IEEE, 2024. 6, 7 [29] Changkun Liu, Shuai Chen, Yash Sanjay Bhalgat, Siyan HU, Ming Cheng, Zirui Wang, Victor Adrian Prisacariu, and Tris-tan Braud. GS-CPR: Efficient camera pose refinement via 3d gaussian splatting. In The Thirteenth International Confer-ence on Learning Representations , 2025. 2, 6, 7, 11, 12 [30] Shaohui Liu, Yidan Gao, Tianyi Zhang, R´ emi Pautrat, Jo-hannes L Sch¨ onberger, Viktor Larsson, and Marc Pollefeys. Robust incremental structure-from-motion with hybrid fea-tures. In European Conference on Computer Vision , pages 249–269. Springer, 2024. 1, 2 [31] David G Lowe. Distinctive image features from scale-invariant keypoints. International journal of computer vi-sion , 60(2):91–110, 2004. 2 [32] Bortolon Matteo, Theodore Tsesmelis, Stuart James, Fabio Poiesi, and Alessio Del Bue. 6dgs: 6d pose estimation from a single image and a 3d gaussian splatting model. In European Conference on Computer Vision , pages 420–436. Springer, 2024. 2 [33] Ben Mildenhall, Pratul P Srinivasan, Matthew Tancik, Jonathan T Barron, Ravi Ramamoorthi, and Ren Ng. Nerf: Representing scenes as neural radiance fields for view syn-thesis. Communications of the ACM , 65(1):99–106, 2021. 1, 2[34] Arthur Moreau, Nathan Piasco, Dzmitry Tsishkou, Bogdan Stanciulescu, and Arnaud de La Fortelle. Lens: Localization enhanced by nerf synthesis. In Conference on Robot Learn-ing , pages 1347–1356. PMLR, 2022. 2, 7 [35] Arthur Moreau, Nathan Piasco, Moussab Bennehar, Dzmitry Tsishkou, Bogdan Stanciulescu, and Arnaud de La Fortelle. Crossfire: Camera relocalization on self-supervised features from an implicit representation. In Proceedings of the IEEE/CVF International Conference on Computer Vision ,pages 252–262, 2023. 2, 7 [36] Tony Ng, Adrian Lopez-Rodriguez, Vassileios Balntas, and Krystian Mikolajczyk. Reassessing the limitations of cnn methods for camera pose regression. In International Con-ference on 3D Vision , 2021. 7, 12 [37] Vojtech Panek, Zuzana Kukelova, and Torsten Sattler. Meshloc: Mesh-based visual localization. In European Con-ference on Computer Vision , pages 589–609. Springer, 2022. 2[38] Maxime Pietrantoni, Gabriela Csurka, and Torsten Sattler. Gaussian splatting feature fields for (privacy-preserving) vi-sual localization. In Proceedings of the Computer Vision and Pattern Recognition Conference , pages 1082–1092, 2025. 6, 7, 12 [39] Pulak Purkait, Cheng Zhao, and Christopher Zach. Synthetic view generation for absolute pose regression and image syn-thesis. In BMVC , page 69, 2018. 2 [40] Minghan Qin, Wanhua Li, Jiawei Zhou, Haoqian Wang, and Hanspeter Pfister. Langsplat: 3d language gaussian splatting. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 20051–20060, 2024. 2[41] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry, Amanda Askell, Pamela Mishkin, Jack Clark, et al. Learning transferable visual models from natural language supervi-sion. In International conference on machine learning , pages 8748–8763. PmLR, 2021. 3 [42] Jerome Revaud, Cesar De Souza, Martin Humenberger, and Philippe Weinzaepfel. R2d2: Reliable and repeatable detec-tor and descriptor. Advances in neural information process-ing systems , 32, 2019. 2 [43] Paul-Edouard Sarlin, Cesar Cadena, Roland Siegwart, and Marcin Dymczyk. From coarse to fine: Robust hierarchical localization at large scale. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition ,pages 12716–12725, 2019. 1, 2, 6, 7, 12 [44] Paul-Edouard Sarlin, Daniel DeTone, Tomasz Malisiewicz, and Andrew Rabinovich. Superglue: Learning feature matching with graph neural networks. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 4938–4947, 2020. 2 [45] Paul-Edouard Sarlin, Ajaykumar Unagar, Mans Larsson, Hugo Germain, Carl Toft, Viktor Larsson, Marc Pollefeys, Vincent Lepetit, Lars Hammarstrand, Fredrik Kahl, et al. Back to the feature: Learning robust camera localization from pixels to pose. In Proceedings of the IEEE/CVF con-ference on computer vision and pattern recognition , pages 3247–3257, 2021. 1, 2, 7 [46] Torsten Sattler, Bastian Leibe, and Leif Kobbelt. Fast image-based localization using direct 2d-to-3d matching. In 2011 International Conference on Computer Vision , pages 667– 674. IEEE, 2011. 2 [47] Torsten Sattler, Bastian Leibe, and Leif Kobbelt. Improving image-based localization by active correspondence search. In European conference on computer vision , pages 752–765. Springer, 2012. 6, 7 [48] Johannes L Schonberger and Jan-Michael Frahm. Structure-from-motion revisited. In Proceedings of the IEEE con-ference on computer vision and pattern recognition , pages 4104–4113, 2016. 1 [49] Yoli Shavit and Yosi Keller. Camera pose auto-encoders for improving pose regression. In European Conference on Computer Vision , pages 140–157. Springer, 2022. 1, 2 
+
+17 [50] Yoli Shavit, Ron Ferens, and Yosi Keller. Learning multi-scene absolute pose regression with transformers. In Pro-ceedings of the IEEE/CVF International Conference on Computer Vision , pages 2733–2742, 2021. 2 [51] Jin-Chuan Shi, Miao Wang, Hao-Bin Duan, and Shao-Hua Guan. Language embedded 3d gaussians for open-vocabulary scene understanding. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 5333–5343, 2024. 2 [52] Jamie Shotton, Ben Glocker, Christopher Zach, Shahram Izadi, Antonio Criminisi, and Andrew Fitzgibbon. Scene co-ordinate regression forests for camera relocalization in rgb-d images. In Proceedings of the IEEE conference on computer vision and pattern recognition , pages 2930–2937, 2013. 6 [53] Gennady Sidorov, Malik Mohrat, Denis Gridusov, Ruslan Rakhimov, and Sergey Kolyubin. Gsplatloc: Grounding key-point descriptors into 3d gaussian splatting for improved vi-sual localization. arXiv preprint arXiv:2409.16502 , 2024. 1, 2, 3, 6, 7, 12 [54] Jiaming Sun, Zehong Shen, Yuang Wang, Hujun Bao, and Xiaowei Zhou. Loftr: Detector-free local feature matching with transformers. In Proceedings of the IEEE/CVF con-ference on computer vision and pattern recognition , pages 8922–8931, 2021. 2, 5 [55] Yuan Sun, Xuan Wang, Yunfan Zhang, Jie Zhang, Caigui Jiang, Yu Guo, and Fei Wang. icomma: Inverting 3d gaus-sian splatting for camera pose estimation via comparing and matching. arXiv preprint arXiv:2312.09031 , 2023. 2 [56] Shitao Tang, Sicong Tang, Andrea Tagliasacchi, Ping Tan, and Yasutaka Furukawa. Neumap: Neural coordinate map-ping by auto-transdecoder for camera localization. In Pro-ceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 929–939, 2023. 1, 2, 6, 7 [57] Akihiko Torii, Relja Arandjelovic, Josef Sivic, Masatoshi Okutomi, and Tomas Pajdla. 24/7 place recognition by view synthesis. In Proceedings of the IEEE conference on computer vision and pattern recognition , pages 1808–1817, 2015. 6, 7 [58] Gabriele Trivigno, Carlo Masone, Barbara Caputo, and Torsten Sattler. The unreasonable effectiveness of pre-trained features for camera pose refinement. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pat-tern Recognition , pages 12786–12798, 2024. 6, 7 [59] Julien Valentin, Angela Dai, Matthias Nießner, Pushmeet Kohli, Philip Torr, Shahram Izadi, and Cem Keskin. Learn-ing to navigate the energy landscape. In 2016 Fourth In-ternational Conference on 3D Vision (3DV) , pages 323–332. IEEE, 2016. 6 [60] Fangjinhua Wang, Xudong Jiang, Silvano Galliani, Christoph Vogel, and Marc Pollefeys. Glace: Global local accelerated coordinate encoding. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 21562–21571, 2024. 1, 2, 6, 7, 12 [61] Shuzhe Wang, Juho Kannala, and Daniel Barath. Dgc-gnn: Leveraging geometry and color cues for visual descriptor-free 2d-3d matching. In Proceedings of the IEEE/CVF Con-ference on Computer Vision and Pattern Recognition , pages 20881–20891, 2024. 1, 2 [62] Yunsong Wang, Tianxin Huang, Hanlin Chen, and Gim Hee Lee. Freesplat++: Generalizable 3d gaussian splatting for efficient indoor scene reconstruction. arXiv preprint arXiv:2503.22986 , 2025. 13 [63] Shaocheng Yan, Pengcheng Shi, and Jiayuan Li. Ml-semreg: Boosting point cloud registration with multi-level semantic consistency. In European Conference on Computer Vision ,pages 19–37. Springer, 2024. 5 [64] Shaocheng Yan, Pengcheng Shi, Zhenjun Zhao, Kaixin Wang, Kuang Cao, Ji Wu, and Jiayuan Li. Turboreg: Turbo-clique for robust and efficient point cloud registration. arXiv preprint arXiv:2507.01439 , 2025. 5 [65] Shaocheng Yan, Yiming Wang, Kaiyan Zhao, Pengcheng Shi, Zhenjun Zhao, Yongjun Zhang, and Jiayuan Li. Hemora: Unsupervised heuristic consensus sampling for ro-bust point cloud registration. In Proceedings of the Computer Vision and Pattern Recognition Conference , pages 1363– 1373, 2025. 4 [66] Lin Yen-Chen, Pete Florence, Jonathan T Barron, Alberto Rodriguez, Phillip Isola, and Tsung-Yi Lin. inerf: Inverting neural radiance fields for pose estimation. In 2021 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) , pages 1323–1330. IEEE, 2021. 1, 2 [67] Hongjia Zhai, Xiyu Zhang, Boming Zhao, Hai Li, Yijia He, Zhaopeng Cui, Hujun Bao, and Guofeng Zhang. Splatloc: 3d gaussian splatting-based visual localization for augmented reality. IEEE Transactions on Visualization and Computer Graphics , 2025. 2, 3, 7, 12 [68] Boming Zhao, Luwei Yang, Mao Mao, Hujun Bao, and Zhaopeng Cui. Pnerfloc: Visual localization with point-based neural radiance fields. In Proceedings of the AAAI Conference on Artificial Intelligence , pages 7450–7459, 2024. 1, 2, 6, 7, 12 [69] Qunjie Zhou, Maxim Maximov, Or Litany, and Laura Leal-Taix´ e. The nerfect match: Exploring nerf features for visual localization. In European Conference on Computer Vision ,pages 108–127. Springer, 2024. 2, 6, 7, 12 [70] Shijie Zhou, Haoran Chang, Sicheng Jiang, Zhiwen Fan, Ze-hao Zhu, Dejia Xu, Pradyumna Chari, Suya You, Zhangyang Wang, and Achuta Kadambi. Feature 3dgs: Supercharging 3d gaussian splatting to enable distilled feature fields. In Pro-ceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 21676–21685, 2024. 2, 4, 8, 9
+
+18

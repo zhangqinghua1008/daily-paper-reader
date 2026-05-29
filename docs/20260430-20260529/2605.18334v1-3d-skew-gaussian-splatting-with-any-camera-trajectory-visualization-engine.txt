@@ -1,0 +1,1702 @@
+Title: 3D Skew Gaussian Splatting with Any Camera Trajectory Visualization Engine
+
+URL Source: https://arxiv.org/pdf/2605.18334v1
+
+Published Time: Tue, 19 May 2026 02:56:49 GMT
+
+Number of Pages: 16
+
+Markdown Content:
+> JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 1
+
+# 3D Skew Gaussian Splatting with Any Camera Trajectory Visualization Engine 
+
+Beizhen Zhao, Yifan Zhou, Gaochao Song, Ziran Yin, Hao Wang ¶
+
+Abstract —While 3D Gaussian Splatting (3DGS) has revolu-tionized real-time photorealistic view synthesis, its fundamental reliance on symmetric Gaussian distributions introduces visual artifacts that hinder accurate spatial data exploration. Specif-ically, symmetric kernels struggle to capture shape and color discontinuities , which cause blurriness and primitive redun-dancy that mislead human perception during visual analysis. To address these visualization barriers, we introduce 3D Skew Gaussian Splatting (3DSGS), a novel framework that significantly enhances the structural fidelity and compactness of explicit scene representations. Our key insight lies in extending the standard primitive to a general Skew Gaussian counterpart. This gener-alized primitive inherits the highly efficient rasterization prop-erties of standard Gaussians while gaining intrinsic asymmetric modeling capabilities. We couple this with an enhanced opacity representation to better handle complex transparency, alongside a depth-aware densification strategy that intelligently manages primitive allocation. Furthermore, to make these advancements actionable for real-world visual analytics, we re-derive the CUDA rasterization pipeline to universally support both symmetric and skew Gaussians, integrating it into a decoupled, free-camera interactive visualization engine. Extensive experiments demonstrate that 3DSGS achieves superior rendering quality and structural compactness, particularly in regions with intricate details, while maintaining the real-time frame rates necessary for fluid interactive exploration. Supplementary derivations and visual results are available at https://3d-skew-gs.github.io/ .
+
+Index Terms —3D Gaussian Splatting, Volume Rendering, Computer Graphics Techniques, Application Motivated Visual-ization 
+
+I. I NTRODUCTION 
+
+Reconstructing and visually exploring realistic 3D scenes from multi-view images is a cornerstone challenge in computer graphics and spatial data analysis. Recent advancements have heavily favored explicit or hybrid representations to achieve the interactive rendering speeds required for real-time vi-sual analytics [1]–[5]. Among these, 3D Gaussian Splatting (3DGS) [6] has emerged as a state-of-the-art technique. By representing scenes as a collection of 3D Gaussians and utilizing an efficient rasterization pipeline, 3DGS enables pho-torealistic, real-time rendering. This capability is paramount not only for automated systems but also for human-driven visual exploration, allowing analysts to interact dynamically with complex spatial environments [7]–[9]. 
+
+Beizhen Zhao, Ziran Yin, Hao Wang are with The Hong Kong University of Science and Technology (Guangzhou), Guangzhou, 511442, China (e-mail: bzhao610@connect.hkust-gz.edu.cn, zyin937@connect.hkust-gz.edu.cn, haowang@hkust-gz.edu.cn), Yifan Zhou is with Zhejiang University, China (e-mail: yifanz@zju.edu.cn), Gaochao Song is with The University of Hong Kong, China (e-mail: gaochaosong 21@tju.edu.cn). 
+
+> ¶
+
+: Corresponding author. 
+
+Despite its remarkable success in view synthesis, standard 3DGS introduces visual artifacts that hinder accurate data interpretation. A symmetric Gaussian kernel, defined solely by its mean and covariance, intrinsically struggles to represent asymmetric spatial features. Real–world phenomena, such as specular reflections, view-dependent shading along sharp geometric boundaries, and complex transparency, often exhibit strong directional asymmetry [10]–[13]. To approximate these features, standard 3DGS forces the deployment of densely overlapping or excessively diminutive primitives. This work-around frequently introduces blurriness, visual discontinuities, and bloated data footprints that compromise both rendering performance and visual fidelity [14], [15]. Furthermore, the standard opacity model struggles to flexibly render sharp opacity transitions, further obfuscating the accurate perception of occlusions and transparent objects [16], [17]. To address these visualization barriers, we propose 3D Skew Gaussian Splatting (3DSGS), a framework that introduces a more expressive asymmetric kernel to accurately capture spatial discontinuities. As illustrated in Fig. 1(b) and (c), fitting a square wave with five skew gaussian distributions yields a better representation than using five gaussian dis-tributions, as the skew parameter allows for sharper edges. This improvement can be attributed to the ability of the Skew Normal distribution to capture higher frequency content more effectively than the standard Gaussian and as shown in Fig. 1(a), the gaussian distribution is the special case of the skew gaussian distribution when the skewness is zero. By combining this enhanced primitive with a depth-aware densification strategy and an extended opacity model, 3DSGS provides a more flexible scene representation that is better suited for the challenges of real-world robot vision and spatial perception, while retaining the crucial real-time rendering performance. To realize this, we systematically rederive and implement the rasterization rendering pipeline from the ground up using CUDA. This highly optimized, custom rasterizer is designed for universal compatibility, seamlessly adapting to both stan-dard 3DGS and our proposed 3DSGS without compromising interactive frame rates. Crucially, to support the complex visual analysis of these scenes, we integrate this generalized CUDA backend into a dedicated visualization engine within Blender. This integration empowers users with unconstrained, free camera movement, allowing them to seamlessly navigate, render, and visually explore the optimized clusters in real-time. By bridging expressive asymmetric primitives with robust underlying algorithms and interactive tooling, our framework ensures that analysts can reliably perceive and interact with   
+
+> arXiv:2605.18334v1 [cs.CV] 18 May 2026 JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 2
+> Fig. 1. Comparison of Skew Normal and Normal Kernels in Fitting a Square Wave. (a): Distribution shapes with different skew parameters in the Skew Normal distribution, where the Gaussian distribution is the special case when the skewness coefficient is zero. (b): Fitting a square wave using five Skew Normal distributions, demonstrating a closer approximation of sharp edges due to adjustable skewness. (c): Fitting the same square wave with five standard Normal distributions, which produce smoother approximations and less accurate edge representation.
+
+high-fidelity spatial data. Our primary contributions are fourfold:  
+
+> •
+
+3D Skew Gaussian Primitives: We fundamentally ad-vance the core 3DGS representation by incorporating a 3D Skew Normal distribution. This introduces a skew-ness parameter that captures asymmetric, view-dependent appearances, significantly improving the visual fidelity of sharp boundaries and reflections.  
+
+> •
+
+Enhanced Opacity and Densification: We develop an extended opacity representation to model complex trans-parency alongside a novel depth-aware densification strat-egy. This intelligent allocation prunes redundant splats, resulting in a more compact and visually accurate geo-metric representation.  
+
+> •
+
+Generalized CUDA Rasterization Pipeline: We com-pletely re-derive and implement an optimized rasteriza-tion pipeline. This robust CUDA backend acts as a uni-versal engine, seamlessly accommodating both standard and skew Gaussians, maximizing rendering efficiency and algorithmic generality.  
+
+> •
+
+Interactive Visualization Engine: We design and inte-grate a visualization framework supporting free camera movement within Blender, providing a powerful interac-tive environment for users to freely explore, render, and analyze 3DSGS scenes. II. R ELATED WORK 
+
+A. Novel View Synthesis and Interactive Exploration 
+
+Early approaches to Novel View Synthesis (NVS) and spatial data visualization frequently relied on explicit geometry reconstruction, such as mesh or point cloud-based representa-tions. While these methods offered intuitive ways to inspect 3D environments, they often struggled to render complex scenes and view-dependent lighting effects with high fidelity. Recent breakthroughs have largely been driven by neural and volumetric rendering techniques, shifting the paradigm toward highly realistic, data-driven scene representations. 
+
+Implicit Neural Scene Representations: Implicit methods, most notably Neural Radiance Fields (NeRF) [18], pioneered the use of Multilayer Perceptrons (MLPs) to encode continu-ous density and radiance fields, achieving photorealistic novel views through volumetric ray marching. Subsequent works, such as Mip-NeRF [19] and Instant-NGP [20], significantly improved training efficiency and spatial consistency using positional encoding, hierarchical sampling, and factorized grid architectures. These NeRF-based models excel at capturing intricate geometry and complex view-dependent appearances. However, for the visualization community, the computationally intensive nature of ray marching and continuous network eval-uations imposes a severe bottleneck, restricting the interactive frame rates required for fluid, user-driven spatial exploration. 
+
+Explicit Point-Based and Gaussian Representations: Before the advent of 3DGS, explicit point-based rendering methods (e.g., ADOP [21]) demonstrated the potential of combining point clouds with neural deferred shading for faster render-ing. Building on this philosophy to bridge the gap between photorealistic synthesis and real-time interactivity, 3D Gaus-sian Splatting (3DGS) [6] has emerged as a transformative technique [22]. By modeling scenes as explicit 3D Gaus-sian primitives, 3DGS leverages spatial locality, transparency modeling, and highly efficient tile-based rasterization [23]– [25]. This explicit structure makes it exceptionally well-suited for integration into interactive visual engines. However, its strict reliance on standard, symmetric Gaussian kernels limits its expressiveness when modeling complex spatial structures. Phenomena such as sharp geometric boundaries, intricate transparency, and strong directional view-dependent effects often force the optimization process to over-compensate by deploying massive numbers of diminutive primitives [26]– [28]. In interactive visualization, this structural redundancy inflates the memory footprint and introduces visual artifacts (e.g., blurring and popping) that can mislead user perception during visual analysis. 
+
+B. Enhanced Gaussian Kernels and Structural Fidelity 
+
+To mitigate the limitations of standard symmetric kernels, a recent wave of studies has focused on improving the expres-siveness, structural alignment, and compactness of Gaussian primitives. Efforts to reduce visual artifacts have primarily explored modifying the basic shape or geometric constraints of the primitives. Student Splatting and Scooping [29] replaces the standard kernel with a learnable Student’s t-distribution, JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 3
+
+> Fig. 2. The architectural pipeline of our 3D Skew Gaussian Splatting (3DSGS) framework. We fundamentally extend standard symmetric 3D Gaussians into 3D Skew Gaussians by introducing an intrinsic skewness parameter, empowering the model to capture complex spatial discontinuities and asymmetric structures. We systematically re-derive and implement a generalized splatting pipeline that seamlessly handles both the forward rendering and backward optimization passes for asymmetric kernels. During the training stage, a novel depth-aware densification criterion intelligently manages the splitting and pruning of Skew Gaussians, ensuring high structural compactness. Ultimately, the optimized scene representation is decoupled and exported to our VisEngine for real-time, interactive visual exploration.
+
+enabling more flexible kernel shapes and improved geomet-ric adaptation. To address the volume-bloating issue and better approximate thin structures, 2D Gaussian Splatting (2DGS) [30] collapses the 3D volume into oriented 2D disks, significantly improving surface extraction and perspective-accurate rendering. To further enhance visual fidelity around sharp edges, 3D Half-Gaussian Splatting [31] introduces half-Gaussian kernels with distinct opacity values. In a similar vein, DRK Splatting [32] proposes a learnable non-linear edge-sharpening function to improve rendering quality on view-dependent surfaces and complex occlusions. Beyond isolated shape modifications, managing multi-scale details and suppressing rendering artifacts in structurally com-plex scenes has led to frequency-domain and multiresolution enhancements. For instance, Mip-Splatting [33] introduced a 3D smoothing filter to eliminate high-frequency aliasing artifacts during camera zooming. Extending this logic to frequency-domain scene representations, Wavelet-GS [ ?] em-ploys wavelet decomposition to systematically manage multi-scale geometric features, enhancing visual fidelity and sup-pressing noise without causing an explosion in primitive count. Furthermore, addressing the entanglement of geometry and texture, methods like 3D Convex Splatting [34] utilize smooth convexes to decouple geometric features from appearance, allowing for more efficient optimization and cleaner structural boundaries. These works share a common goal: pushing the boundaries of how explicit primitives represent geometric and appearance complexity to eliminate visual artifacts. However, a funda-mental limitation remains that most still operate under the assumption of symmetric or isotropic core kernels. Conse-quently, they must rely on indirect mechanisms to capture spatial asymmetry. In an interactive visualization context, these workarounds not only complicate the optimization landscape but also introduce significant computational overhead during the forward rasterization pass, limiting fluid exploration. In contrast, we address this challenge by explicitly introducing the 3D Skew Normal distribution as the core primitive. By empowering each splat with an intrinsic asymmetry parameter, our method directly captures directional phenomena at the mathematical foundation of the kernel. This direct approach re-quires significantly fewer primitives to achieve high structural compactness and ultimately ensures the robust performance required for real-time interactive visual analytics. 
+
+C. Rendering Pipelines and Visualization Frameworks 
+
+The transition from static novel view synthesis to dynamic visual exploration relies heavily on robust underlying ren-dering pipelines. The original 3DGS implementation features a highly specialized CUDA rasterizer optimized exclusively for standard covariance matrices. When attempting to intro-duce complex primitives—such as asymmetric distributions or customized projection mechanisms—researchers often face significant performance degradation or are forced to rely on approximate blending workarounds. Consequently, developing flexible, generalized rasterization architectures has become a pressing need. Moreover, making these advanced scene representations accessible for practical spatial analysis requires seamless in-tegration into established 3D authoring and exploration tools. While standalone viewers exist, integrating customized splat-ting backends directly into comprehensive suites like Blender empowers users with unconstrained, free-camera movement and deep analytical capabilities. Our work directly addresses this gap by re-deriving and implementing a generalized CUDA rasterizer that natively supports both standard symmetric and novel skew Gaussians. This robust backend serves as the high-performance foundation for our interactive Blender visualiza-tion engine, ensuring that advanced representation techniques are fully actionable for user-driven visual exploration. JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 4
+
+III. P RELIMINARIES 
+
+A. Preliminary of 3D Gaussian Splatting 
+
+Formally, 3DGS represents a scene as a collection of N
+
+anisotropic 3D Gaussians {Gi}Ni=1. Each primitive is parame-terized by a continuous 3D probability density function: 
+
+Gi(x) = exp 
+
+
+
+− 12 (x − μi)T Σ−1 
+
+> i
+
+(x − μi)
+
+
+
+, (1) where μi ∈ R3 denotes the spatial center (mean) of the prim-itive, and Σi ∈ R3×3 is the 3D covariance matrix determining its scale and orientation. To ensure that Σi remains physically valid during gradient-based optimization, it is typically factor-ized into a learnable scaling matrix Si and a rotation matrix Ri
+
+(derived from a quaternion), such that Σi = RiSiSTi RTi . Each Gaussian is additionally coupled with a base opacity αi and view-dependent color coefficients parameterized via Spherical Harmonics (SH). To synthesize a novel view, these 3D primitives are pro-jected onto the 2D image plane. This splatting process employs an affine approximation of the viewing transformation to compute a 2D covariance matrix Σ′
+
+> i
+
+, which defines the elliptical footprint of the projected Gaussian on the screen. The scene is then rendered pixel by pixel utilizing a highly efficient, tile-based rasterization pipeline. For a given pixel, the intersecting 2D Gaussians are sorted in depth, and their color contributions are accumulated using front-to-back alpha blending: 
+
+C = ∑
+
+> i
+
+ciα′
+
+> ii−1
+
+# ∏
+
+> j=1
+
+(1 − α′
+
+> j
+
+), (2) where ci is the view-dependent color evaluated from the SH coefficients, and α′ 
+
+> i
+
+is the final opacity of the i-th Gaussian, computed as the product of the learned base opacity αi and the 2D Gaussian falloff. Because this entire model is analytically differentiable, the attributes of all Gaussians can be optimized by gradient descent, driven by photometric loss formulations between the rendered outputs and ground-truth images. 
+
+B. Interactive 3DGS Exploration Workflow in Blender 
+
+To provide analysts with an intuitive and unconstrained environment for spatial data exploration, VisEngine leverages Blender as its interactive frontend. The operational workflow is designed to bridge the gap between abstract mathematical representations and human-centric visual analysis without re-quiring users to write visualization scripts. The workflow begins by importing a visual proxy of the 3DSGS scene into the Blender viewport. Depending on the an-alytical requirement, this proxy can either be the raw, colored point cloud extracted from the initialized Gaussians (imported via our customized .ply parser), or a continuous geometric mesh (e.g., an .obj file generated via surface reconstruction). These proxies provide immediate spatial context. Analysts then utilize Blender’s native viewport controls to perform unconstrained free camera movements. They can fluidly orbit around complex spatial structures, inspect asymmetric specular reflections from specific angles, or establish keyframes along a timeline to design precise, cinematic analytical trajectories. Because the heavy CUDA rasterization is completely decou-pled from this frontend interaction loop, analysts experience zero latency during trajectory design, ensuring a seamless and responsive exploratory data analysis experience. 
+
+C. Camera Trajectories and Format Standardization 
+
+A significant bottleneck in standardizing interactive radiance fields is the fragmentation of camera coordinate conventions across different computational domains. Synthesizing novel views relies on perfect synchronization between the frontend trajectory design and the backend CUDA rasterizer. However, these two ecosystems fundamentally disagree on the definition of local camera space. 
+
+The OpenCV / COLMAP Convention: In the computer vi-sion ecosystem, most Structure-from-Motion (SfM) algorithms such as COLMAP and explicit neural rendering backends operate under the OpenCV camera coordinate standard. In this convention, the camera looks down the positive Z-axis ( +Z), the local Y-axis points downwards ( +Y down), and the X-axis points to the right ( +X right). Camera extrinsic parameters outputted by these pipelines typically store Camera-to-World (C2W) matrices strictly adhering to this Right-Down-Forward structural assumption. 
+
+The OpenGL / Blender Convention: In contrast, interactive 3D authoring environments and graphics APIs heavily rely on the OpenGL standard. When an analyst navigates the free camera within Blender, the generated local camera coordinate system assumes the camera looks down the negative Z-axis (−Z), the local Y-axis points upwards ( +Y up), and the X-axis points to the right ( +X right). Consequently, directly feeding raw Blender camera parameters into a 3DGS rasterizer results in severe axis-flipping artifacts, rendering the scene upside down or completely out of the field of view. IV. M ETHODOLOGY 
+
+3D Gaussian Splatting (3DGS) models spatial environments using symmetric volumetric kernels. However, these sym-metric primitives inherently struggle to accurately represent spatial discontinuities. To overcome these representational barriers, we propose 3D Skew Gaussian Splatting (3DSGS). By integrating the Skew Normal distribution into the splatting architecture, we introduce a more robust rendering pipeline, naturally encompassing the standard symmetric Gaussian as a special baseline case. The remainder of this section details our systematic ap-proach. Section 3.1 briefly reviews the mathematical founda-tions of classical 3DGS. In Section 3.2, we formulate the 3D Skew Gaussian kernel and its asymmetric properties. Section 3.3 details our rigorous extensions to both the forward and backward passes of the rasterization pipeline. Section 3.4 outlines a novel depth-aware densification criterion designed to optimize primitive allocation and ensure structural com-pactness. Finally, Section 3.5 describes the integration of these core rendering components into a decoupled interactive visualization engine (VisEngine) to facilitate unconstrained visual analysis. The comprehensive training and rendering workflow of our 3DSGS framework is illustrated in Figure 2. JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 5
+
+Algorithm 1: Forward Pass of 3DSGS 
+
+Input: Pixel coordinate x, Gaussian mean μ, inverse covariance parameters a, b, c, skewness coefficients βx, βy, base opacity d, color features ci
+
+Output: Rendered pixel color C
+
+// Compute spatial offsets  
+
+> 1
+
+δx ← x − μx, δy ← y − μy;
+
+// Compute standard 2D Gaussian and skewness terms  
+
+> 2
+
+G′(x) ← exp  − 12 (aδ 2 
+
+> x
+
++ cδ 2 
+
+> y
+
+) − bδxδy
+
+; 
+
+> 3
+
+z ← βxδx+βyδy 
+
+> √2
+
+; 
+
+> 4
+
+Φ(x) ← 1 + erf (z);
+
+// Compute final modulated opacity  
+
+> 5
+
+α ← d · G′(x) · Φ(x);
+
+// Alpha blending for volume rendering  
+
+> 6
+
+T1 ← 1;  
+
+> 7
+
+C ← 0;  
+
+> 8
+
+for each intersected Gaussian i from near to far do  
+
+> 9
+
+C ← C + ci · αi · Ti; 
+
+> 10
+
+Ti+1 ← Ti · (1 − αi); 
+
+> 11
+
+return C;
+
+A. 3D Skew Gaussian Kernel 
+
+Traditional 3DGS models scene components using symmet-ric Gaussian kernels, characterized solely by their mean μ and covariance Σ. While effective in representing isotropic and symmetric features, such models are limited in their ability to accurately depict asymmetric or discontinuous structures commonly found at object edges, corners, or textured regions. To overcome these limitations, we propose a skew Gaussian kernel formulated as: 
+
+S(x) = 2 G(x; μ, Σ)Φ  β T (x − μ) , (3) where G(x; μ, Σ) is the conventional multivariate Gaus-sian density, and Φ(·) denotes the cumulative distribution function (CDF) of the standard normal distribution. β ∈ Rd
+
+denotes Skewness vector controlling the direction and degree of asymmetry along each axis. Larger magnitudes indicate stronger skewness, allowing the kernel to stretch or compress asymmetrically. The derivative of S with respect to β is given by the formula in Eq. 4. The detailed derivation process can be found in the supplementary materials. 
+
+∂ S(x)
+
+∂ β = G(x; μ, Σ) · 2
+
+√π · e−   
+
+> βT(x−μ)√2
+> 2
+
+· 1
+
+√2 (x − μ). (4) This enhanced kernel design allows for more flexible and precise scene representations, particularly beneficial for mod-eling real-world scenes with complex structures. By accom-modating directional biases in density distribution, the model can achieve more faithful reconstructions, especially in regions with abrupt changes. Additionally, the skew-normal formu-lation preserves smoothness and compatibility with gradient-based optimization. The opacity value alpha, used in the process of alpha blend-ing is determined through a specific calculation to accurately represent the transparency level of each element: 
+
+α = oi · Si(x) = oi · Gi(x) · Φ  β T (x − μ) , (5) (6) where 
+
+Φ(z) = 12
+
+
+
+1 + erf 
+
+ z
+
+√2
+
+ 
+
+. (7) The 3D Gaussian distribution utilized in 3DGS is precisely the special case of the Skew Normal distribution where the skewness vector β = 0. In this case, we have Φ(0) = 0.5, then the Skew Normal PDF simplifies to: 
+
+S(x; μ, Σ, 0) = 2G(x; μ, Σ)Φ(0) = G(x; μ, Σ). (8) Our Skew Normal primitive thus generalizes the 3DGS primitive, allowing for a continuous transition from symmetric to arbitrarily skewed distributions. The power of the Skew Normal kernel lies in the Φ
+
+
+
+β T (x − μ)
+
+
+
+term, which acts as a directional modulation factor on the underlying symmetric Gaussian G(x). The scalar value β T (x − μ) represents the projection of the vector (x − μ) onto the direction of the skewness vector β . The sign of this projection determines whether x is on the ”positive” or ”negative” side of the hyperplane passing through μ with normal β . The CDF Φ(·)
+
+then maps this scalar projection to a value between 0 and 1. 
+
+B. 3D Skew Gaussian Rasterization and Splatting 
+
+Building upon the highly efficient tile-based architecture of standard 3DGS, we extend the rasterization and splatting pipeline to accommodate the geometric complexity of Skew Gaussian kernels. During the forward pass, the 2D image is rendered by accumulating the contributions of each projected skew Gaussian through alpha blending. The final color C
+
+of a given pixel is computed by evaluating the intersecting primitives in a strictly back-to-front depth order: 
+
+C = ∑
+
+> i∈N
+
+ciαi(ˆx − ˆμ)
+
+> i−1
+
+# ∏
+
+> j=1
+
+(1 − α j(ˆx − ˆμ)) . (9) Unlike standard symmetric Gaussians that utilize a static scalar opacity, our 3DSGS framework introduces a spatially varying opacity model to capture complex transparency and sharp occlusion boundaries. Inspired by recent advancements in structural modeling, we incorporate an additional analytical term that modulates the transparency across the internal foot-print of a single kernel. The effective opacity o evaluated at the 2D projected coordinate x is defined as: 
+
+o(x) = 12
+
+
+
+(α1 + α2) + ( α1 − α2) erf 
+
+ (β + d)T x
+
+√2
+
+ 
+
+, (10) JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 6
+
+Algorithm 2: Backward Pass of 3DSGS 
+
+Input: Loss gradient w.r.t color ∂ L 
+
+> ∂C
+
+, forward pass intermediate variables δx, δy, z, G′(x), S′(x), α
+
+Output: Gradients for learning parameters:    
+
+> ∂L
+> ∂xndc
+
+, ∂ L  
+
+> ∂yndc
+
+, ∂ L  
+
+> ∂a
+
+, ∂ L  
+
+> ∂b
+
+, ∂ L  
+
+> ∂c
+
+, ∂ L 
+
+> ∂ β x
+
+, ∂ L
+
+> ∂ β y
+
+// Compute base gradient for opacity 
+
+αk   
+
+> 1∂L
+> ∂ α k
+
+← Tk ∑i ∂ L 
+
+> ∂C[i]
+
+(ck[i] − Rk+1);
+
+// Gradients for screen-space coordinates     
+
+> 2∂L
+> ∂xndc
+
+← − d · ∂ L 
+
+> ∂ α k
+
+· G′(x) ·
+
+> W
+> 2
+
+
+
+(aδx + bδy)( 1 + erf (z)) + 
+
+q 2 
+
+> π
+
+βx exp (−z2)
+
+
+
+;    
+
+> 3∂L
+> ∂yndc
+
+← − d · ∂ L 
+
+> ∂ α k
+
+· G′(x) ·
+
+> H
+> 2
+
+
+
+(bδx + cδy)( 1 + erf (z)) + 
+
+q 2 
+
+> π
+
+βy exp (−z2)
+
+
+
+;
+
+// Gradients for inverse covariance parameters     
+
+> 4∂L
+> ∂a
+
+← − 12 d · δ 2 
+
+> x
+
+· S′(x) ∂ L 
+
+> ∂ α k
+
+;    
+
+> 5∂L
+> ∂b
+
+← − d · δxδy · S′(x) ∂ L 
+
+> ∂ α k
+
+;    
+
+> 6∂L
+> ∂c
+
+← − 12 d · δ 2 
+
+> y
+
+· S′(x) ∂ L 
+
+> ∂ α k
+
+;
+
+// Gradients for skewness coefficients  
+
+> 7
+
+Eskew ← exp  − 12 (aδ 2 
+
+> x
+
++ cδ 2 
+
+> y
+
++ 2z2) − bδxδy
+
+;   
+
+> 8∂L
+> ∂ β x
+
+← d · ∂ L
+
+> ∂ α k
+
+q 2 
+
+> π
+
+δx · Eskew ;   
+
+> 9∂L
+> ∂ β y
+
+← d · ∂ L
+
+> ∂ α k
+
+q 2 
+
+> π
+
+δy · Eskew ; 
+
+> 10
+
+return All computed gradients; where α1 and α2 denote the distinct base opacities of the bisected regions, β is the intrinsic skewness parameter that governs the asymmetry of the distribution, and d is a di-rectional vector guiding the internal segmentation boundary. This formulation empowers a single skew Gaussian to flexibly represent sharp opacity transitions and directional variations, significantly reducing the visual blurring typically caused by the forced overlapping of multiple symmetric primitives. Because this customized splatting formulation is fully an-alytically differentiable, we seamlessly integrate it into the backward pass for end-to-end optimization. Driven by the photometric loss L between the synthesized and ground-truth images, the gradients must propagate through our complex opacity formulation. Specifically, the gradient with respect to the skewness parameter β is derived via the chain rule: 
+
+∂ L
+
+∂ β = ∂ L
+
+∂ α i
+
+· ∂ α i
+
+∂ S · ∂ S
+
+∂ β , (11) where S represents the intermediate state variables of the kernel footprint. This gradient flow ensures that the model penalizes structural discrepancies, promoting stable conver-gence. Detailed mathematical derivations are provided in the supplementary material. 
+
+> Fig. 3. The left sub-figure shows how the enhanced opacity parameter affects the skew kernel. The right sub-figure indicates split the skew kernel along the max scale direction and adjust the scale of new kernels.
+
+C. Depth-Aware Densification Strategy 
+
+A critical component of explicit radiance fields is the adap-tive optimization of the point cloud density. Standard 3DGS heavily relies on the 2D screen-space positional gradient norm, denoted as g(uv ) 
+
+> i
+
+, to trigger this densification. However, in the context of high-fidelity visual analytics, we observe that relying solely on view-dependent 2D projected errors is insufficient to capture complex topologies. Specifically, regions near sharp occlusion boundaries and depth discontinu-ities often suffer from under-reconstruction or floaters, which severely degrade human depth perception during interactive 3D exploration. To enforce geometric fidelity strictly along the viewing ray and eliminate these visual artifacts, we introduce a depth-aware densification constraint. We quantify the sensitivity of each primitive to depth perturbations. For each skew Gaussian indexed by i, we define the maximal gradient magnitude with respect to the depth coordinate over the optimization history as: 
+
+g(z) 
+
+> i
+
+= max  
+
+> t
+
+∇zL ti 2 , (12) where L ti represents the rendering loss for Gaussian i at training iteration t, and ∇zL ti denotes the explicit gradient of this loss with respect to the depth ( Z-axis) of the primitive’s spatial center. By incorporating g(z) 
+
+> i
+
+into the adaptive control loop along-side the standard 2D gradient g(uv ) 
+
+> i
+
+, our strategy intelligently identifies regions with severe depth ambiguities. Gaussians exhibiting high depth-gradients are prioritized for splitting or cloning. This depth-aware mechanism ensures that skew Gaus-sians are distributed compactly and accurately along physical surface boundaries, resulting in a more reliable geometric representation for spatial analysis. Then we improve the split strategy during the densification process. We split the skew kernel on the max axis and adjust the scale of new kernels after splitting with the skew parameters to fit the original shape as shown in Fig. 3. This split strategy can help us generate more accurate Gaussians. 
+
+D. Decoupled Interactive Visual Analytics Engine 
+
+A challenge in applying advanced radiance fields to visual analytics is the tight coupling between the rendering pipelines and restricted viewing interfaces. This rigidity severely hinders the exploratory data analysis (EDA) required to understand complex spatial phenomena. To bridge the gap between high-fidelity view synthesis and human-centric spatial cognition, JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 7
+
+Algorithm 3: Decoupled Interactive Rendering Pipeline for 3DSGS 
+
+Input: Optimized 3DSGS primitive set P, viewport resolution (W, H)
+
+Output: Real-time photorealistic novel view It at frame t 
+
+> 1
+
+Talign ← diag (1, −1, −1, 1) // OpenGL → OpenCV transform  
+
+> 2
+
+while interactive visual exploration do  
+
+> 3
+
+Phase 1: Spatial Context & Trajectory Acquisition  
+
+> 4
+
+M(t) 
+
+> gl
+
+← frontend camera pose (C2W) ;  
+
+> 5
+
+K(t) ← intrinsic matrix derived from (W, H) ; 
+
+> 6
+
+Phase 2: Coordinate Alignment (CoordEngine)  
+
+> 7
+
+M(t) 
+
+> cv
+
+← M(t) 
+
+> gl
+
+Talign // coordinate consistency  
+
+> 8
+
+Phase 3: Backend Synthesis & Visual Feedback  
+
+> 9
+
+It ← CUDARasterizer (P, M(t) 
+
+> cv
+
+, K(t)) ; 
+
+> 10
+
+UpdateViewport (It ) ;we propose a decoupled Interactive Visual Analytics Engine (VisEngine). By integrating our generalized CUDA raster-ization backend into a mature 3D authoring environment (Blender), our method shifts the paradigm from passive view-ing to active, unconstrained visual exploration. The architec-tural flow is formalized in Algorithm 3. Effective spatial analysis relies heavily on accurate contex-tual awareness. A primary obstacle when integrating computer vision reconstruction techniques with standard visual design platforms is the fundamental mismatch in coordinate systems. Our rendering pipeline, derived from Structure-from-Motion (SfM) conventions (e.g., COLMAP), operates in the OpenCV coordinate space. Conversely, interactive environments like Blender utilize the OpenGL standard (Right-Up-Back). To prevent spatial disorientation and axis-flipping artifacts dur-ing visual analysis, VisEngine introduces an embedded Co-ordEngine . For any viewpoint Mgl interactively defined by the user, CoordEngine mathematically guarantees alignment through a transformation matrix Talign :
+
+Mcv = Mgl Talign = Mgl 
+
+
+
+1 0 0 00 −1 0 00 0 −1 00 0 0 1
+
+ (13) This rigorous alignment allows analysts to maintain a consis-tent mental map of the 3D space, ensuring that interactive ma-nipulations directly map to geometrically correct synthesized views. Beyond extrinsic alignment, accurate view synthesis man-dates the precise extraction of intrinsic camera parameters from the interactive viewport. Traditional explicit rendering pipelines often embed camera state management inextricably within the rasterization loop, making customized trajectory design cumbersome. VisEngine bypasses this by introducing a dynamic intrinsic mapping module. For each frame, the engine continuously retrieves the active viewport resolution (W, H)
+
+and the horizontal Field-of-View (FoV x). The intrinsic matrix 
+
+K is then formulated by computing the focal lengths fx, fy and projecting the principal point (cx, cy) to the image center: 
+
+K =
+
+ 
+
+> W
+> 2 tan (FoV x/2)
+
+0 W
+
+> 2
+
+0 H
+
+> 2 tan (FoV y/2)
+> H
+> 2
+
+0 0 1
+
+ (14) This rigorous mathematical mapping accommodates dynamic zooming and aspect-ratio modifications on the fly, which are essential operations during fine-grained spatial inspection. To fundamentally realize the architectural decoupling, we designed a lightweight parameter serialization protocol. Rather than embedding the computationally heavy CUDA rasterizer directly within the frontend Python API, which would in-evitably block the main UI thread and degrade the interac-tion frame rate. VisEngine extracts the synchronized spatio-temporal states ( Mcv , K, W , H). For pre-designed analytical trajectories, this sequence of matrices is serialized into a standardized, lightweight format . Our generalized CUDA backend asynchronously ingests this data stream to execute the forward rasterization pass. This decoupled architecture offers profound analytical ad-vantages. First, users can effortlessly navigate intricate topolo-gies and design precise temporal visual narratives without being hindered by programming interfaces. Moreover, by iso-lating the frontend interaction loop from the backend rendering latencies, VisEngine ensures that the visual interface remains highly responsive and robust, even when evaluating millions of complex asymmetric primitives. V. E XPERIMENT 
+
+A. Experiment Setup 
+
+Datasets and Evaluation Metrics. 
+
+To rigorously evaluate the visual fidelity, structural com-pactness, and rendering robustness of our 3DSGS framework under unconstrained camera exploration, we conduct extensive experiments across a diverse collection of real-world scenes. In accordance with established novel view synthesis benchmarks, we utilize a comprehensive suite of 11 complex scenes sourced from three widely adopted datasets:  
+
+> •
+
+Mip-NeRF 360 Dataset [35]: We select seven high-resolution scenes (a mix of indoor and unbounded outdoor environments) from this dataset. These scenes feature complex central objects surrounded by highly detailed, expansive backgrounds.  
+
+> •
+
+Tanks and Temples [36]: We evaluate two large-scale outdoor scenes ( Truck and Train ). This dataset is char-acterized by challenging, unconstrained capture trajec-tories, variable lighting conditions, and thin geometric structures. It serves as a rigorous stress test for our depth-aware densification strategy and the structural alignment capabilities of the skew primitives.  
+
+> •
+
+Deep Blending [37]: We incorporate two indoor scenes (Playroom and Dr Johnson ) that contain rich textures, specular reflections, and complex object boundaries. JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 8GT  3DGS  3DHGS  Mip -Splatting  Ours        
+
+> Fig. 4. Comparison Results. Visual differences are highlighted with red insets for better clarity. Our approach consistently outperforms other models on Mip-NeRF 360 [35] dataset, demonstrating clear advantages in challenging scenarios such as thin geometries and fine-scale details. Best viewed in color.
+> Fig. 5. Interactive Exploration and View Synthesis Quality. Top row: The unconstrained free camera trajectory and the 3DSGS point cloud proxy visualized within our Blender frontend. Bottom row: The corresponding novel views rendered by our CUDA rasterizer at the selected poses.
+
+Data Splitting Protocol: To ensure a fair and consistent eval-uation, we strictly adhere to the standard protocol established in prior volumetric rendering research. For every scene, we uniformly sample every 8-th image from the captured sequence to form the unseen testing set, while the remaining images are utilized for training and optimizing the 3DSGS representation. 
+
+Quantitative Evaluation Metrics: To assess the quality of the synthesized novel views from both signal-processing and human-perceptual perspectives, we employ three standard quantitative metrics:  
+
+> •
+
+Peak Signal-to-Noise Ratio (PSNR): This metric mea-sures the absolute pixel-level photometric error between the rendered image and the ground truth. A higher PSNR indicates lower pixel-wise distortion and better fundamen-tal signal fidelity.  
+
+> •
+
+Structural Similarity Index Measure (SSIM) [43]: 
+
+Unlike PSNR, SSIM evaluates image quality based on the degradation of structural information, luminance, and contrast over local image patches. A higher SSIM score demonstrates that our method better preserves the ge-ometric integrity and sharp boundaries of the objects, which is crucial for accurate spatial analysis.  
+
+> •
+
+Learned Perceptual Image Patch Similarity (LPIPS) [44]: LPIPS uses a VGG network backbone. This deep-learning-based metric measures the perceptual distance between images. A lower LPIPS indicates that rendered views contain fewer visual artifacts. Detailed quantitative comparisons are provided in the Sup-JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 9
+
+TABLE I 
+
+QUANTITATIVE COMPARISON TO PREVIOUS METHODS ON MIP -N ERF 360 [35], T ANKS & TEMPLES [36], AND DEEP BLENDING [37] DATASET .
+
+THE HIGHER PSNR( ↑) AND SSIM( ↑) DENOTE BETTER RENDERING QUALITY . T HE COLOR OF EACH CELL SHOWS THE BEST AND THE SECOND BEST .Dataset Mip-NeRF 360 [35] Tanks & Temples [36] Deep Blending [37] Method PSNR ↑ SSIM ↑ LPIPS ↓ PSNR ↑ SSIM ↑ LPIPS ↓ PSNR ↑ SSIM ↑ LPIPS ↓
+
+Mip-NeRF [19] 29.23 0.844 0.207 22.22 0.759 0.257 29.40 0.901 0.245 3DGS [6] 28.88 0.870 0.182 23.60 0.847 0.181 29.41 0.903 0.243 GES [38] 28.69 0.857 0.206 23.35 0.836 0.198 29.68 0.901 0.252 2DGS [39] 28.49 0.862 0.201 23.11 0.829 0.212 29.52 0.899 0.259 Fre-GS [40] 27.85 0.826 0.209 23.96 0.841 0.183 29.73 0.903 0.245 Scaffold-GS [41] 28.84 0.848 0.220 23.96 0.853 0.177 30.21 0.906 0.254 Mip-Splatting [42] 29.31 0.880 0.168 23.83 0.852 0.175 29.35 0.903 0.244 3DHGS [31] 29.56 0.873 0.178 24.35 0.857 0.169 29.64 0.902 0.242 3DSGS (Ours) 29.78 0.888 0.145 24.36 0.857 0.173 29.75 0.904 0.236 Scaffold-SGS (Ours) 29.32 0.870 0.182 24.31 0.855 0.171 30.26 0.906 0.244 
+
+Fig. 6. Comparison Results. Visual differences are highlighted with red insets for better clarity. Our approach consistently outperforms other models on Mip-NeRF 360 [35] dataset, demonstrating advantages in challenging scenarios. Best viewed in color. 
+
+plementary Materials. 
+
+Baselines. Given the extensive volume of research related to 3DGS, we select the original 3DGS [6] alongside the most recent advancements that target core improvements in the 3DGS paradigm and have demonstrated superior perfor-mance. The baselines include Generalized Exponential Splat-ting (GES) [38], Mip-Splatting [42] and 3D Half-Gaussian Splatting (3DHGS) [31], which leverage different (positive-only) mixture components; Scaffold-GS [41] and Fre-GS [40], which enhance training efficiency through optimized proce-dures; 2D Gaussian Splatting (2DGS) [39], which design the 2D Gaussian kernel; and Mip-NeRF [19], a state-of-the-art method based on Neural Radiance Fields (NeRF) [18]. Collec-tively, these baselines encompass techniques employing novel mixture components, optimization strategies, and represent the current state-of-the-art in rendering quality. JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 10                                          
+
+> TABLE II
+> TRAINING TIME AND RENDERING EFFICIENCY ACROSS DIFFERENT DATASETS .
+> Mip-NeRF 360 [35] Tanks & Temples [36] Deep Blending [37] Method FPS Training time # of kernel FPS Training time # of kernel FPS Training time # of kernel 3DGS [6] 99 21min 3.22M 120 14min 3.13M 104 21min 2.72M GS-MCMC [7] 75 32min 3.29M 98 20min 3.22M 90 29min 2.69M Ours 91 49min 3.12M 112 31min 3.07M 101 38min 2.42M (a) (b) (c) (d)
+> Fig. 7. This figure illustrates the fitting error analysis between different rendering models and the ground truth. (a) represents the ground truth, while subfigures (c) and (d) display the error maps of our model and the 3DGS model, respectively. The errors are calculated as absolute values and normalized, presented as heatmaps. (b) shows the error values along sampled lines on the error maps, where green indicates the error values of the 3DGS model, blue represents the error values of our model, and red highlights the differences in errors between the two models.
+
+B. Results Analysis 
+
+Rendering Quality Comparison: Quantitative evaluations are presented in Figs. 4, along with detailed metrics summa-rized in Tab. I. The training time and render efficiency are evaluated in Tab. II. More results could be found in the Ap-pendix. Across diverse datasets and rendering methodologies, the integration of the 3D Skew Gaussian Splatting (3DSGS) kernel consistently yields significant improvements. Fig. 4 illustrates the quality of the proposed method on a complex scene from the Mip-NeRF 360 [35] dataset. Visual comparisons demonstrate that 3DSGS achieves a closer ap-proximation to ground truth, especially in regions with sharp transitions and high-frequency details. Compared to baseline methods, our approach provides a more faithful representation of intricate scene features, confirming its effectiveness in capturing high-frequency content and discontinuities. Tab. I showcases the performance of our model on the Tanks & Temples [36] and Deep Blending [37] datasets. These datasets are particularly challenging due to their highly detailed textures and complex object interactions. Our method demonstrates superior capability in accurately rendering fine details and maintaining coherence across varying viewpoints. The visual results highlight the robustness of 3DSGS in han-dling intricate scene characteristics and discontinuities, further validating its effectiveness in diverse rendering scenarios. Tab. I highlights the performance of various variants incor-porating 3DSGS across multiple widely used datasets. The re-sults reveal that our method surpasses existing approaches by a clear margin. Notably, on the Mip-NeRF 360 [35] dataset, our approach markedly improves reconstruction fidelity, leading to consistent high-quality rendering across all tested scenarios. Similar trends are observed on the Tanks & Temples [36] and Deep Blending [37] datasets, where the proposed kernel yields leading performance metrics, setting new standards for neural scene representation. The efficiency of 3DSGS is also evaluated as shown in Tab. II. The 3DSGS can achieve fewer number of kernels for 3D representation in most scenes. Despite 3DSGS is slower compared to vanilla 3DGS, the system still maintains real-time performance at over 90 FPS. This demonstrates that the en-hanced expressiveness and detail preservation afforded by our method are achievable without compromising computational efficiency too much. In the Fig. 7, the fitting error analysis compares the per-formance of our rendering model against the 3DGS with the ground truth from the garden scene of the Mip-NeRF 360 dataset. Fig. 7(a) depicts the ground truth, serving as a reference for evaluating the models’ accuracy. Fig. 7(c) and (d) show the error maps of our model and the 3DGS respectively, with errors visualized as normalized heatmaps. It is evident that our model consistently exhibits lower error magnitudes across the sampled regions, indicating more accurate recon-structions. Fig. 7(b) further illustrates the error distributions along selected lines, where the blue curves (our model) generally stay below the green curves (3DGS), demonstrating reduced error levels. The red highlights reveal that our model minimizes discrepancies in error profiles, underscoring its robustness. These results highlight that our approach achieves more precise renderings and improved consistency with the ground truth compared to the 3DGS. 
+
+Interactive Exploration and Structural Fidelity: Beyond static quantitative metrics, the true value of our framework is demonstrated through its robust performance during un-constrained Exploratory Data Analysis (EDA). As illustrated in Figure 5, we evaluate the system’s qualitative behavior under dynamic, human-driven camera trajectories. During the frontend navigation in Blender, analysts frequently position the camera at extreme grazing angles or close to complex topological structures to inspect specific spatial phenomena. Standard 3DGS models exhibit visual artifacts when navi-JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 11                 
+
+> Fig. 8. Ablation Results. We design the ablation study about the performance of our methods with 3DGS under different optimization iteration settings across all three datasets. Our method can outperform 3DGS consistently. TABLE III ABLATION EVALUATION ON THE MIP -N ERF 360 [35] DATASET .Method PSNR ↑SSIM ↑LPIPS ↓
+> w/o opacity regularization 29.53 0.881 0.159 w/o densification optimization 29.47 0.878 0.166 Ours 29.78 0.888 0.145
+
+gating around thin geometries. In contrast, our 3DSGS frame-work preserves these fine-scale details. The intrinsic skewness of our primitives naturally conforms to shape discontinuities, while the depth-aware densification ensures that primitives are compactly aligned along true physical surfaces. Crucially, the decoupled architecture of VisEngine ensures that the heavy computational evaluation of these asymmetric kernels does not block the interaction loop. Consequently, analysts can smoothly scrub through the timeline, design complex fly-throughs, and receive high-fidelity, real-time visual feedback, bridging the gap between rigorous spatial reconstruction and fluid visual analysis. 
+
+C. Ablation Analysis 
+
+To demonstrate the necessity of the proposed modules within our 3D Skew Gaussian Splatting framework, we con-duct ablation studies focusing on the Depth-Aware Densifica-tion Criterion and opacity regularization as shown in Fig.III. The Depth-Aware Densification Criterion plays a crucial role in ensuring accurate and coherent spatial representation by adaptively concentrating the density of splats in regions with complex geometry, thereby improving the fidelity of the recon-structed scene. Without this module, the representation tends to be sparse in areas of rich details, leading to poor rendering quality and loss of structural consistency. Meanwhile, opacity regularization serves as an essential mechanism to balance the transparency and solidity of splats, encouraging the model to produce more realistic and stable visualizations. Removing this regularization results in overly transparent or artificially opaque regions, adversely affecting the visual coherence and physical plausibility of the output. In addition, we present a quantitative ablation study inves-tigating the model’s performance under varying optimization iteration settings. As shown in Fig. 8, this analysis not only demonstrates the stable convergence behavior of our approach but also highlights its consistent superiority over the baseline at different training stages. 
+
+D. Limitation 
+
+One limitation of our current approach is that the intro-duction of the skew parameter has led to increased training time and decreased rendering speed as shown in Tab. II. We believe this is primarily due to the higher computational cost of the erf function compared to the exponential function, which affects overall efficiency. Despite this, the system still maintains real-time performance at over 60 FPS. Moving forward, we plan to explore optimization strategies to reduce this computational overhead, further improving both training efficiency and rendering speed. VI. C ONCLUSION 
+
+In this work, we presented 3D Skew Gaussian Splatting (3DSGS), a novel framework that fundamentally extends the core primitive of explicit radiance fields from a standard sym-metric Gaussian to a generalized 3D Skew Normal distribution. Our approach resolves the structural artifacts and visual per-ception barriers inherent in standard 3DGS by: (1) introducing an intrinsic skewness parameter to accurately model complex spatial discontinuities and asymmetric features, (2) developing a spatially varying opacity representation for improved trans-parency modeling, and (3) refining the optimization process through a depth-aware densification criterion that guarantees geometric compactness. We re-derived the underlying CUDA rasterization pipeline and develop a dedicated visualization engine (VisEngine) within Blender. Empirical results demonstrate that our frame-work not only achieves superior visual fidelity but also em-powers analysts with real-time, unconstrained exploratory data analysis. Future work may include speeding up the 3D skew splatting and exploring the extension of 3DSGS to dynamic scenes and deformable objects. JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 12 
+
+VII. A CKNOWLEDGMENT 
+
+This work is supported by the National Natural Science Foundation of China (No. 62406267), Guangdong Provincial Project (No. 2024QN11X072), Guangzhou-HKUST(GZ) Joint Funding Program (No. 2025A03J3956) and Guangzhou Mu-nicipal Education Project (No. 2024312122). REFERENCES [1] S. Choi, M. Gopakumar, Y. Peng, J. Kim, O’Toole et al. , “Time-multiplexed neural holography: a flexible framework for holographic near-eye displays with fast heavily-quantized spatial light modulators,” in ACM SIGGRAPH 2022 Conference Proceedings , 2022, pp. 1–9. [2] B. Wen, J. Tremblay, V. Blukis, S. Tyree, T. M¨ uller, A. Evans, D. Fox 
+
+et al. , “Bundlesdf: Neural 6-dof tracking and 3d reconstruction of unknown objects,” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , 2023, pp. 606–617. [3] P. Tang, Z. Wang, G. Wang, J. Zheng, X. Ren et al. , “Sparseocc: Rethink-ing sparse latent representation for vision-based semantic occupancy prediction,” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , 2024, pp. 15 035–15 044. [4] Y. Wang, J. Wang, R. Gao, Y. Qu, W. Duan, S. Yang, and Y. Qi, “Look at the sky: Sky-aware efficient 3d gaussian splatting in the wild,” IEEE Transactions on Visualization and Computer Graphics , 2025. [5] H. Zhai, X. Zhang, B. Zhao, H. Li, Y. He, Z. Cui et al. , “Splatloc: 3d gaussian splatting-based visual localization for augmented reality,” IEEE Transactions on Visualization and Computer Graphics , 2025. [6] B. Kerbl, G. Kopanas, T. Leimk¨ uhler, and G. Drettakis, “3d gaussian splatting for real-time radiance field rendering.” ACM Trans. Graph. ,vol. 42, no. 4, pp. 139–1, 2023. [7] S. Kheradmand, D. Rebain, G. Sharma, W. Sun, Y.-C. Tseng, H. Isack, A. Kar, A. Tagliasacchi, and K. M. Yi, “3d gaussian splatting as markov chain monte carlo,” Advances in Neural Information Processing Systems ,vol. 37, pp. 80 965–80 986, 2024. [8] J. Kulhanek, S. Peng, Z. Kukelova, M. Pollefeys, and T. Sattler, “Wildgaussians: 3d gaussian splatting in the wild,” arXiv preprint arXiv:2407.08447 , 2024. [9] R. Zha, T. J. Lin, Y. Cai, J. Cao, Y. Zhang, and H. Li, “R 2-gaussian: Rectifying radiative gaussian splatting for tomographic reconstruction,” 
+
+arXiv preprint arXiv:2405.20693 , 2024. [10] Y. Jiang, J. Tu, Y. Liu, X. Gao, X. Long, W. Wang, and Y. Ma, “Gaus-sianshader: 3d gaussian splatting with shading functions for reflective surfaces,” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , 2024, pp. 5322–5332. [11] K. Ye, Q. Hou, and K. Zhou, “3d gaussian splatting with deferred reflection,” in ACM SIGGRAPH 2024 Conference Papers , 2024, pp. 1– 10. [12] Z. Yang, X. Gao, Y.-T. Sun, Y. Huang, X. Lyu, W. Zhou, S. Jiao, X. Qi, and X. Jin, “Spec-gaussian: Anisotropic view-dependent appearance for 3d gaussian splatting,” Advances in Neural Information Processing Systems , vol. 37, pp. 61 192–61 216, 2024. [13] E. Zakharov, V. Sklyarova, M. Black, G. Nam, J. Thies, and O. Hilliges, “Human hair reconstruction with strand-aligned 3d gaussians,” in Euro-pean Conference on Computer Vision . Springer, 2024, pp. 409–425. [14] H. Chen, R. Chen, Q. Qu, Z. Wang, T. Liu, X. Chen, and Y. Y. Chung, “Beyond gaussians: Fast and high-fidelity 3d splatting with linear kernels,” arXiv preprint arXiv:2411.12440 , 2024. [15] S. Rota Bul` o, L. Porzi, and P. Kontschieder, “Revising densification in gaussian splatting,” in European Conference on Computer Vision .Springer, 2024, pp. 347–362. [16] R. Xu, W. Chen, J. Wang, Y. Liu, P. Wang, L. Gao, S. Xin, T. Ko-mura, X. Li, and W. Wang, “Supergaussians: Enhancing gaussian splatting using primitives with spatially varying colors,” arXiv preprint arXiv:2411.18966 , 2024. [17] J. Hyung, S. Hong, S. Hwang, J. Lee, J. Choo, and J.-H. Kim, “Effective rank analysis and regularization for enhanced 3d gaussian splatting,” 
+
+arXiv preprint arXiv:2406.11672 , 2024. [18] B. Mildenhall, P. P. Srinivasan, M. Tancik, J. T. Barron et al. , “Nerf: Representing scenes as neural radiance fields for view synthesis,” 
+
+Communications of the ACM , vol. 65, no. 1, pp. 99–106, 2021. [19] J. T. Barron, B. Mildenhall, M. Tancik, P. Hedman, R. Martin-Brualla, and P. P. Srinivasan, “Mip-nerf: A multiscale representation for anti-aliasing neural radiance fields,” in Proceedings of the IEEE/CVF inter-national conference on computer vision , 2021, pp. 5855–5864. [20] T. M¨ uller, A. Evans, C. Schied, and A. Keller, “Instant neural graphics primitives with a multiresolution hash encoding,” ACM transactions on graphics (TOG) , vol. 41, no. 4, pp. 1–15, 2022. [21] D. R¨ uckert, L. Franke, and M. Stamminger, “ADOP: Approximate differentiable one-pixel point rendering,” ACM Transactions on Graphics (TOG) , vol. 41, no. 4, pp. 1–14, 2022. [22] Z. Yang, X. Gao, W. Zhou, S. Jiao, Y. Zhang, and X. Jin, “Deformable 3d gaussians for high-fidelity monocular dynamic scene reconstruction,” in Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , 2024, pp. 20 331–20 341. [23] J. Chung, S. Lee, H. Nam, J. Lee, and K. M. Lee, “Luciddreamer: Domain-free generation of 3d gaussian splatting scenes,” arXiv preprint arXiv:2311.13384 , 2023. [24] J. Xu, Y. Mei, and V. Patel, “Wild-gs: Real-time novel view synthesis from unconstrained photo collections,” Advances in Neural Information Processing Systems , vol. 37, pp. 103 334–103 355, 2024. [25] S. Zhou, Z. Fan, D. Xu, H. Chang, P. Chari, T. Bharadwaj, S. You, Z. Wang, and A. Kadambi, “Dreamscene360: Unconstrained text-to-3d scene generation with panoramic gaussian splatting,” in European Conference on Computer Vision . Springer, 2024, pp. 324–342. [26] Y. Cao, Y. Jv, and D. Xu, “3dgs-det: Empower 3d gaussian splatting with boundary guidance and box-focused sampling for 3d object detection,” 
+
+arXiv preprint arXiv:2410.01647 , 2024. [27] X. Sun, J. C. Lee, D. Rho, J. H. Ko, U. Ali, and E. Park, “F-3dgs: Factorized coordinates and representations for 3d gaussian splatting,” in 
+
+Proceedings of the 32nd ACM International Conference on Multimedia ,2024, pp. 7957–7965. [28] W. Morgenstern, F. Barthel, A. Hilsmann, and P. Eisert, “Compact 3d scene representation via self-organizing gaussian grids,” in European Conference on Computer Vision . Springer, 2024, pp. 18–34. [29] J. Zhu, J. Yue, F. He, and H. Wang, “3d student splatting and scooping,” 
+
+arXiv preprint arXiv:2503.10148 , 2025. [30] B. Huang, Z. Yu, A. Chen, A. Geiger, and S. Gao, “2D Gaussian Splat-ting for geometrically accurate radiance fields,” in ACM SIGGRAPH 2024 Conference Papers , 2024, pp. 1–11. [31] H. Li, J. Liu, M. Sznaier, and O. Camps, “3d-hgs: 3d half-gaussian splatting,” arXiv preprint arXiv:2406.02720 , 2024. [32] Y.-H. Huang, M.-X. Lin, Y.-T. Sun, Z. Yang, X. Lyu, Y.-P. Cao, and X. Qi, “Deformable radial kernel splatting,” arXiv preprint arXiv:2412.11752 , 2024. [33] Z. Yu, A. Chen, B. Huang, T. Sattler, and A. Geiger, “Mip-splatting: Alias-free 3d gaussian splatting,” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , 2024, pp. 19 447–19 456. [34] J. Held, R. Vandeghen, A. Hamdi, A. Deliege, A. Cioppa, S. Giancola, A. Vedaldi, B. Ghanem, and M. Van Droogenbroeck, “3d convex splatting: Radiance field rendering with 3d smooth convexes,” arXiv preprint arXiv:2411.14974 , 2024. [35] J. T. Barron, B. Mildenhall, D. Verbin, P. P. Srinivasan, and P. Hedman, “Mip-nerf 360: Unbounded anti-aliased neural radiance fields,” in Pro-ceedings of the IEEE/CVF conference on computer vision and pattern recognition , 2022, pp. 5470–5479. [36] A. Knapitsch, J. Park, Q.-Y. Zhou, and V. Koltun, “Tanks and temples: Benchmarking large-scale scene reconstruction,” ACM Transactions on Graphics , vol. 36, no. 4, 2017. [37] P. Hedman, J. Philip, T. Price, J.-M. Frahm, G. Drettakis, and G. Bros-tow, “Deep blending for free-viewpoint image-based rendering,” ACM Transactions on Graphics (ToG) , vol. 37, no. 6, pp. 1–15, 2018. [38] A. Hamdi, L. Melas-Kyriazi, J. Mai, G. Qian, R. Liu, C. Vondrick, B. Ghanem, and A. Vedaldi, “Ges: Generalized exponential splatting for efficient radiance field rendering,” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , 2024, pp. 19 812–19 822. [39] B. Huang, Z. Yu, A. Chen, A. Geiger, and S. Gao, “2d gaussian splatting for geometrically accurate radiance fields,” in SIGGRAPH 2024 Conference Papers . Association for Computing Machinery, 2024. [40] J. Zhang, F. Zhan, M. Xu, S. Lu, and E. Xing, “Fregs: 3d gaussian splatting with progressive frequency regularization,” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition ,2024, pp. 21 424–21 433. [41] T. Lu, M. Yu, L. Xu, Y. Xiangli, L. Wang, D. Lin, and B. Dai, “Scaffold-gs: Structured 3d gaussians for view-adaptive rendering,” in 
+
+Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , 2024, pp. 20 654–20 664. [42] Z. Yu, A. Chen, B. Huang, T. Sattler, and A. Geiger, “Mip-splatting: Alias-free 3d gaussian splatting,” in Proceedings of the IEEE/CVF JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 13    
+
+> Conference on Computer Vision and Pattern Recognition (CVPR) , June 2024, pp. 19 447–19 456. [43] Z. Wang, A. C. Bovik, H. R. Sheikh, and E. P. Simoncelli, “Image quality assessment: from error visibility to structural similarity,” IEEE transactions on image processing , vol. 13, no. 4, pp. 600–612, 2004. [44] R. Zhang, P. Isola, A. A. Efros, E. Shechtman, and O. Wang, “The unreasonable effectiveness of deep features as a perceptual metric,” in
+> Proceedings of the IEEE conference on computer vision and pattern recognition , 2018, pp. 586–595.
+
+APPENDIX 
+
+This work adheres to the IEEE Code of Ethics. In this study, no human subjects or animal experimentation was involved. All datasets used were sourced in compliance with relevant usage guidelines, ensuring no violation of privacy. We have taken care to avoid any biases or discriminatory outcomes in our research process. No personally identifiable information was used, and no experiments were conducted that could raise privacy or security concerns. We are committed to maintaining transparency and integrity throughout the research process. We have made every effort to ensure that the results pre-sented in this paper are reproducible. All code and datasets will be made publicly available after the paper is accepted to facilitate replication and verification. The experimental setup, including training steps, model configurations, and hardware details, is described in detail in the paper. We believe these measures will enable other researchers to reproduce our work and further advance the field. Large Language Models (LLMs) were used to for editing and grammar enhancement in the writing and polishing of the manuscript. It is important to note that the LLM was not involved in the ideation, research methodology, or experimental design. All research concepts, ideas, and analyses were developed and conducted by the authors. The contributions of the LLM were solely focused on improving the linguistic quality of the paper, with no involvement in the scientific content or data analysis. We have ensured that the LLM-generated text adheres to ethical guidelines and does not contribute to plagiarism or scientific misconduct. In this section, we will present a comprehensive mathemat-ical derivation of the 3D Skew Gaussian Surface Generation (3DSGS) method. Given the different statistical distributions involved, it is essential to implement modifications to both the forward and backward propagation processes. These cor-rections are necessary to ensure accurate training convergence and high-quality rendering results, aligning the optimized parameters with the intended skew Gaussian models. 
+
+A. Forward Pass 
+
+3DGS is based on Gaussian distribution, also known as Normal distribution, to achieve differentiable rendering, The distribution of the original 3DGS is as follows: 
+
+Gi(x) = exp 
+
+
+
+− 12 (x − μi)⊤Σ−1 
+
+> i
+
+(x − μi)
+
+
+
+(15) As a comparison, the distribution form of 3D SGS is different, mainly due to the introduction of an additional product term Φ to achieve skewed representation: 
+
+S(x) = 2G(x; μ, Σ)Φ
+
+
+
+β T (x − μ)
+
+
+
+(16) where Φ is the cumulative distribution function (CDF) of the standard normal distribution, which represents a linear combination of the skewness vector and the deviation from the mean. In addition, Φ can be expanded using the erf function to obtain the following equation: 
+
+Φ(z) = 12
+
+
+
+1 + erf 
+
+ z
+
+√2
+
+ 
+
+(17) The erf (error function) is a special function widely used in probability, statistics, and partial differential equations. It is defined by the integral: erf (x) = 2
+
+√π
+
+Z x
+
+> 0
+
+e−t2
+
+dt (18) The Taylor expansion of this equation yields: erf (z) = 2
+
+√π
+
+
+
+z − z3
+
+3 + z5
+
+10 − z7
+
+42 + · · · 
+
+
+
+, |z| < ∞ (19) Based on this, we can expand and simplify the distribution form of 3D SGS to obtain the following form: 
+
+S(x) = 2G(x; μ, Σ)Φ
+
+
+
+β T (x − μ)
+
+
+
+(20) 
+
+= 2G(x; μ, Σ) · 12
+
+"
+
+1 + erf β T (x − μ)
+
+√2
+
+!# 
+
+(21) 
+
+= G(x; μ, Σ) ·
+
+"
+
+1 + erf β T (x − μ)
+
+√2
+
+!# 
+
+(22) where, β is the skewness coefficient. 
+
+α = oi · Si(x) = oi ·
+
+s
+
+det (Σ′)
+
+det (Σ′ + sI ) Gi(x) · Φ
+
+
+
+β T (x − μ)
+
+
+
+(23) 
+
+= oi ·
+
+s
+
+det (Σ′)
+
+det (Σ′ + sI ) exp (− 12 (x − μ)T (Σ′ + sI )−1(x − μ)) (24) 
+
+·
+
+
+
+1 + erf 
+
+ β T (x − μ)
+
+√2
+
+ 
+
+(25) 
+
+For opacity, 2D covariance matrix, mean, and skewness coefficient, we have: 
+
+x− μ =
+
+δx
+
+δy
+
+
+
+, β =
+
+βx
+
+βy
+
+
+
+, (Σ′ +sI )−1 =
+
+a bb c
+
+
+
+, d = o·
+
+s
+
+det (Σ′)
+
+det (Σ′ + sI ) = o′
+
+(26) According to the above equation, the calculation of α can be simplified: JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 14 
+
+α = ( oi ·
+
+s
+
+det (Σ′)
+
+det (Σ′ + sI ) ) · exp (− 12
+
+δx, δy
+
+ a bb c
+
+  δx
+
+δy
+
+
+
+) (27) 
+
+·
+
+1 + erf 
+
+βx, βy
+
+ δx
+
+δy
+
+
+
+√2
+
+ (28) 
+
+= d · exp (− 12 (aδ 2 
+
+> x
+
++ cδ 2 
+
+> y
+
+) − bδxδy) ·
+
+
+
+1 + erf 
+
+ βxδx + βxδy
+
+√2
+
+ 
+
+(29) 
+
+Then, based on alpha-blending, we can calculate the color values rendered at each pixel: 
+
+C =
+
+> N
+
+# ∑
+
+> i=1
+
+ciαiTi, where Ti =
+
+> i−1
+
+# ∏
+
+> j=1
+
+(1 − α j), (30) 
+
+B. Backward Pass 
+
+In the process of backward, we need to calculate various key gradients, including ∂ L 
+
+> ∂ μ
+
+, ∂ L  
+
+> ∂S
+
+, ∂ L  
+
+> ∂R
+
+, ∂ L  
+
+> ∂c
+
+, ∂ L  
+
+> ∂o
+
+and ∂ L 
+
+> ∂ β
+
+. According to the chain rule, we can obtain ∂ L 
+
+> ∂ μ
+
+, ∂ L  
+
+> ∂S
+
+, ∂ L  
+
+> ∂R
+
+, ∂ L  
+
+> ∂c
+
+, ∂ L  
+
+> ∂o
+
+by calculating    
+
+> ∂L
+> ∂xndc
+
+, ∂ L  
+
+> ∂yndc
+
+, ∂ L 
+
+> ∂ α k
+
+, ∂ L  
+
+> ∂a
+
+, ∂ L  
+
+> ∂b
+
+, ∂ L  
+
+> ∂c
+
+, so we will focus on the derivation of ∂ L  
+
+> ∂xndc
+
+, ∂ L  
+
+> ∂yndc
+
+, ∂ L 
+
+> ∂ α k
+
+, ∂ L  
+
+> ∂a
+
+, ∂ L  
+
+> ∂b
+
+, ∂ L  
+
+> ∂c
+
+. We will not repeat the theoret-ical derivation of the remaining backpropagation here. The loss L is calculated between the ground-truth pixel col-ors and rendered colors. It is obvious that ∂C(p)/∂ ck = αkTk,then 
+
+∂ L
+
+∂ ck
+
+= ∑
+
+> p
+
+∂ L
+
+∂C(p)
+
+∂C(p)
+
+∂ ck
+
+= ∑
+
+> p
+
+αkTk
+
+∂ L
+
+∂C(p) (31) If [i] is the channel index of the color, then 
+
+∂ L
+
+∂ α k
+
+= ∑
+
+> i
+
+∂ L
+
+∂C[i]
+
+∂C[i]
+
+∂ α k
+
+= Tk ∑
+
+> i
+
+∂ L
+
+∂C[i] (ck[i] − Rk+1) (32) According to the last section, we have: 
+
+α = o′ · S′(x) = d · exp (− 12 (aδ 2 
+
+> x
+
++ cδ 2 
+
+> y
+
+) − bδxδy) (33) 
+
+·
+
+
+
+1 + erf 
+
+ βxδx + βxδy
+
+√2
+
+ 
+
+(34) The derivative calculation formula of erf function is as follows: 
+
+ddx erf (x) = 2
+
+√π e−x2
+
+(35) According to the derivative of erf function, we have: 
+
+d erf (z)
+
+dz = 2
+
+√π e−z2
+
+· dz dx (36) 
+
+= 2
+
+√π e−z2
+
+· 1
+
+√2 β (37) 
+
+=
+
+r 2
+
+π e−z2
+
+β (38) Due to 
+
+xndc = ( x − W
+
+2 )/W
+
+2 = 2xW − 1 (39) Then 
+
+δx = x − u = ( xndc + 1) · W
+
+2 − u, (40) So we have 
+
+∂ δ x
+
+∂ xndc 
+
+= W
+
+2 (41) 
+
+∂ α ∂ xndc 
+
+= ∂ α ∂ δ x
+
+∂ δ x
+
+∂ xndc 
+
+= d · ∂ S′
+
+∂ δ x
+
+∂ δ x
+
+∂ xndc 
+
+(42) 
+
+= −d · exp 
+
+
+
+− 12 (aδ 2 
+
+> x
+
++ cδ 2 
+
+> y
+
+) − bδxδy
+
+
+
+·
+
+
+
+1 + erf 
+
+ βxδx + βyδy
+
+√2
+
+ 
+
+(43) 
+
+· (aδx + bδy) · ∂ δ x
+
+∂ xndc 
+
+(44) 
+
++ d · exp 
+
+
+
+− 12 (aδ 2 
+
+> x
+
++ cδ 2 
+
+> y
+
+) − bδxδy
+
+
+
+·√2βx
+
+√π exp − (βxδx + βyδy)2
+
+2
+
+!
+
+(45) 
+
+= −d · exp 
+
+
+
+− 12 (aδ 2 
+
+> x
+
++ cδ 2 
+
+> y
+
+) − bδxδy
+
+
+
+· ∂ δ x
+
+∂ xndc 
+
+·
+
+"
+
+(aδx + bδy)
+
+(46) 
+
+·
+
+
+
+1 + erf 
+
+ βxδx + βyδy
+
+√2
+
+ 
+
+−√2βx
+
+√π exp − (βxδx + βyδy)2
+
+2
+
+! # 
+
+= −d · exp 
+
+
+
+− 12 (aδ 2 
+
+> x
+
++ cδ 2 
+
+> y
+
+) − bδxδy
+
+
+
+· ∂ δ x
+
+∂ xndc 
+
+·
+
+"
+
+(aδx + bδy)
+
+(47) 
+
+· (1 + erf (z)) −√2βx
+
+√π exp 
+
+
+
+− z2
+
+2
+
+ #
+
+= −d · G′(x) · ∂ δ x
+
+∂ xndc 
+
+·
+
+"
+
+(aδx + bδy) · (1 + erf (z)) −√2βx
+
+√π exp 
+
+
+
+− z2
+
+2
+
+ #
+
+= −d · G′(x) · W
+
+2 ·
+
+"
+
+(aδx + bδy) · (1 + erf (z)) −√2βx
+
+√π exp 
+
+
+
+− z2
+
+2
+
+ #
+
+= −d · G′(x) · W
+
+2 ·
+
+"
+
+(aδx + bδy) · (1 + erf (z)) −
+
+r 2
+
+π βx exp 
+
+
+
+− z2
+
+2
+
+ #
+
+where z = βxδx + βyδy.Therefore, 
+
+∂ L
+
+∂ xndc 
+
+= ∂ L
+
+∂ α ∂ α ∂ δ x
+
+∂ δ x
+
+∂ xndc 
+
+(48) 
+
+= −d · ∂ L
+
+∂ α · G′(x) · W
+
+2 ·
+
+"
+
+(aδx + bδy) · (1 + erf (z)) (49) 
+
++
+
+r 2
+
+π βx exp 
+
+
+
+− z2
+
+2
+
+ #
+
+Similarly, JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 15 
+
+∂ L
+
+∂ yndc 
+
+= ∂ L
+
+∂ α ∂ α ∂ δ y
+
+∂ δ y
+
+∂ yndc 
+
+(50) 
+
+= −d · ∂ L
+
+∂ α · G′(x) · H
+
+2 ·
+
+"
+
+(bδx + cδy) · (1 + erf (z)) (51) 
+
++
+
+r 2
+
+π βy exp 
+
+
+
+− z2
+
+2
+
+ #
+
+For the derivation of (Σ′ + sI )−1 and opacity, we have: 
+
+∂ L
+
+∂ a = ∂ L
+
+∂ α ∂ α ∂ a = − 12 d · δ 2 
+
+> x
+
+· S′(x) ∂ L
+
+∂ α k
+
+, (52) 
+
+∂ L
+
+∂ b = ∂ L
+
+∂ α ∂ α ∂ b = −d · δxδy · S′(x) ∂ L
+
+∂ α k
+
+, (53) 
+
+∂ L
+
+∂ c = ∂ L
+
+∂ α ∂ α ∂ c = − 12 d · δ 2 
+
+> y
+
+· S′(x) ∂ L
+
+∂ α k
+
+(54) 
+
+∂ L
+
+∂ d = ∂ L
+
+∂ α ∂ α ∂ d = S′(x) ∂ L
+
+∂ α k
+
+· βreg (55) where βreg is the skewness regularization term for opacity. For the derivation of skewness coefficient, we have: 
+
+∂ L
+
+∂ β = ∂ L
+
+∂ α k
+
+· ∂ α k
+
+∂ S · ∂ S
+
+∂ β (56) According to 
+
+∂ S(x)
+
+∂ β = G(x; μ, Σ) · 2
+
+√π · e−   
+
+> βT(x−μ)√2
+> 2
+
+· 1
+
+√2 (x − μ) (57) Then 
+
+∂ S
+
+∂ β x
+
+= G′(x) 2
+
+√π · exp −
+
+ β xδx + β xδx
+
+√2
+
+2!
+
+· 1
+
+√2 δx (58) 
+
+= exp (− 12 (aδ 2 
+
+> x
+
++ cδ 2 
+
+> y
+
+) − bδxδy) 2
+
+√π (59) 
+
+· exp −
+
+ β xδx + β xδx
+
+√2
+
+2!
+
+· 1
+
+√2 δx (60) 
+
+=
+
+r 2
+
+π δx exp (− 12 (aδ 2 
+
+> x
+
++ cδ 2 
+
+> y
+
++ ( β xδx + β xδx)2) − bδxδy)
+
+(61) Similarly, 
+
+∂ S
+
+∂ β y
+
+=
+
+r 2
+
+π δy exp (− 12 (aδ 2 
+
+> x
+
++ cδ 2 
+
+> y
+
++ ( β xδx + β xδx)2) − bδxδy)
+
+(62) Therefore, 
+
+∂ L
+
+∂ β x
+
+= d · ∂ L
+
+∂ α k
+
+r 2
+
+π δx exp (− 12 (aδ 2 
+
+> x
+
++ cδ 2 
+
+> y
+
++ ( β xδx + β xδx)2) − bδxδy)
+
+(63) 
+
+∂ L
+
+∂ β y
+
+= d · ∂ L
+
+∂ α k
+
+r 2
+
+π δy exp (− 12 (aδ 2 
+
+> x
+
++ cδ 2 
+
+> y
+
++ ( β xδx + β xδx)2) − bδxδy)
+
+(64) In this section, we analyze the rendering speed, training duration, and the number of kernels used to represent scenes in our proposed model. We provide a comprehensive comparison to highlight the efficiency and scalability of our approach. Additionally, we discuss the limitations of our method, includ-ing potential challenges in handling highly complex scenes and scalability issues under certain conditions. To support our analysis, we present detailed experimental results for each dataset and scene, including quantitative metrics and extensive visualizations that illustrate our model’s performance and behavior across different scenarios. 
+
+C. Implementation 
+
+Regarding the experimental results, some baseline perfor-mances reported in the literature are taken directly from their respective publications. To facilitate comprehensive compari-son, we also implement these methods under consistent ex-perimental settings based on original 3DGS to ensure fairness and comparability. In our implementation, we extend the 3DGS framework by incorporating skewness parameters, which results in only a minimal increase in memory. The modifications to both the forward and backward passes of the rasterizer are based on the standard 3DGS, ensuring seamless integration. For the 3DHGS, we follow the training protocols and hyperparam-eters. For Scaffold-HGS, we do not increase the number of parameters within each Gaussian; instead, we employ an MLP to generate the normal vector for each voxel based on its feature vector, doubling the width of the output layer for the opacity MLP to predict two opacity values per voxel. The rasterizer is similarly adapted based on the specifications in the referenced works, ensuring consistency across different model variants. The learning rate of skewness parameter is set to 0.0001. For the τuv , it is set to 0.001 by default. All experiments are conducted using an NVIDIA RTX A6000 GPU. JOURNAL OF L ATEX CLASS FILES, VOL. 14, NO. 8, AUGUST 2021 16 GT  3DGS  3DHGS  Mip -Splatting  Ours 
+
+Fig. 9. Comparison Results. Visual differences are highlighted with red insets for better clarity. Our approach consistently outperforms other models on Tanks & Temples [36] and Deep Blending [37] dataset, demonstrating advantages in challenging scenarios such as thin geometries and fine-scale details. Best viewed in color.

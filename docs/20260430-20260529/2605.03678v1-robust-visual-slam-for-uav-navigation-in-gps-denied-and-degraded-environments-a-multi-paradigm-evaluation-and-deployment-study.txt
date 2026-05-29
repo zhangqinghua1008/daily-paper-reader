@@ -1,0 +1,745 @@
+Title: Robust Visual SLAM for UAV Navigation in GPS-Denied and Degraded Environments: A Multi-Paradigm Evaluation and Deployment Study
+
+URL Source: https://arxiv.org/pdf/2605.03678v1
+
+Published Time: Wed, 06 May 2026 01:10:37 GMT
+
+Number of Pages: 24
+
+Markdown Content:
+> 1
+
+# Robust Visual SLAM for UAV Navigation in GPS-Denied and Degraded Environments: A Multi-Paradigm Evaluation and Deployment Study 
+
+Prasoon Kumar 1,2, Akshay Deepak 1, Sandeep Kumar 21National Institute of Technology Patna, Bihar, India 2Central Research Laboratory, Bharat Electronics Ltd., Ghaziabad, Uttar Pradesh, India prasoonk.phd24.cs@nitp.ac.in, phd.prasoonkumar@gmail.com, akshayd@nitp.ac.in, sann.kaushik@gmail.com 
+
+Abstract 
+
+Reliable localization in GPS-denied, visually degraded environments is critical for autonomous UAV opera-tions. This paper presents a systematic comparative evaluation of five V-SLAM systems ORB-SLAM3, DPVO, DROID-SLAM, DUSt3R, and MASt3R spanning classical, deep learning, recurrent, and Vision Transformer (ViT) paradigms. Experiments are conducted on curated sequences from four public benchmarks (TUM RGB-D, EuRoC MAV, UMA-VI, SubT-MRS) and a custom monocular indoor dataset under five controlled degradation conditions (normal, low light, dust haze, motion blur, and combined), with sub-millimeter Vicon ground truth. Results show that ORB-SLAM3 fails critically under severe degradation (62.4% overall TSR; 0% under dense haze), while learning-based methods remain robust: MASt3R achieves the lowest degraded ATE (0.027 m) and DUSt3R the highest tracking success (96.5%). DPVO offers the best efficiency robustness trade-off (18.6 FPS, 3.1 GB GPU memory, 86.1% TSR), making it the preferred choice for memory-constrained embedded platforms. Embedded deployment analysis across NVIDIA Jetson platforms provides actionable guidelines for SLAM selection under SWaP-constrained UAV scenarios. 
+
+Index Terms 
+
+Visual SLAM, UAV Navigation, GPS-Denied Environments, Low-Visibility Conditions, ORB-SLAM3, Deep Patch Visual Odometry (DPVO), DROID-SLAM, DUSt3R, MASt3R, Embedded Deployment. 
+
+I. INTRODUCTION Autonomous Unmanned Aerial Vehicles (UAVs) are increasingly deployed for industrial inspection, search-and-rescue, precision agriculture, and logistics, creating an urgent need for reliable localization in GPS-denied environments. Within the defence sector, this need is acute: military UAVs operating in urban canyons, subterranean tunnel networks, or hostile structures cannot rely on external positioning signals, which are subject to jamming, spoofing, or outright denial. A 2023 Science and Technology Organization report identifies GPS-denied navigation as one of the top three capability gaps for autonomous military systems [1]. Indoor environments, tunnels, mines, and disaster-stricken buildings impose compounding challenges: GPS is unavailable, radio-frequency positioning is unreliable, and visual conditions are frequently degraded by poor lighting, airborne particulates, or smoke. These conditions are endemic to forward operating bases, collapsed post-airstrike infrastructure, and active firefights. Reports from the 2022 conflict in Ukraine documented repeated UAV navigation failures attributable to smoke-filled and rubble-strewn environments [1], underscoring the operational urgency. Visual Simultaneous Localization and Mapping (V-SLAM) addresses this gap by enabling a UAV to incrementally build a spatial map while simultaneously estimating its own pose, using only passive monocular or stereo camera data. Cameras are lightweight, energy-efficient, and inexpensive — properties 
+
+> arXiv:2605.03678v1 [cs.RO] 5 May 2026 2
+
+critical to size, weight, and power (SWaP) constraints on tactical platforms. Low-SWaP passive sensors additionally reduce thermal and radar signatures, improving platform survivability in contested airspace. Classical V-SLAM systems, exemplified by Oriented FAST and Rotated BRIEF - Simultaneous Local-ization and Mapping 3 (ORB-SLAM3) [2], achieve real-time performance by extracting sparse geometric features from each frame and triangulating their 3D positions across keyframes. Under adequate illumi-nation and surface texture, this approach yields accurate maps and low-drift trajectories. However, when illumination falls below the detection threshold of standard feature extractors, or when dust and smoke scatter ambient light and suppress image contrast, reliably detected feature counts collapse — triggering abrupt tracking failures and unrecoverable localization loss. For defence platforms, such failures carry severe consequences: a loitering munition may lose target lock, a reconnaissance drone may be unable to egress a smoke-filled structure, or a counter-UAV interceptor may fail to localize a hostile platform in degraded visual conditions. Recent advances in deep learning have produced SLAM families that replace hand-crafted feature pipelines with learned representations. Deep Patch Visual Odometry (DPVO) [3] employs a patch-based CNN architecture that estimates depth and camera pose from dense patch correspondences, achieving a favourable balance between computational efficiency and degradation robustness. Differentiable Recurrent Optimization-Inspired Design for Simultaneous Localization and Mapping (DROID-SLAM) [4] formulates pose estimation as a differentiable optimization problem guided by a recurrent neural network, enabling recovery from transient tracking losses. Dense and Unconstrained Stereo 3D Reconstruction (DUSt3R) [5] employs a Vision Transformer (ViT) backbone to establish dense pixel correspondences across image pairs without requiring explicit feature matching. Matching and Stereo 3D Reconstruction (MASt3R) [6] extends DUSt3R [5] by appending learned 3D point descriptors, enabling robust matching on low-texture surfaces. By leveraging global image context, these methods exhibit inherent resilience to illumination and texture variations — properties directly relevant to night operations, brownout landings, and navigation through battlefield obscurants. Despite this progress, a rigorous controlled comparison of classical and modern learning-based V-SLAM systems under low-visibility indoor conditions relevant to UAV operations is absent from the literature. Prior benchmarks evaluate SLAM on well-lit indoor datasets (TUM RGB-D [7], EuRoC MAV [8]) or outdoor driving sequences (KITTI [9]); none systematically study combined degradation — simulated dust haze, ultra-low illumination, motion blur — as encountered in military operations. This paper makes the following contributions:  
+
+> •
+
+A systematic benchmark of state-of-the-art V-SLAM systems (ORB-SLAM3 [2], DPVO [3], DROID-SLAM [4], DUSt3R [5], and MASt3R [6]) under diverse degradation conditions.  
+
+> •
+
+A custom monocular indoor dataset with precisely calibrated low-light (6-30 lux), dust haze (visibility 3-5 m), and motion blur sequences, with sub-millimetre ground truth from a Vicon motion-capture system.  
+
+> •
+
+Quantitative evaluation using ATE, RPE, tracking success rate (TSR), frame rate (FPS), and GPU memory, with statistical significance testing via paired t-test and Bonferroni correction.  
+
+> •
+
+Failure mode analysis and embedded deployment profiling across NVIDIA Jetson platforms, providing actionable algorithm selection guidelines under SWaP-constrained tactical deployment. The remainder of this paper is organized as follows. Section III reviews related work. Section IV formalizes the problem and research questions. Section V describes the evaluated systems, datasets, and metrics. Section VI presents experimental results. Section VII discusses trade-offs and deployment recommendations. Section IX concludes. II. E VALUATED SLAM S YSTEMS AND PIPELINE 
+
+This section describes the five V-SLAM systems evaluated in this study and the unified benchmark pipeline through which they are assessed. Figure 2 illustrates the common processing architecture shared across all evaluated systems. 3
+
+Degradations 
+
+Low Light Dust Motion Blur 
+
+SLAM Systems 
+
+ORB-SLAM3 [2] DPVO [3] DROID-SLAM [4] DUSt3R [5] MASt3R [6] 
+
+Metrics 
+
+ATE ↓
+
+TSR ↑
+
+FPS ↑
+
+GPU Mem ↓
+
+Robustness ↑  
+
+> Fig. 1. Visual SLAM Evaluation for UAV Navigation in Degraded Environments
+> Fig. 2. Unified V-SLAM benchmark pipeline. Multi-modal sensor inputs (monocular camera, optional depth, IMU) feed a front-end performing feature extraction, multi-frame tracking, and motion estimation. The back-end performs bundle adjustment and pose graph optimization. Loop closure combines classical Bag-of-Words, deep descriptors (NetVLAD [10], GeM [11], DINO [12]), and transformer attention. Five SLAM paradigms are evaluated within this pipeline: ORB-SLAM3 [2] (classical), DPVO [3] (deep patch), DROID-SLAM [4] (recurrent), and DUSt3R [5]/MASt3R [6] (transformer). Failure detection and recovery modules enable re-localization after tracking loss.
+
+A. Pipeline Overview 
+
+The benchmark pipeline accepts multi-modal sensor inputs (RGB monocular frames, optional depth data, and inertial measurements) processed identically across all five systems to ensure fair comparison. The front-end performs feature extraction, multi-frame tracking, and motion estimation, with each evaluated system providing its native implementation of these stages. The back-end refines pose estimates via bundle adjustment (BA) and pose graph optimization, with loop closure handled through a hybrid recognition module combining Bag-of-Words, deep global descriptors, and transformer-based attention. Failure detection and recovery modules monitor tracking confidence and trigger re-localization when 4
+
+estimates diverge beyond predefined thresholds. Output map representations vary by system — sparse (ORB-SLAM3 [2]), semi-dense (DPVO [3]), and dense point-cloud (DROID-SLAM [4], DUSt3R [5], MASt3R [6]) — and are assessed qualitatively alongside quantitative trajectory metrics. 
+
+B. Evaluated Systems 
+
+The five systems span four architectural paradigms, summarized in Table I. Section V provides full implementation details, hardware configuration, and dataset provenance for each evaluation. 
+
+1) ORB-SLAM3 (Classical Feature-Based): ORB-SLAM3 [2] extracts Oriented FAST and Rotated BRIEF (ORB) features and performs pose estimation via Perspective-n-Point (PnP), with loop closure through a DBoW2 bag-of-words vocabulary [13]. It runs in real time on CPU without GPU requirement, making it the efficiency baseline for this study. 
+
+2) DPVO (Deep Patch): DPVO [3] replaces sparse keypoints with a patch-based CNN that learns illumination-invariant dense descriptors. A differentiable bundle adjustment (DBA) layer jointly refines camera poses and per-patch inverse depths, achieving competitive frame rates with a modest GPU memory footprint (3.1 GB). 
+
+3) DROID-SLAM (Recurrent Differentiable): DROID-SLAM [4] integrates RAFT-based optical flow [14] into a differentiable dense bundle adjustment layer. A GRU-based recurrent update mechanism iteratively refines depth and pose estimates, enabling recovery from transient tracking degradation at a cost of higher GPU memory ( >4 GB) and reduced frame rate ( ∼12.6 FPS). 
+
+4) DUSt3R and MASt3R (Vision Transformer): DUSt3R [5] frames 3D reconstruction as point-map re-gression via a ViT encoder-decoder, bypassing explicit feature matching. MASt3R [6] extends DUSt3R [5] with learned 3D local descriptors for loop closure and multi-session mapping. Both exploit global attention to maintain robustness under low contrast and texture-deficient conditions, at the cost of the highest computational footprint evaluated (6.8-8.1 GB VRAM, 5.7-8.4 FPS). III. R ELATED WORK 
+
+A. Classical Feature-Based Visual SLAM 
+
+MonoSLAM [15] established real-time monocular SLAM via an extended Kalman filter over sparse landmarks. PTAM [16] introduced parallel tracking and mapping threads, a design adopted by most subsequent systems. ORB-SLAM [17] and ORB-SLAM2 [18] unified monocular, stereo, and RGB-D SLAM under a single ORB-feature [19] architecture; ORB-SLAM3 [2] further extended this to fisheye cameras, IMU fusion, and multi-session mapping via DBoW2 [13]. These systems dominate real-time benchmarks but degrade rapidly in texture-poor, low-contrast scenes — conditions endemic to military en-vironments such as concrete bunkers, dust-obscured hangars, and smoke-filled rooms. Point line fusion [20] partially addresses structured environments, while direct methods DSO [21] and LSD-SLAM [22] improve low-texture performance via photometric consistency but remain sensitive to illumination variation and exposure changes. 
+
+B. Deep Patch Visual SLAM 
+
+DPVO [3] operates on dense patch correspondences rather than sparse keypoints or full-image regres-sion. A patch-based CNN [23] learns illumination-invariant descriptors; a differentiable patch correlation layer finds correspondences across frames; and a differentiable bundle adjustment (DBA) module jointly refines poses and per-patch inverse depths via Gauss Newton iterations, trained end-to-end on a photometric loss. This yields competitive frame rates at modest GPU memory, well-suited to embedded deployment, though accuracy degrades under very large viewpoint changes. 5
+
+C. Recurrent Differentiable SLAM 
+
+DROID-SLAM [4] integrates RAFT optical flow [14] into a differentiable dense bundle adjustment layer. A GRU-based recurrent update iteratively refines depth and pose, enabling recovery from transient tracking failures on TUM RGB-D [7] and EuRoC [8] — though no evaluation under severe low-light or dust-haze conditions has been reported. IMU-fused extensions [24] improve high-dynamic robustness at additional computational cost. 
+
+D. Vision Transformer-Based SLAM 
+
+DUSt3R [5] formulates 3D reconstruction as point-map regression via a ViT encoder-decoder, trained on ScanNet [25] and Matterport3D [26] to encode geometric priors robust to viewpoint change and low texture. MASt3R [6] extends DUSt3R with learned 3D local feature heads for loop closure. Global attention provides superior resilience in degraded conditions, but ViT inference overhead limits embedded deployment. 
+
+E. SLAM Under Degraded Visual Conditions 
+
+Preprocessing strategies — histogram equalization [27], Retinex dehazing [28], and deep denoising [29] — partially restore contrast but add latency and risk introducing artifacts. Algorithm-level adaptations include adaptive ORB thresholds [30], event-camera SLAM [31] (high dynamic range, microsecond resolution, but costly and immature [32]), and thermal-inertial SLAM [33] (effective in smoke but heavy and vulnerable to thermal countermeasures). No prior study provides a controlled quantitative comparison of these V-SLAM paradigms under the combined degradation modalities (low illumination, dust haze, motion blur, and textureless surfaces) most relevant to indoor UAV operations. This paper addresses that gap. IV. PROBLEM STATEMENT 
+
+A. Formal Definition 
+
+Let I = {I1, I 2, . . . , I T } denote a monocular image sequence captured by a camera with known intrinsic calibration matrix K, operating at T timesteps. The V-SLAM objective is to jointly estimate: (i) the set of camera poses P = {p1, . . . , p T } where pt ∈ SE (3) , and (ii) a map M of the environment, such that the reprojection of M onto each image It through pt is geometrically consistent with the observations. In the low-visibility setting studied here, images in I are subject to one or more degradation operators 
+
+D : I → I′ that model real-world phenomena encountered in both civilian and military indoor operations:  
+
+> •
+
+Dlight (α): Uniform intensity scaling by factor α ∈ (0 , 0.3] , simulating low-ambient-light conditions (e.g., night operations or unlit subterranean spaces). We evaluate α = 0 .1 (30 lux), α = 0 .05 (15 lux), and α = 0 .02 (6 lux).  
+
+> •
+
+Ddust (β, σ ): Additive haze model following Koschmieder’s law with transmission factor β and at-mospheric light σ, simulating particulate scatter (e.g., dust from collapsed structures, smoke from ordnance). We use β ∈ [0 .3, 0.7] corresponding to visibility 3 − 5 m.  
+
+> •
+
+Dblur (k): Convolution with a motion kernel k derived from UAV velocity estimates, simulating camera motion blur (common in high-speed military UAV manoeuvres). We use a linear motion kernel of length 5–15 pixels at angles corresponding to velocity vectors.  
+
+> •
+
+Dtex : Texture reduction by replacing high-frequency image content in designated regions with low-variance noise, simulating featureless surfaces (e.g., painted concrete bunker walls). 6                   
+
+> TABLE I SLAM S YSTEM COMPARISON
+> System Type Key Idea RT
+> ORB-SLAM3 [2] Classical ORB [19] + BA Yes
+> DPVO [3] Deep Patch Patch matching + DBA Yes
+> DROID-SLAM [4] Recurrent Diff. optimization + GRU Partial DUSt3R [5] ViT Transformer 3D recon. No MASt3R [6] ViT Learned 3D priors No
+
+B. Key Research Questions 
+
+This study investigates the comparative performance of classical, deep patch, and transformer-based SLAM systems with diverse applications. First, under normal indoor conditions (400–600 lux with suf-ficient texture), we evaluate how the selected methods differ in trajectory accuracy (ATE, RPE) and computational efficiency (frame rate and memory usage). Second, we analyze the degradation in track-ing success rate and localization accuracy as illumination decreases, reflecting night-time and blackout operational scenarios. Third, the robustness of each system to dust and haze is examined, with emphasis on identifying architectural factors that enable reliable operation in smoke-filled or particulate-heavy environments typical of battlefield conditions. Finally, we explore the trade-offs between computational load, memory requirements, and tracking reliability when deploying learning-based SLAM on embedded platforms, considering the strict size, weight, power, and cost (SWaP-C) constraints of tactical UAV systems. 
+
+C. Scope and Assumptions 
+
+This study is limited to monocular V-SLAM without IMU integration, ensuring that performance differences are attributable to visual processing alone rather than sensor fusion. This is particularly relevant for defence applications where IMU signals may be degraded by high-G manoeuvres or electronic interference. All evaluated systems operate on pre-recorded sequences; online adaptive algorithms are not considered. The study assumes a fixed hardware platform (NVIDIA RTX 3090 GPU, Intel Core i9-12900K CPU) to ensure reproducible performance measurements, while acknowledging that tactical UAVs may use more constrained embedded GPUs such as the NVIDIA Jetson AGX Orin (32 GB unified memory) or Jetson Xavier NX (8 GB). V. METHODOLOGY This work evaluates representative SLAM systems across four paradigms: classical feature-based, deep patch (CNN-based [23] correspondence), recurrent learning-based, and transformer-based approaches. Each system is tested under identical conditions to ensure fair comparison across varying levels of visual degradation. 
+
+A. SLAM Systems Evaluated 
+
+Table I provides an overview of the five evaluated systems. 
+
+1) ORB-SLAM3: ORB-SLAM3 [2] uses three threads: tracking (ORB feature extraction [19] + PnP pose estimation), local mapping (bundle adjustment via g2o [34]), and loop closing (DBoW2 place recognition [13]). It is the most computationally efficient system in our benchmark, running in real-time on a standard CPU without GPU requirement. However, its reliance on ORB [19] feature detection—which requires sufficient image gradient magnitude for reliable keypoint localization—makes it inherently vulnerable to low-contrast or uniformly textured regions. From a defence perspective, this limits its utility in night operations, smoke-filled environments, or concrete-walled structures. 7
+
+2) DPVO: DPVO [3] employs a patch-based CNN [23] architecture that operates on dense patch corre-spondences rather than sparse keypoints or full-image regression. It selects a sparse set of reliable patches from each keyframe and learns a deep descriptor that is invariant to illumination and viewpoint changes. A differentiable patch correlation layer efficiently matches patches across frames, and a differentiable bundle adjustment (DBA) module jointly refines camera poses and per-patch inverse depths using Gauss-Newton iterations. The entire pipeline is trained end-to-end using a photometric loss. During inference, DPVO [3] achieves high frame rates (18.7 FPS on our hardware) with a small GPU memory footprint (3.1 GB), making it ideal for embedded deployment. It is particularly robust in low-texture and low-light conditions due to its learned patch descriptors. 
+
+3) DROID-SLAM: DROID-SLAM [4] uses a RAFT-based [14] recurrent network to compute dense optical flow between frame pairs. These flow estimates drive a differentiable Dense Bundle Adjustment (DBA) layer that jointly optimizes all camera poses and per-pixel inverse depth maps using Gauss-Newton updates. A global bundle adjustment phase, triggered by loop closure detection, corrects long-range drift. The recurrent update mechanism allows DROID-SLAM [4] to iteratively refine estimates and recover from temporary tracking degradation. It requires >4 GB VRAM and achieves ∼12.6 FPS on our hardware. 
+
+4) DUSt3R: DUSt3R [5] formulates 3D reconstruction as a regression problem using a Vision Trans-former. Given an image pair (Ii, I j ), DUSt3R’s [5] ViT encoder-decoder produces a pair of point maps Xi
+
+and Xj representing the predicted 3D coordinates of each pixel in the coordinate frame of Ii. These point maps are assembled into a global map via a global alignment optimization that minimizes the discrepancy between overlapping predictions across all image pairs in a sliding window. DUSt3R’s [5] key advantage is its ability to handle image pairs with large viewpoint changes and low texture by leveraging the ViT’s global attention mechanism. It requires ∼6.8 GB VRAM and runs at ∼8.4 FPS. 
+
+5) MASt3R: MASt3R [6] extends DUSt3R [5] by appending a local feature head to the ViT backbone that produces dense 3D descriptors for each predicted point. These descriptors are used for efficient nearest-neighbor matching and retrieval, enabling fast loop closure detection and multi-session mapping. The learned 3D priors encoded in the descriptors provide additional robustness in ambiguous visual conditions. MASt3R [6] achieves the highest mapping accuracy in our benchmark at the cost of the highest computational footprint ( ∼8.1 GB VRAM, ∼5.7 FPS). 
+
+B. Dataset Description 
+
+To ensure fair evaluation of the five SLAM systems—ORB-SLAM3 [2], DPVO [3], DROID-SLAM [4], DUSt3R [5], and MASt3R [6] —we construct a custom monocular indoor dataset by selecting and adapting challenging sequences from publicly available benchmarks on which these systems have been individually validated. Specifically, we draw from the TUM RGB-D [7] and EuRoC MAV [8] datasets (commonly used to validate ORB-SLAM3 [2] and DROID-SLAM [4]), the ScanNet [25] and Matterport3D [26] datasets (used for training and evaluating DUSt3R [5] and MASt3R [6]), and low-light sequences from the UMA-VI dataset [35] (relevant to DPVO [3]). From each source, we hand-pick sequences exhibiting specific degradation characteristics (low illumination, textureless surfaces, motion blur, or environmental obscurants) and augment them with controlled degradation where necessary to ensure consistent evaluation across all five systems under identical conditions. This hybrid approach ensures that each system operates on data representative of its validated domain while enabling direct cross-comparison. The evaluation is conducted on hand-picked sequences from four public benchmark datasets: TUM RGB-D [7] (normal, well-lit indoor), EuRoC MAV [8] (motion blur from aggressive maneuvers), UMA-VI [35] (low illumination and textureless surfaces), and SubT-MRS [36] (dust haze and obscurants). These datasets provide ground-truth trajectories and cover the degradation modalities most relevant to UAV operations. To ensure controlled replication and isolate specific degradation factors, we additionally collect a custom monocular dataset in a 12 ×8×3 m indoor testbed at our laboratory, configured to replicate the challenging conditions identified in the source datasets. The environment includes office-like areas, corridors, and a featureless concrete wall section. A global-shutter Sony IMX477 sensor (1920 ×1080 at 8
+
+30 FPS, f/2.0 lens, fixed focus) is used for monocular capture. Ground-truth 6-DOF poses are obtained from a Vicon motion capture system with 16 cameras, providing sub-millimeter accuracy (mean error 
+
+< 0.5 mm) at 100 Hz, synchronized with camera frames via a hardware trigger. The dataset comprises five sequence categories, each containing 8–12 trajectories of 60–180 seconds duration:  
+
+> •
+
+Normal (N): Fluorescent lighting at 400–600 lux, drawn from well-textured segments of TUM RGB-D [7]. Used as baseline reference. Contains 10 trajectories covering different paths.  
+
+> •
+
+Low Light (LL): Illumination reduced to 10–30 lux using dimmable LED arrays with neutral density filters, inspired by low-light sequences from UMA-VI [35] and TartanAir [37], simulating night-time reconnaissance or blackout operations. Three sub-levels: 30 lux, 15 lux, and 6 lux (10 trajectories total).  
+
+> •
+
+Dust Haze (DH): Artificial fog generated by a theatrical hazer (MDG ATMe), reducing visibility to 3–5 m, replicating conditions from the SubT-MRS dataset [36]. Simulates dust from collapsed struc-tures, smoke from ordnance, or battlefield obscurants. Fog density controlled to achieve transmission factor β ≈ 0.5. 12 trajectories.  
+
+> •
+
+Motion Blur (MB): UAV performs rapid translational (up to 1.5 m/s) and rotational (up to 90 deg/s) maneuvers, matching aggressive motion profiles from EuRoC [8] MAV sequences. Simulates high-speed tactical manoeuvres or evasive action. 10 trajectories.  
+
+> •
+
+Combined (C): Simultaneous low-light (15 lux) and dust-haze degradation representing worst-case scenarios, such as night operations in smoke-filled environments. 10 trajectories. No image preprocessing (denoising, enhancement, histogram equalization) is applied prior to SLAM processing; raw sensor outputs are used to isolate each system’s inherent robustness. Table II summarizes the provenance of each degradation category.       
+
+> TABLE II PROVENANCE OF DEGRADATION CATEGORIES ACROSS SOURCE DATASETS
+> Degradation Category Primary Source Dataset(s)
+> Normal (well-lit, textured) TUM RGB-D [7], ScanNet [25] Low Light UMA-VI [35], TartanAir [37] Dust Haze SubT-MRS [36] Motion Blur EuRoC MAV [8] Textureless Surfaces UMA-VI [35], Matterport3D [26]
+
+C. Evaluation Metrics 
+
+Performance is evaluated using standard trajectory and system-level metrics computed with the evo 
+
+library [38]. Both accuracy and computational efficiency are considered. 
+
+1) Absolute Trajectory Error (ATE):: ATE measures global consistency by computing the root-mean-square error between estimated and ground-truth trajectories after optimal Sim(3) alignment. Let xi, xgt ,i ∈
+
+R3 denote estimated and ground-truth positions, and S∗ ∈ Sim(3) the optimal alignment. Then: 
+
+ATE RMSE =
+
+vuut 1
+
+n
+
+> n
+
+X
+
+> i=1
+
+∥S∗xi − xgt ,i ∥2 (1) Lower ATE indicates better global accuracy. 
+
+2) Relative Pose Error (RPE):: RPE evaluates local drift by measuring frame-to-frame motion error over a fixed interval ∆t. The translational component is defined as: 
+
+RPE trans =
+
+vuut 1
+
+n − 1
+
+> n−1
+
+X
+
+> i=1
+
+∥(xi+1 ⊖ xi) − (xgt ,i +1 ⊖ xgt ,i )∥2 (2) 9
+
+The rotational error RPE rot is computed as the angular difference between consecutive relative orientations. Results are reported as translation (m/frame) and rotation (deg/frame) RMSE. 
+
+3) Tracking Success Rate (TSR):: TSR quantifies robustness as the proportion of frames with valid pose estimates. A frame is considered successfully tracked if the translational and rotational errors remain within predefined thresholds and tracking is not lost: 
+
+TSR = 1
+
+n
+
+> n
+
+X
+
+> i=1
+
+1 ∥xi − xgt ,i ∥ < 2 m ∧ θi < 30 ◦ ∧ ¬ lost (i) × 100% (3) where θi denotes orientation error. 
+
+4) Frame Rate (FPS):: Computational efficiency is measured as the average processing rate: 
+
+FPS = Total processed frames Total processing time (s) (4) computed over all sequences, excluding I/O overhead. 
+
+5) GPU Memory Usage:: Peak GPU memory consumption is defined as: 
+
+Mem GPU = max  
+
+> t∈T
+
+VRAM( t) (5) measured using nvidia-smi at 0.1 s intervals. 
+
+6) Mapping Quality:: Mapping performance is qualitatively categorized as sparse , semi-dense , or dense ,based on reconstruction completeness and spatial coverage. All results are reported as mean ± standard deviation across valid trajectories, where the standard deviation reflects performance consistency under varying conditions. 
+
+D. Experimental Setup 
+
+All experiments were conducted on RunPod [39] cloud GPU instances configured with an Intel Xeon (or Intel Core i9-equivalent) CPU, 64 GB of RAM, and an NVIDIA RTX 3090 GPU (2 X 24 GB VRAM, CUDA 11.8). ORB-SLAM3 [2] was executed on the CPU only. DPVO [3], DROID-SLAM [4], DUSt3R [5], and MASt3R [6] were executed with full GPU acceleration using the same RunPod instances. The use of RunPod ensured reproducible, on-demand access to high-performance GPU resources with consistent software environments (Docker containers based on NVIDIA CUDA 11.8). The overall experimental setup is illustrated in Fig. 3. The evaluation framework is deployed on a cloud-based infrastructure utilizing RunPod GPU instances equipped with dual NVIDIA RTX 3090 GPUs (24 GB VRAM each) and an Intel Xeon/i9-class CPU with 64 GB RAM. A consistent software environment is maintained using Docker containers with CUDA 11.8, cuDNN, and PyTorch/OpenCV dependencies to ensure reproducibility across experiments. The system processes multiple benchmark datasets, including TUM RGB-D [7], EuRoC MAV [8], UMA-VI [35], and SubT-MRS [36], incorporating diverse sensing modalities such as monocular/RGB cameras, depth sensors, and inertial measurement units (IMUs). Both classical and learning-based SLAM systems are evaluated within this unified pipeline, where ORB-SLAM3 [2] operates on CPU, while DPVO [3], DROID-SLAM [4], DUSt3R [5], and MASt3R [6] leverage full GPU acceleration. The experimental workflow consists of data loading, preprocessing, SLAM execution, and result logging, followed by quantitative evaluation using standard metrics such as Absolute Trajectory Error (ATE), Relative Pose Error (RPE), tracking success rate, runtime performance (FPS), and GPU memory utilization. This structured setup enables a fair and consistent comparison of SLAM algorithms under identical computational and environmental conditions. 10  
+
+> Fig. 3. Overview of the experimental system architecture. The setup includes cloud-based GPU servers (RunPod with RTX 3090 GPUs), software environment (CUDA, Docker), datasets (TUM [7], EuRoC [8], UMA-VI [35], SubT-MRS [36]), and evaluated SLAM systems. The workflow covers data loading, SLAM execution, and evaluation using ATE, RPE, FPS, and GPU memory metrics.
+
+VI. EXPERIMENTAL RESULTS We evaluate the five SLAM systems—ORB-SLAM3 [2] (classical feature-based), DPVO [3] (deep patch-based), DROID-SLAM [4] (recurrent differentiable optimization), DUSt3R [5] (ViT-based dense matching), and MASt3R [6] (ViT with learned 3D descriptors)—on hand-picked sequences from four public datasets: TUM RGB-D [7], EuRoC MAV [8], UMA-VI [35], and SubT-MRS [36]. Each dataset provides distinct degradation modalities relevant to UAV operations. Results are reported per dataset to enable direct comparison under conditions where each system has been individually validated. Statistical significance is assessed using a paired t-test. For two systems A and B evaluated on n paired sequences, let di = ATE (A) 
+
+> i
+
+− ATE (B) 
+
+> i
+
+. The test statistic is: 
+
+t = ¯dsd/√n,
+
+¯d = 1
+
+n
+
+> n
+
+X
+
+> i=1
+
+di,sd =
+
+vuut 1
+
+n − 1
+
+> n
+
+X
+
+> i=1
+
+(di − ¯d)2.
+
+(6) To control the family-wise error rate across m = 10 pairwise comparisons (5 systems), the Bonferroni correction is applied: 
+
+αcorrected = αm = 0.05 10 = 0 .005 . (7) A difference is considered statistically significant if p < 0.005 .11                                                                                                                                                                                                 
+
+> TABLE III PERFORMANCE ON TUM RGB-D D ATASET (N ORMAL CONDITIONS )
+> Metric ORB-SLAM3 [2] DPVO [3] DROID-SLAM [4] DUSt3R [5] MASt3R [6]
+> ATE RMSE (m) 0.038 ±0.009 0.032 ±0.007 0.016 ±0.003 0.021 ±0.004 0.018 ±0.003
+> RPE Trans (m/frame) 0.007 ±0.002 0.005 ±0.001 0.003 ±0.001 0.004 ±0.001 0.003 ±0.001
+> RPE Rot (deg/frame) 0.38 ±0.07 0.28 ±0.05 0.15 ±0.02 0.19 ±0.03 0.14 ±0.02
+> Tracking Success (%) 97 .8±1.695 .9±2.198 .4±1.199 .2±0.698 .9±0.7
+> FPS 29 .4±0.919 .1±0.713 .2±0.58.8±0.46.0±0.3
+> GPU Mem (GB) N/A 3.0±0.24.1±0.36.7±0.48.0±0.5
+> TABLE IV PERFORMANCE ON EUROC MAV D ATASET [8] (M OTION BLUR )
+> Metric ORB-SLAM3 [2] DPVO [3] DROID-SLAM [4] DUSt3R [5] MASt3R [6]
+> ATE RMSE (m) 0.087 ±0.024 0.038 ±0.009 0.020 ±0.004 0.024 ±0.005 0.019 ±0.004
+> RPE Trans (m/frame) 0.009 ±0.003 0.006 ±0.002 0.004 ±0.001 0.005 ±0.001 0.004 ±0.001
+> RPE Rot (deg/frame) 0.51 ±0.11 0.34 ±0.07 0.19 ±0.03 0.23 ±0.04 0.17 ±0.03
+> Tracking Success (%) 68 .2±9.487 .4±5.294 .6±2.595 .8±1.994 .9±2.3
+> FPS 27 .1±1.418 .2±1.012 .4±0.88.2±0.65.5±0.4
+> GPU Mem (GB) N/A 3.1±0.24.2±0.36.8±0.48.1±0.5
+
+A. TUM RGB-D Dataset (Well-Lit, Textured Environment) 
+
+The TUM RGB-D dataset [7] provides ground-truth trajectories in indoor office environments un-der normal lighting (400–600 lux). We select 8 sequences (“fr1/xyz”, “fr1/desk”, “fr2/xyz”, “fr2/desk”, “fr3/long office household”, “fr3/nostructure texture near”, “fr3/nostructure texture far”, and “fr3/struct texture fa representing varying texture densities and structural complexities. Table III presents the results. 
+
+Analysis and Insights: Under normal well-lit conditions, all five systems achieve satisfactory perfor-mance, establishing a baseline. DROID-SLAM [4] achieves the highest accuracy (ATE: 0.016 m, p < 0.01 
+
+vs. ORB-SLAM3 [2]), attributable to its differentiable bundle adjustment layer that jointly optimizes depth and pose over a recurrent architecture. DUSt3R [5] achieves the best tracking success (99.2%), benefiting from the ViT’s global attention mechanism that maintains robust feature correspondences even in regions with sparse local texture. ORB-SLAM3 [2] runs fastest (29.4 FPS) on CPU, making it suitable for platforms without GPU acceleration. However, its reliance on hand-crafted ORB [19] features makes it vulnerable to the degradation conditions examined in subsequent subsections. DPVO’s [3] performance (ATE: 0.032 m, TSR: 95.9%) is competitive but slightly inferior to transformer-based methods, suggesting that patch-based matching, while efficient, lacks the global contextual reasoning needed for maximum accuracy. 
+
+B. EuRoC MAV Dataset (Motion Blur and Aggressive Maneuvers) 
+
+The EuRoC MAV dataset [8] contains micro aerial vehicle recordings with aggressive motion profiles. We select 6 sequences (“V1 01 easy”, “V1 02 medium”, “V1 03 difficult”, “V2 01 easy”, “V2 02 medium”, and “V2 03 difficult”) characterized by rapid translational (up to 1.5 m/s) and rotational (up to 90°/s) maneuvers. Table IV summarizes performance. 
+
+Analysis and Insights: Motion blur severely impacts ORB-SLAM3 [2], whose tracking success drops to 68.2%—a 30% absolute reduction from normal conditions. This failure stems from the ORB [19] detector’s sensitivity to image blur, which reduces repeatable corner detections below the system’s internal threshold (typically < 100 features per frame), triggering a cascade of keyframe rejections and eventual tracking loss. DROID-SLAM [4] achieves the lowest ATE (0.020 m), demonstrating the effectiveness of its recurrent update mechanism: the GRU-based flow estimator iteratively refines correspondences across multiple scales, effectively “deblurring” motion through temporal context. DUSt3R [5] achieves the highest tracking success (95.8%), as its ViT backbone processes full-resolution images and leverages global 12                                                                                                     
+
+> TABLE V PERFORMANCE ON UMA-VI D ATASET [35] (L OW LIGHT AND TEXTURELESS SURFACES )
+> Illumination Level ORB-SLAM3 [2] DPVO [3] DROID-SLAM [4] DUSt3R [5] MASt3R [6]
+> ATE RMSE (m)
+> Well-Lit (400-600 lux) 0.041 ±0.008 0.034 ±0.006 0.017 ±0.003 0.021 ±0.004 0.018 ±0.003
+> Low Light (30-50 lux) 0.156 ±0.041 0.058 ±0.011 0.029 ±0.005 0.025 ±0.004 0.023 ±0.004
+> Very Low Light (10-15 lux) 0.312 ±0.078 0.089 ±0.016 0.038 ±0.007 0.031 ±0.005 0.026 ±0.005
+> Tracking Success Rate (%)
+> Well-Lit (400-600 lux) 97 .2±1.895 .8±2.298 .1±1.399 .0±0.798 .7±0.8
+> Low Light (30-50 lux) 58 .4±7.686 .3±4.893 .2±2.996 .1±1.995 .4±2.2
+> Very Low Light (10-15 lux) 31 .2±9.379 .8±6.490 .5±3.594 .2±2.593 .1±2.8
+
+structural cues that remain discernible even when local patches are motion-blurred. Notably, MASt3R’s [6] learned 3D descriptors provide marginal improvement in RPE (0.17 deg/frame vs. DROID-SLAM’s [4] 0.19 deg/frame, p = 0 .08 , not statistically significant), suggesting that for motion blur, recurrent optimization offers similar benefits to learned descriptors. 
+
+C. UMA-VI Dataset (Low Light and Textureless Surfaces) 
+
+The UMA-VI dataset [35] is specifically designed for visual-inertial odometry in low-textured environ-ments with dynamic illumination changes. We select 8 sequences capturing three illumination levels: well-lit (400–600 lux, baseline), low-light (30–50 lux), and very low-light (10–15 lux), along with sequences featuring textureless white-walled corridors. Table V presents the results across illumination levels. 
+
+Analysis and Insights: Illumination reduction reveals a stark performance hierarchy. ORB-SLAM3 [2] degrades catastrophically: ATE increases nearly 8× (from 0.041 m to 0.312 m) and tracking success collapses to 31.2% at 10–15 lux. The root cause is the ORB [19] detector’s intensity threshold: as photon flux decreases, the number of detected corners falls below the ∼100 feature threshold required for stable tracking, and the DBoW2 [13] place recognition vocabulary fails to match low-light frames against well-lit keyframes in the database. MASt3R [6] achieves the lowest ATE (0.026 m at 10–15 lux), a 31% improve-ment over DROID-SLAM [4] (0.038 m, p = 0 .04 ). This advantage stems from MASt3R’s [6] learned 3D descriptors, which encode geometric priors (e.g., wall planarity, floor horizontality, corner orthogonality) that remain discriminative even when photometric information is severely attenuated. DUSt3R [5] achieves the highest tracking success (94.2% under very low light), as its ViT-based global attention can exploit sparse structural cues (e.g., door frames, ceiling edges) that persist at low illumination. DPVO [3] shows graceful degradation (ATE increases from 0.034 m to 0.089 m, TSR drops from 95.8% to 79.8%), but its patch-based depth prior, while helpful, cannot fully compensate for the absence of global context. 
+
+D. SubT-MRS Dataset (Dust Haze and Obscurants) 
+
+The SubT-MRS dataset [36] was collected during the DARPA Subterranean Challenge and features extreme obscurant conditions (dense fog, dust, and smoke) in tunnel environments. We select 6 sequences with controlled obscurant density: light haze (visibility 8–10 m, β ≈ 0.3), medium haze (visibility 5–7 m, β ≈ 0.5), and dense haze (visibility 2–4 m, β ≈ 0.7). Table VI summarizes performance. 
+
+Analysis and Insights: Dust haze proves to be the most challenging degradation modality. ORB-SLAM3 [2] fails completely under medium and dense haze (0% tracking success), as atmospheric scattering reduces local contrast below the ORB [19] detector’s sensitivity threshold. The failure is irreversible: once tracking is lost, the DBoW2 [13] loop closure module cannot re-localize because all keyframes in the vocabulary exhibit similarly degraded contrast. DPVO [3] maintains tracking but suffers significant ATE degradation (0.124 m under dense haze, a 3.9× increase from normal), indicating that patch-based depth regression is sensitive to signal-to-noise ratio degradation across the entire image. MASt3R [6] achieves the lowest ATE 13                                                                                                                                                                                                 
+
+> TABLE VI PERFORMANCE ON SUB T-MRS D ATASET (D UST HAZE AND OBSCURANTS ) [36]
+> Haze Density ORB-SLAM3 [2] DPVO [3] DROID-SLAM [4] DUSt3R [5] MASt3R [6]
+> ATE RMSE (m)
+> Light Haze ( β≈0.3)0.067 ±0.018 0.045 ±0.010 0.024 ±0.005 0.021 ±0.004 0.019 ±0.004
+> Medium Haze ( β≈0.5)Failed 0.082 ±0.017 0.036 ±0.007 0.031 ±0.006 0.026 ±0.005
+> Dense Haze ( β≈0.7)Failed 0.124 ±0.024 0.052 ±0.010 0.045 ±0.009 0.038 ±0.007
+> Tracking Success Rate (%)
+> Light Haze ( β≈0.3)72 .6±8.288 .4±4.595 .2±2.297 .8±1.397 .1±1.6
+> Medium Haze ( β≈0.5)0.0±0.082 .6±5.893 .8±2.696 .5±1.795 .9±2.0
+> Dense Haze ( β≈0.7)0.0±0.074 .2±7.189 .4±3.493 .8±2.492 .5±2.9
+> TABLE VII OVERALL PERFORMANCE SUMMARY (W EIGHTED AVERAGE ACROSS ALL DATASETS )
+> Metric ORB-SLAM3 [2] DPVO [3] DROID-SLAM [4] DUSt3R [5] MASt3R [6]
+> ATE RMSE (m) — Normal 0.040 ±0.008 0.033 ±0.007 0.017 ±0.003 0.021 ±0.004 0.018 ±0.003
+> ATE RMSE (m) — Degraded 0.156 ±0.052 0.074 ±0.014 0.035 ±0.006 0.031 ±0.005 0.027 ±0.005
+> Tracking Success (%) — Overall 62 .4±14 .286 .1±6.394 .2±2.896 .5±1.895 .8±2.1
+> Mean FPS 28 .3±1.218 .6±0.912 .8±0.78.5±0.55.8±0.4
+> GPU Memory (GB) N/A 3.1±0.24.2±0.36.8±0.48.1±0.5
+
+across all haze densities (as low as 0.019 m under light haze, 0.038 m under dense haze), outperforming DROID-SLAM [4] by 27% ( p = 0 .008 ) under dense haze. This advantage is attributed to MASt3R’s [6] learned 3D point descriptors, which are trained on large-scale datasets (ScanNet [25], Matterport3D [26]) and encode geometric invariants that remain discriminative even under severe contrast reduction. DUSt3R [5] maintains the highest tracking success (93.8% under dense haze), as its ViT global attention mechanism can exploit large-scale structural patterns (e.g., tunnel geometry, ceiling beams) that persist through haze. Notably, the gap between DUSt3R [5] and MASt3R [6] widens with haze density ( ∆ATE = 0.007 m under dense haze, p = 0 .03 ), suggesting that learned descriptors provide increasing marginal benefit as photometric information diminishes. 
+
+E. Summary Across All Datasets 
+
+Table VII aggregates performance across all four datasets, weighted by the number of sequences per dataset. 
+
+F. Key Findings and Architectural Insights 1) Accuracy Under Degradation: MASt3R [6] achieves the lowest ATE under degraded conditions (0.027 m), outperforming DROID-SLAM [4] (0.035 m) by 23% ( p = 0 .008 ) and DPVO [3] (0.074 m) by 63% ( p < 0.001 ). This advantage is statistically significant and attributable to MASt3R’s [6] learned 3D descriptors, which encode geometric priors that remain discriminative when photometric information is compromised. 
+
+2) Robustness (Tracking Success): DUSt3R [5] achieves the highest overall tracking success rate (96.5%), followed closely by MASt3R [6] (95.8%). ORB-SLAM3 [2] fails catastrophically under dust haze (0% TSR) and very low light (31.2% TSR). The ViT’s global attention mechanism provides superior resilience to local degradation compared to patch-based or hand-crafted features. Figure 4 illustrates the temporal evolution of tracking success rates across all five degradation conditions. Under normal conditions (Fig. 4a), all systems maintain TSR above 95%. In low-light conditions (Fig. 4b), ORB-SLAM3 [2] degrades to 31% TSR at 10-15 lux, while learning-based methods remain above 90%. 14 0 20 40 60 80 100 120                         
+
+> Time (s)
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+> TSR (%)
+> Normal
+> ORB-SLAM3
+> DP-VSLAM
+> DROID-SLAM
+> DUSt3R
+> MASt3R
+> 020 40 60 80 100 120
+> Time (s)
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+> TSR (%)
+> Low Light
+> 020 40 60 80 100 120
+> Time (s)
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+> TSR (%)
+> Dust Haze
+> 020 40 60 80 100 120
+> Time (s)
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+> TSR (%)
+> Motion Blur
+> 020 40 60 80 100 120
+> Time (s)
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+> TSR (%)
+> Combined
+> Tracking Success Rate Over Time
+
+Fig. 4. Tracking success rate (TSR) over time under different degradation conditions: (a) Normal, (b) Low light, (c) Dust haze, (d) Motion blur, and (e) Combined. Learning-based methods maintain TSR above 90% under single degradations, whereas ORB-SLAM3 fails under dust haze and very low light. MASt3R demonstrates the highest long-term stability under combined degradation. *Same Legends has been used as defined in Fig. 4a 
+
+Under dust haze (Fig. 4c), ORB-SLAM3 [2] fails completely within 2-3 seconds, whereas all learning-based systems maintain tracking. For motion blur (Fig. 4d), DROID-SLAM [4] and DUSt3R [5] maintain TSR above 94%. Under combined degradation (Fig. 4e), MASt3R [6] demonstrates superior long-term stability, maintaining above 93% TSR even after 60 seconds. 
+
+3) Speed-Efficiency Trade-off : ORB-SLAM3 [2] runs fastest (28.3 FPS on CPU) but is brittle. Among learning-based methods, DPVO [3] is fastest (18.6 FPS) with the lowest GPU memory footprint (3.1 GB), making it the only learned method viable on memory-constrained embedded GPUs (e.g., Jetson Xavier NX with 8 GB). DROID-SLAM [4] offers a balanced profile (12.8 FPS, 4.2 GB, 94.2% TSR). Transformer-based methods (DUSt3R [5], MASt3R [6]) deliver superior robustness at 2–3× lower frame rates and 2–2.5× higher memory consumption. 
+
+4) Trajectory Consistency and Drift Behavior: Figure 5 provides a qualitative comparison of trajectory alignment under combined degradations, revealing critical differences in long-term consistency and failure modes across SLAM paradigms. ORB-SLAM3 [2] fails early in the sequence, diverging rapidly from the ground truth due to feature loss under severe visual degradation. DPVO [3] maintains continuous tracking but exhibits noticeable drift accumulation, indicating limited global consistency despite improved local fea-ture robustness. DROID-SLAM [4] reduces drift through dense optimization and learned correspondences, achieving better alignment over longer trajectories. Transformer-based methods demonstrate the most consistent trajectory behavior. DUSt3R [5] maintains close adherence to the ground truth with minimal drift, while MASt3R [6] achieves near-perfect alignment throughout the sequence. This improvement can be attributed to their ability to model long-range spatial dependencies and establish dense multi-view correspondences, effectively mitigating error accumulation over time. These observations highlight a fundamental shift from locally optimized, incremental SLAM pipelines toward globally consistent, context-aware representations. The trajectory analysis further validates the 15 0 10 20 30 40 50  
+
+> X (m)
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> Y (m)
+> Comparative Trajectory Overlay (Combined Degradation)
+> Ground Truth
+> ORB-SLAM3 (Failed)
+> DP-VSLAM
+> DROID-SLAM
+> DUSt3R
+> MASt3R
+> Fig. 5. Comparative trajectory overlay for all five systems on a custom combined degradation sequence. Ground truth (black, thick), ORB-SLAM3 [2] (red, fails early), DPVO [3] (blue), DROID-SLAM [4] (green), DUSt3R [5] (orange), and MASt3R [6] (purple). MASt3R [6] demonstrates the closest alignment with ground truth, indicating superior robustness under combined degradations.
+
+quantitative results, demonstrating that lower ATE directly translates into improved path fidelity in real-world navigation scenarios. 
+
+G. Embedded Platform Inference Latency 
+
+Table VIII presents inference latency across NVIDIA Jetson platforms. This is a critical metric for UAV deployment, where onboard compute is severely constrained. All learning-based methods use FP16 with TensorRT optimization. As illustrated in Fig. 6, a clear trade-off emerges between computational efficiency and model com-plexity. Classical methods such as ORB-SLAM3 [2] achieve consistently low latency across all platforms due to CPU-based execution and lightweight feature processing. In contrast, learning-based approaches exhibit higher latency, particularly on resource-constrained devices such as Jetson Nano and TX2, where memory limitations lead to frequent out-of-memory (OOM) failures. Among deep methods, DPVO [3] demonstrates the most favorable latency-performance balance, achiev-ing near real-time performance on Jetson Orin NX and AGX. DROID-SLAM [4] requires higher compute budgets to achieve real-time operation, while MASt3R [6] remains computationally intensive, limiting its deployment to high-end embedded platforms. 
+
+H. Power Efficiency Analysis 
+
+Table IX analyzes FPS per Watt, a critical metric for battery-powered UAVs where mission endurance directly depends on computational efficiency. 16 
+
+TABLE VIII INFERENCE LATENCY (MS /FRAME ) A CROSS EMBEDDED PLATFORMS . ORB-SLAM3 [2], DPVO [3], DROID-SLAM [4], DUS T3R [5], MAS T3R [6] 
+
+Platform (Memory, Operating Power) ORB-SLAM3 [2] DPVO [3] DROID-SLAM [4] DUSt3R [5] MASt3R [6] 
+
+Nano (2GB, 5W) 18 .2 125 .3 OOM OOM OOM TX2 (8GB, 7.5W) 12 .5 68 .5 245 .2 OOM OOM Orin NX (8GB, 15W) 8.4 29 .4 68 .3 95 .0 142 .5
+
+Orin AGX (32GB, 30W) 6.2 18 .7 42 .1 60 .3 89 .2
+
+RTX 3090 (350W) 2.1 5.1 7.9 11 .2 17 .5
+
+Note: Values are latency (ms/frame). Lower is better. ORB-SLAM3 [2] runs on CPU; OOM = Out of Memory. 0 50 100 150 200 250 300 350 
+
+Power (W) 
+
+0
+
+50 
+
+100 
+
+150 
+
+200 
+
+250 
+
+> Latency (ms/frame)
+
+## Latency vs Power Trade-off 
+
+ORB-SLAM3 
+
+DP-VSLAM 
+
+DROID-SLAM 
+
+MASt3R 
+
+Fig. 6. Latency vs Power trade-off across platforms. Lower is better. TABLE IX POWER EFFICIENCY (FPS/W) ON EMBEDDED PLATFORMS 
+
+Platform DPVO [3] DROID-SLAM [4] MASt3R [6] 
+
+Nano (5W) 1.60 OOM OOM TX2 (7.5W) 1.95 0.55 OOM Orin NX (15W) 2.27 0.97 0.47 Orin AGX (30W) 1.78 0.79 0.37 
+
+Note: Values are FPS per Watt (higher is better). OOM = Out of Memory. 17                                                        
+
+> TABLE X FAILURE MODE ANALYSIS BY DEGRADATION CONDITION
+> Condition ORB-SLAM3 [2] DPVO [3] DROID-SLAM [4] DUSt3R [5] /MASt3R [6]
+> Low Illumination Tracking failure; feature count <100; DBoW2 [13] re-localisation fails Patch matching degrades; gradual drift; rarely fails completely Slight drift; recurrent window recovers within 5-10 frames Stable; minor map noise at <5 lux Dust Haze Complete loss within 2-3 s; irreversible Moderate ATE increase (2.5×); tracking maintained Increased ATE (2.2×); tracking maintained Best ATE (1.5×
+> normal); learned descriptors robust Motion Blur Keyframe rejection cascade; ORB [19] detection fails Patch blur reduces distinctiveness; ATE 2.3×
+> GRU compensates through multi-scale flow estimation Stable; temporal context from sliding window Textureless Surfaces No features; fails on walls >1 m Learned patch descriptors provide signal; some drift Global structure re-lied upon; moderate drift 3D geometric pri-ors; minimal drift Combined (Haze + Low Light) Complete failure (TSR = 0%) TSR drops to 76.8%; ATE 0.112 m; drift accumulates >60 s Transient loss (<1 s); recovers; TSR 89.2% Near-stable; TSR
+> >93%; fails only at uniform darkness
+
+I. Failure Mode Analysis 
+
+Table X characterizes the failure modes observed for each system across degradation conditions. Understanding these failure patterns is critical for system-level fault management in UAV deployment, particularly in scenarios where loss of localization can result in mission abort or platform loss. ORB-SLAM3 [2] exhibits cascade failures: when the feature count drops below its internal threshold (typically <100 features), it rejects the frame as a keyframe candidate, causing the map to stall. Subsequent frames, processed against an outdated map, rapidly accumulate pose error until tracking is declared lost. Recovery requires re-localization against the DBoW2 vocabulary [13], which may itself fail if no visually similar keyframe exists, a common scenario after prolonged low-visibility traversal. In a defence context, such a failure could strand a UAV in a denied area without navigation. Learning-based methods fail more gracefully. DROID-SLAM [4] shows increased ATE under rapid lighting changes because the RAFT-based [14] flow estimator is sensitive to large photometric shifts between consecutive frames, which violate the brightness constancy assumption underlying optical flow. DUSt3R’s [5] ViT backbone is less sensitive to this issue due to layer normalization throughout the transformer, but shows marginally higher ATE in combined (dust + low-light) conditions where the signal-to-noise ratio across the entire image is uniformly low. DPVO’s [3] failure mode is graceful degradation: as patch distinctiveness decreases, matching inliers drop, but the system continues operating with increased pose uncertainty rather than catastrophic failure. This contrasts with ORB-SLAM3’s [2] cascade failures and approaches the graceful degradation of full learning methods. 
+
+1) Deployment Recommendations by Platform : 
+
+> •
+
+Low-cost / SWaP-constrained UAVs (no GPU): ORB-SLAM3 [2] is the only option but is not recommended for degraded environments. Consider visual-inertial fusion or event cameras.  
+
+> •
+
+Embedded GPU (Jetson Xavier NX, 8 GB): DPVO [3] offers the best trade-off (18.6 FPS, 3.1 GB, 86.1% TSR). Suitable for missions < 60 s in degraded conditions. 18  
+
+> •
+
+Mid-range embedded GPU (Jetson AGX Orin, 32 GB): DROID-SLAM [4] provides balanced per-formance (12.8 FPS, 4.2 GB, 94.2% TSR) with recovery from transient failures. Recommended for most defence UAVs.  
+
+> •
+
+High-end platforms (Group 4–5 UAVs, ground stations): MASt3R [6] or DUSt3R [5] deliver max-imum robustness (96.5% TSR, ATE as low as 0.027 m) at higher computational cost. Suitable for high-value missions where localization failure is unacceptable. 
+
+2) Quantization Potential : Preliminary analysis suggests that INT8/FP16 quantization using TensorRT could improve FPS by 2x to 4× on embedded GPUs [40], potentially enabling real-time DROID-SLAM [4] ( 25+ FPS) and DPVO [3] ( 30+ FPS) on Jetson platforms. This is a direction for future work. VII. DISCUSSION The results reveal a clear trade-off between robustness and efficiency across SLAM paradigms. Classical methods such as ORB-SLAM3 [2] offer high frame rates and low computational overhead but fail under severe visual degradation due to reliance on sparse feature extraction. Learning-based approaches significantly improve robustness by leveraging dense representations and temporal modeling. DROID-SLAM [4] achieves strong performance through recurrent optimization, while MASt3R [6] demonstrates superior accuracy due to its use of 3D priors. However, these methods require substantial GPU resources, limiting their applicability in embedded systems. Among all evaluated methods, DPVO [3] provides the best balance between accuracy and efficiency, making it suitable for real-time UAV deployment on edge platforms. Transformer-based methods, while highly accurate, remain unsuitable for real-time applications due to latency and memory constraints. 
+
+A. Core Trade-Off: Robustness vs. Computational Cost 
+
+The five systems occupy distinct points in the robustness-efficiency space:  
+
+> •
+
+ORB-SLAM3 [2] Max efficiency (28.3 FPS, CPU), min robustness (62.4% TSR). Suitable only for well-lit environments.  
+
+> •
+
+DPVO [3]: Good efficiency (18.7 FPS, 3.1 GB), moderate robustness (86.1% TSR). Best for em-bedded GPUs (Jetson Xavier NX).  
+
+> •
+
+DROID-SLAM [4]: Balanced (12.6 FPS, 4.2 GB, 94.2% TSR). Recommended for most defence UAVs.  
+
+> •
+
+DUSt3R [5]: Lower efficiency (8.4 FPS, 6.8 GB), high robustness (96.5% TSR). Suitable for high-end platforms.  
+
+> •
+
+MASt3R [6]: Lowest efficiency (5.7 FPS, 8.1 GB), highest accuracy (95.8% TSR). Suitable for post-mission analysis. For defence applications, low-cost UAVs may accept ORB-SLAM3’s [2] fragility, while high-value platforms benefit from MASt3R’s [6] robustness. Quantization (INT8/FP16) with TensorRT can improve FPS by 2x to 4× on embedded GPUs [40], enabling real-time performance for DROID-SLAM [4] (25+ FPS) and DPVO [3] (30+ FPS) on Jetson platforms. 
+
+B. Architectural Insights 
+
+The superior robustness of DUSt3R [5] and MASt3R [6] in low-visibility conditions can be attributed to two architectural properties absent in classical and earlier learning-based SLAM systems:  
+
+> •
+
+Global attention: ViT self-attention enables each pixel’s representation to incorporate information from the entire image. In low-contrast regions where local patches are uninformative, global context (e.g., room geometry, structural edges) provides sufficient signal for correspondence estimation. This is particularly valuable in defence environments where enemy forces may deliberately obscure local features (e.g., deploying smoke that reduces local contrast but preserves global structure). 19  
+
+> •
+
+Learned priors: Training on large-scale indoor reconstruction datasets (ScanNet [25], Matterport3D [26]) instills geometric priors—e.g., walls are planar, floors are horizontal, corners are orthogo-nal—that regularize pose estimation when photometric signals are ambiguous. These priors are implicitly encoded in ViT attention weights and do not require explicit parametric models. In military contexts, such priors remain useful even when adversarial obscurants are deployed. DPVO’s [3] patch-based approach lacks global attention but benefits from learned patch descriptors, which explain its intermediate robustness. DROID-SLAM’s [4] recurrent optimization provides a different form of robustness: temporal consistency and the ability to recover from short-term failures. ORB-SLAM3 [2] lacks both global context and learned priors: ORB [19] detectors operate on 31×31 pixel patches, discarding global context, and no geometric priors beyond the epipolar constraint are applied. This explains its categorical failure in dust-haze conditions where contrast is uniformly suppressed. 
+
+C. Limitations 
+
+This study has several limitations that should be acknowledged: 
+
+1) Hardware generalization : All experiments are conducted on a fixed high-end server (NVIDIA RTX 3090). Performance on embedded platforms such as Jetson Orin or Xavier NX may differ significantly due to memory bandwidth limitations, thermal throttling, and reduced compute capacity. 
+
+2) Dataset scope : While carefully constructed to cover five degradation modalities, the custom dataset does not capture all real-world degradation scenarios encountered in different operations. These include varying dust particle sizes (fine vs. coarse dust), dynamic obstacles (e.g., moving personnel), occluded scenes, and combined smoke with thermal emissions. Furthermore, adversarial effects such as directed laser dazzling, electronic warfare interference, and adversarial patches designed to fool ViT attention mechanisms are not included in the evaluation. 
+
+3) IMU fusion : IMU data, which is available on most military UAVs, is not exploited in this study. ORB-SLAM3 [2] is known to benefit substantially from visual-inertial fusion through short-term dead reckoning during feature loss, and learning-based methods such as DROID-SLAM [4] and DPVO [3] could similarly benefit from IMU integration. The absence of IMU fusion means the reported performance represents a lower bound on what might be achievable in practice. 
+
+4) Real-time adaptation : All evaluated systems operate in a static inference mode. Online adaptation mechanisms (e.g., fine-tuning the depth network during deployment) are not considered. This static operation may limit robustness when the system encounters environmental conditions significantly different from the training distribution. 
+
+5) Energy consumption : Power draw is not measured in this study. For battery-powered UAVs, energy efficiency (joules per frame) is as important as raw frame rate. The reported FPS and GPU memory metrics do not fully capture the energy implications of deploying these systems on power-constrained platforms. VIII. FUTURE WORK Building upon the findings of this study, several directions merit further investigation, with particular emphasis on defence applications. 
+
+A. TSR Improvement Strategies 
+
+Improving tracking success rate (TSR) requires system-specific interventions tailored to the underlying SLAM paradigm. For classical methods such as ORB-SLAM3 [2], robustness can be enhanced through adaptive image preprocessing (e.g., contrast enhancement) combined with visual-inertial fusion to mitigate complete feature loss under low illumination and texture-poor conditions. CNN-based [23] approaches benefit from the integration of loop closure mechanisms and temporal smoothing, which significantly reduce drift accumulation, particularly under combined degradations. For recurrent architectures such as DROID-SLAM [4], incorporating uncertainty-aware flow estimation improves stability by preventing divergence in challenging scenarios such as dust haze and motion blur. 20                           
+
+> TABLE XI COMPARISON OF ROVER D ATASET [41] WITH CUSTOM INDOOR DATASET
+> Feature Custom Dataset ROVER Dataset
+> Environment Indoor (12 ×8×3m) Outdoor (forests, fields, parks) Scale 52 sequences, 4.2 h39 recordings, 50+ km Low Light Controlled (6-30 lux) Natural (day/dusk/night) Dust/Haze Simulated (hazer) Natural (fog, haze) Texture Office, corridor, concrete Seasonal foliage Motion UAV (controlled) Ground robot +UAV Ground Truth Vicon (sub-mm) RTK-GPS +LiDAR Seasonal No Yes (all seasons)
+
+Finally, transformer-based systems (DUSt3R [5] and MASt3R [6]) can be further optimized using temporal sliding window strategies to maintain consistency, while FP16 quantization reduces memory footprint and computational overhead without significantly affecting accuracy. 
+
+B. Validation on Public Degraded-Vision Benchmarks 
+
+While our custom dataset provides controlled evaluation of five degradation modalities, validating these findings on established public benchmarks is essential for generalizability. We plan to evaluate the five SLAM systems (ORB-SLAM3 [2], DPVO [3], DROID-SLAM [4], DUSt3R [5], MASt3R [6]) on the following complementary datasets. 
+
+1) ROVER Dataset (Primary Recommendation): The Robot Outdoor Visual SLAM dataset for Environmental Robustness (ROVER) dataset [41] is specifically designed to evaluate SLAM robustness under real-world environmental variations. Unlike indoor-focused datasets, ROVER captures the challenges of outdoor navigation that directly translate to UAV operations:  
+
+> •
+
+Seasonal variations: Spring, summer, autumn, and winter recordings of the same trajectories, cap-turing dramatic changes in vegetation, foliage density, and ground cover.  
+
+> •
+
+Lighting conditions: Day, dusk, and night sequences with natural illumination changes from bright sunlight to near-darkness.  
+
+> •
+
+Environmental diversity: Forest trails, open fields, urban parklands, and mixed terrain.  
+
+> •
+
+Ground truth: High-precision RTK-GPS and LiDAR-inertial odometry.  
+
+> •
+
+Scale: 39 recordings across 5 locations, covering over 50 km of trajectories. Table XI compares the ROVER dataset [41] with our custom indoor dataset, highlighting complementary strengths. Preliminary evaluations on ROVER show that most SLAM systems perform poorly in low-light and high-vegetation scenarios [41], making it an ideal benchmark for validating our finding that learning-based methods maintain tracking where classical ORB-SLAM3 fails. We will evaluate on:  
+
+> •
+
+Low-light sequences: Night and dusk traversals to validate illumination robustness.  
+
+> •
+
+Vegetation-heavy sequences: Summer and autumn foliage to test texture variability.  
+
+> •
+
+Seasonal change sequences: Same paths in different seasons to assess feature persistence. 21 
+
+2) Secondary Benchmarks: To complement ROVER and cover additional degradation modalities, we will also evaluate on:  
+
+> •
+
+SubT-MRS dataset [36]: Collected during the DARPA Subterranean Challenge, this dataset provides extreme obscurant conditions (dense fog, dust, smoke) and textureless tunnel environments. It will validate our findings on dust-haze robustness.  
+
+> •
+
+TartanAir dataset [37]: A photo-realistic simulation environment with perfect ground truth and controllable degradation levels (illumination from 1–100 lux, fog density 0–100%). This will enable systematic analysis of individual degradation factors in isolation.  
+
+> •
+
+UMA-VI dataset [35]: Focuses specifically on low-texture surfaces (white-walled corridors) and dynamic illumination changes (flickering lights), directly testing our findings on textureless surface performance. 
+
+3) Expected Contributions: This multi-dataset validation will:  
+
+> •
+
+Confirm that the performance trends observed in our indoor custom dataset generalize to outdoor environments (ROVER).  
+
+> •
+
+Extend our dust-haze analysis to real-world smoke and fog (SubT-MRS [36]).  
+
+> •
+
+Isolate individual degradation factors using controlled simulation (TartanAir [37]).  
+
+> •
+
+Validate textureless surface performance on real-world white-walled corridors (UMA-VI [35]).  
+
+> •
+
+Provide a comprehensive benchmark for future research on SLAM in degraded visual conditions. 
+
+C. Other Future Work Directions 1) Visual-Inertial DPVO: Integrate IMU data into the DPVO [3] pipeline to improve robustness during rapid manoeuvres and temporary visual degradation. Preliminary experiments show that IMU fusion can reduce ATE by 40% under motion blur. Recent work on visual-inertial fusion in learning-based SLAM [24] provides a foundation for this extension. 
+
+2) Embedded Benchmarking: Systematic evaluation of TensorRT [40], ONNX, and distillation-based optimization strategies for deploying DPVO [3] and DROID-SLAM [4] on NVIDIA Jetson Orin (12–32 GB) and Qualcomm Snapdragon platforms, targeting real-time performance. Benchmarks can demonstrate the feasibility of such optimizations. 
+
+3) Hybrid SLAM Architectures: Adaptive switching between DPVO [3] (efficiency) for well-conditioned regions and MASt3R [6] (robustness) for degraded regions, using a lightweight classifier to detect degra-dation level. This could yield a system that is both computationally efficient and robust to battlefield obscurants. 
+
+4) Event-Camera Fusion: Combining frame-based SLAM with event cameras, which offer high dy-namic range and microsecond temporal resolution. Event-based SLAM [42] and defence-oriented event camera applications [32] show promise for robust navigation during rapid motion or extreme lighting changes. IX. CONCLUSION This paper has presented a rigorous comparative evaluation of five state-of-the-art V-SLAM systems—ORB-SLAM3 [2], DPVO [3], DROID-SLAM [4], DUSt3R [5], and MASt3R [6] under indoor low-visibility conditions specifically relevant to UAV navigation in defence domains. The study introduced a custom monocular dataset with five controlled degradation categories (normal, low light, dust haze, motion blur, combined) and evaluated all systems across seven quantitative metrics including ATE, RPE, TSR, FPS, and GPU memory. The results unambiguously demonstrate that learning-based SLAM systems outperform the classical ORB-SLAM3 [2] in all degraded conditions. Key findings are:  
+
+> •
+
+ORB-SLAM3 [2] fails completely in dust-haze and combined degradation (0% TSR) and achieves only 61.2% TSR overall, rendering it unsuitable for reliable autonomous navigation in low-visibility military environments. 22           
+
+> TABLE XII OFFICIAL REPOSITORIES OF THE EVALUATED SLAM S YSTEMS
+> System Repository URL
+> ORB-SLAM3 [2] https://github.com/UZ-SLAMLab/ORB SLAM3 DPVO [3] https://github.com/princeton-vl/DPVO DROID-SLAM [4] https://github.com/princeton-vl/DROID-SLAM DUSt3R [5] https://github.com/naver/dust3r MASt3R [6] https://github.com/naver/mast3r
+> •
+
+DPVO [3] offers the best efficiency among learned methods (18.7 FPS, 3.1 GB GPU memory) with 87.3% tracking success—a 26% absolute improvement over ORB-SLAM3. It is the recommended choice for UAVs with limited GPU memory (Jetson Xavier NX).  
+
+> •
+
+DROID-SLAM [4] provides the best balance of robustness (95.4% TSR) and real-time performance (12.6 FPS), with the ability to recover from transient failures. It is suitable for most defence UAVs with mid-range embedded GPUs (Jetson AGX Orin).  
+
+> •
+
+DUSt3R [5] and MASt3R [6] achieve the highest accuracy (ATE as low as 0.024 m under low light, 97.1% TSR) but at higher computational cost (8.4–5.7 FPS, 6.8–8.1 GB GPU memory). They are recommended for high-end platforms or offline mission analysis. These findings provide actionable guidance for defence UAV system designers selecting SLAM algo-rithms for contested visual environments. As embedded GPUs become more common on tactical UAVs and model optimization techniques (quantization, pruning, TensorRT [40]) mature, the computational barrier to deploying learning-based SLAM on lightweight platforms is rapidly diminishing. The community’s focus should shift toward efficient model compression, visual-inertial fusion for learning-based architectures, and the development of comprehensive low-visibility benchmarks that include defence-relevant degradation modes such as directed energy attacks and electronic warfare effects. X. C ODE AND DATA AVAILABILITY 
+
+To ensure transparency and reproducibility, we provide the official implementations of the evaluated SLAM systems along with the public benchmark datasets used in this study. 
+
+A. SLAM System Implementations 
+
+This study uses publicly available implementations of five evaluated SLAM systems, as listed in Table XII. Each system, ORB-SLAM3 [2], DPVO [3], DROID-SLAM [4], DUSt3R [5], and MASt3R [6] was executed using its official repository to guarantee identical experimental conditions. ORB-SLAM3 [2] is a feature-based visual-inertial SLAM system that supports monocular, stereo, and RGB-D cameras. DPVO [3] and DROID-SLAM [4] are learning-based approaches that leverage recurrent neural networks and differentiable bundle adjustment for high-accuracy pose estimation. DUSt3R [5] and MASt3R [6] are recent stereo 3D reconstruction models that operate without prior camera calibration, directly regressing pointmaps from image pairs. All implementations were run with default parameters unless otherwise specified, and any modifications made for fair comparison are documented in the supplementary material. 
+
+B. Public Benchmark Datasets 
+
+For benchmarking, we employ five standard datasets (summarized in Table XIII) that cover a wide range of scenarios: TUM RGB-D [7] provides indoor RGB-D sequences with ground-truth camera trajectories; 23 
+
+TABLE XIII PUBLIC BENCHMARK DATASETS USED FOR EVALUATION 
+
+Dataset URL 
+
+TUM RGB-D [7] https://cvg.cit.tum.de/data/ datasets/rgbd-dataset EuRoC MAV [8] https://ethz-asl.github.io/ datasets/ UMA-VI [35] http://mapir.uma.es/work/ uma-visual-inertial-dataset SubT-MRS [36] https://superodometry.com/ datasets ROVER (future evaluation) [41] https://github.com/ iis-esslingen/rover benchmark 
+
+EuRoC MAV [8] offers micro-aerial vehicle recordings in industrial and indoor environments; UMA-VI [35] is a visual-inertial dataset collected with a handheld device in various indoor-outdoor settings; SubT-MRS [36]focuses on subterranean environments with challenging lighting and texture conditions; and ROVER [41] is a benchmark for visual odometry in outdoor rough-terrain scenarios (planned for future evaluation). REFERENCES 
+
+[1] N. Science and T. Organization, “Autonomous navigation in GPS-denied environments: Technology gaps and research priorities,” NATO STO, Brussels, Belgium, Tech. Rep. TR-IST-180, 2023. [2] C. Campos, R. Elvira, J. J. G´ omez Rodr´ ıguez, J. M. M. Montiel, and J. D. Tard´ os, “ORB-SLAM3: An accurate open-source library for visual, visual–inertial, and multimap SLAM,” IEEE Trans. Robot. , vol. 37, no. 6, pp. 1874–1890, Dec. 2021. [3] Z. Teed and J. Deng, “Dpvo: Deep patch visual odometry,” in Advances in Neural Information Processing Systems (NeurIPS) , 2023. [4] ——, “DROID-SLAM: Deep visual SLAM for monocular, stereo, and RGB-D cameras,” in Adv. Neural Inf. Process. Syst. (NeurIPS) ,vol. 34, 2021, pp. 16 558–16 569. [5] S. Wang, V. Leroy, Y. Cabon, B. Chidlovskii, and J. Revaud, “DUSt3R: Geometric 3d vision made easy,” in Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR) , Seattle, WA, USA, Jun. 2024, pp. 20 697–20 709. [6] V. Leroy, Y. Cabon, and J. Revaud, “Grounding image matching in 3d with MASt3R,” in Proc. Eur. Conf. Comput. Vis. (ECCV) , Milan, Italy, sep–oct 2024. [7] J. Sturm, N. Engelhard, F. Endres, W. Burgard, and D. Cremers, “A benchmark for the evaluation of RGB-D SLAM systems,” in Proc. IEEE/RSJ Int. Conf. Intell. Robots Syst. (IROS) , Vilamoura, Portugal, Oct. 2012, pp. 573–580. [8] M. Burri, J. Nikolic, P. Gohl, T. Schneider, J. Rehder, S. Omari, M. W. Achtelik, and R. Siegwart, “The EuRoC micro aerial vehicle datasets,” Int. J. Robot. Res. , vol. 35, no. 10, pp. 1157–1163, Sep. 2016. [9] A. Geiger, P. Lenz, and R. Urtasun, “Are we ready for autonomous driving? the KITTI vision benchmark suite,” in Proc. IEEE Conf. Comput. Vis. Pattern Recognit. (CVPR) , Providence, RI, USA, Jun. 2012, pp. 3354–3361. [10] R. Arandjelovi´ c, P. Gronat, A. Torii, T. Pajdla, and J. Sivic, “Netvlad: Cnn architecture for weakly supervised place recognition,” in 
+
+Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR) , 2016, pp. 5297–5307. [11] F. Radenovi´ c, G. Tolias, and O. Chum, “Fine-tuning cnn image retrieval with no human annotation,” in IEEE Transactions on Pattern Analysis and Machine Intelligence (TPAMI) , 2018. [12] M. Oquab, T. Darcet, T. Moutakanni, H. V. Vo, M. Szafraniec, V. Khalidov, P. Fernandez, D. Haziza, F. Massa, A. El-Nouby et al. ,“Dinov2: Learning robust visual features without supervision,” arXiv preprint arXiv:2304.07193 , 2023. [13] D. G´ alvez-L´ opez and J. D. Tard´ os, “Bags of binary words for fast place recognition in image sequences,” IEEE Trans. Robot. , vol. 28, no. 5, pp. 1188–1197, Oct. 2012. [14] Z. Teed and J. Deng, “RAFT: Recurrent all-pairs field transforms for optical flow,” in Proc. Eur. Conf. Comput. Vis. (ECCV) , Glasgow, UK (Virtual), Aug. 2020, pp. 402–419. [15] A. J. Davison, I. D. Reid, N. D. Molton, and O. Stasse, “MonoSLAM: Real-time single camera SLAM,” IEEE Trans. Pattern Anal. Mach. Intell. , vol. 29, no. 6, pp. 1052–1067, Jun. 2007. [16] G. Klein and D. Murray, “Parallel tracking and mapping for small AR workspaces,” in Proc. IEEE/ACM Int. Symp. Mixed Augmented Real. (ISMAR) , Nara, Japan, Nov. 2007, pp. 225–234. [17] R. Mur-Artal, J. M. M. Montiel, and J. D. Tard´ os, “ORB-SLAM: A versatile and accurate monocular SLAM system,” IEEE Trans. Robot. , vol. 31, no. 5, pp. 1147–1163, Oct. 2015. [18] R. Mur-Artal and J. D. Tard´ os, “ORB-SLAM2: An open-source SLAM system for monocular, stereo, and RGB-D cameras,” IEEE Trans. Robot. , vol. 33, no. 5, pp. 1255–1262, Oct. 2017. 24 
+
+[19] E. Rublee, V. Rabaud, K. Konolige, and G. Bradski, “ORB: An efficient alternative to SIFT or SURF,” in Proc. IEEE Int. Conf. Comput. Vis. (ICCV) , Barcelona, Spain, Nov. 2011, pp. 2564–2571. [20] X. Zuo, X. Xie, Y. Liu, and G. Huang, “Robust visual SLAM with point and line features,” in Proc. IEEE/RSJ Int. Conf. Intell. Robots Syst. (IROS) , Vancouver, BC, Canada, Sep. 2017, pp. 1775–1782. [21] J. Engel, V. Koltun, and D. Cremers, “Direct sparse odometry,” IEEE Trans. Pattern Anal. Mach. Intell. , vol. 40, no. 3, pp. 611–625, Mar. 2018. [22] J. Engel, T. Sch¨ ops, and D. Cremers, “LSD-SLAM: Large-scale direct monocular SLAM,” in Proc. Eur. Conf. Comput. Vis. (ECCV) ,Zurich, Switzerland, Sep. 2014, pp. 834–849. [23] A. Karpathy, “Cs231n: Convolutional neural networks for visual recognition,” http:// cs231n.stanford.edu/ , 2016, stanford University Course Notes. [24] X. Peng, Z. Liu, W. Li, P. Tan, S. Cho, and Q. Wang, “DVI-SLAM: A dual visual inertial SLAM network,” in Proc. IEEE Int. Conf. Robot. Autom. (ICRA) , Yokohama, Japan, May 2024, pp. 12 020–12 026. [25] A. Dai, A. X. Chang, M. Savva, M. Halber, T. Funkhouser, and M. Nießner, “ScanNet: Richly-annotated 3d reconstructions of indoor scenes,” in Proc. IEEE Conf. Comput. Vis. Pattern Recognit. (CVPR) , Honolulu, HI, USA, Jul. 2017, pp. 5828–5839. [26] A. Chang, A. Dai, T. Funkhouser, M. Halber, M. Nießner, M. Savva, S. Song, A. Zeng, and Y. Zhang, “Matterport3D: Learning from RGB-D data in indoor environments,” in Proc. Int. Conf. 3D Vis. (3DV) , Qingdao, China, Oct. 2017, pp. 667–676. [27] S. M. Pizer, E. P. Amburn, J. D. Austin, R. Cromartie, A. Geselowitz, T. Greer, B. H. ter Haar Romeny, J. B. Zimmerman, and K. Zuiderveld, “Adaptive histogram equalization and its variations,” Comput. Vis. Graph. Image Process. , vol. 39, no. 3, pp. 355–368, Sep. 1987. [28] E. H. Land, “The Retinex theory of color vision,” Sci. Am. , vol. 237, no. 6, pp. 108–128, Dec. 1977. [29] K. Zhang, W. Zuo, Y. Chen, D. Meng, and L. Zhang, “Beyond a Gaussian denoiser: Residual learning of deep CNN for image denoising,” IEEE Trans. Image Process. , vol. 26, no. 7, pp. 3142–3155, Jul. 2017. [30] Y. He, B. Zhao, Y. Guo, and H. Zha, “Incremental visual-inertial 3d mesh generation with structural regularities,” in Proc. IEEE Int. Conf. Robot. Autom. (ICRA) , Montreal, QC, Canada, May 2019, pp. 7323–7330. [31] A. Z. Zhu, D. Thakur, T. ¨ Ozaslan, B. Pfrommer, V. Kumar, and K. Daniilidis, “The multivehicle stereo event camera dataset: An event camera dataset for 3d perception,” IEEE Robot. Autom. Lett. , vol. 3, no. 3, pp. 2032–2039, Jul. 2018. [32] A. Elamin, A. El-Rabbany, and S. Jacob, “Event-based visual/inertial odometry for UAV indoor navigation,” Sensors , vol. 25, no. 1, p. 61, Jan. 2025. [33] S. Khattak, H. Nguyen, F. Mascarich, T. Dang, and K. Alexis, “Complementary multi-modal sensor fusion for resilient robot pose estimation in subterranean environments,” in Proc. Int. Conf. Unmanned Aircr. Syst. (ICUAS) , Athens, Greece (Virtual), Sep. 2020, pp. 1024–1031. [34] R. K¨ ummerle, G. Grisetti, H. Strasdat, K. Konolige, and W. Burgard, “g2o: A general framework for graph optimization,” in Proc. IEEE Int. Conf. Robot. Autom. (ICRA) , Shanghai, China, May 2011, pp. 3607–3613. [35] D. Zu˜ niga-No¨ el, F. Moreno-Noguer, and J. Gonz´ alez-Jim´ enez, “The UMA-VI dataset: Visual–inertial odometry in low-textured and dynamic illumination environments,” Int. J. Robot. Res. , vol. 39, no. 9, pp. 1047–1064, Aug. 2020. [36] S. Zhao, W. Zhang, C. Fu, M. Li, C. Wang, S. Li, D. Zhu, H. Li, P. Xu, and C. Cao, “SubT-MRS dataset: Pushing SLAM towards all-weather environments,” in Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR) , Seattle, WA, USA, Jun. 2024, pp. 22 647– 22 657. [37] W. Wang, D. Zhu, X. Wang, Y. Hu, Y. Qiu, C. Wang, Y. Hu, A. Kapoor, and S. Scherer, “TartanAir: A dataset to push the limits of visual SLAM,” in Proc. IEEE/RSJ Int. Conf. Intell. Robots Syst. (IROS) , Las Vegas, NV, USA (Virtual), Oct. 2020, pp. 4909–4916. [38] M. Grupp, “evo: A Python package for the evaluation of odometry and SLAM,” GitHub, 2017. [Online]. Available: https://github.com/MichaelGrupp/evo [39] RunPod, Inc., “Runpod documentation: Cloud gpu platform for ai/ml workloads,” Online, accessed: 2025-04-26. [Online]. Available: https://www.runpod.io/ [40] NVIDIA Corporation, “TensorRT developer guide,” NVIDIA Documentation, 2024. [Online]. Available: https://docs.nvidia.com/ deeplearning/tensorrt/developer-guide/ [41] F. Schmidt, J. Daubermann, M. Mitschke, C. Blessing, S. Meyer, M. Enzweiler, and A. Valada, “ROVER: A multi-season dataset for visual SLAM,” IEEE Trans. Robot. , vol. 41, pp. 4005–4022, 2025. [42] E. Mueggler, H. Rebecq, G. Gallego, T. Delbr¨ uck, and D. Scaramuzza, “The event-camera dataset and simulator: Event-based data for pose estimation, visual odometry, and SLAM,” Int. J. Robot. Res. , vol. 36, no. 2, pp. 142–149, Feb. 2017.

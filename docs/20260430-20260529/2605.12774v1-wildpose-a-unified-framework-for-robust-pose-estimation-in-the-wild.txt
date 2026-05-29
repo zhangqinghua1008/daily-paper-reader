@@ -1,0 +1,451 @@
+Title: WildPose: A Unified Framework for Robust Pose Estimation in the Wild
+
+URL Source: https://arxiv.org/pdf/2605.12774v1
+
+Published Time: Thu, 14 May 2026 00:21:43 GMT
+
+Number of Pages: 15
+
+Markdown Content:
+# WildPose: A Unified Framework for Robust Pose Estimation in the Wild 
+
+## Jianhao Zheng 1 Liyuan Zhu 1 Zihan Zhu 2 Iro Armeni 11Stanford University 2ETH Zürich wildpose.github.io 
+
+Figure 1. WildPose. Left : Given a calibrated video sequence captured in dynamic environments, our method effectively detects the moving distractors and accurately estimates the camera trajectory, whereas methods relying on semantic segmentation fail to identify all dynamic elements. Right : Pose estimation performance across multiple SLAM benchmarks, where our method achieves superior and stable performance on both dynamic and static datasets. 
+
+## Abstract 
+
+Estimating camera pose in dynamic environments is a critical challenge, as most visual SLAM and SfM methods assume in-puts from static environments. While recent dynamic-aware methods exist, they are often not unified: semantic-based approaches are brittle, per-sequence optimization methods fail on short sequences, and other learned models sometimes perform badly on static-only scenes. We present WildPose, a unified monocular pose estimation framework that is robust in dynamic environments while maintaining state-of-the-art performance on static and low-ego-motion datasets. Our key insight is to connect the two powerful paradigms in mod-ern 3D vision: the rich perceptual frontend of feed-forward models and the end-to-end optimization of differentiable bundle adjustment (BA). We achieve this by enhancing the differentiable BA pipeline in two ways. First, we introduce a new 3D-aware update operator by integrating a frozen, pre-trained MASt3R feature backbone and training the op-erator’s subsequent layers on a diverse curriculum of static and dynamic data. Second, we propose a high-capacity motion mask detector that leverages rich, multi-level 3D-aware features from the same frozen backbone. Extensive experiments show WildPose consistently outperforms prior methods across a wide variety of benchmarks, including dynamic (Wild-SLAM, Bonn), static (TUM, 7-Scenes), and low-ego-motion (Sintel) datasets. 
+
+## 1. Introduction 
+
+Estimating camera pose and 3D scene structure is a corner-stone of 3D vision, vital for applications like AR/VR and robotics. These tasks are commonly formulated as Struc-ture from Motion (SfM) or, in the case of sequential input, Simultaneous Localization and Mapping (SLAM). While traditional geometric methods [ 12 , 30 – 32 , 62 , 63 ] offered mature solutions, recent progress has been dominated by deep learning. This has led to two distinct and powerful research directions. On one hand, feed-forward SfM mod-els [ 25 , 46 , 49 ] are trained to directly regress 3D structure and, in some cases, camera poses. On the other hand, dif-ferentiable optimization frameworks [ 43 ] learn an update operator to feed a differentiable bundle adjustment (BA) layer. Despite architectural differences, all these approaches largely share a critical vulnerability: they assume a static 
+
+> arXiv:2605.12774v1 [cs.CV] 12 May 2026
+
+world, which causes their performance to degrade signifi-cantly in dynamic scenes. To handle dynamic environments, a common approach is to perform motion segmentation from 2D images. Sev-eral recent methods [ 7, 17 , 54 ] utilize semantic information to extract motion masks. Nevertheless, such approaches are highly sensitive to the quality of semantic segmenta-tion and often struggle to generalize across scenes with var-ied and unconstrained motion patterns. Two recent works that eliminate the reliance on semantic priors are WildGS-SLAM [ 60 ] and MegaSaM [ 27 ]. WildGS-SLAM [ 60 ] lever-ages image-rendering inconsistency from 3D Gaussian Splat-ting (3DGS) [ 22 ] to train on-the-fly a per-sequence special-ized motion detector, but its effectiveness diminishes when input sequences lack sufficient temporal and spatial coverage. MegaSaM [ 27 ], on the other hand, trains a more general mo-tion prediction network, offering a promising direction but suffers from a key limitation: it attempts to decode motion from the recurrent hidden state of its flow operator, which is designed to propagate flow information and not to explicitly segment motion. Hence, it lacks the capacity and feature richness required for a complex segmentation task. Further-more, its reliance on a synthetic training corpus of limited diversity creates a domain gap, causing its performance to degrade on long, real-world trajectories. Critically, existing dynamic-scene methods such as the above often fail to main-tain accuracy with solely static inputs. We argue that a robust SLAM system must excel in both static and dynamic scenar-ios, as real-world applications are inherently unpredictable and will inevitably encounter a mix of both. We present WildPose , a unified and generalizable pose estimation framework capable of handling both dynamic and static environments, while remaining robust across short-term and long-term sequences. Our key insight is to fuse the two powerful paradigms in deep visual pose estimation and 3D reconstruction: the end-to-end optimization of differen-tiable BA frameworks [ 43 ] and the rich perceptual frontend of feed-forward models [ 33 ]. To this end, we adopt the dif-ferentiable BA pipeline of DROID-SLAM [ 43 ], which relies on a learnable update operator to refine poses and geometry. We enhance this pipeline in two fundamental ways. First, we create a new 3D-aware update operator. We are the first to replace the standard, simple CNN encoder with a powerful, pre-trained 3D-aware feature extractor [ 25 ], providing rich geometric priors. We train this operator on a highly diverse, augmented dataset of both static and dynamic scenes with varied motion patterns, improving robustness to diverse, in-the-wild inputs. Second, we propose a new motion mask detector that also leverages these 3D-aware features. Unlike MegaSaM, which decodes from a weak recurrent state, our detector is a dedicated module receiv-ing multi-level features from the MASt3R backbone. This high-capacity design enables more accurate dynamic region detection and allows seamless integration as a robust weight-ing in the BA process. Our full pipeline integrates these components with monoc-ular depth priors for metric scale, along with loop closure and global BA for long-term consistency. Extensive experi-ments show WildPose consistently outperforms prior work across a wide variety of benchmarks. We further demon-strate that our improved pose accuracy and motion masks are beneficial for downstream tasks like consistent video depth estimation. In summary, our main contributions are: • A unified monocular pose estimator, WildPose , that oper-ates robustly in highly dynamic environments while main-taining state-of-the-art performance on static and short-term datasets. • An enhanced update operator for differentiable BA, which leverages 3D-aware features and is trained on a new, di-verse curriculum of static and dynamic data. • A novel, high-capacity motion mask detector to identify dynamic regions that offers seamless integration into the BA pipeline. 
+
+## 2. Related Work 
+
+Feed-forward 3D Reconstruction. Feed-forward 3D recon-struction has emerged as a significant paradigm from classi-cal optimization-based techniques, aiming to solve SfM in a single pass. These methods, pioneered by DUSt3R [ 49 ]and MASt3R [24], directly predict 3D point maps and cam-era parameters from a set of unposed images in a single forward pass, followed by VGGT [ 46 ], which improved scalability and generalization. More recently, the focus has expanded to address the challenge of dynamic environments. MonST3R [ 57 ] directly finetunes DUSt3R [ 49 ] to support ro-bust prediction under dynamic scenes. CUT3R [ 47 ] proposes a recurrent state model that continuously updates its pose and point map prediction with each new observation. π3 [50 ] and MapAnything [ 21 ] directly train multi-view transformers on large-scale static and dynamic datasets to generalize to in-the-wild data. While fast and robust, these models struggle with long sequences, precise camera pose estimation, and are not fully compatible with camera calibration. 
+
+Visual SLAM. Monocular Visual SLAM systems [ 30 , 37 ,43 , 56 , 64 ] estimate camera motion and scene geometry from RGB sequences. Classical approaches rely on sparse feature correspondences [ 3 , 31 ] or direct photometric con-sistency [ 10 , 11 , 13 ], which often produce false matches in dynamic regions, leading to tracking failures. A promi-nent approach within this domain is the differentiable opti-mization framework proposed by Droid-SLAM [ 43 ]. This paradigm trains a deep neural network to predict intermedi-ate variables, which are consumed by a dense, differentiable BA layer. While this design has demonstrated superior per-formance in static environments, its network is trained purely on static data, limiting its robustness to dynamic inputs. Fur-thermore, its frontend consists of a simple CNN-based fea-ture extractor trained from scratch. In contrast, our work leverages the powerful, pre-trained feature backbone from MASt3R [ 25 ], a successful feed-forward SfM model. An-other method that leverages MASt3R is Mast3r-SLAM [ 33 ], which builds its system bottom-up from the MASt3R net-work’s direct 3D point map outputs. While it achieves robust real-time tracking, it operates as a fully training-free sys-tem. This contrasts with our approach, which integrates MASt3R’s internal features into a learnable, optimization-based pipeline. Moreover, this approach, like most in its category [ 29 ], is primarily designed for static scenes and struggles with significant dynamic elements. 
+
+Pose Estimation in Dynamic Scenes. To address the chal-lenge of pose estimation in dynamic environments, many approaches first detect dynamic objects by leveraging ge-ometric cues [ 6, 14 , 34 , 39 , 51 , 58 , 59 ], or by predefin-ing semantic priors to segment out moving objects, as in MASK-SLAM [ 19 ], Crowd-SLAM [ 41 ], and ViPE [ 17 ]. Others combine both strategies [ 1, 18 , 26 , 38 , 53 ]. How-ever, these semantic-based methods are inherently brittle: they are constrained by predefined categories, fail to detect novel dynamic objects, and are sensitive to segmentation quality. Other recent learning-based methods avoid these priors. BA-Track [ 5] learns to decompose the observed point motion into static and dynamic components. Since only the static component is induced by camera motion, it excludes the dynamic motion from bundle adjustment to eliminate distractions from moving objects. WildGS-SLAM [ 60 ] in-tegrates dynamic object handling by training an uncertainty MLP online, supervised by image–rendering inconsisten-cies from 3D Gaussian splatting. This design, however, makes it reliant on high-quality mapping and wide view-point coverage. Furthermore, its pose estimation is tightly coupled with the computationally demanding mapping mod-ule and online mask optimization overhead, resulting in a slow pipeline. Alternatively, MegaSaM [ 27 ] learns a motion estimator from large-scale training data. However, it suffers from key limitations: its training on a synthetic corpus of lim-ited diversity creates a domain gap, hindering generalization to long sequences. Architecturally, it decodes motion from the ConvGRU’s hidden state—a low-capacity representation designed for flow. In contrast, our method trains a separate, high-capacity detector leveraging 3D-aware features [25]. 
+
+## 3. WildPose 
+
+Given a monocular RGB sequence {Ii}Ni=1 with known cam-era intrinsics (fx, f y , c x, c y ), our goal is to estimate the per-frame camera poses {ωi}Ni=1 ∈ SE (3) . We first review the preliminaries of DROID-SLAM [ 43 ], then describe how we integrate the feed-forward front-end MASt3R [ 24 ] into a differentiable SLAM framework for end-to-end training. We further introduce our learned motion mask detector and present a multi-stage training strategy for all components. Finally, we describe how the trained modules are combined for unified inference. 
+
+3.1. Preliminaries 
+
+DROID-SLAM [ 43 ] is characterized by two core compo-nents: a learnable update operator and a differentiable BA pipeline. The state of each keyframe i comprises the cam-era pose ˆωi ∈ SE (3) and downsampled disparity map 
+
+ˆdi ∈ R H   
+
+> 8×W
+> 8
+
+. The optimization process is acted on a frame graph G, where edges (i, j ) ∈ G connect keyframes with significant observational overlap. For each edge in the graph, the update operator iteratively refines intermediate variables which are further utilized in the differentiable BA process to optimize the camera poses and geometry. 
+
+Update Operator. For each image pair (Ii, I j ) form-ing an edge in the pose graph, we estimate the optical flow by projecting and back-projecting pixels as ˜fi,j =Πc
+
+
+
+ˆω−1 
+
+> j
+
+ˆωiΠ−1
+
+> c
+
+
+
+pi, ˆdi
+
+ 
+
+, where Πc denotes the pinhole camera projection and pi is a pixel location in the reference frame i. The update operator then iteratively refines the pose and disparity by adjusting intermediate variables guided by the estimated optical flow 
+
+(ˆf t+1  
+
+> i,j
+
+, ˆwt+1  
+
+> i,j
+
+, ˆηt+1 , ˆut+1 ) = F (Ii, Ij, ˜f ti,j , rti,j ), (1) where ˆf ti,j ∈ R H    
+
+> 8×W
+> 8×2
+
+is the predicted optical flow be-tween the two frames i and j, ˆwti,j ∈ R H    
+
+> 8×W
+> 8×2
+
+is the confidence of the predicted optical flow, ˆηt is a damping factor used to stabilize the BA process, ˆut ∈ R 8×8 is a mask for disparity upsampling, and rti,j = ˆf ti,j − ˜f ti,j . The update operator F comprises a CNN feature encoder, a feature cor-relation module, and a ConvGRU-based recurrent network to iteratively refine the state variables. For more architecture details, please refer to the supplementary material. 
+
+Differentiable BA. The differentiable BA layer jointly opti-mizes all camera poses ˆω and disparity maps ˆd by minimiz-ing the reprojection error over the frame graph G:
+
+E(ˆ ω, ˆd) = X
+
+> (i,j )∈G
+
+ˆfij − ˜fij 
+
+> 2Σij
+
+, (2) where Σ−1 
+
+> ij
+
+= diag ( ˆ wi,j ). This objective penalizes the weighted residual between the predicted flow ˆf and the geometry-induced flow ˜f , weighted by the confidence ˆw
+
+from the update operator. This non-linear least-squares prob-lem is solved by the Gauss-Newton algorithm. The cost function is linearized using local parameterization, and the resulting linear system for updates (∆ˆ ω, ∆ ˆd) is solved ef-ficiently by applying the Schur complement. The entire process is fully differentiable, enabling end-to-end training by backpropagating gradients through the solver. Depth 
+
+Estimator 
+
+Motion Mask 
+
+Detector 
+
+Input: RGB frames 
+
+Metric Depth   
+
+> Frame i
+> Frame j
+> ViT Encoder
+> Transformer
+> Decoder
+> Transformer
+> Decoder
+> Cross.
+> Attention
+> Motion Head
+> Multi -layer Feature
+
+MASt3R 
+
+Encoder 
+
+Update 
+
+Operator 
+
+> 3D -Aware Feature
+
+Pose 𝝎 
+
+Disparity d
+
+Depth & Uncertainty Guided 
+
+Dense Bundle Adjustment         
+
+> Online BA Loop
+> Closure Global BA Motion
+> Mask Figure 2. System Overview. WildPose robustly estimates the camera trajectory from a monocular RGB sequence. We leverage 3D-aware features from the frozen MASt3R encoder [ 25 ], which are fed into our update operator . Concurrently, a motion mask detector generates motion masks from the backbone’s multi-layer features. These outputs, combined with the metric depth prior [ 48 ], enable our Dense Bundle Adjustment layer to mitigate dynamic outliers and perform robust trajectory optimization.
+
+3.2. Feed-forward Transformer Encoder 
+
+Recent advances in feed-forward models, such as MASt3R [ 25 ], have demonstrated that large-scale pre-training can produce powerful, 3D-aware image representa-tions. In contrast, the update operator in DROID-SLAM [ 43 ]employs a relatively simple CNN encoder, trained from scratch, merely to extract auxiliary features for its recur-rent ConvGRU. Therefore, we propose to replace this simple CNN with the pre-trained MASt3R backbone, integrating a feed-forward frontend with the robust optimization of a differentiable BA backend. A direct integration is not possible, as the outputs of the MASt3R backbone are not compatible with the inputs expected by the DROID update operator. The MASt3R ar-chitecture consists of a ViT encoder [ 9 ] and two intertwined decoders ( DecBlk 1, DecBlk 2) that produce complex, multi-level correspondence tokens. An obvious design choice is to adapt the final multi-level tokens or the intermediate ViT features. However, we find that fusing the decoder tokens with the ConvGRU layer is computationally prohibitive for both training and inference. Therefore, we opt to use the features from the ViT en-coder. To make the encoder compatible with the ConvGRU, we introduce a lightweight adapter module. This module consists of two convolutional residual layers that take the patch-based ViT features as input. It processes these features to produce the local feature maps and global context infor-mation that the ConvGRU subsequently uses to update the flow field. We empirically selected MASt3R over other feed-forward models [ 46 , 50 ] as we found its features yielded the best performance. We hypothesize this is because MASt3R’s pre-training objectives on point map precision and 2D pixel correspondences are highly aligned with the update opera-tor’s role in estimating the optical flow, providing "cleaner" and more relevant features than those from more versatile models. 
+
+3.3. Motion Mask Detector 
+
+The BA objective in Eq. (2) only holds on static scenes, where only ego-motion ˜fij determines the full optical flow 
+
+ˆfij . This assumption is violated in dynamic environments. For a pixel pi corresponding to a moving 3D point, its true optical flow ˜f ⋆i,j is a composite of camera motion and the object’s self motion: 
+
+˜f ⋆i,j = Π c
+
+
+
+ˆω−1 
+
+> j
+
+ˆωiΠ−1
+
+> c
+
+
+
+pi, ˆdi
+
+
+
++ Xi,j (pi)
+
+
+
+where Xi,j (pi) represents the object’s 3D displacement be-tween frames Ii and Ij . Consequently, directly minimizing Eq. (2) forces the optimizer to incorrectly adjust ˆω and ˆd
+
+to compensate for the large residuals from dynamic pixels, leading to inaccurate state estimation. To mitigate this, we propose a deep motion detector that takes an image pair as input and predicts a motion map to identify and filter these dynamic regions. Our motion detector, illustrated in Fig. 2, is designed to predict a downsampled motion map ˆMi,j ∈ R H   
+
+> 8×W
+> 8
+
+. This map is used to robustify the BA objective (Eq. (2) ) by iden-tifying and down-weighting residuals from dynamic pixels. To achieve this, we adapt the MASt3R backbone [ 25 ] by aggregating the multi-level correspondence tokens produced by its transformer decoder via a DPT-style fusion layer [ 36 ]. Figure 3. Visualization of Motion Masks. Top : Our per-edge masks (Frame i → j and i → k) resolve temporal ambiguity by capturing motion relative to a second frame, enabling fine-grained detection of inconsistencies along each frame-graph edge. Bottom :Per-frame masks from prior methods (WildGS-SLAM [ 60 ] and Vipe [ 17 ]) are shown for comparison; these approaches produce frame-level predictions that are unable to identify transient motion. 
+
+The fused features are then passed to a final CNN-based motion head, which regresses the motion map ˆMi,j that identifies the dynamic regions on reference frame i.Our edge-dependent mask design avoids the ambiguity of per-frame [ 60 ] or global dynamic object segmentation [ 17 ]. An object may move transiently, remaining static in other parts of the sequence, making a single-frame "dynamic" label unreliable. For instance, as shown in Fig. 3, a global-consistency-based method [ 60 ] fails to identify the moved box, as it is static in most other views. Our pairwise detector circumvents this. It only masks objects if they move between the input pair ( Ii, I j ), thereby correctly identifying true out-liers for a specific edge in the BA graph. If the object is static within that pair, it is preserved as a valid constraint, improv-ing robustness. This design resolves temporal ambiguity and integrates directly into the BA optimization. 
+
+3.4. Training 
+
+Our pipeline contains two learnable modules, the update operator and the motion detector, which we train using a multi-stage curriculum. Unlike prior work [ 37 , 56 , 60 ] that uses the pre-trained DROID-SLAM operator, our goal is to train a new operator with enhanced robustness to both static and dynamic scenes. This is followed by a separate stage to train the motion detector. 
+
+Training Datasets. We train our methods on a diverse set of synthetic datasets, including the static TartanAir V2 [ 44 ] and TartanGround [35], and the dynamic Dynamic Replica [20] and OmniWorld-Game [ 61 ]. While these provide various trajectories, they underrepresent certain challenging camera motions. To address this, we augment our training pool with data from the Kubric simulator [ 15 ]. We generate both static and dynamic sequences focusing on three distinct motion patterns: linear translation, pure rotation, and target-locked motion, i.e., fixing the look-at point while the camera moves. The latter two are less prevalent in the other public datasets and enhance the dataset diversity. 
+
+Training Strategy. We first train the update operator end-to-end using only the static datasets. This stage trains the model to effectively learn pairwise flows induced purely by camera ego-motion. The loss function, similar to [ 43 ], is a weighted sum: 
+
+L1 = wcam Lcam + wf low Lf low + wres Lres , (3) where Lcam is the loss on the camera poses, Lf low compares the geometry-induced flow ˜f with the ground truth flow, and Lres is the residual loss between ˜f and the operator-predicted flow ˆf .In the second stage, we finetune the operator on a mix of static and dynamic datasets. To train the model to handle dynamic content, we provide the annotated motion masks M
+
+and inject them directly into the BA process by modifying the weighting matrix from Eq. (2) to ¯Σ−1 
+
+> ij
+
+= diag ( ˆ wi,j Mi).This stage trains the update operator to adapt to masked inputs and generalize to dynamic outliers. Finally, we train the motion mask detector by coupling it with the frozen update operator and the differentiable BA layer. In this stage, we replace the ground truth motion masks with the predicted masks from our motion detector. We remove the flow loss and residual loss from the supervision to focus solely on the pose and mask quality: 
+
+L2 = wcam Lcam + wmask LBCE , (4) where LBCE is the binary cross-entropy loss between the predicted motion map and the annotated mask. 
+
+3.5. Inference 
+
+During inference, our system operates as an online visual odometry. We designate a new incoming frame as a keyframe if it has sufficient motion wrt. the latest keyframe. For each new keyframe Ii, we initialize its disparity ˆdi using the metric depth Di from Moge2 [ 48 ] and form new edges with its co-visible keyframes in the graph G. For each new edge 
+
+(i, j ) created in the graph, we run our motion detector to predict the motion mask Mi,j . The poses and disparities are then optimized via BA by minimizing a composite objective similar to the training stage: 
+
+E(ˆ ω, ˆd) = X
+
+> (i,j )∈G
+
+ˆfij − ˜fij 
+
+> 2¯Σij
+
++ λ X
+
+> i∈G
+
+ ˆdi − 1/D i
+
+ 2
+
+(5) Method ANYmal1 ANYmal2 Ball Crowd Person Racket Stones Table1 Table2 Umbrella Avg.                                                                                                  
+
+> Keyframe Poses
+> MASt3R-SLAM [33] 0.5 1.2 0.5 1.3 4.5 1.9 0.9 4.2 29.5 1.5 4.59 VGGT [46] 1.2 87.2 1.0 1.3 2.9 1.7 2.0 1.9 58.8 1.2 15.91
+> π3[50] 0.8 3.7 0.9 1.1 1.8 1.5 1.3 2.4 5.7 1.1 2.02
+> Full Trajectory
+> DROID-SLAM [43] 0.6 4.7 1.2 2.3 0.6 1.5 3.4 48.0 95.6 3.8 16.17 WildGS-SLAM [60] 0.2 0.3 0.2 0.3 0.8 0.4 0.3 0.6 1.3 0.2 0.46 MegaSaM [27] 0.6 2.7 0.6 1.0 3.2 1.6 3.2 1.0 9.4 0.6 2.40 ViPE [17] 0.4 0.7 0.4 0.6 4.8 1.2 0.7 1.7 14.8 0.5 2.59
+> WildPose (Ours) 0.2 0.3 0.2 0.4 0.4 0.5 0.3 0.5 1.0 0.2 0.39
+> Table 1. Tracking Performance on Wild-SLAM MoCap Dataset [ 60 ](ATE RMSE ↓[cm]). Best results are highlighted as first , second , and third . All baseline methods were run using their publicly available code.
+
+where the reprojection error is further weighted by the pre-dicted motion mask, ¯Σij −1 = diag ( ˆ wi, j ˆM i, j ), with an additional disparity regularization term which encourages the estimated disparity to cohere with the metric depth prior. This optimization is performed in a sliding window man-ner, where old keyframes and edges are removed when new keyframes come in. To mitigate scale and pose drift in longer sequences, we employ loop closure and global BA in addition to the lo-cal window optimization, similar to [ 37 , 56 , 60 ]. We de-tect loops by computing optical flow between current ac-tive keyframes and past keyframes; if the temporal interval between two frames exceeds a threshold τ and they have sufficient co-visibility, we create a new graph with these loop closure edges and perform BA on them. Global BA is performed on all keyframes to ensure global consistency, running periodically during the sequence with fewer itera-tions and as a final post-processing step. In the final global BA, we remove the second term in Eq. (5) , which is the depth regularizer term. We empirically find that while the metric depth provides good initialization, its inherent noise can be detrimental when estimates are highly refined. 
+
+## 4. Experiments 
+
+4.1. Experimental Setup 
+
+Datasets. We evaluate our approach on a wide range of datasets to assess its performance under various conditions. • Dynamic Scenes : To demonstrate robustness to dynamic objects, we follow the benchmark from [ 60 ] and evaluate on Wild-SLAM MoCap Dataset [ 60 ], Bonn RGB-D Dy-namic Dataset [ 34 ], and the dynamic sequences in TUM RGB-D Dataset [42]. • Low-Motion and Short Trajectories : To assess perfor-mance on challenging sequences with minimal egomotion, we evaluate on the MPI Sintel dataset [ 2]. This dataset con-tains 18 short sequences, each of which has 20-50 frames, with small camera motion. • Static Scenes : Finally, to validate performance on standard static benchmarks, we evaluate on 7-Scenes Dataset [ 40 ] and the nine static sequences in TUM RGB-D Dataset [ 42 ], following [ 33 ]. We also report the evaluation on the ScanNet Dataset [ 8] in the supplementary material. 
+
+Metrics. We follow the standard monocular SLAM evalua-tion pipeline [ 33 , 56 , 60 ]. The estimated trajectory is aligned to the ground truth using Sim(3) Umeyama alignment [ 45 ], after which we compute the RMSE of the absolute trajectory error (ATE). 
+
+Implementation details. The update operator is trained in a two-stage process using the Adam optimizer. The first pre-training stage uses only static datasets and runs for 200K iterations with a learning rate (LR) of 1.5 × 10 −3. We use a batch size of 3, where each sample consists of a 7-frame video sequence. The second stage is conducted jointly on both static and dynamic datasets for 100K iterations with a reduced LR of 1 × 10 −4. Subsequently, the motion mask detector is trained for 15K iterations with a batch size of 8 and a learning rate of 5 × 10 −3. The entire training curricu-lum takes approximately two weeks on 8 A100 GPUs. We employ gradient norm clipping with a threshold of 2.5 to ensure training stability. All training images are resized to 
+
+384 × 512 . During inference, we resize input images to a similar resolution while preserving the original aspect ratio. 
+
+Baselines. We compare WildPose against SOTA meth-ods, categorized as dynamic, static, and feed-forward: WildGS-SLAM [ 60 ], ViPE [ 17 ], MegaSaM [ 27 ], DROID-SLAM [ 43 ], MASt3R-SLAM [ 33 ], VGGT [ 46 ], and π3 [50 ]. Several baselines require specific evaluation protocols. For ViPE, we pre-identify and provide moving semantics as in-put, in accordance with its requirements. MASt3R-SLAM is evaluated only on keyframes, as it does not predict a full trajectory. Similarly, due to high GPU memory consumption on long sequences, VGGT and π3 are also evaluated only on the keyframe poses identified by our method, except on Sintel, where the full trajectory is used due to the small num-ber of frames. Noting that the keyframe-only evaluation is inherently less challenging than the full-trajectory evaluation employed for our method and other baselines. Method Balloon Balloon2 Crowd Crowd2 Person Person2 Moving Moving2 Avg.                                                                          
+
+> Keyframe Poses
+> MASt3R-SLAM [33] 2.8 3.1 4.4 6.6 2.6 1.9 7.5 2.8 3.96 VGGT [46] 3.3 3.5 2.0 2.1 6.6 27.1 1.4 4.0 6.26
+> π3[50] 1.5 1.7 2.7 2.9 3.6 7.3 1.4 2.3 2.92
+> Full Trajectory
+> DROID-SLAM [43] 7.5 4.1 5.2 6.5 4.3 5.4 2.3 4.0 4.91 WildGS-SLAM [60] 2.8 2.4 1.5 2.3 3.1 2.7 1.6 2.2 2.31
+> MegaSaM [27] 3.7 2.6 1.6 7.2 4.1 4.0 1.4 3.4 3.51 ViPE [17] 3.3 2.7 2.6 3.9 3.4 3.8 1.4 2.3 2.93
+> WildPose (Ours) 2.6 2.4 1.4 1.9 4.0 2.6 1.3 2.7 2.36
+
+Table 2. Tracking Performance on Bonn RGB-D Dynamic Dataset [34] (ATE RMSE ↓ [cm]).                                               
+
+> Method f3/ws f3/wx f3/wr f3/whs Avg.
+> Keyframe Poses
+> MASt3R-SLAM [33] 0.7 1.7 3.9 3.7 2.51 VGGT [46] 0.7 1.5 3.6 2.0 1.96
+> π3[50] 0.9 2.4 3.8 2.6 2.44
+> Full Trajectory
+> DROID-SLAM [43] 1.2 1.6 4.0 2.2 2.25 WildGS-SLAM [60] 0.4 1.3 3.3 1.6 1.63 MegaSaM [27] 0.6 1.5 2.6 1.8 1.63 ViPE [17] 0.5 1.3 3.0 1.6 1.58
+> WildPose (Ours) 0.6 1.3 2.7 1.7 1.57
+
+Table 3. Tracking Performance on TUM RGB-D (dynamic) Dataset [42] (ATE RMSE ↓ [cm]). 
+
+4.2. Pose Estimation 
+
+Wild-SLAM Mocap. As shown in Table 1, our method achieves the best performance across all the sequences of Wild-SLAM Mocap Dataset [ 60 ]. While ViPE [ 17 ] per-forms comparably on most sequences, its error increases sig-nificantly on the Table1 and Table2 sequences. These scenes contain a human pushing a table while navigating, a challenging scenario for ViPE as tables are typically treated as static and thus not identified as dynamic by its semantic segmentation, leading to tracking errors. MegaSaM [ 27 ]and WildGS-SLAM [ 60 ] also detect motions without se-mantic priors. Our method still surpasses them, which we attribute to our use of 3D-aware features [ 25 ] and carefully designed training curriculum. Although π3 is evaluated only on keyframes, its performance is nonetheless lower than ours. This suggests that while feed-forward models excel at dense pointmap predictions, their end-to-end pose estimation accu-racy still lags behind optimization-based methods. Lacking mechanisms to handle dynamic content, other static methods perform dramatically worse on the dynamic dataset. 
+
+Bonn and TUM Dynamic. Tracking results on the Bonn RGB-D [ 34 ] and TUM Dynamic dataset [ 42 ], presented in Table 2 and Table 3, demonstrate superior or competitive performance of our method (second-best on Bonn, best on TUM). The Bonn dataset features non-trivial illumination changes across frames. WildGS-SLAM outperforms our approach on this dataset, likely because its explicit handling of illumination changes. WildPose outperforms all other                               
+
+> Method Sintel [2] TUM RGB-D [42] 7-scenes [40] low-motion static static
+> Keyframe Poses
+> MASt3R-SLAM [33] -0.030 0.047
+> VGGT [46] 0.072 †0.042 0.058
+> π3[50] 0.047 †0.038 0.052
+> Full Trajectory
+> DROID-SLAM [43] 0.030 0.038 0.049 WildGS-SLAM [60] 0.049 0.037 0.051 MegaSaM [27] 0.018 0.066 0.056 ViPE [17] 0.028 0.065 0.050
+> WildPose (Ours) 0.017 ⋆0.027 0.049
+
+Table 4. Tracking Performance on Low-motion and Static benchmarks. Reported as ATE RMSE ↓ in meters, except for Sintel where trajectories are scale-normalized following MegaSaM [27]. † indicates evaluation on all the frames. 
+
+baselines by a clear margin. 
+
+Sintel. We report tracking performance on Sintel [ 2 ] in Ta-ble 4. As these sequences are short (<50 frames), there are no memory constraints on VGGT [ 46 ] and π3 [50 ], allowing evaluation on all frames. Notably, WildGS-SLAM, which performs competitively on the long dynamic sequences, struggles here, exhibiting higher error than even some static methods. This is because the short sequences are insufficient to build a high-quality 3DGS map for training its uncertainty MLP effectively. 
+
+Static Benchmarks. We report the performance on static datasets in Table 4. Our method achieves the best perfor-mance among all full-trajectory pose estimators on both TUM [ 42 ] and 7-Scenes [ 40 ]. This highlights the key ad-vantage of WildPose: while MegaSaM [ 27 ] and ViPE [ 17 ]are robust on some dynamic benchmarks, their performance degrades significantly on static datasets, unlike our method which excels at both. 
+
+Qualitative Results. We provide qualitative trajectory com-parisons in Fig. 4, visualizing 2D projections from three representative sequences, one each for dynamic, low-ego-motion, and static. In all examples, our estimated trajectory demonstrates the closest alignment to the ground truth. MegaSaM Wild-Pose (Ours) WildGS-SLAM ViPE 
+
+> Wild-SLAM Sintel
+> fr1-plant  cave-4  person tracking
+> TUM (static)
+> Input
+
+Input ViPE [17] MegaSAM [27] WildGS-SLAM [60] WildPose (Ours) Figure 4. Visualization of Camera Trajectories. The estimated trajectory is colorized by the translation error (ATE). Method Abs.Rel. ↓ Log-RMSE ↓ δ1.25 ↑                  
+
+> DA-v2 [55] 0.16 0.24 91.1 PPD [52] 0.15 0.24 94.6 DepthCrafter [16] 0.19 0.26 86.8 Video-Depth-Anything [4] 0.14 0.23 95.7 MegaSaM [27] 0.13 0.23 94.5
+> WildPose (Ours) 0.12 0.22 96.3
+
+Table 5. Comparison on Long-video Depth Estimation on Bonn RGB-D Dynamic [34] Dataset. 
+
+4.3. Downstream Application: Depth Estimation 
+
+We demonstrate the benefit of our high-quality poses on video depth estimation. We adopt the depth optimization pipeline from MegaSaM [ 27 ], but substitute their poses with our own and incorporate our predicted motion masks as additional optimization weights. We evaluate on all eight sequences of the Bonn Dynamic Dataset [ 34 ], each of which is temporally subsampled by a stride of 10. The results in Table 5 further showcase our state-of-the-art performance on depth estimation in long sequences, outperforming all baselines on all metrics. This confirms that depth estimation benefits from more accurate pose estimation by WildPose. 
+
+4.4. Ablation Study 
+
+We validate our primary design choices in Table 6, where we ablate three key components: (1) the second-stage fine-tuning of the update operator with mixed static and dynamic datasets ( Mix. Ft. ), (2) the application of our motion mask detector to down-weight dynamic regions during BA ( Mot. Mask ), and (3) the removal of the depth regularizer in the fi-                              
+
+> Mix. Ft. Mot. Mask GBA Dep. Off Wild-SLAM [60] Bonn [34] TUM [42]
+> ✗✗✓2.16 5.58 2.10
+> ✓✗✓0.76 2.61 1.58
+> ✗✓✓0.61 2.55 1.66
+> ✓✓✗2.34 2.60 2.13
+> ✓✓✓0.39 2.50 1.54
+
+Table 6. WildPose Ablation Study (ATE RMSE ↓ [cm]). We report the average tracking error for each dataset. Mix. Ft. denotes finetuning the update operator with the mix of static and dynamic datasets, Mot. Mask denotes the motion mask detector, and GBA Dep. Off denotes removing the depth regularization term during the final global BA. 
+
+nal global BA ( GBA Dep. off ). Our full model, integrating all components, achieves the best performance, validating our complete system design. While dynamic finetuning of the update operator provides significant initial gains, integrating the motion mask detector consistently boosts performance, demonstrating the necessity of explicit motion masks. 
+
+## 5. Conclusion 
+
+We presented WildPose, a novel pose estimation framework that achieves robust performance on both static and dynamic scenes. Our method enhances the differentiable BA pipeline by integrating a 3D-aware feature backbone from MASt3R, which powers both a new update operator and a high-capacity motion mask detector. This hybrid design proves superior to prior work, setting a new state-of-the-art on a wide array of static and dynamic datasets and benefiting downstream tasks like depth estimation. We discuss our limitations and future work in the supplementary material. Acknowledgment. This work is supported by the Center for Integrated Facility Engineering (CIFE) and the Stanford Robotics Center (SRC). We also thank Stanford’s Marlowe computing clusters and Stanford Sherlock clusters for pro-viding GPU computing for model training and evaluation. 
+
+## References 
+
+[1] Berta Bescos, José M. Fácil, Javier Civera, and José Neira. DynaSLAM: Tracking, Mapping and Inpainting in Dynamic Scenes. RAL , 2018. 3 [2] Daniel J Butler, Jonas Wulff, Garrett B Stanley, and Michael J Black. A naturalistic open source movie for optical flow evaluation. In European conference on computer vision , pages 611–625. Springer, 2012. 6, 7 [3] Carlos Campos, Richard Elvira, Juan J Gómez Rodríguez, José MM Montiel, and Juan D Tardós. Orb-slam3: An accu-rate open-source library for visual, visual–inertial, and mul-timap slam. IEEE transactions on robotics , 37(6):1874–1890, 2021. 2 [4] Sili Chen, Hengkai Guo, Shengnan Zhu, Feihu Zhang, Zilong Huang, Jiashi Feng, and Bingyi Kang. Video depth anything: Consistent depth estimation for super-long videos. In Pro-ceedings of the Computer Vision and Pattern Recognition Conference , pages 22831–22840, 2025. 8 [5] Weirong Chen, Ganlin Zhang, Felix Wimbauer, Rui Wang, Nikita Araslanov, Andrea Vedaldi, and Daniel Cremers. Back on track: Bundle adjustment for dynamic scene reconstruc-tion. In Proceedings of the IEEE/CVF International Confer-ence on Computer Vision (ICCV) , pages 4951–4960, 2025. 3[6] Jiyu Cheng, Yuxiang Sun, and Max Q-H Meng. Improving monocular visual slam in dynamic environments: an optical-flow-based approach. Advanced Robotics , 2019. 3 [7] Shuhong Cheng, Changhe Sun, Shijun Zhang, and Dianfan Zhang. Sg-slam: A real-time rgb-d visual slam toward dy-namic scenes with semantic and geometric information. IEEE Transactions on Instrumentation and Measurement , 2022. 2 [8] Angela Dai, Angel X. Chang, Manolis Savva, Maciej Halber, Thomas Funkhouser, and Matthias Nießner. Scannet: Richly-annotated 3d reconstructions of indoor scenes. In CVPR ,2017. 6, 3 [9] Alexey Dosovitskiy. An image is worth 16x16 words: Trans-formers for image recognition at scale. arXiv preprint arXiv:2010.11929 , 2020. 4 [10] Jakob Engel, Thomas Schöps, and Daniel Cremers. Lsd-slam: Large-scale direct monocular slam. In European conference on computer vision , pages 834–849. Springer, 2014. 2 [11] Jakob Engel, Vladlen Koltun, and Daniel Cremers. Direct sparse odometry. IEEE TPAMI , 2017. 2 [12] Jakob Engel, Vladlen Koltun, and Daniel Cremers. Direct sparse odometry. PAMI , 2017. 1 [13] Christian Forster, Matia Pizzoli, and Davide Scaramuzza. Svo: Fast semi-direct monocular visual odometry. In 2014 IEEE international conference on robotics and automation (ICRA) ,pages 15–22. IEEE, 2014. 2 [14] Lily Goli, Sara Sabour, Mark Matthews, Marcus A Brubaker, Dmitry Lagun, Alec Jacobson, David J Fleet, Saurabh Saxena, and Andrea Tagliasacchi. Romo: Robust motion segmenta-tion improves structure from motion. In Proceedings of the IEEE/CVF International Conference on Computer Vision ,pages 6155–6164, 2025. 3 [15] Klaus Greff, Francois Belletti, Lucas Beyer, Carl Doersch, Yilun Du, Daniel Duckworth, David J Fleet, Dan Gnanapra-gasam, Florian Golemo, Charles Herrmann, et al. Kubric: A scalable dataset generator. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 3749–3761, 2022. 5, 1 [16] Wenbo Hu, Xiangjun Gao, Xiaoyu Li, Sijie Zhao, Xiaodong Cun, Yong Zhang, Long Quan, and Ying Shan. Depthcrafter: Generating consistent long depth sequences for open-world videos. arXiv preprint arXiv:2409.02095 , 2024. 8 [17] Jiahui Huang, Qunjie Zhou, Hesam Rabeti, Aleksandr Ko-rovko, Huan Ling, Xuanchi Ren, Tianchang Shen, Jun Gao, Dmitry Slepichev, Chen-Hsuan Lin, et al. Vipe: Video pose engine for 3d geometric perception. arXiv preprint arXiv:2508.10934 , 2025. 2, 3, 5, 6, 7, 8 [18] Haochen Jiang, Yueming Xu, Kejie Li, Jianfeng Feng, and Li Zhang. Rodyn-slam: Robust dynamic dense rgb-d slam with neural radiance fields. IEEE Robotics and Automation Letters , 2024. 3 [19] Masaya Kaneko, Kazuya Iwami, Toru Ogawa, Toshihiko Yamasaki, and Kiyoharu Aizawa. Mask-slam: Robust feature-based monocular slam by masking using semantic segmenta-tion. In CVPR Workshops , 2018. 3 [20] Nikita Karaev, Ignacio Rocco, Benjamin Graham, Natalia Neverova, Andrea Vedaldi, and Christian Rupprecht. Dy-namicstereo: Consistent dynamic depth from stereo videos. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 13229–13239, 2023. 5, 1 [21] Nikhil Keetha, Norman Müller, Johannes Schönberger, Lorenzo Porzi, Yuchen Zhang, Tobias Fischer, Arno Knapitsch, Duncan Zauss, Ethan Weber, Nelson Antunes, Jonathon Luiten, Manuel Lopez-Antequera, Samuel Rota Bulò, Christian Richardt, Deva Ramanan, Sebastian Scherer, and Peter Kontschieder. MapAnything: Universal feed-forward metric 3D reconstruction. In arXiv:2509.13414 , 2025. 2[22] Bernhard Kerbl, Georgios Kopanas, Thomas Leimkühler, and George Drettakis. 3d gaussian splatting for real-time radiance field rendering. ACM TOG , 2023. 2 [23] Alexander Kirillov, Eric Mintun, Nikhila Ravi, Hanzi Mao, Chloe Rolland, Laura Gustafson, Tete Xiao, Spencer White-head, Alexander C Berg, Wan-Yen Lo, et al. Segment any-thing. In ICCV , 2023. 1 [24] Vincent Leroy, Yohann Cabon, and Jérôme Revaud. Ground-ing image matching in 3d with mast3r. In European Confer-ence on Computer Vision , pages 71–91. Springer, 2024. 2, 3[25] Vincent Leroy, Yohann Cabon, and Jerome Revaud. Ground-ing image matching in 3d with mast3r, 2024. 1, 2, 3, 4, 7 [26] Mingrui Li, Zhetao Guo, Tianchen Deng, Yiming Zhou, Yux-iang Ren, and Hongyu Wang. Ddn-slam: Real time dense dynamic neural implicit slam. IEEE Robotics and Automation Letters , 2025. 3 [27] Zhengqi Li, Richard Tucker, Forrester Cole, Qianqian Wang, Linyi Jin, Vickie Ye, Angjoo Kanazawa, Aleksander Holynski, and Noah Snavely. Megasam: Accurate, fast, and robust structure and motion from casual dynamic videos. CVPR ,2025. 2, 3, 6, 7, 8 [28] Shilong Liu, Zhaoyang Zeng, Tianhe Ren, Feng Li, Hao Zhang, Jie Yang, Qing Jiang, Chunyuan Li, Jianwei Yang, Hang Su, et al. Grounding dino: Marrying dino with grounded pre-training for open-set object detection. In European con-ference on computer vision , pages 38–55. Springer, 2024. 1[29] Dominic Maggio, Hyungtae Lim, and Luca Carlone. Vggt-slam: Dense rgb slam optimized on the sl (4) manifold. 
+
+NeurIPS , 2025. 3 [30] Hidenobu Matsuki, Riku Murai, Paul HJ Kelly, and Andrew J Davison. Gaussian splatting slam. In CVPR , 2024. 1, 2 [31] Raul Mur-Artal and Juan D Tardós. Orb-slam2: An open-source slam system for monocular, stereo, and rgb-d cameras. 
+
+IEEE transactions on robotics , 2017. 2 [32] Raul Mur-Artal, Jose Maria Martinez Montiel, and Juan D Tardos. Orb-slam: a versatile and accurate monocular slam system. IEEE transactions on robotics , 2015. 1 [33] Riku Murai, Eric Dexheimer, and Andrew J Davison. Mast3r-slam: Real-time dense slam with 3d reconstruction priors. In 
+
+CVPR , 2025. 2, 3, 6, 7 [34] E. Palazzolo, J. Behley, P. Lottes, P. Giguère, and C. Stachniss. ReFusion: 3D Reconstruction in Dynamic Environments for RGB-D Cameras Exploiting Residuals. In iros , 2019. 3, 6, 7, 8, 4 [35] Manthan Patel, Fan Yang, Yuheng Qiu, Cesar Cadena, Se-bastian Scherer, Marco Hutter, and Wenshan Wang. Tartan-ground: A large-scale dataset for ground robot perception and navigation. arXiv preprint arXiv:2505.10696 , 2025. 5, 1 [36] René Ranftl, Alexey Bochkovskiy, and Vladlen Koltun. Vi-sion transformers for dense prediction. In Proceedings of the IEEE/CVF international conference on computer vision ,pages 12179–12188, 2021. 4 [37] Erik Sandström, Keisuke Tateno, Michael Oechsle, Michael Niemeyer, Luc Van Gool, Martin R Oswald, and Federico Tombari. Splat-slam: Globally optimized rgb-only slam with 3d gaussians. arXiv preprint arXiv:2405.16544 , 2024. 2, 5, 6 [38] Nicolas Schischka, Hannah Schieber, Mert Asim Karaoglu, Melih Gorgulu, Florian Grötzner, Alexander Ladikos, Nas-sir Navab, Daniel Roth, and Benjamin Busam. Dynamon: Motion-aware fast and robust camera localization for dynamic neural radiance fields. IEEE Robotics and Automation Letters ,2024. 3 [39] Raluca Scona, Mariano Jaimez, Yvan R Petillot, Maurice Fallon, and Daniel Cremers. Staticfusion: Background re-construction for dense rgb-d slam in dynamic environments. 2018. 3 [40] Jamie Shotton, Ben Glocker, Christopher Zach, Shahram Izadi, Antonio Criminisi, and Andrew Fitzgibbon. Scene coordinate regression forests for camera relocalization in rgb-d images. In Proceedings of the IEEE conference on computer vision and pattern recognition , pages 2930–2937, 2013. 6, 7, 2, 3 [41] João Carlos Virgolino Soares, Marcelo Gattass, and Marco Antonio Meggiolaro. Crowd-slam: visual slam to-wards crowded environments using object detection. Journal of Intelligent & Robotic Systems , 2021. 3 [42] Jürgen Sturm, Nikolas Engelhard, Felix Endres, Wolfram Burgard, and Daniel Cremers. A benchmark for the evaluation of rgb-d slam systems. In IROS , 2012. 6, 7, 8, 2, 3 [43] Zachary Teed and Jia Deng. Droid-slam: Deep visual slam for monocular, stereo, and rgb-d cameras. In NeurIPS , 2021. 1, 2, 3, 4, 5, 6, 7 [44] The AirLab. TartanAir-V2 Dataset. https://tartanair.org, 2022. Accessed: 2025-10-28. 5, 1 [45] Shinji Umeyama. Least-squares estimation of transformation parameters between two point patterns. IEEE TPAMI , 1991. 6[46] Jianyuan Wang, Minghao Chen, Nikita Karaev, Andrea Vedaldi, Christian Rupprecht, and David Novotny. Vggt: Visual geometry grounded transformer. In CVPR , pages 5294– 5306, 2025. 1, 2, 4, 6, 7, 3 [47] Qianqian Wang*, Yifei Zhang*, Aleksander Holynski, Alexei A. Efros, and Angjoo Kanazawa. Continuous 3d per-ception model with persistent state. In CVPR , 2025. 2 [48] Ruicheng Wang, Sicheng Xu, Yue Dong, Yu Deng, Jianfeng Xiang, Zelong Lv, Guangzhong Sun, Xin Tong, and Jiaolong Yang. Moge-2: Accurate monocular geometry with metric scale and sharp details. arXiv preprint arXiv:2507.02546 ,2025. 4, 5 [49] Shuzhe Wang, Vincent Leroy, Yohann Cabon, Boris Chidlovskii, and Jerome Revaud. Dust3r: Geometric 3d vision made easy. In CVPR , 2024. 1, 2 [50] Yifan Wang, Jianjun Zhou, Haoyi Zhu, Wenzheng Chang, Yang Zhou, Zizun Li, Junyi Chen, Jiangmiao Pang, Chunhua Shen, and Tong He. π3: Scalable permutation-equivariant visual geometry learning. arXiv preprint arXiv:2507.13347 ,2025. 2, 4, 6, 7, 3 [51] Felix Wimbauer, Nan Yang, Lukas Von Stumberg, Niclas Zeller, and Daniel Cremers. Monorec: Semi-supervised dense reconstruction in dynamic environments from a single moving camera. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 6112–6122, 2021. 3 [52] Gangwei Xu, Haotong Lin, Hongcheng Luo, Xianqi Wang, Jingfeng Yao, Lianghui Zhu, Yuechuan Pu, Cheng Chi, Haiyang Sun, Bing Wang, et al. Pixel-perfect depth with semantics-prompted diffusion transformers. arXiv preprint arXiv:2510.07316 , 2025. 8 [53] Yueming Xu, Haochen Jiang, Zhongyang Xiao, Jianfeng Feng, and Li Zhang. Dg-slam: Robust dynamic gaussian splatting slam with hybrid pose optimization. Advances in Neural Information Processing Systems , 37:51577–51596, 2024. 3 [54] Yueming Xu, Haochen Jiang, Zhongyang Xiao, Jianfeng Feng, and Li Zhang. DG-SLAM: Robust Dynamic Gaus-sian Splatting SLAM with Hybrid Pose Optimization. In 
+
+NeurIPS , 2024. 2 [55] Lihe Yang, Bingyi Kang, Zilong Huang, Xiaogang Xu, Jiashi Feng, and Hengshuang Zhao. Depth anything: Unleashing the power of large-scale unlabeled data. In CVPR , pages 10371–10381, 2024. 8 [56] Ganlin Zhang, Erik Sandström, Youmin Zhang, Manthan Patel, Luc Van Gool, and Martin R Oswald. Glorie-slam: Globally optimized rgb-only implicit encoding point cloud slam. arXiv preprint arXiv:2403.19549 , 2024. 2, 5, 6 [57] Junyi Zhang, Charles Herrmann, Junhwa Hur, Varun Jampani, Trevor Darrell, Forrester Cole, Deqing Sun, and Ming-Hsuan Yang. Monst3r: A simple approach for estimating geometry in the presence of motion. arXiv preprint arxiv:2410.03825 ,2024. 2 [58] Zhoutong Zhang, Forrester Cole, Zhengqi Li, Michael Rubin-stein, Noah Snavely, and William T Freeman. Structure and motion from casual videos. In ECCV , pages 20–37. Springer, 2022. 3 [59] Wang Zhao, Shaohui Liu, Hengkai Guo, Wenping Wang, and Yong-Jin Liu. Particlesfm: Exploiting dense point trajectories for localizing moving cameras in the wild. In ECCV , pages 523–542. Springer, 2022. 3 [60] Jianhao Zheng, Zihan Zhu, Valentin Bieri, Marc Pollefeys, Songyou Peng, and Iro Armeni. Wildgs-slam: Monocular gaussian splatting slam in dynamic environments. In CVPR ,pages 11461–11471, 2025. 2, 3, 5, 6, 7, 8 [61] Yang Zhou, Yifan Wang, Jianjun Zhou, Wenzheng Chang, Haoyu Guo, Zizun Li, Kaijing Ma, Xinyue Li, Yating Wang, Haoyi Zhu, et al. Omniworld: A multi-domain and multi-modal dataset for 4d world modeling. arXiv preprint arXiv:2509.12201 , 2025. 5, 1 [62] Liyuan Zhu, Yue Li, Erik Sandström, Konrad Schindler, and Iro Armeni. Loopsplat: Loop closure by registering 3d gaus-sian splats. In 3DV , 2025. 1 [63] Zihan Zhu, Songyou Peng, Viktor Larsson, Weiwei Xu, Hujun Bao, Zhaopeng Cui, Martin R. Oswald, and Marc Pollefeys. Nice-slam: Neural implicit scalable encoding for slam. In 
+
+CVPR , 2022. 1 [64] Zihan Zhu, Songyou Peng, Viktor Larsson, Zhaopeng Cui, Martin R Oswald, Andreas Geiger, and Marc Pollefeys. Nicer-slam: Neural implicit scene encoding for rgb slam. 2024. 2 WildPose: A Unified Framework for Robust Pose Estimation in the Wild 
+
+# Supplementary Material 
+
+## Abstract 
+
+In the supplementary material, we provide additional details about the following: 1. More information about the training dataset (Sec. 6). 2. Implementation details of WildPose, including more train-ing details and model architecture (Sec. 7). 3. Additional results and discussion (Sec. 8). 4. Limitations and future work (Sec. 9). 
+
+## 6. Training Dataset 
+
+We trained our model on four publicly available datasets supplemented with data that we generated using the Kubric simulator [ 15 ]. The training datasets encompass both static and dynamic environments. A comprehensive list of the datasets we used is provided in Table 7. While the TartanAir V2 [ 44 ] and TartanGround [ 35 ]datasets primarily feature static scenes, we manually iden-tify dynamic content in 8 of their 65 environments. Among these, ground truth motion masks can be reliably extracted via semantic segmentation for only four specific environ-ments: AmusementPark , SeasonalForestAutumn ,
+
+WaterMillDay , and WaterMillNight . The dynamic content in the remaining four scenes (CarWelding ,
+
+CyberPunk Downtown , Ocean , and SoulCity ) is complex and difficult to segment accurately. Hence, these four scenes are discarded from the training set. Furthermore, sequences containing significant photographic or geometric artifacts (e.g., camera trajectories passing directly through walls in sequence P004 of OldBrickHouseDay ) are also discarded from the training set to maintain data quality. The OmniWorld-Game dataset [ 61 ] provides foreground masks generated using Grounding DINO [ 28 ] to identify bounding boxes, which are then fed as prompts to SAM [ 23 ]to extract fine masks. However, these generated masks are often noisy, exhibiting incomplete segmentation of instances or entirely missing dynamic objects. Therefore, we do not use their annotated masks as ground truth for calculating the BCE loss in Eq. (4) when training the motion mask detector, but we incorporate them in the second stage of update operator finetuning to encourage robustness against noisy motion maps. We utilized the Kubric simulator [ 15 ] to generate diverse motion patterns that are under-represented in the public datasets. We considered three specific camera trajectory types: (1) Linear Translation, defined by a linear move-ment between two randomly selected waypoints; (2) Pure                   
+
+> Dataset Name Dynamic? Dynamic Mask? Camera Motion Trajectory TartanAir V2 [44] No ⋆-Drone-style TartanGround [35] No ⋆-Grounded Robot Dynamic Replica [20] Yes Yes Handheld 6-DOF OmniWorld-Game [61] Yes Noisy Player-controlled Kubric (Generated) [15] Mixed Yes Specified motion patterns
+
+Table 7. Training Datasets. We utilized four public data sources and generated data from Kubric [ 15 ] for training WildPose. The table details the scene type, the availability and quality of ground truth dynamic masks, and the type of camera motions. OmniWorld-Game [ 61 ] uses open-source segmentation models [ 23 , 28 ] to gen-erate dynamic mask, hence noisy. While most environments in TartanAir V2 [ 44 ] and TartanGround [ 35 ] are static, there are eight environments containing dynamic objects. 
+
+Rotation, involving zero translation, with trajectories en-compassing rotation along single or multiple axes; and (3) Target-Locked Motion, where the camera’s translation varies but its rotation is constrained to maintain focus on a fixed point. The third type included four distinct translation pat-terns: lateral, vertical, orbital, and spiral movement. For both static and dynamic scene configurations, we generated a total of 5,500 sequences, each comprising 24 or 36 frames. 
+
+## 7. Implementation Details 
+
+7.1. Additional Training Details 
+
+Following [ 43 ], we sample 7 frames per batch from the train-ing sequence. We constrain the average optical flow magni-tude between neighboring pairs to fall within the range of 8 to 96 pixels. For all frames, we apply standard data augmen-tation, comprising photometric transformations (color jitter, grayscale, and Gaussian blurring) and spatial randomization via center resizing. The images are then cropped to the fixed input resolution of 384 ×512 . Subsequently, a frame graph is constructed over the 7 frames with edges determined by flow distance. We execute 15 iterations of the update operator and differentiable BA. The total training objective for the update operator com-bines three weighted loss components. The Pose Loss Lcam 
+
+is the geodesic distance computed by mapping the relative pose error Grel P−1 
+
+> rel
+
+to the Lie Algebra se (3) using the log map. Here, Grel and Prel denote the ground truth and pre-dicted relative poses, respectively. Lcam is defined as the average of the L2 norms of the translational τ and rotational 
+
+ϕ components. We further utilize a Flow Loss Lflow defined by the L2 norm of the difference between the ground truth optical flow and the flow induced by the estimated pose and disparity ˜f . Lastly, we use the Residual Loss Lres , which is calculated by the L1 distance between ˜f and the flow pre-Figure 5. Architecture of Update Operator. The ConvGRU iteratively updates the hiddens state from the image feature correlation, context features, and the current optical flow. The updated hidden state is further decoded to variables that will be used to guide pose and disparity estimation in the differentiable BA process.  
+
+> Figure 6. Architecture of the flow feature and context encoders.
+> Both encoders take the MASt3R features as input and output fea-tures at 1/8 of the image resolution. For the context encoder, the dimension of the last convolution layer is 256.
+
+dicted by the update operator ˆf . All three losses are applied across the 15 BA steps, utilizing an increasing temporal weighting scheme wk = γ(15 −k), where γ = 0 .9 and k is the iteration step. When training the motion mask detector, the parameters of the update operator are frozen. As mentioned in the main paper, we integrate the predicted motion mask as an additional weight during the 15 BA steps. We retain the Pose Loss Lcam , exclude Lflow and Lres , and add the BCE loss 
+
+LBCE , which is only applied when reliable annotated ground truth motion masks are available. For the initial static pretraining stage of the update op-erator, we utilize only the static portions of the TartanAir V2, TartanGround, and Kubric-Generated datasets. All re-maining datasets, including dynamic sequences, are then incorporated for the second stage of update operator finetun-ing and subsequent motion mask detector training. 
+
+7.2. Model Architecture 
+
+Our update operator is extended from DROID-SLAM [ 43 ]. The full architecture is illustrated in Fig. 5. Given a pair of input images ( Ii, Ij ), we first extract 3D-aware features from the pre-trained MASt3R Encoder. These high-dimensional features (1024 channels) are produced at 116 resolution rela-tive to the original image. We then utilize two separate en-coders, the Context Feature Extractor and the Flow Feature Extractor, to process the MASt3R output. The architecture shared by these encoders is shown in Fig. 6. This stage lifts the feature resolution to the required 18 scale. The Flow Fea-ture Extractor output is subsequently used to compute the 4D correlation volume between the image features. The key component of the update operator is the ConvGRU layer. It takes the context feature, flow feature correlation, current hidden state, and the optical flow from the last iteration as input, and outputs an updated hidden state, which is further used to extract intermediate variables for differentiable BA, such as the updated optical flow and the confidence weight. 
+
+## 8. Additional Results 
+
+Full Tracking Results on the static Dataset. In the main paper, we summarize the average ATE for the TUM RGB-D (static) [ 42 ] and 7-Scenes [ 40 ] datasets. Here, we present the results of full sequences in Table 8 (TUM RGB-D) and Method 360 desk desk2 floor plant room rpy teddy xyz                                                                          
+
+> Keyframe Poses
+> MASt3R-SLAM [33] 0.049 0.016 0.024 0.025 0.020 0.061 0.027 0.041 0.009
+> VGGT [46] 0.049 0.023 0.029 0.084 0.024 0.095 0.025 0.033 0.012
+> π3[50] 0.065 0.018 0.028 0.085 0.026 0.061 0.024 0.028 0.011
+> Full Trajectory
+> DROID-SLAM [43] 0.111 0.018 0.042 0.021 0.016 0.049 0.026 0.048 0.012 WildGS-SLAM [60] 0.069 0.018 0.025 0.023 0.044 0.061 0.024 0.058 0.009
+> MegaSaM [27] 0.055 0.019 0.040 0.278 0.038 0.080 0.024 0.043 0.013 ViPE [17] 0.067 0.024 0.035 0.320 0.025 0.048 0.020 0.038 0.011
+> WildPose (Ours) 0.057 0.016 0.024 0.019 0.018 0.039 0.018 0.035 0.009
+
+Table 8. Tracking Performance on TUM RGB-D (static) Dataset [42] (ATE RMSE ↓ [m]).                                                                 
+
+> Method chess fire heads office pumpkin kitchen stairs
+> Keyframe Poses
+> MASt3R-SLAM [33] 0.053 0.025 0.015 0.097 0.088 0.041 0.011
+> VGGT [46] 0.039 0.027 0.017 0.098 0.128 0.059 0.036
+> π3[50] 0.034 0.034 0.017 0.080 0.118 0.037 0.047
+> Full Trajectory
+> DROID-SLAM [43] 0.036 0.027 0.025 0.066 0.127 0.040 0.026 WildGS-SLAM [60] 0.037 0.032 0.027 0.054 0.154 0.037 0.019 MegaSaM [27] 0.040 0.040 0.024 0.069 0.147 0.045 0.025 ViPE [17] 0.035 0.027 0.023 0.070 0.131 0.039 0.024
+> WildPose (Ours) 0.038 0.029 0.024 0.053 0.142 0.037 0.023
+
+Table 9. Tracking Performance on 7-Scenes Dataset [40] (ATE RMSE ↓ [m]).                                    
+
+> Method 0000 0059 0106 0169 0181 0207 Avg. DROID-SLAM [43] 5.48 9.00 6.76 7.89 7.41 7.97 7.42 WildGS-SLAM [60] 5.74 8.15 9.15 8.31 7.17 7.31 7.64 MegaSaM [27] OOM 8.56 37.35 10.16 8.35 8.54 -
+> WildPose (Ours) 6.11 8.07 6.75 8.01 6.56 7.36 7.14
+
+Table 10. Tracking Performance on ScanNet Dataset [ 8] (ATE RMSE ↓ [m]). 
+
+Table 9 (7-Scenes). On the TUM RGB-D sequences, our method shows superior performance compared to the base-lines, achieving the best result on 5 out of 9 sequences. No-tably, compared to recent dynamic methods like MegaSaM (ATE: 0.278 m) and ViPE (ATE: 0.320 m), WildPose ex-hibits higher stability on the challenging floor sequence (ATE: 0.020 m). In this sequence, some temporally close frames contain large relative motion. This rapid change in viewpoint reduces feature overlap and induces large pixel displacements. Our resilience on this sequence stems from the broad variety of camera motion types included in our training data and the incorporation of loop closure. Further-more, on the 7-Scenes dataset, where most methods exhibit only marginal performance differences, WildPose maintains competitive accuracy across all sequences. The consistently strong behavior across these benchmarks affirms the robust-ness of our method in static environments. 
+
+Addtional Evaluation Results on the ScanNet dataset [ 8 ].                      
+
+> Method ATE [cm] ↓Avg. fps ↑Peak GPU Use [GiB] ↓
+> DROID-SLAM [43] 16.17 11.27 7.52
+> WildGS-SLAM [60] 0.46 0.49 14.65 MegaSaM [27] 2.40 1.86 21.87 Vipe [17] 2.59 6.44 13.45
+> WildPose (Ours) 0.39 2.98 18.62
+
+Table 11. Run time and memory usage on Wild-SLAM [ 60 ]. We compute FPS by dividing the total number of frames by the total running time. The experiments are conducted on an RTX 4090 GPU. 
+
+To evaluate our method’s robustness to motion blur and its generalization across diverse static indoor environments, we conduct additional experiments on the ScanNet dataset. The tracking results are reported in Table 10. DROID-SLAM results are sourced from GO-SLAM and Nicer-SLAM [56]. WildPose still outperforms other baselines in this static benchmark. 
+
+Runtime Analysis. We compare the average processing frame rate (FPS) and the peak GPU usage of our method against the baselines that estimate poses of the full trajectory, with detailed results presented in Table 11. For a fair compar-ison, MegaSaM’s FPS includes depth preprocessing but ex-cludes video depth optimization. While lightweight systems (DROID-SLAM, Vipe) are faster, they struggle with dynamic scenes. Compared to more complex dynamic frameworks like MegaSaM and WildGS-SLAM, WildPose offers supe-Figure 7. Limitations. We visualize sampled images from Bonn RGB-D Dynamic Dataset [ 34 ] ( Person sequence). The dataset has inconsistent exposure, which is challenging to our approach. 
+
+rior tracking accuracy (lowest ATE) with a higher FPS. Our peak memory usage stems from foundation models (Moge2, MASt3R) but is mitigatable via preprocessing, similar to MegaSaM, or using a distilled model. 
+
+## 9. Limitations 
+
+WildPose’s learnable modules are trained exclusively on syn-thetic data. Although our curriculum is diverse, a domain gap to real-world scenarios inevitably exists. This gap is evi-dent in sequences with unobserved phenomena, such as the significant photometric variations in the Bonn RGB-D Dy-namic Dataset (Fig. 7). Our model, lacking explicit training on such exposure changes, achieves slightly worse accuracy on this dataset, particularly on the Person and Person 2 sequences. Furthermore, our framework assumes known and fixed camera intrinsics, limiting its applicability to un-calibrated videos. Addressing these gaps through domain adaptation and online intrinsic refinement remains an impor-tant avenue for future work.
