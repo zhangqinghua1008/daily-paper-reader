@@ -1,0 +1,174 @@
+Title: SCARED-C: Corrected Camera Poses for Endoscopic Depth Estimation
+
+URL Source: https://arxiv.org/pdf/2605.16628v1
+
+Published Time: Tue, 19 May 2026 00:18:56 GMT
+
+Number of Pages: 7
+
+Markdown Content:
+# SCARED-C: C ORRECTED CAMERA POSES FOR ENDOSCOPIC 
+
+# DEPTH ESTIMATION 
+
+John J. Han 
+
+Vanderbilt University Nashville, TN, USA 
+
+Adam Schmidt 
+
+Intuitive Surgical, Inc. Sunnyvale, CA, USA 
+
+Max Allan 
+
+Intuitive Surgical, Inc. Sunnyvale, CA, USA 
+
+Jie Ying Wu 
+
+Vanderbilt University Nashville, TN, USA 
+
+Omid Mohareri 
+
+Intuitive Surgical, Inc. Sunnyvale, CA, USA 
+
+# ABSTRACT 
+
+The SCARED dataset [ 1] is a widely used benchmark for endoscopic depth estimation, offering ground-truth 3D reconstructions captured with a structured light sensor. However, the depth maps for non-keyframe images rely on robot kinematics that introduce substantial pose errors, limiting the reliably labeled portion of the dataset to 35 keyframes. We present SCARED-C, a corrected version of the SCARED dataset that expands the number of reliable RGB-D pairs from 35 to 17,135. Our pipeline applies COLMAP [ 2], a Structure-from-Motion system, to re-estimate camera poses for all frames, followed by a scale recovery step that aligns the resulting reconstructions to metric space using the ground-truth keyframe depth maps. We validate the corrected poses through (1) stereo disparity evaluation and (2) monocular depth estimation experiments. The corrected dataset and code are publicly released to the community. 1
+
+# 1 Introduction 
+
+Depth estimation is a fundamental task in surgical computer vision, with applications ranging from augmented reality overlays to autonomous surgical assistance [ 3, 4]. However, collecting ground-truth depth in a clinical endoscopic setting remains difficult due to the physical constraints of the operating environment. Existing labeled datasets for surgical depth estimation therefore rely on either simulated data [ 5, 6 ], phantom scenes registered to 3D scans [ 7 , 8], or, more recently, synthetic data generated through generative models [9] and neural rendering techniques [10]. Among real-tissue datasets, the SCARED dataset [ 1] occupies a unique position. Introduced as part of a sub-challenge of EndoVis at the MICCAI 2019 conference, it provides ground-truth depth maps for ex-vivo porcine abdominal scenes captured using a structured light sensor mounted on a da Vinci endoscope. Each keyframe consists of an RGB image paired with a depth map derived from the structured light reconstruction. Because the sensor can only capture depth from a static viewpoint, the dataset was extended by moving the endoscope arm and projecting the depth map of keyframe into the neighboring video frames using the robot’s forward kinematics. In theory, this yields RGB-D supervision across entire video sequences. In practice, however, the non-keyframe depth maps are unreliable. The da Vinci system is cable-driven to maintain a compact form factor, and this design introduces non-negligible kinematics errors. As noted by the original challenge authors [ 1], the resulting depth maps exhibit severe misalignment with their corresponding RGB images (see Fig. 1), rendering most of the extended dataset unsuitable for training or evaluation. Consequently, prior work on the SCARED dataset has been limited to the 35 keyframes for which structured light ground truth exists. We address this limitation by correcting the camera poses for all frames in the SCARED dataset. Rather than relying on robot kinematics, we use COLMAP [ 2], an off-the-shelf Structure-from-Motion (SfM) pipeline, to estimate camera poses 
+
+> 1
+
+https://huggingface.co/datasets/juseonghan/SCARED-C 
+
+> arXiv:2605.16628v1 [cs.CV] 15 May 2026
+
+directly from the image data. Because monocular SfM recovers geometry only up to an unknown scale, we introduce a simple scale recovery algorithm that uses the ground-truth keyframe depth maps to transform the reconstruction into metric space. By reprojecting keyframe depth maps through the corrected poses, we obtain 17,135 reliable RGB-D pairs, resulting in roughly 490 × expansion over the original 35 keyframes. Our contributions are as follows: 1. We correct the non-keyframe camera poses in the SCARED dataset using Structure-from-Motion and a scale recovery algorithm, expanding the reliably labeled data from 35 to 17,135 frames. 2. We validate the corrected dataset through two experiments: evaluation with an off-the-shelf stereo model (FoundationStereo [11]) and a monocular depth estimation training comparison. 3. We publicly release the corrected dataset on HuggingFace with a suggested train-validation split and release our scale-recovery code. 
+
+# 2 Method 
+
+2.1 Camera Pose Estimation via COLMAP 
+
+For each video sequence in the SCARED dataset, we run COLMAP on the left camera frames at their original resolution. Because the da Vinci system produces natively undistorted images, we do not apply any additional undistortion. Since the optical center of the left camera does not coincide with the image center, we initialize COLMAP with the provided camera intrinsics and allow it to refine these values during bundle adjustment. The output of COLMAP consists of estimated camera intrinsics, extrinsics, and a sparse 3D point cloud. 
+
+2.2 Scale Recovery 
+
+The camera trajectory and point cloud produced by COLMAP are defined only up to an unknown scale factor, an inherent ambiguity of monocular SfM. To resolve this ambiguity, we exploit the metric depth available at each keyframe. We include the keyframe RGB image in the input to COLMAP so that the keyframe is registered within the same coordinate system as the video frames. Let ˆTkf denote the camera-to-world pose estimated by COLMAP for the keyframe, and let D denote the metric depth map from the structured light sensor. We project the COLMAP sparse point cloud onto the image plane at ˆTkf to obtain an unscaled depth map ˆD. The scale factor s is then computed as the median of the elementwise ratio between the metric and unscaled depth values: 
+
+s = median 
+
+ D
+
+ˆD
+
+
+
+. (1) Let ˆTi = ( Ri, ˆti) denote the camera-to-world transformation for frame i, where Ri ∈ SO(3) is the rotation and ˆti ∈ R3
+
+is the camera center in COLMAP coordinates. Because the rotation is scale-invariant, we recover the metric pose by scaling only the translation: 
+
+Ti = ( Ri, s · ˆti). (2) With metric poses in hand, we reproject the associated keyframe depth map into each frame to produce RGB-D pairs. This procedure is repeated independently for every video sequence in the dataset. 
+
+2.3 Limitations and Exclusions Co-registration requirement. Only frames that COLMAP successfully co-registers with the keyframe image can be metricized. In some sequences, limited visual overlap or texture leads to low registration rates; for instance, only 11 of the 88 frames in dataset 2, keyframe 1 were co-registered with the keyframe. As a result, the corrected dataset is smaller than the original in terms of total frame count. However, we demonstrate that the corrected frames are more reliable for neural network training. 
+
+Datasets 4 and 5. The original challenge paper [ 1] notes poor calibration for datasets 4 and 5. We attempted to apply the same pipeline to these datasets but were unable to obtain satisfactory results, so we exclude them entirely. After all exclusions, our pipeline produces 17,135 reliable RGB-D pairs. The full breakdown by sequence and suggested train-validation split are provided in Table 4 (Appendix). 2Original Dataset  Corrected Dataset Figure 1: Samples from the original SCARED dataset (left) and the corrected SCARED-C dataset (right). The corrected depth maps exhibit substantially better alignment with the corresponding RGB images. 33 Experiments 
+
+There is no direct way to evaluate the accuracy of corrected non-keyframe poses, since ground-truth depth exists only at the keyframes. We therefore design two indirect experiments that test whether the corrected data is consistent with the keyframe ground truth. We use 25 of the provided 35 keyframes since datasets 4 and 5 contain imperfect calibration. 
+
+3.1 Stereo Disparity Evaluation Setup. We evaluate FoundationStereo [ 11 ], an off-the-shelf stereo disparity estimation model, on three versions of the dataset: (1) the original SCARED data with kinematics-based poses, (2) our corrected SCARED-C data, and (3) the keyframes only. Metric depth is computed from predicted disparity using the provided stereo calibration via depth = ( fx × baseline )/disparity . We report End-Point Error (EPE) for disparity, along with Absolute Relative error (Abs. Rel.) and δ1 accuracy for depth. The reasoning behind this experiment is as follows. FoundationStereo predicts disparity from stereo image pairs, independently of the ground-truth depth map. If the corrected dataset contains geometrically accurate RGB-D pairs, then the stereo model’s predictions should agree with the reprojected depth maps at a level comparable to its agreement with the keyframe ground truth. Table 1: FoundationStereo evaluation on the original, corrected, and keyframes-only versions of the SCARED data. Dataset EPE ↓ Abs. Rel. ↓ δ1 ↑
+
+Original 6.062 0.046 96.3 Corrected 1.912 0.026 99.0 Keyframes 0.998 0.014 99.7 
+
+Discussion. Table 1 shows that the corrected dataset substantially closes the gap between the original data and the keyframe ground truth across all three metrics. The EPE drops from 6.062 to 1.912 (a 3.2× reduction), and both Abs. Rel. and δ1 approach their keyframe-only values. The remaining gap between the corrected data and the keyframes is expected: reprojected depth maps inevitably contain artifacts from occlusion and interpolation that are absent in the directly measured keyframe depth. We also observed that the original dataset exhibits high variance in per-sequence quality, with some sequences such as dataset 2, keyframe 4 showing catastrophically poor results (EPE of 23.6). The corrected dataset minimizes this error and high variance between sequences. We also report per-keyframe results in Table 5. 
+
+Fast-FoundationStereo. Recently, the authors of FoundationStereo released Fast-FoundationStereo [ 12 ], a faster distilled model for real-time stereo matching. For comprehensive benchmarking, we also compare the two models’ performance on the 25 SCARED keyframes, shown in Table 2. We observe that both models exhibit similar performance with small gains in the original FoundationStereo model. However, Fast-FoundationStereo is over 8× faster. Table 2: Comparison of FoundationStereo and Fast-FoundationStereo on SCARED keyframes in performance and FPS. The images were processed at original resolution of 1024 × 1280 . We used an NVIDIA H200 with batch size 1 to generate these results. Model EPE ↓ Abs. Rel. ↓ δ1 ↑ FPS ↑
+
+Fast-FoundationStereo 1.011 0.014 99.6 1.852 
+
+FoundationStereo 0.998 0.014 99.7 0.226 
+
+3.2 Monocular Depth Estimation Setup. As an alternative method of verification, we train a monocular depth estimation model on either the original or the corrected dataset and evaluate on the 25 keyframes as a held-out test set. Note that keyframe images are not part of any video sequence and are therefore never seen during training. For simplicity, all depth maps are normalized to perform relative depth estimation. We train a ConvNet-based U-Net using the train-validation split specified in Table 4 and select the best model based on validation loss. This model is evaluated on the held-out keyframes, whose metrics are reported in Table 3. 4Table 3: Relative depth estimation results for models trained on the original and corrected datasets, evaluated on 25 keyframes. Dataset Abs. Rel. ↓ RMSE ↓ δ1 ↑
+
+Original 0.856 0.283 18.5 
+
+Corrected 0.528 0.184 26.3 Discussion. Table 3 confirms that the corrected dataset produces meaningfully better training signal. The model trained on SCARED-C achieves a 38% lower Abs. Rel. and a 35% lower RMSE compared to training on the original data. The 
+
+δ1 accuracy improves from 18.5% to 26.3%. While both models remain far from the performance ceiling suggested by the stereo evaluation in Table 1 (which achieves near-perfect δ1), this is expected given the simplicity of the U-Net architecture, the difficulty of monocular depth estimation task, and the dataset size. The key takeaway is that training on the corrected data consistently outperforms training on the original data, indicating that the corrected depth maps provide a more reliable supervisory signal. We emphasize that these results should be interpreted relatively, and not as a SOTA baseline. 
+
+# 4 Conclusion 
+
+We have presented SCARED-C, a corrected version of the SCARED endoscopic depth estimation dataset. By replacing the original kinematics-based camera poses with poses estimated through Structure-from-Motion and a simple scale recovery procedure, we expand the number of reliable RGB-D pairs from 35 keyframes to 17,135 frames. Our experiments show that the corrected data is comparable to the keyframe ground truth in stereo evaluation and produces stronger training signal for monocular depth estimation. The corrected dataset is not without limitations. Frames that COLMAP fails to co-register are lost, and the reprojected depth maps inherit any errors in the sparse reconstruction and scale estimation. Additionally, datasets 4 and 5 remain excluded due to poor calibration. Despite these limitations, we believe that a roughly 490 × expansion of reliable labeled data in a real-tissue surgical dataset is a meaningful contribution to the community. Finally, there remains some misalignment between the corrected depth maps and RGB images due to imperfect calibrations and COLMAP performance. We release the corrected dataset on HuggingFace along with our scale-recovery code in https://github.com/ juseonghan/SCARED-C , and we encourage the community to adopt the suggested train-validation split in Table 4 to enable consistent benchmarking. 
+
+# References 
+
+[1] Max Allan, Jonathan Mcleod, Congcong Wang, Jean Claude Rosenthal, Zhenglei Hu, Niklas Gard, Peter Eisert, Ke Xue Fu, Trevor Zeffiro, Wenyao Xia, et al. Stereo correspondence and reconstruction of endoscopic data challenge. arXiv preprint arXiv:2101.01133 , 2021. [2] Johannes Lutz Schönberger and Jan-Michael Frahm. Structure-from-motion revisited. In Conference on Computer Vision and Pattern Recognition (CVPR) , 2016. [3] John J Han, Ayberk Acar, Callahan Henry, and Jie Ying Wu. Depth anything in medical images: A comparative study. In Medical Imaging 2026: Image-Guided Procedures, Robotic Interventions, and Modeling , volume 13927, pages 58–66. SPIE, 2026. [4] Ayberk Acar, Mariana Smith, Lidia Al-Zogbi, Tanner Watts, Fangjie Li, Hao Li, Nural Yilmaz, Paul Maria Scheikl, Jesse F d’Almeida, Susheela Sharma, et al. From monocular vision to autonomous action: Guiding tumor resection via 3d reconstruction. In 2025 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) ,pages 21714–21720. IEEE, 2025. [5] Kutsev Bengisu Ozyoruk, Guliz Irem Gokceler, Taylor L Bobrow, Gulfize Coskun, Kagan Incetan, Yasin Almalioglu, Faisal Mahmood, Eva Curto, Luis Perdigoto, Marina Oliveira, et al. Endoslam dataset and an unsupervised monocular visual odometry and depth estimation approach for endoscopic videos. Medical image analysis , 71:102058, 2021. [6] Chiara Lena, Davide Milesi, Alessandro Casella, Luca Carlini, Joseph C Norton, James Martin, Bruno Scaglioni, Keith L Obstein, Roberto De Sire, Marco Spadaccini, et al. Realsyncol: a high-fidelity synthetic colon dataset for 3d reconstruction applications. arXiv preprint arXiv:2602.08397 , 2026. 5[7] Taylor L Bobrow, Mayank Golhar, Rohan Vijayan, Venkata S Akshintala, Juan R Garcia, and Nicholas J Durr. Colonoscopy 3d video dataset with paired depth from 2d-3d registration. Medical image analysis , 90:102956, 2023. [8] Mayank V Golhar, Lucas Sebastian Galeano Fretes, Loren Ayers, Venkata S Akshintala, Taylor L Bobrow, and Nicholas J Durr. C3vdv2–colonoscopy 3d video dataset with enhanced realism. arXiv preprint arXiv:2506.24074 ,2025. [9] Sabina Martyniak, Joanna Kaleta, Diego Dall’Alba, Michał Naskr˛ et, Szymon Płotka, and Przemysław Ko-rzeniowski. Simuscope: Realistic endoscopic synthetic dataset generation through surgical simulation and diffusion models. In 2025 IEEE/CVF Winter Conference on Applications of Computer Vision (WACV) , pages 4268–4278. IEEE, 2025. [10] John J Han and Jie Ying Wu. Endopbr: Photorealistic synthetic data for surgical 3d vision via physically-based rendering. In Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision , pages 5601–5611, 2026. [11] Bowen Wen, Matthew Trepte, Joseph Aribido, Jan Kautz, Orazio Gallo, and Stan Birchfield. Foundationstereo: Zero-shot stereo matching. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition ,pages 5249–5260, 2025. [12] Bowen Wen, Shaurya Dewan, and Stan Birchfield. Fast-foundationstereo: Real-time zero-shot stereo matching. 
+
+arXiv preprint arXiv:2512.11130 , 2025. 6Table 4: Suggested train and validation split for the corrected SCARED dataset. The dataset is split approximately 70-30. The sequence code follows the format {dataset}_{keyframe}. 
+
+Train Validation Seq Frames Seq Frames 
+
+1_1 197 1_2 280 1_3 471 1_4 12_2 1,033 1_5 12_4 2,114 2_1 11 3_1 329 2_3 1,102 3_2 1,597 2_5 13_3 448 3_4 834 6_1 637 3_5 16_2 1,087 6_4 1,360 6_3 1,573 6_5 17_1 647 7_2 628 7_4 2,197 7_3 584 7_5 1
+
+Total 12,330 Total 4,805 Grand Total: 17,135 
+
+Table 5: Per-keyframe evaluation on the corrected SCARED dataset with FoundationStereo. Predicted disparity is converted to depth using the provided stereo calibration. Disparity metrics are in pixels; depth RMSE and MAE are in mm. 
+
+Disparity Depth 
+
+Dataset / Keyframe EPE ↓ RMSE ↓ Bad 3 ↓ Abs Rel ↓ RMSE ↓ MAE ↓ δ < 1.25 ↑
+
+1 / 1 0.75 1.00 0.2 0.011 1.04 0.67 99 .99 
+
+1 / 2 0.67 1.46 0.3 0.012 1.44 0.87 99 .89 
+
+1 / 3 0.62 1.16 0.2 0.011 1.26 0.85 100 .00 
+
+1 / 4 1.19 1.68 0.9 0.012 0.75 0.53 99 .99 
+
+1 / 5 0.83 1.27 0.5 0.010 1.05 0.59 99 .99 
+
+2 / 1 1.62 2.47 1.2 0.017 1.21 0.76 99 .98 
+
+2 / 2 0.85 1.36 0.8 0.017 2.00 1.41 99 .97 
+
+2 / 3 1.97 3.12 6.7 0.021 1.89 1.07 99 .75 
+
+2 / 4 1.08 1.85 0.2 0.010 0.76 0.37 99 .97 
+
+2 / 5 1.02 2.28 1.4 0.017 2.66 1.30 99 .55 
+
+3 / 1 0.91 1.68 3.4 0.015 2.54 1.31 99 .85 
+
+3 / 2 1.05 2.00 1.2 0.014 3.01 0.98 99 .57 
+
+3 / 3 0.81 1.40 1.1 0.014 2.54 1.14 99 .73 
+
+3 / 4 0.84 1.60 1.0 0.012 2.78 0.84 99 .71 
+
+3 / 5 2.67 10 .79 10 .7 0.035 5.71 2.20 98 .51 
+
+6 / 1 0.55 1.64 0.2 0.012 2.10 1.26 99 .97 
+
+6 / 2 0.78 1.78 0.3 0.011 1.52 0.72 99 .97 
+
+6 / 3 0.67 1.14 0.7 0.011 1.47 0.86 99 .99 
+
+6 / 4 0.77 2.48 1.8 0.013 3.04 1.19 98 .89 
+
+6 / 5 1.06 4.50 2.1 0.018 5.56 1.74 98 .51 
+
+7 / 1 1.05 1.80 1.2 0.016 2.44 1.38 99 .90 
+
+7 / 2 1.13 2.39 0.9 0.014 1.81 0.97 99 .87 
+
+7 / 3 1.46 5.42 1.2 0.012 1.43 0.53 99 .63 
+
+7 / 4 1.10 2.08 2.8 0.013 2.16 0.80 99 .78 
+
+7 / 5 0.65 3.67 0.6 0.011 2.32 0.86 99 .91 
+
+Mean 1.00 3.05 1.6 0.014 2.54 1.02 99.71 
+
+7

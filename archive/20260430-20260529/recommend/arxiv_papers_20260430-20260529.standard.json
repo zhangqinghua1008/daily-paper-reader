@@ -1,0 +1,562 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-05-29T10:25:24.916963+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 3,
+    "deep_cap": 6,
+    "deep_selected": 3,
+    "quick_candidates": 15,
+    "quick_skim_target": 11,
+    "quick_selected": 11
+  },
+  "deep_dive": [
+    {
+      "id": "2605.13038v1",
+      "source": "arxiv",
+      "title": "CoGE: Sim-to-Real Online Geometric Estimation for Monocular Colonoscopy",
+      "abstract": "Geometric estimation including depth estimation and scene reconstruction is a crucial technique for colonoscopy which can provide surgeons with 3D spatial perception and navigation. However, geometric ground truth in colonoscopy is difficult to obtain due to narrow and enclosed space of the colon, while there is a large feature gap between simulated data and realistic data caused by artifacts and illumination. In this paper, we present CoGE, a novel framework for online monocular geometric estimation during colonoscopy. Firstly, we propose an illumination-aware supervision module based on the Retinex theory to address illumination diversity in different colonoscopy scenes. Moreover, a structure-aware perception module is proposed based on wavelet decomposition to extract common structural and local features of the colon. Both quantitative and qualitative results demonstrate that the proposed model solely trained on simulated data achieves state-of-the-art performance in geometric estimation for both simulated and realistic scenes.",
+      "authors": [
+        "Liangjing Shao",
+        "Beilei Cui",
+        "Hongliang Ren"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-05-13T05:46:39+00:00",
+      "link": "https://arxiv.org/pdf/2605.13038v1",
+      "tags": [
+        "keyword:endo-dgs",
+        "query:endo-dgs"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Online geometric estimation including depth estimation for monocular colonoscopy",
+      "llm_evidence_cn": "结肠镜单目在线几何估计，包含深度估计",
+      "llm_evidence": "结肠镜单目在线几何估计，包含深度估计",
+      "canonical_evidence": "结肠镜单目在线几何估计，包含深度估计",
+      "llm_tldr_en": "CoGE proposes a sim-to-real framework for online monocular geometric estimation in colonoscopy, directly addressing endoscopic depth estimation and scene reconstruction via illumination- and structure-aware modules.",
+      "llm_tldr_cn": "针对结肠镜中真实几何真值获取困难及仿真与真实域间差异大的问题，提出CoGE在线单目几何估计框架，结合基于Retinex理论的照明感知监督和基于小波分解的结构感知模块。实验证明，该方法在结肠镜视频上实现了准确的深度估计和场景重建，为内窥镜3D感知和导航提供了稳定方案。",
+      "llm_tldr": "针对结肠镜中真实几何真值获取困难及仿真与真实域间差异大的问题，提出CoGE在线单目几何估计框架，结合基于Retinex理论的照明感知监督和基于小波分解的结构感知模块。实验证明，该方法在结肠镜视频上实现了准确的深度估计和场景重建，为内窥镜3D感知和导航提供了稳定方案。",
+      "llm_tags": [
+        "query:endo-dgs"
+      ],
+      "matched_query_tag": "query:endo-dgs",
+      "matched_query_text": "depth estimation for endoscopic scenes",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2605.16022v1",
+      "source": "arxiv",
+      "title": "EndoGSim: Physics-Aware 4D Dynamic Endoscopic Scene Simulations via MLLM-Guided Gaussian Splatting",
+      "abstract": "In robot-assisted minimally invasive surgery, high-fidelity dynamic endoscopic scene reconstruction and simulation are crucial to enhancing downstream tasks and advancing surgical outcomes. However, existing methods primarily focus on visual reconstruction, lacking physics-based descriptions of the scene required for realistic simulation. We propose a unified framework that achieves physics-aware reconstruction and physical simulation of endoscopic scenes through Multi-modal Large Language Models (MLLMs)-guided Gaussian Splatting. Our approach utilizes 4D Gaussian Splatting (4DGS) integrated with pre-trained segmentation and depth estimation to represent deformable tissues and tools. To achieve automatic inference of physical properties, we introduce an object-wise material field that initializes material parameters via MLLM and refines them through a differentiable Material Point Method (MPM) under joint supervision from rendered images and optical flow. Validated on both open-source and in-house datasets, our framework achieves superior simulation fidelity and physical accuracy compared to state-of-the-art methods, underscoring its potential to advance robot-assisted surgical applications.",
+      "authors": [
+        "Changjing Liu",
+        "Yiming Huang",
+        "Long Bai",
+        "Beilei Cui",
+        "Hongliang Ren"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-05-15T14:56:54+00:00",
+      "link": "https://arxiv.org/pdf/2605.16022v1",
+      "tags": [
+        "keyword:endo-dgs",
+        "query:endo-dgs"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Directly applies 4D Gaussian Splatting for physics-aware endoscopic scene reconstruction and simulation.",
+      "llm_evidence_cn": "直接应用4D高斯溅射实现内窥镜场景的物理感知重建与仿真。",
+      "llm_evidence": "直接应用4D高斯溅射实现内窥镜场景的物理感知重建与仿真。",
+      "canonical_evidence": "直接应用4D高斯溅射实现内窥镜场景的物理感知重建与仿真。",
+      "llm_tldr_en": "EndoGSim uses 4D Gaussian Splatting guided by MLLMs to achieve physics-aware reconstruction and simulation of dynamic endoscopic scenes, integrating segmentation and depth estimation for realistic surgical simulation.",
+      "llm_tldr_cn": "本文提出EndoGSim，统一了内窥镜场景的物理感知重建与物理仿真。利用多模态大语言模型（MLLM）引导的4D高斯溅射（4DGS）表示可变形组织和手术器械，结合预训练分割与深度估计，自动推断力学和碰撞等物理参数。实验表明，该方法不仅能高保真重建视觉外观，还能进行真实物理仿真，为手术训练、规划和视觉感知提供支持。",
+      "llm_tldr": "本文提出EndoGSim，统一了内窥镜场景的物理感知重建与物理仿真。利用多模态大语言模型（MLLM）引导的4D高斯溅射（4DGS）表示可变形组织和手术器械，结合预训练分割与深度估计，自动推断力学和碰撞等物理参数。实验表明，该方法不仅能高保真重建视觉外观，还能进行真实物理仿真，为手术训练、规划和视觉感知提供支持。",
+      "llm_tags": [
+        "query:endo-dgs"
+      ],
+      "matched_query_tag": "query:endo-dgs",
+      "matched_query_text": "3D Gaussian splatting for endoscopic scene reconstruction",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2605.16628v1",
+      "source": "arxiv",
+      "title": "SCARED-C: Corrected Camera Poses for Endoscopic Depth Estimation",
+      "abstract": "The SCARED dataset is a widely used benchmark for endoscopic depth estimation, offering ground-truth 3D reconstructions captured with a structured light sensor. However, the depth maps for non-keyframe images rely on robot kinematics that introduce substantial pose errors, limiting the reliably labeled portion of the dataset to 35 keyframes. We present SCARED-C, a corrected version of the SCARED dataset that expands the number of reliable RGB-D pairs from 35 to 17,135. Our pipeline applies COLMAP, a Structure-from-Motion system, to re-estimate camera poses for all frames, followed by a scale recovery step that aligns the resulting reconstructions to metric space using the ground-truth keyframe depth maps. We validate the corrected poses through (1) stereo disparity evaluation and (2) monocular depth estimation experiments. The corrected dataset and code are publicly released to the community.",
+      "authors": [
+        "John J. Han",
+        "Adam Schmidt",
+        "Max Allan",
+        "Jie Ying Wu",
+        "Omid Mohareri"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-05-15T20:48:51+00:00",
+      "link": "https://arxiv.org/pdf/2605.16628v1",
+      "tags": [
+        "keyword:endo-dgs",
+        "query:endo-dgs"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Corrects camera poses in SCARED dataset for improved endoscopic depth estimation",
+      "llm_evidence_cn": "纠正SCARED数据集中的相机位姿以改善内窥镜深度估计",
+      "llm_evidence": "纠正SCARED数据集中的相机位姿以改善内窥镜深度估计",
+      "canonical_evidence": "纠正SCARED数据集中的相机位姿以改善内窥镜深度估计",
+      "llm_tldr_en": "SCARED-C corrects camera poses in the SCARED dataset using COLMAP and scale alignment, expanding reliable depth pairs from 35 to 17,135 for endoscopic depth estimation.",
+      "llm_tldr_cn": "SCARED-C通过COLMAP重新估计相机位姿并利用关键帧深度图进行尺度恢复，将SCARED数据集中可靠的RGB-D对从35个扩展到17,135个，显著提升了内窥镜深度估计基准的质量。该方法通过立体视差等验证了修正后位姿的准确性，为训练更精确的深度估计模型提供了价值。",
+      "llm_tldr": "SCARED-C通过COLMAP重新估计相机位姿并利用关键帧深度图进行尺度恢复，将SCARED数据集中可靠的RGB-D对从35个扩展到17,135个，显著提升了内窥镜深度估计基准的质量。该方法通过立体视差等验证了修正后位姿的准确性，为训练更精确的深度估计模型提供了价值。",
+      "llm_tags": [
+        "query:endo-dgs"
+      ],
+      "matched_query_tag": "query:endo-dgs",
+      "matched_query_text": "depth estimation for endoscopic scenes",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2605.07781v1",
+      "source": "arxiv",
+      "title": "Differentiable Ray Tracing with Gaussians for Unified Radio Propagation Simulation and View Synthesis",
+      "abstract": "Explicit neural representations such as 3D Gaussian Splatting (3DGS) enable high-fidelity and real-time novel view synthesis, yet optimize for alpha-composited optical appearance rather than ray-intersectable geometry. In contrast, radio-frequency (RF) digital twins require deterministic multi-bounce paths, where the geometry dictates trajectories and their associated attenuation and delay. We introduce a framework enabling differentiable RF propagation simulation directly within visually reconstructed neural scenes, allowing point-to-point path computation between arbitrary 3D locations while preserving high-quality visual rendering. Unlike conventional RF simulation pipelines that rely on manually constructed meshes, we embed Gaussian primitives into a hardware-accelerated ray tracing structure as the underlying spatial representation. By extracting physically meaningful channel impulse responses from visual-only reconstructions, we provide cross-modal evidence that neural reconstructions can serve as unified spatial representations for both electromagnetic propagation simulation and photorealistic view synthesis.",
+      "authors": [
+        "Niklas Vaara",
+        "Lam Huynh",
+        "Pekka Sangi",
+        "Miguel Bordallo López",
+        "Janne Heikkilä"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-05-08T14:19:28+00:00",
+      "link": "https://arxiv.org/pdf/2605.07781v1",
+      "tags": [
+        "keyword:endo-dgs",
+        "query:endo-dgs"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Differentiable ray tracing with 3D Gaussian Splatting for view synthesis",
+      "llm_evidence_cn": "基于3D高斯溅射的可微光线追踪用于视图合成",
+      "llm_evidence": "基于3D高斯溅射的可微光线追踪用于视图合成",
+      "canonical_evidence": "基于3D高斯溅射的可微光线追踪用于视图合成",
+      "llm_tldr_en": "Introduces differentiable RF propagation simulation within neural scenes using 3D Gaussian Splatting, enabling point-to-point path computation while preserving visual rendering, a method transferable to differentiable rendering pipelines for surgical endoscopy.",
+      "llm_tldr_cn": "针对射频数字孪生需要确定性地理解几何轨迹的问题，提出将可微射线追踪与3D高斯溅射结合的统一框架，实现神经场景中的点对点路径计算和高保真视图合成。该框架支持直接在高斯表示中进行可微渲染，无需手工网格，为可微渲染管线提供新范式，其方法可迁移至手术内窥镜的微分渲染。",
+      "llm_tldr": "针对射频数字孪生需要确定性地理解几何轨迹的问题，提出将可微射线追踪与3D高斯溅射结合的统一框架，实现神经场景中的点对点路径计算和高保真视图合成。该框架支持直接在高斯表示中进行可微渲染，无需手工网格，为可微渲染管线提供新范式，其方法可迁移至手术内窥镜的微分渲染。",
+      "llm_tags": [
+        "query:endo-dgs"
+      ],
+      "matched_query_tag": "query:endo-dgs",
+      "matched_query_text": "Differentiable rendering pipelines for surgical endoscopy using Gaussian primitives",
+      "matched_requirement_id": "req-9",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2604.27437v1",
+      "source": "arxiv",
+      "title": "Softmax-GS: Generalized Gaussians Learning When to Blend or Bound",
+      "abstract": "3D Gaussian Splatting (3D GS) is widely adopted for novel view synthesis due to its high training and rendering efficiency. However, its efficiency relies on the key assumption that Gaussians do not overlap in the 3D space, which leads to noticeable artifacts and view inconsistencies. In addition, the inherently diffuse boundaries of Gaussians hinder accurate reconstruction of sharp object edges. We propose Softmax-GS, a unified solution that addresses both the view-inconsistency and the diffuse-boundary problem by enforcing a softmax-based competition in overlapping regions between two Gaussians. With learnable parameters controlling the strength of the competition, it enables a continuous spectrum from smooth color blending to crisp, well-defined boundaries. Our formulation explicitly preserves order invariance for any two overlapping Gaussians and ensures that the output transmittance remains unchanged irrespective of the extent of overlapping, preventing undesirable discontinuities in the rendered output. Ablation experiments on simple geometries demonstrate the effectiveness of each component of Softmax-GS, and evaluations on real-world benchmarks show that it achieves state-of-the-art performance, improving both reconstruction quality and parameter efficiency.",
+      "authors": [
+        "Chen Ziwen",
+        "Peng Wang",
+        "Hao Tan",
+        "Zexiang Xu",
+        "Li Fuxin"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-04-30T05:23:05+00:00",
+      "link": "https://arxiv.org/pdf/2604.27437v1",
+      "tags": [
+        "keyword:endo-dgs",
+        "query:endo-dgs"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Proposes Softmax-GS to resolve view inconsistencies and diffuse boundaries in 3DGS via softmax competition",
+      "llm_evidence_cn": "提出Softmax-GS，通过softmax竞争解决3DGS中的视图不一致和模糊边界问题",
+      "llm_evidence": "提出Softmax-GS，通过softmax竞争解决3DGS中的视图不一致和模糊边界问题",
+      "canonical_evidence": "提出Softmax-GS，通过softmax竞争解决3DGS中的视图不一致和模糊边界问题",
+      "llm_tldr_en": "Softmax-GS enforces a softmax-based competition between overlapping Gaussians to produce crisp boundaries and consistent views, improving novel view synthesis.",
+      "llm_tldr_cn": "针对3D高斯泼溅因高斯重叠假设不成立而导致的视图不一致和物体边缘模糊问题，本文提出Softmax-GS方法，在重叠区域引入可学习参数的softmax竞争，使高斯混合从平滑过渡到清晰边界，从而统一处理融合与遮挡。实验表明该方法在不牺牲实时渲染效率的情况下显著提升了边缘清晰度和视图一致性，对要求精确几何的内窥镜重建具有参考意义。",
+      "llm_tldr": "针对3D高斯泼溅因高斯重叠假设不成立而导致的视图不一致和物体边缘模糊问题，本文提出Softmax-GS方法，在重叠区域引入可学习参数的softmax竞争，使高斯混合从平滑过渡到清晰边界，从而统一处理融合与遮挡。实验表明该方法在不牺牲实时渲染效率的情况下显著提升了边缘清晰度和视图一致性，对要求精确几何的内窥镜重建具有参考意义。",
+      "llm_tags": [
+        "query:endo-dgs"
+      ],
+      "matched_query_tag": "query:endo-dgs",
+      "matched_query_text": "Applying 3D Gaussian Splatting for real time novel view synthesis in endoscopy",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2605.15010v2",
+      "source": "arxiv",
+      "title": "3D Skew-Normal Splatting",
+      "abstract": "3D Gaussian Splatting (3DGS) has emerged as a leading representation for real-time novel view synthesis and has been widely adopted in various downstream applications. The core strength of 3DGS lies in its efficient kernel-based scene representation, where Gaussian primitives provide favorable mathematical and computational properties. However, under a finite primitive budget, the symmetric shape of each primitive directly affects representation compactness, especially near asymmetric structures such as object boundaries and one-sided surfaces. Recent works have explored more complex kernel distributions; however, they either remain within the elliptical family or rely on hard truncation, which limits continuous shape control and introduces distributional discontinuities. In this paper, we propose Skew-Normal Splatting (SNS), which adopts the Azzalini Skew-Normal distribution as the fundamental primitive. By introducing a learnable and bounded skewness parameter, SNS can continuously interpolate between symmetric Gaussians and Half-Gaussian-like shapes, enabling flexible modeling of both sharp boundaries and interior regions. Moreover, SNS preserves analytical tractability under affine transformations and marginalization. This property allows seamless integration into existing Gaussian Splatting rasterization pipelines. Furthermore, to address the strong coupling between scale, rotation, and skewness parameters, we introduce a decoupled parameterization and a block-wise optimization strategy to enhance training stability and accuracy. Extensive experiments on standard novel-view synthesis benchmarks show that SNS consistently improves reconstruction quality over Gaussian and recent non-Gaussian kernels, with clearer benefits on sharp boundaries and thin or one-sided structures.",
+      "authors": [
+        "Xiangru Wu",
+        "Ke Fan",
+        "Yanwei Fu"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-05-14T16:10:41+00:00",
+      "link": "https://arxiv.org/pdf/2605.15010v2",
+      "tags": [
+        "keyword:endo-dgs",
+        "query:endo-dgs"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Extends 3D Gaussian Splatting with skew-normal primitives for improved representation",
+      "llm_evidence_cn": "采用偏正态基元扩展3D高斯溅射以改善表示",
+      "llm_evidence": "采用偏正态基元扩展3D高斯溅射以改善表示",
+      "canonical_evidence": "采用偏正态基元扩展3D高斯溅射以改善表示",
+      "llm_tldr_en": "Proposes 3D Skew-Normal Splatting as an improved kernel for 3DGS, providing asymmetric shape control for compact scene representation, a fundamental advancement applicable to endoscopic reconstruction.",
+      "llm_tldr_cn": "为解决3D高斯溅射中对称基元在边界和单侧表面处的低效表示问题，提出偏正态溅射，利用偏正态分布提供连续的非对称形状控制，增强表示紧凑性。实验表明该改进提升了重建质量和基元效率，可用于内窥镜等场景中更精确的几何建模。",
+      "llm_tldr": "为解决3D高斯溅射中对称基元在边界和单侧表面处的低效表示问题，提出偏正态溅射，利用偏正态分布提供连续的非对称形状控制，增强表示紧凑性。实验表明该改进提升了重建质量和基元效率，可用于内窥镜等场景中更精确的几何建模。",
+      "llm_tags": [
+        "query:endo-dgs"
+      ],
+      "matched_query_tag": "query:endo-dgs",
+      "matched_query_text": "3D Gaussian splatting for endoscopic scene reconstruction",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2604.28016v1",
+      "source": "arxiv",
+      "title": "Faster 3D Gaussian Splatting Convergence via Structure-Aware Densification",
+      "abstract": "3D Gaussian Splatting has emerged as a powerful scene representation for real-time novel-view synthesis. However, its standard adaptive density control relies on screen-space positional gradients, which do not distinguish between geometric misplacement and frequency aliasing, often leading to either over-blurred high-frequency textures or inefficient over-densification. We present a structure-aware densification framework. Our key insight is that the decision to subdivide a Gaussian should be driven by an explicit comparison between its projected screen-space extent and the local structure of the texture it seeks to represent. We introduce a multi-scale frequency analysis combining structure tensors with Laplacian scale space analysis to estimate the dominant frequency at each pixel, enabling robust supervision across varying texture scales. Based on this analysis, we define $η$, a per-Gaussian, per-axis frequency violation metric that indicates when a primitive may be under-resolving local texture details. Unlike methods that perform isotropic splitting (e.g., splitting each Gaussian into two smaller ones with uniform shape), our approach performs anisotropic splitting. For each axis with high $η$, we compute a split factor to better resolve the local frequency content. We further introduce a multiview consistency criterion that aggregates $η$ observations across multiple views. By performing densification early and faster, we skip the lengthy iterative densification phases required by baseline methods and achieve significantly faster convergence. Experiments on standard benchmarks demonstrate that our method also achieves superior reconstruction quality, particularly in high-frequency regions.",
+      "authors": [
+        "Linjie Lyu",
+        "Ayush Tewari",
+        "Jianchun Chen",
+        "Thomas Leimkühler",
+        "Christian Theobalt"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.GR",
+        "cs.LG"
+      ],
+      "published": "2026-04-30T15:37:20+00:00",
+      "link": "https://arxiv.org/pdf/2604.28016v1",
+      "tags": [
+        "keyword:endo-dgs",
+        "query:endo-dgs"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Improves 3DGS convergence via structure-aware densification based on multi-scale frequency analysis",
+      "llm_evidence_cn": "通过基于多尺度频率分析的结构感知致密化改进3DGS收敛",
+      "llm_evidence": "通过基于多尺度频率分析的结构感知致密化改进3DGS收敛",
+      "canonical_evidence": "通过基于多尺度频率分析的结构感知致密化改进3DGS收敛",
+      "llm_tldr_en": "This paper accelerates 3D Gaussian Splatting training by a structure-aware densification strategy that compares Gaussian size with local texture frequency to avoid over-densification.",
+      "llm_tldr_cn": "为解决3DGS自适应密度控制中因屏幕空间梯度无法区分几何错位与频率混叠导致的过度致密化或模糊问题，本文提出结构感知的致密化框架。通过结构张量与拉普拉斯尺度空间分析估计局部纹理频率，指导高斯细分决策，实验证明在保持渲染质量的同时显著加速收敛，对需要快速场景重建的内窥镜应用具有潜在价值。",
+      "llm_tldr": "为解决3DGS自适应密度控制中因屏幕空间梯度无法区分几何错位与频率混叠导致的过度致密化或模糊问题，本文提出结构感知的致密化框架。通过结构张量与拉普拉斯尺度空间分析估计局部纹理频率，指导高斯细分决策，实验证明在保持渲染质量的同时显著加速收敛，对需要快速场景重建的内窥镜应用具有潜在价值。",
+      "llm_tags": [
+        "query:endo-dgs"
+      ],
+      "matched_query_tag": "query:endo-dgs",
+      "matched_query_text": "Applying 3D Gaussian Splatting for real time novel view synthesis in endoscopy",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2605.25909v1",
+      "source": "arxiv",
+      "title": "R5DGS: Semantic-Aware 4D Gaussian Splatting with Rigid Body Constraints for Efficient Dynamic Scene Reconstruction",
+      "abstract": "Reconstructing and predicting dynamic 3D scenes from multi-view videos is a foundational task for robotics, AR/VR, and digital twins. Recent physics-informed Gaussian Splatting methods achieve impressive future frame extrapolation but lack semantic awareness and suffer from large computational overhead. We introduce $\\textbf{R5DGS}$, a framework that augments a physics-driven 4D Gaussian representation with compact Identity Encoding vectors, enabling precise Gaussian-to-object association. By constructing an offline CLIP-based object lookup table, we support open-vocabulary text prompting to retrieve and render object-specific Gaussians across arbitrary timestamps and viewpoints. Furthermore, we propose a rigid-body inference constraint that predicts and integrates physical dynamics exclusively for object centroids, propagating motion to associated Gaussians via relative transformations. This optimization yields a 11 FPS speedup during extrapolation without compromising trajectories plausibility.",
+      "authors": [
+        "Denis Gridusov",
+        "Maxim Popov",
+        "Sergey Kolyubin"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-05-25T14:46:04+00:00",
+      "link": "https://arxiv.org/pdf/2605.25909v1",
+      "tags": [
+        "keyword:endo-dgs",
+        "query:endo-dgs"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "4D Gaussian Splatting with semantic awareness could improve dynamic endoscopic scene reconstruction.",
+      "llm_evidence_cn": "语义感知4D高斯溅射可提升动态内窥镜场景重建。",
+      "llm_evidence": "语义感知4D高斯溅射可提升动态内窥镜场景重建。",
+      "canonical_evidence": "语义感知4D高斯溅射可提升动态内窥镜场景重建。",
+      "llm_tldr_en": "R5DGS enhances 4D Gaussian Splatting with semantic identity encoding and rigid body constraints, enabling efficient dynamic scene reconstruction with open-vocabulary object retrieval, applicable to dynamic surgical scene modeling.",
+      "llm_tldr_cn": "R5DGS将紧凑身份编码向量集成到物理驱动的4D高斯表示中，实现对特定物体的开放词汇检索与渲染，并通过刚体约束提高动态场景重建效率。该方法虽非专为内窥镜设计，但其动态4DGS框架可有效迁移至手术内窥镜下的组织与器械建模，有助于实时手术仿真和导航。",
+      "llm_tldr": "R5DGS将紧凑身份编码向量集成到物理驱动的4D高斯表示中，实现对特定物体的开放词汇检索与渲染，并通过刚体约束提高动态场景重建效率。该方法虽非专为内窥镜设计，但其动态4DGS框架可有效迁移至手术内窥镜下的组织与器械建模，有助于实时手术仿真和导航。",
+      "llm_tags": [
+        "query:endo-dgs:composite"
+      ],
+      "matched_query_tag": "query:endo-dgs:composite",
+      "matched_query_text": "Papers central to 内窥镜领域下的3DGS相关工作及启发点, especially work that connects or combines: 3D Gaussian splatting for endoscopic scene reconstruction; endoscopic image enhancement with Gaussian splatting; depth estimation for endoscopic scenes; surgical navigation using 3D scene representations; real-time rendering for endoscopic video; explicit scene representation for surgical views; Applying 3D Gaussian Splatting for real time novel view synthesis in endoscopy; Gaussian based scene reconstruction from monocular endoscopic video; Differentiable rendering pipelines for surgical endoscopy using Gaussian primitives.",
+      "matched_requirement_id": "req-composite-endo-dgs",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2605.06876v1",
+      "source": "arxiv",
+      "title": "AdpSplit: Error-Driven Adaptive Splitting for Faster Geometry Discovery in 3D Gaussian Splatting",
+      "abstract": "Adaptive density control in 3D Gaussian Splatting (3DGS) repeatedly grows the Gaussian population through fixed-cardinality random splitting to discover useful scene structure. However, in vanilla 3DGS, its binary split operator requires many densification rounds to expose fine details, making it a bottleneck for efficient training schedules with fewer iterations. We introduce AdpSplit, an error-driven adaptive split operator that determines the number of split children and initializes the child parameters from L1-pixel-error region statistics, enabling fewer densification iterations, thus reduced training time, while preserving the rendering quality of full-schedule training. Across the MipNeRF360, Deep-Blending, and Tanks&Temples datasets, AdpSplit reduces the training time of multiple accelerated 3DGS pipelines by 9.2%-22.3% as a simple drop-in replacement for the standard split operator. With FastGS, AdpSplit matches the full-schedule PSNR on MipNeRF360 while reducing training time by 16.4%, corresponding to a 12.6x acceleration over vanilla 3DGS.",
+      "authors": [
+        "Yongjae Lee",
+        "Jingxing Li",
+        "Abhay Kumar Yadav",
+        "Rama Chellappa",
+        "Deliang Fan"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-05-07T19:23:16+00:00",
+      "link": "https://arxiv.org/pdf/2605.06876v1",
+      "tags": [
+        "keyword:endo-dgs",
+        "query:endo-dgs"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Adaptive splitting operator for 3DGS accelerates training, potentially benefiting real-time endoscopic 3DGS reconstruction.",
+      "llm_evidence_cn": "3DGS的自适应分裂算子加速训练，可潜在加速内窥镜三维重建。",
+      "llm_evidence": "3DGS的自适应分裂算子加速训练，可潜在加速内窥镜三维重建。",
+      "canonical_evidence": "3DGS的自适应分裂算子加速训练，可潜在加速内窥镜三维重建。",
+      "llm_tldr_en": "AdpSplit introduces an error-driven adaptive splitting that determines split cardinality and initialization from pixel error statistics, reducing 3DGS training time without quality loss, useful for accelerating endoscopic scene reconstruction.",
+      "llm_tldr_cn": "针对3D高斯溅射（3DGS）中原生分裂算子需多轮致密化才能暴露细节、导致训练时间过长的问题，本文提出AdpSplit，一种误差驱动的自适应分裂算子。该算子根据L1像素误差区域统计决定子高斯数量并初始化参数，从而减少致密化迭代次数，缩短训练时间，同时保持与全周期训练相当的渲染质量。在多个数据集上验证，能有效加速几何发现，对要求实时重建的内窥镜3DGS应用具有加速潜力。",
+      "llm_tldr": "针对3D高斯溅射（3DGS）中原生分裂算子需多轮致密化才能暴露细节、导致训练时间过长的问题，本文提出AdpSplit，一种误差驱动的自适应分裂算子。该算子根据L1像素误差区域统计决定子高斯数量并初始化参数，从而减少致密化迭代次数，缩短训练时间，同时保持与全周期训练相当的渲染质量。在多个数据集上验证，能有效加速几何发现，对要求实时重建的内窥镜3DGS应用具有加速潜力。",
+      "llm_tags": [
+        "query:endo-dgs:composite"
+      ],
+      "matched_query_tag": "query:endo-dgs:composite",
+      "matched_query_text": "Papers central to 内窥镜领域下的3DGS相关工作及启发点, especially work that connects or combines: 3D Gaussian splatting for endoscopic scene reconstruction; endoscopic image enhancement with Gaussian splatting; depth estimation for endoscopic scenes; surgical navigation using 3D scene representations; real-time rendering for endoscopic video; explicit scene representation for surgical views; Applying 3D Gaussian Splatting for real time novel view synthesis in endoscopy; Gaussian based scene reconstruction from monocular endoscopic video; Differentiable rendering pipelines for surgical endoscopy using Gaussian primitives.",
+      "matched_requirement_id": "req-composite-endo-dgs",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2605.07254v1",
+      "source": "arxiv",
+      "title": "High-Fidelity Surface Splatting-Based 3D Reconstruction from Multi-View Images",
+      "abstract": "Multi-view mesh reconstruction remains a core challenge in computer graphics and vision, especially for recovering high-frequency geometry from sparse observations. Recent methods such as 3D Gaussian Splatting (3DGS) and Neural Radiance Fields (NeRF) rely on post-processing for mesh extraction, thereby limiting joint optimization of geometry and appearance. Implicit Moving Least Squares (IMLS) instead enables direct conversion of point clouds into signed distance and texture fields, supporting end-to-end reconstruction and rendering. However, existing IMLS formulations use exponential kernels that struggle with high-frequency detail. We introduce a compact polynomial kernel with local support and greater flexibility, allowing better control over frequency content and improved geometric fidelity. To further enhance fine details, we incorporate stochastic regularization with Laplacian filtering. Together, these improve the preservation of high-frequency structure while maintaining stable optimization. Experiments show state-of-the-art performance in both surface reconstruction and rendering, yielding more accurate geometry and sharper visuals from multi-view data.",
+      "authors": [
+        "Nandhana Sunil",
+        "Abhirami R Iyer",
+        "Avirup Mandal"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.GR"
+      ],
+      "published": "2026-05-08T05:23:28+00:00",
+      "link": "https://arxiv.org/pdf/2605.07254v1",
+      "tags": [
+        "keyword:endo-dgs",
+        "query:endo-dgs"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Proposes a polynomial kernel IMLS for high-fidelity surface splatting, improving 3DGS mesh extraction",
+      "llm_evidence_cn": "提出多项式核IMLS实现高保真表面抛雪球，改进3DGS网格提取",
+      "llm_evidence": "提出多项式核IMLS实现高保真表面抛雪球，改进3DGS网格提取",
+      "canonical_evidence": "提出多项式核IMLS实现高保真表面抛雪球，改进3DGS网格提取",
+      "llm_tldr_en": "This paper improves 3D Gaussian Splatting by introducing a compact polynomial kernel in IMLS for high-fidelity surface reconstruction from multi-view images.",
+      "llm_tldr_cn": "针对多视角网格重建中高频率几何恢复的挑战，本文在隐式移动最小二乘(IMLS)框架下提出一种紧凑多项式核，以提升3D高斯泼溅（3DGS）方法在表面重建中对高频细节的刻画能力。该方法支持端到端的重建与渲染联合优化，实验表明在稀疏观测下能获得更准确的网格与纹理，为实时高质量场景重建提供了新途径。",
+      "llm_tldr": "针对多视角网格重建中高频率几何恢复的挑战，本文在隐式移动最小二乘(IMLS)框架下提出一种紧凑多项式核，以提升3D高斯泼溅（3DGS）方法在表面重建中对高频细节的刻画能力。该方法支持端到端的重建与渲染联合优化，实验表明在稀疏观测下能获得更准确的网格与纹理，为实时高质量场景重建提供了新途径。",
+      "llm_tags": [
+        "query:endo-dgs"
+      ],
+      "matched_query_tag": "query:endo-dgs",
+      "matched_query_text": "Applying 3D Gaussian Splatting for real time novel view synthesis in endoscopy",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2605.11756v1",
+      "source": "arxiv",
+      "title": "Focusable Monocular Depth Estimation",
+      "abstract": "Monocular depth foundation models generalize well across scenes, yet they are typically optimized with uniform pixel-wise objectives that do not distinguish user-specified or task-relevant target regions from the surrounding context. We therefore introduce Focusable Monocular Depth Estimation (FDE), a region-aware depth estimation task in which, given a specified target region, the model is required to prioritize foreground depth accuracy, preserve sharp boundary transitions, and maintain coherent global scene geometry. To prioritize task-critical region modeling, we propose FocusDepth, a prompt-conditioned monocular relative depth estimation framework that guides depth modeling to focus on target regions via box/text prompts. The core Multi-Scale Spatial-Aligned Fusion (MSSA) in FocusDepth spatially aligns multi-scale features from Segment Anything Model 3 to the Depth Anything family and injects them through scale-specific, gated conditional fusion. This enables dense prompt cue injection without disrupting geometric representations, thereby endowing the depth estimation model with focused perception capability. To study FDE, we establish FDE-Bench, a target-centric monocular relative depth benchmark built from image-target-depth triplets across five datasets, containing 252.9K/72.5K train/val triplets and 972 categories spanning real-world and embodied simulation environments. On FDE-Bench, FocusDepth consistently improves over globally fine-tuned DA2/DA3 baselines under both box and text prompts, with the largest gains appearing in target boundary and foreground regions while preserving global scene geometry. Ablations show that MSSA's spatial alignment is the key design factor, as disrupting prompt-geometry correspondence increases AbsRel by up to 13.8%.",
+      "authors": [
+        "Yuxin Du",
+        "Tao Lin",
+        "Zile Zhong",
+        "Runting Li",
+        "Xiyao Chen",
+        "Jiting Liu",
+        "Chenglin Liu",
+        "Ying-Cong Chen",
+        "Yuqian Fu",
+        "Bo Zhao"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-05-12T08:30:53+00:00",
+      "link": "https://arxiv.org/pdf/2605.11756v1",
+      "tags": [
+        "keyword:endo-dgs",
+        "query:endo-dgs"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Introduces region-aware monocular depth estimation focusing on specified target regions",
+      "llm_evidence_cn": "提出区域感知的单目深度估计，聚焦于指定目标区域",
+      "llm_evidence": "提出区域感知的单目深度估计，聚焦于指定目标区域",
+      "canonical_evidence": "提出区域感知的单目深度估计，聚焦于指定目标区域",
+      "llm_tldr_en": "Focusable Monocular Depth Estimation enables prioritizing depth accuracy in user-specified regions while maintaining global coherence, using prompt-conditioned framework.",
+      "llm_tldr_cn": "针对现有单目深度模型无法区分任务相关区域的问题，本文提出区域感知的深度估计任务FDE，并设计FocusDepth框架，通过框/文本提示引导模型聚焦目标区域。多尺度空间对齐融合模块显著提升了指定区域的深度精度和边缘清晰度，在通用场景中取得优越性能，可灵活迁移至内窥镜等关注局部深度的应用。",
+      "llm_tldr": "针对现有单目深度模型无法区分任务相关区域的问题，本文提出区域感知的深度估计任务FDE，并设计FocusDepth框架，通过框/文本提示引导模型聚焦目标区域。多尺度空间对齐融合模块显著提升了指定区域的深度精度和边缘清晰度，在通用场景中取得优越性能，可灵活迁移至内窥镜等关注局部深度的应用。",
+      "llm_tags": [
+        "query:endo-dgs"
+      ],
+      "matched_query_tag": "query:endo-dgs",
+      "matched_query_text": "depth estimation for endoscopic scenes",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2605.13073v1",
+      "source": "arxiv",
+      "title": "HarmoGS: Robust 3D Gaussian Splatting in the Wild via Conflict-Aware Gradient Harmonization",
+      "abstract": "In-the-wild 3D Gaussian Splatting remains challenging due to transient distractors and illumination-induced cross-view appearance inconsistencies. Existing methods mainly rely on image-level masking to suppress unreliable supervision, but masking alone cannot fully eliminate residual occlusions or resolve illumination-induced inconsistencies, both of which can introduce conflicting cross-view gradients. These unresolved conflicts may destabilize Gaussian optimization and lead to visible reconstruction artifacts. We propose a conflict-aware 3DGS framework that addresses this problem from both image-space supervision and gradient-level optimization. Semantic Consistency-Guided Masking learns pixel-wise consistency scores to adaptively refine prior masks and suppress unreliable supervision before gradient formation. A dual-view Conflict-Aware Gradient Harmonization strategy further reconciles view-specific gradients by mutually rotating them into an orthogonal configuration, reducing negative directional interference across views. We also introduce conflict-aware densification and pruning to stabilize Gaussian growth and remove persistently conflicting primitives. Extensive experiments on standard in-the-wild benchmarks demonstrate that our method achieves state-of-the-art rendering quality under complex transient distractors and cross-view inconsistencies.",
+      "authors": [
+        "Yulei Kang",
+        "Tianze Zhu",
+        "Jian-Fang Hu",
+        "Jianhuang Lai",
+        "Wei-Shi Zheng"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-05-13T06:47:09+00:00",
+      "link": "https://arxiv.org/pdf/2605.13073v1",
+      "tags": [
+        "keyword:endo-dgs",
+        "query:endo-dgs"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Robust 3D Gaussian Splatting for general scenes via gradient harmonization",
+      "llm_evidence_cn": "通过梯度协调实现通用场景的鲁棒3D高斯溅射",
+      "llm_evidence": "通过梯度协调实现通用场景的鲁棒3D高斯溅射",
+      "canonical_evidence": "通过梯度协调实现通用场景的鲁棒3D高斯溅射",
+      "llm_tldr_en": "HarmoGS introduces conflict-aware gradient harmonization for robust 3D Gaussian Splatting in the wild, a method beneficial for handling endoscopic scene challenges like occlusions and lighting variations.",
+      "llm_tldr_cn": "针对野外3D高斯溅射中瞬时干扰和光照不一致导致的梯度冲突问题，提出冲突感知框架，从图像空间掩膜和梯度级优化两方面增强鲁棒性。实验表明该方法减少了重建伪影，提升了3DGS在复杂场景下的可靠性，其思路可启发内窥镜场景中不稳定因素的处理。",
+      "llm_tldr": "针对野外3D高斯溅射中瞬时干扰和光照不一致导致的梯度冲突问题，提出冲突感知框架，从图像空间掩膜和梯度级优化两方面增强鲁棒性。实验表明该方法减少了重建伪影，提升了3DGS在复杂场景下的可靠性，其思路可启发内窥镜场景中不稳定因素的处理。",
+      "llm_tags": [
+        "query:endo-dgs"
+      ],
+      "matched_query_tag": "query:endo-dgs",
+      "matched_query_text": "3D Gaussian splatting for endoscopic scene reconstruction",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2605.13073v2",
+      "source": "arxiv",
+      "title": "HarmoGS: Robust 3D Gaussian Splatting in the Wild via Conflict-Aware Gradient Harmonization",
+      "abstract": "In-the-wild 3D Gaussian Splatting remains challenging due to transient distractors and illumination-induced cross-view appearance inconsistencies. Existing methods mainly rely on image-level masking to suppress unreliable supervision, but masking alone cannot fully eliminate residual occlusions or resolve illumination-induced inconsistencies, both of which can introduce conflicting cross-view gradients. These unresolved conflicts may destabilize Gaussian optimization and lead to visible reconstruction artifacts. We propose a conflict-aware 3DGS framework that addresses this problem from both image-space supervision and gradient-level optimization. Semantic Consistency-Guided Masking learns pixel-wise consistency scores to adaptively refine prior masks and suppress unreliable supervision before gradient formation. A dual-view Conflict-Aware Gradient Harmonization strategy further reconciles view-specific gradients by mutually rotating them into an orthogonal configuration, reducing negative directional interference across views. We also introduce conflict-aware densification and pruning to stabilize Gaussian growth and remove persistently conflicting primitives. Extensive experiments on standard in-the-wild benchmarks demonstrate that our method achieves state-of-the-art rendering quality under complex transient distractors and cross-view inconsistencies.",
+      "authors": [
+        "Yulei Kang",
+        "Tianze Zhu",
+        "Jian-Fang Hu",
+        "Jianhuang Lai",
+        "Wei-Shi Zheng"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-05-13T06:47:09+00:00",
+      "link": "https://arxiv.org/pdf/2605.13073v2",
+      "tags": [
+        "keyword:endo-dgs",
+        "query:endo-dgs"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Improves robustness of 3DGS to distractors and illumination inconsistencies via gradient harmonization",
+      "llm_evidence_cn": "通过梯度协调提高3DGS对扰动和光照不一致的鲁棒性",
+      "llm_evidence": "通过梯度协调提高3DGS对扰动和光照不一致的鲁棒性",
+      "canonical_evidence": "通过梯度协调提高3DGS对扰动和光照不一致的鲁棒性",
+      "llm_tldr_en": "HarmoGS proposes conflict-aware gradient harmonization and semantic masking for robust 3DGS in challenging conditions.",
+      "llm_tldr_cn": "针对野外场景中瞬态干扰和光照变化导致3D高斯泼溅不稳定的问题，本文提出冲突感知的梯度协调和语义一致性引导掩码框架。该方法从图像空间监督和梯度层面双重解决交叉视图冲突，实验证明能有效抑制伪影、提升重建质量，为内窥镜等复杂临床环境下的稳定场景重建提供了思路。",
+      "llm_tldr": "针对野外场景中瞬态干扰和光照变化导致3D高斯泼溅不稳定的问题，本文提出冲突感知的梯度协调和语义一致性引导掩码框架。该方法从图像空间监督和梯度层面双重解决交叉视图冲突，实验证明能有效抑制伪影、提升重建质量，为内窥镜等复杂临床环境下的稳定场景重建提供了思路。",
+      "llm_tags": [
+        "query:endo-dgs"
+      ],
+      "matched_query_tag": "query:endo-dgs",
+      "matched_query_text": "Applying 3D Gaussian Splatting for real time novel view synthesis in endoscopy",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2605.13465v1",
+      "source": "arxiv",
+      "title": "Z-Order Transformer for Feed-Forward Gaussian Splatting",
+      "abstract": "Recent advances in 3D Gaussian Splatting (3DGS) have enabled significant progress in photorealistic novel view synthesis. However, traditional 3DGS relies on a slow, iterative optimization process, which limits its use in scenarios demanding real-time results. To overcome this bottleneck, recent feed-forward methods aim to predict Gaussian attributes directly from images, but they often struggle with the redundancy of Gaussian primitives and rendering quality. In this work, we introduce a transformer-based architecture specifically designed for feed-forward Gaussian Splatting. Our key insight is that spatial and semantic relationships among Gaussians can be effectively captured through a sparse attention mechanism, enabled by a Z-order strategy that organizes the unstructured Gaussian set into a spatially coherent sequence. Furthermore, we incorporate this Z-order strategy to adaptively suppress redundancy while preserving critical structural details. This allows the transformer to efficiently model context, compress Gaussian primitives, and predict Gaussian attributes in a single forward pass. Comprehensive experiments demonstrate that our method achieves fast and high-quality novel view synthesis with fewer Gaussian primitives.",
+      "authors": [
+        "Can Wang",
+        "Lei Liu",
+        "Wei Jiang",
+        "Dong Xu"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-05-13T12:54:59+00:00",
+      "link": "https://arxiv.org/pdf/2605.13465v1",
+      "tags": [
+        "keyword:endo-dgs",
+        "query:endo-dgs"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Introduces a transformer-based feed-forward 3DGS method for real-time novel view synthesis",
+      "llm_evidence_cn": "引入基于Transformer的前馈3DGS方法，实现实时新视角合成",
+      "llm_evidence": "引入基于Transformer的前馈3DGS方法，实现实时新视角合成",
+      "canonical_evidence": "引入基于Transformer的前馈3DGS方法，实现实时新视角合成",
+      "llm_tldr_en": "This paper proposes a Z-order transformer architecture for feed-forward Gaussian Splatting, enabling rapid prediction of Gaussian attributes from images for real-time rendering.",
+      "llm_tldr_cn": "为解决传统3D高斯泼溅需要缓慢迭代优化而不适合实时场景的问题，本文提出一种基于Transformer的前馈架构，利用Z阶空间排序捕获高斯间稀疏注意关系，直接从图像预测高斯属性。该方法在保持渲染质量的同时实现了实时新视角合成，为内窥镜视频实时渲染和导航提供了高效技术路径。",
+      "llm_tldr": "为解决传统3D高斯泼溅需要缓慢迭代优化而不适合实时场景的问题，本文提出一种基于Transformer的前馈架构，利用Z阶空间排序捕获高斯间稀疏注意关系，直接从图像预测高斯属性。该方法在保持渲染质量的同时实现了实时新视角合成，为内窥镜视频实时渲染和导航提供了高效技术路径。",
+      "llm_tags": [
+        "query:endo-dgs"
+      ],
+      "matched_query_tag": "query:endo-dgs",
+      "matched_query_text": "real-time rendering for endoscopic video",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
