@@ -140,6 +140,48 @@ subscriptions:
           source: generated
           note: ''
       updated_at: '2026-05-29T08:44:10.017Z'
+    - tag: endo-dgs
+      description: 内窥镜领域下的3DGS相关工作及启发点
+      enabled: true
+      paper_sources:
+        - arxiv
+        - biorxiv
+      keywords:
+        - keyword: 3D Gaussian Splatting
+          keyword_cn: 三维高斯泼溅
+          query: 3D Gaussian splatting for endoscopic scene reconstruction
+        - keyword: endoscopic imaging
+          keyword_cn: 内窥镜成像
+          query: endoscopic image enhancement with Gaussian splatting
+        - keyword: depth estimation
+          keyword_cn: 深度估计
+          query: depth estimation for endoscopic scenes
+        - keyword: surgical navigation
+          keyword_cn: 手术导航
+          query: surgical navigation using 3D scene representations
+        - keyword: real-time rendering
+          keyword_cn: 实时渲染
+          query: real-time rendering for endoscopic video
+        - keyword: scene representation
+          keyword_cn: 场景表示
+          query: explicit scene representation for surgical views
+      intent_queries:
+        - query: Applying 3D Gaussian Splatting for real time novel view synthesis in endoscopy
+          query_cn: 将三维高斯泼溅应用于内窥镜的实时新视角合成
+          enabled: true
+          source: manual
+          note: ''
+        - query: Gaussian based scene reconstruction from monocular endoscopic video
+          query_cn: 从单目内窥镜视频进行基于高斯的场景重建
+          enabled: true
+          source: manual
+          note: ''
+        - query: Differentiable rendering pipelines for surgical endoscopy using Gaussian primitives
+          query_cn: 使用高斯基元的可微渲染管线用于手术内窥镜
+          enabled: true
+          source: manual
+          note: ''
+      updated_at: '2026-05-29T08:46:42.680Z'
 source_backends:
   arxiv:
     papers_table: arxiv_papers
