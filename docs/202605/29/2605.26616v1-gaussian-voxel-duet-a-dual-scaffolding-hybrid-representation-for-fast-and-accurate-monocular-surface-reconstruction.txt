@@ -1,0 +1,411 @@
+Title: Gaussian-Voxel Duet: A Dual-Scaffolding Hybrid Representation for Fast and Accurate Monocular Surface Reconstruction
+
+URL Source: https://arxiv.org/pdf/2605.26616v1
+
+Published Time: Wed, 27 May 2026 00:48:19 GMT
+
+Number of Pages: 27
+
+Markdown Content:
+# Gaussian-Voxel Duet: A Dual-Scaffolding Hybrid Representation for Fast and Accurate Monocular Surface Reconstruction 
+
+Zhenhua Du 1,2, Zhen Tan 3, Haoyu Zhang 3,Dewen Hu 3, Shuaifeng Zhi 3⋆, and Peidong Liu 2 
+
+> 1
+
+Zhejiang University  
+
+> 2
+
+Westlake University  
+
+> 3
+
+National University of Defense Technology 
+
+Abstract. While 3D Gaussian Splatting has achieved remarkable suc-cess in photorealistic novel view synthesis, its pursuit of fast and high-fidelity 3D reconstruction has long been constrained by a trade-off be-tween geometric accuracy and optimization efficiency. Methods special-ized in image rendering converge quickly at the cost of imperfect geom-etry caused by superfluous primitives overfitting training views, while methods integrating neural signed-distance field (SDF) for better geom-etry incur prohibitive training costs. In this paper, we attempt to strike a better trade-off by tethering scaffold-anchored Gaussians to a jointly optimized sparse voxel scaffold. This hybrid Gaussian-Voxel represen-tation explicitly confines anchored Gaussians to a narrow band around surfaces defined by voxelized SDFs, which effectively improves repre-sentation efficiency and condenses floating Gaussians without sacrificing geometry quality. An implicit surface tethering loss further pulls indi-vidual Gaussian primitives closer to SDF-induced surfaces in a mutu-ally regularized manner for improved reconstruction accuracy. Exten-sive experiments on diverse real-world indoor scenes from ScanNet++, ScanNetv2, and DeepBlending datasets demonstrate that our method achieves state-of-the-art surface reconstruction quality as well as supe-rior novel view synthesis against leading baselines, while maintaining fast training convergence and real-time rendering. Code will be available at 
+
+https://github.com/duzh11/VoxelGS .
+
+Keywords: Hybrid Scene Representation · Surface Reconstruction ·
+
+View Synthesis · 3d Deep Learning 
+
+## 1 Introduction 
+
+Multi-view 3D scene reconstruction remains a core challenge in computer vision and graphics. The emergence of Neural Radiance Fields (NeRF) [20] and its vari-ants [16, 29, 33, 39] marked a paradigm shift, demonstrating remarkable fidelity in modeling complex appearance and fine geometry from posed RGB images.  
+
+> ⋆
+
+Corresponding author.   
+
+> arXiv:2605.26616v1 [cs.CV] 26 May 2026 2Z. Du et al.
+> Fig. 1: Fast Monocular Surface Reconstruction with our Gaussian-Voxel Dual-Scaffolding Representation. Our method, Gaussian-Voxel Duet, unleashes the structural advantages of anchored-Gaussians and sparse volumetric SDF field, pro-ducing high-fidelity meshes of challenging textureless and large-scale 3D indoor scenes. Our method achieves state-of-the-art performance while attaining compelling efficiency.
+
+However, their reliance on dense, volumetric ray marching often renders them computationally prohibitive. The recent introduction of 3D Gaussian Splatting (3DGS) [14] represented a significant leap forward, by replacing costly volume rendering with efficient point-based splatting, achieving real-time rendering while preserving high visual quality. Despite its excellence in novel view synthesis, a critical limitation of 3DGS persists: the underlying geometry recovered by 3DGS and its derivatives is often inaccurate. This impedes reliable surface extraction and hinders downstream applications demanding precise geometric reasoning. The root of this geometric inaccuracy lies in the shape-radiance ambigu-ity [42]. Under monocular color supervision, 3DGS is prone to producing su-perfluous ‘floater’ Gaussians that minimize photometric error for plausible ren-dering, yet lie far from the true surface. Existing mitigation strategies often involve establishing various structural scaffolds [18] to constrain Gaussian prim-itives. One line of work [19, 38, 43, 46] learns a neural Signed Distance Function (SDF) to pull Gaussians toward an implicit surface. While it improves geometry quality, the integration of a global, neural SDF introduces substantial compu-tational overhead, escalating per-scene optimization costs to several hours. An-other line of work chooses to anchor Gaussian primitives to explicit topological structures such as voxel grids or meshes [15, 26]. These methods preserve fast rendering speed and enhance surface coherence, but sacrifice the inherent flexi-bility of the Gaussian representation, causing geometric degradation in sparsely observed areas or flat and smooth structures. Moreover, their success often de-pends on robust geometric initialization or additional scene-level bounding-box priors, potentially limiting their broad applications. Therefore, one important question arises: How can we achieve both high geometric accuracy and computa-tional efficiency in monocular surface reconstruction? 
+
+In this paper, we propose a simple yet effective solution for fast and robust 3D reconstruction from multi-view monocular images. Our approach is built upon a novel dual-scaffold representation, which collaboratively learns a Gaussian-Gaussian-Voxel Duet 3
+
+anchor scaffold and a voxel scaffold. The anchor scaffold, inspired by [18], struc-tures Gaussian primitives in locally managed sets to reduce redundancy and im-prove rendering fidelity. The voxel scaffold, in contrast, captures the underlying geometry surface through a collection of differentiable sparse voxels, each encod-ing a local Signed Distance Function (SDF). In contrast to existing Gaussian-SDF hybrid representations [38, 43], we avoid learning a costly global SDF from scratch by focusing on a sparse voxel grid covering scene surfaces and optimizing only residual SDF updates, which enables significantly accelerated convergence. By tethering scaffold-anchored Gaussians to a jointly optimized sparse voxel scaffold, we achieve a better trade-off among geometric accuracy, converging efficiency, and rendering quality. The core of our framework (as shown in Fig. 1) is a mutual tethering mech-anism that tightly couples the two scaffolds. First, an explicit anchor tethering strategy uses the voxel scaffold’s SDF to confine anchor densification and pruning to a narrow, surface-proximal confidence band, effectively eliminating geomet-ric outliers (Fig. 3). Second, we introduce an implicit surface tethering loss that pulls individual Gaussians toward the SDF-defined surface, simultaneously refin-ing the Gaussian distribution and providing direct supervisory signals to update voxel SDF values. This bidirectional regularization allows Gaussians to adapt freely within a geometrically grounded region, preserving the high fidelity of novel view synthesis while ensuring surface coherence. We achieve high-fidelity geometry and appearance with fast training convergence and real-time rendering on complex and large indoor scenes. In summary, our contributions are as follows: 
+
+– We propose a collaborative dual-scaffold reconstruction approach featuring a hybrid Gaussian–voxel representation that enables efficient high-quality surface reconstruction from posed multi-view images. 
+
+– We introduce a tethering mechanism, comprising an explicit anchor-tethering strategy and an implicit surface-tethering strategy, to ensure Gaussian prim-itives remain geometrically grounded without sacrificing flexibility and ren-dering quality. 
+
+– Extensive experiments on ScanNet++, ScanNetv2, and DeepBlending demon-strate that our method achieves state-of-the-art surface reconstruction and superior novel view synthesis against leading baselines, while maintaining fast training and real-time rendering. 
+
+## 2 Related Work 
+
+Surface Reconstruction via Implicit Neural Field. Implicit neural fields repre-sent a 3D scene as continuous functions learned by neural networks. The sem-inal work NeRF [20] parameterizes a radiance field with an MLP that maps spatial locations to volume density and view-dependent color. Subsequent NeRF variants aim to improve the quality of the extracted geometry. These approaches integrate occupancy grids [23] or SDFs [29,33] into the differentiable volume ren-dering pipeline by re-parameterizing volume density, thus yielding a well-defined 4 Z. Du et al. 
+
+isosurface for mesh extraction. Subsequent efforts have attempted to enhance reconstruction quality through additional regularization strategies [10, 28, 39]. Other methods [16, 30] integrate SDF-based representations with hash encod-ings and coarse-to-fine hierarchical optimization to accelerate convergence and increase surface detail recovery. Nevertheless, implicit neural field methods typ-ically require hours of per-scene optimization, motivating the development of more efficient scene representations. 
+
+Surface Reconstruction via Gaussian Splatting. 3D Gaussian Splatting [14] rep-resents a scene as a collection of explicit learnable Gaussian primitives, enabling real-time novel-view synthesis with markedly shorter optimization times. How-ever, extracting high-fidelity surfaces from the discrete Gaussians remains a sig-nificant challenge, which has motivated several complementary lines of research: One line of work constrains the Gaussian ellipsoids to flatten surfels [1,5,12,45], forcing the flattened primitives to align with local surface geometry. A second di-rection attempts to convert Gaussian representations into volumetric density [9] or an opacity field [40]. For example, some approaches couple Gaussians with a neural SDF, either jointly optimizing an SDF branch [17, 19, 38] or using SDF gradients to pull Gaussian primitives toward the zero-level set [43]. Currently, ex-ternal regularization strategies such as monocular geometric cues [2, 25, 27, 31], multi-view consistency [1, 32], or semantic priors [44] are also being leveraged to stabilize reconstruction in challenging scenes. Despite this rapid progress, most GS-based surface reconstruction methods either lack a well-defined surface constraint, making them susceptible to floating artifacts in empty space and low-texture regions. 
+
+Surface Reconstruction via Grid-based Neural Field. Applying sparse voxel grids, octrees, and hash grids to neural rendering and 3D reconstruction has been extensively explored [6–8, 13, 16, 21, 37], where spatial sparsity and structured storage enable empty-space skipping, fast feature queries, and tighter geomet-ric control. Introducing grid hierarchies into Gaussian splatting has also proved effective: Scaffold-GS [18] and Octree-GS [24] regulate the spatial layout of Gaus-sians with gridified anchors to improve rendering stability and scalability. Fur-thermore, SVRaster [26] directly treats voxels as the rendering primitives for real-time high-fidelity radiance fields, and GeoSVR [15] augments this pipeline with geometric constraints to obtain accurate, mesh-extractable surfaces. 
+
+## 3 Method 
+
+We present our dual-scaffold hybrid representation with jointly optimized Gaus-sian primitives and sparse voxel grids for scene reconstruction, as shown in Fig. 2. Given multi-view posed images and imperfect monocular priors, an anchor scaffold tethering a set of 2D Gaussians is constructed via minimizing render-ing loss. Concurrently, another sparse differentiable voxel scaffold is allocated along Gaussian-estimated surfaces and optimized to acquire accurate local signed Gaussian-Voxel Duet 5        
+
+> Fig. 2: Method Overview. Starting from multi-view images, SfM points, and monocular priors, we (1) build a dual-scaffold hybrid representation , where the anchor scaffold produces 2D Gaussian surfels for appearance and the voxel scaffold encodes a sparse local SDF for surface geometry, (2) perform explicit tethering to prune off-surface anchors and Gaussians based on the learned SDF, and (3) apply im-plicit tethering to further pull remaining Gaussians toward the learned surface for accurate 3D reconstruction.
+
+distance fields (Sec. 3.2). We achieve high-quality geometry with efficient con-vergence by mutual regularization between these two scaffolds. Specifically, an explicit anchor-tethering strategy prunes distant anchored Gaussians while pre-serving those in proximity to the surface (Sec. 3.3), and an implicit surface teth-ering strategy further pulls the remaining Gaussians and surfaces closer via joint optimization to ensure precise geometric and photometric quality (Sec. 3.4). 
+
+3.1 Preliminary Gaussian Splatting . 3D Gaussian Splatting (3DGS) [14] represents scenes us-ing explicit 3D Gaussian ellipsoids {G i}, each defined by its mean position μ and covariance matrix Σ: G(x) = exp  − 12 (x − μ)⊤Σ−1(x − μ), where x denotes a 3D world coordinate. 3D Gaussians are projected to screen space as 2D Gaussians 
+
+{G 2Di }, with colors composited via: c = PNi=1 ciαiG2Di
+
+Qi−1
+
+> j=1
+
+ 1 − αj G2Dj
+
+, where 
+
+αi is opacity and ci is view-dependent color. Scaffold-GS [18] further improves its rendering accuracy and robustness with anchor-spawned 3D Gaussians. Although 3DGS and its variants excel at photorealistic image rendering, they lack a well-defined surface and hinder geometry extraction. To better align Gaus-sian primitives towards scene surfaces, 2D Gaussian Splatting (2DGS) opts for 2D Gaussian surfels defined on local tangent planes. Each surfel Gi is param-eterized by center pi, tangent axes tu, tv , and scales (su, s v ) in a local plane: 
+
+P (u, v ) = pi + sutuu + sv tv v = H(u, v, 1, 1) T , where H is a 4 × 4 homogeneous transformation matrix representing 2D Gaussian geometry. In the local tangent coordinates (u, v ), the Gaussian surfel is defined as: G(u, v ) = exp 
+
+
+
+− u2+v2
+
+> 2
+
+
+
+.
+
+Each 2D surfel is subsequently projected to screen space and follows a com-positing procedure similar to 3DGS. In this paper, we also integrate the anchor scaffold into 2DGS to improve structural coherence and rendering quality. 
+
+Neural Signed Distance Field. Neural SDF represents scene geometry as a neural function f mapping any 3D point x to its signed distance s towards the 6 Z. Du et al. 
+
+nearest surfaces: s = fd(x). Thus, the scene surface is defined as the zero-level set of its SDF: S = { x ∈ R3 | f (x) = 0 }.Existing neural SDF-based reconstruction approaches [29, 33, 38] typically apply a differentiable transformation that converts SDF value s into opacity value or volume density, and enables end-to-end gradient propagation from pho-tometric loss supervision. However, such a learning process that regresses an underlying dense SDF field from scratch generally exhibits slow convergence, requiring several hours for per-scene optimization. 
+
+3.2 Dual-Scaffold Hybrid Representation Anchor Scaffold Representation. Optimization of unstructured 3D Gaussian primitives often leads to geometric artifacts in large scenes, as there are excessive Gaussians drifting freely to minimize photometric error. However, simply fixing Gaussian positions would sacrifice the expressive view-dependent appearance they can model. Inspired by Scaffold-GS [18], we introduce anchor scaffold to 2DGS for view-consistent planar Gaussian primitives as well as improved photometric rendering quality [12], especially in complex large 3D scenes. Specifically, with anchors ini-tialized from SfM points, each anchor then dynamically manages k 2D Gaussian primitives {G 0, G1, . . . , Gk−1}, predicting their attributes conditioned on viewing parameters. Following previous monocular reconstruction approaches [6, 15, 39], we also resort to monocular geometric cues of depths and normals [34, 36] for efficient warm-up of the training phase. Despite imperfect and view-inconsistent monocular priors, we experimentally found that our anchored 2DGS can leverage them to render view-consistent geometry after a few iterations ( ≤ 1 min). Our design choice of anchor scaffold significantly reduces the redundancy of Gaussians and regularizes their spatial distribution. We also notice that dur-ing optimization, the anchor scaffold itself lacks further geometric constraints but only obeys heuristic management [18], preventing strict alignment between anchored Gaussians and underlying geometry (Fig. 3), which will be further addressed by our mutual optimization strategy in Sec. 3.3 and Sec. 3.4. 
+
+Voxel Scaffold Representation. To promote explicit surface awareness into anchor scaffold representation, we introduce a voxel scaffold that represents the scene surface through a collection of sparse voxels allocated near object surfaces, each encoding a local signed distance fv (x) and RGB color cv . Unlike methods that learn a global dense SDF field covering the entire scene, our approach focuses on learning local SDFs fv (x) near surfaces and only optimizes their residual updates. This strategy of local geometric modeling and residual learning enables detailed surface reconstruction and fast convergence, which in turn regularizes concurrent Gaussian distributions within the anchor scaffold. However, in monocular reconstruction, initializing sparse voxels near the true surface presents a chicken-and-egg dilemma: accurate voxel placement requires surface knowledge, which is initially unavailable. We overcome this by creating sparse voxels using TSDF fusion of depth maps rendered by warmed-up Gaus-sians, and placing sparse voxels in estimated surface-proximal regions. Gaussian-Voxel Duet 7         
+
+> Fig. 3: Analysis of Gaussian Point Distributions .(Left) We report the dis-tant Gaussian ratio δdunder varying thresholds d, alongside qualitative visualizations. Both quantitative metrics and qualitative comparisons demonstrate that our method effectively suppresses noisy floating Gaussians, yielding cleaner and more geometry-faithful distributions. (Right) On an extremely textureless scene (9460c8889d from ScanNet++), our explicit and implicit tethering strategies effectively align Gaussian primitives (blue points) toward the underlying GT surface, producing complete and ac-curate reconstruction. The metric Dgs computes the mean distance between all Gaus-sian points and the GT mesh.
+
+The above process establishes a core synergistic cycle: the voxel scaffold pro-vides a geometrically accurate surface to which the anchor scaffold’s Gaussians are guided, while the anchor scaffold, in turn, supplies the necessary supervisory geometry signals to update the voxel scaffold. 
+
+3.3 Explicit Anchor Tethering 
+
+To ensure comprehensive coverage of scene surfaces, adaptive densification and pruning of anchors are essential. Prior work [14, 18] follows a heuristic strategy based on positional gradients. Anchors exhibiting substantial accumulated gra-dients ∇i are subdivided ( ∇i > τ g ), while those associated with persistently low-opacity Gaussians ( Oi) are culled ( Oi < τ p), where τg and τp represent pre-determined threshold hyperparameters. Despite effectively distributing anchors across the scene, it also produces unreliable anchors due to its reliance on dom-inant photometric cues and the objective for novel view synthesis, which cause anchors to remain geometrically ungrounded and lead to geometry artifacts in challenging areas like textureless or sparse-view regions. We take advantage of our robust voxel scaffold to tether Gaussian anchors. Specifically, for an anchor Ai at xi, we define a confidence band B = {x ∈ R3 ||fv (x)| < τ d} from the SDF fv , which delineates the valid region for the anchor’s placement and presence. We augment the tethering mechanism with additional geometric priors: 
+
+Grow if: (∇i > τ g ) ∧ (|fv (xi)| < τ d),
+
+Prune if: (Oi < τ p) ∨ (|fv (xi)| > τ d), (1) where τd is a predefined threshold and controls the band’s width. This ensures that densification is strictly applied to photometrically significant anchors near the surface, while the pruning operation removes optically inactive Gaussians 8 Z. Du et al. 
+
+and those lying far from the inferred surface. Additionally, we explicitly remove any anchor-spawned neural Gaussians residing beyond the valid boundary of the voxel scaffold, as they are deemed to be too distant from the surface. By explicitly tethering anchors to the voxel scaffold, our approach enforces geometric coherence while preserving the flexibility needed for high-quality ap-pearance modeling. In contrast to previous methods that introduce an SDF-aware pruning operator [38], or rigidly attach Gaussians to voxel grids or mesh faces [3, 15], our strategy balances simplicity, stability and adaptability, leading to more accurate geometry and improved novel view synthesis. 
+
+3.4 Implicit Surface Tethering 
+
+The explicit anchor tethering strategy in Sec. 3.3 has ensured anchors’ proxim-ity to the surface, but it does not directly constrain anchor-spawned Gaussian primitives. To close this gap, we introduce an implicit surface tethering loss that further pulls each remaining Gaussian toward its nearest surface by minimizing the tethering length, i.e., SDF value. Formally, for a Gaussian primitive located at pk, we define the loss as: 
+
+Lt =
+
+> N
+
+X
+
+> k=1
+
+∥fv (pk)∥2, (2) where fv (·) is the SDF evaluated from voxel scaffold. We adopt the L2 loss which strongly penalizes Gaussians with large absolute SDF values (i.e., those relatively far from the surface), while granting greater freedom of movement to those already within the vicinity of the zero-level set. This loss serves a dual purpose. First, it acts as a continuous attractor, pulling Gaussians toward the inferred geometry and refining their spatial distribution. Second, it also provides direct supervisory signals to the SDF field fv (·) itself. The gradients flowing from Lt help update the queried SDF value, making voxel scaffold a more accurate geometric representation. As evidenced by our experi-ments, this simple yet effective loss facilitates a synergistic co-optimization be-tween the anchor scaffold and the voxel scaffold, leading to improved geometric accuracy without compromising rendering fidelity. 
+
+3.5 Implementation Details Anchor scaffold optimization. Following [12, 18], we optimize the anchor scaffold with standard photometric loss Lc, depth distortion loss Ld, and normal consistency loss Ln. Monocular depth and normal cues [34,36] are incorporated by formulating corresponding losses Lmd and Lmn as a Pearson depth loss and an L1 loss, respectively. The overall anchor–Gaussian objective is 
+
+Lgs = Lc + λdLd + λnLn + λmd Lmd + λmn Lmn , (3) where the weights λmd and λmn follow an annealing schedule with decreasing dependence on monocular priors. Gaussian-Voxel Duet 9
+
+Voxel scaffold optimization. We implement our voxel scaffold using the dif-ferentiable sparse voxel engine of Torch-Ash [7]. After warming up the anchor scaffold for Nw iterations, we unproject the Gaussian-rendered depth to initialize a sparse voxel grid. The voxel SDF, color, and normal are then optimized with a voxel color loss Lvc , voxel depth loss Lvd , voxel normal loss Lvn , and an Eikonal regularizer Leik :
+
+Lv = Lvc + λvd Lvd + λvn Lvn + λeik Leik . (4) In practice, we set the warm-up iteration Nw ∈ { 1500 , 3000 } depending on the scene scale, and reset the voxel scaffold every 1500 iterations to mitigate the influence of outdated initialization. 
+
+Overall loss function. The proposed tethering loss Lt in Sec. 3.4 links Gaus-sians to the voxel scaffold and confines them to a narrow surface band. The overall training objective is: 
+
+L = Lgs + Lv + λtLt, (5) where λt controls the strength of tethering. Most of the hyper-parameters, in-cluding loss weights and optimization settings, are set following 2DGS [12], Scaffold-GS [18], and Torch-Ash [7], and we found our performance insensitive to the particular choice of hyper-parameters. More details can be seen in Appendix. 
+
+## 4 Experiment 
+
+4.1 Experimental Setup Datasets. We evaluate our method on three real-world indoor datasets: Scan-Net++ [35], ScanNetv2 [4], and DeepBlending [11]. For ScanNet++, we ran-domly select 12 scenes covering various spatial scales and layout complexity. For ScanNetv2 and DeepBlending, we follow the same scene selections as MonoSDF [39] and 3DGS [14], respectively. 
+
+Metrics. For surface reconstruction, we strictly follow the evaluation protocol of [22] and report five geometric metrics: accuracy (Acc), completeness (Comp), precision (Prec), recall (Recall), and F-score. For novel view synthesis, we adopt standard image quality metrics: PSNR, SSIM, and LPIPS. 
+
+Baselines. We compare our method against the following representative recon-struction baselines: (1) implicit methods: MonoSDF [39], and Ash [6]; (2) explicit methods: 2DGS [12], RaDeGS [41], GOF [40], PGSR [1], and GeoSVR [15]; (3) hybrid methods: GSDF [38] and GS-Pull [43]. To fairly compare against strong reconstruction baselines with monocular priors, we equip PGSR and GSDF with the same depth and normal supervision (denoted as PGSR* and GSDF*, respec-tively), and add monocular normal cues to GeoSVR (denoted as GeoSVR*), leading to a further performance boost. 10 Z. Du et al. 
+
+> Fig. 4: Qualitative Results of Surface Reconstruction on ScanNet++ . We show the global mesh (top) and detailed view of the region indicated by the red box (bottom) of four scenes. Compared to 2DGS and monocular-enhanced baselines (GSDF*, PGSR*, GeoSVR*), our approach achieves the best reconstruction qual-ity. Specifically, our method yields cleaner geometry with fewer floating artifacts and smoother surfaces, especially in texture-less regions and large-scale multi-room layouts.
+
+4.2 Surface Reconstruction 
+
+We conducted extensive quantitative comparisons on the popular ScanNet++ and ScanNetv2 datasets, as shown in Tab. 1. On the ScanNet++ dataset, our method outperforms all baselines, achieving the highest F-score, recall, and pre-cision. This clearly surpasses SOTA surface reconstruction methods like GeoSVR and PGSR with fair monocular cues. Qualitative results in Fig. 4 demonstrate our superior surface reconstruction quality on both challenging textureless room-scale scenes and multi-room large-scale scenes. Our method produces precise and smooth meshes without the structural artifacts observed in the baselines. Fig. 3 also shows that our method manages to prune distant Gaussians and leaves significantly more Gaussian primitives lying close to the surface. Gaussian-Voxel Duet 11 
+
+Fig. 5: Qualitative Results of Surface Reconstruction on ScanNetv2 . We vi-sualize the global mesh (top) and zoomed-in views (bottom) of the highlighted re-gions. Compared to 2DGS and prior-aided baselines (GSDF*, PGSR*, GeoSVR*), our method consistently yields cleaner geometry with sharper details and fewer artifacts. 
+
+Table 1: Quantitative Results of Surface Reconstruction on ScanNet++ and ScanNetv2 . First , second , and third best results are highlighted. * means meth-ods enhanced with monocular cues. The symbol † indicates the results on ScanNetv2 datasets cited directly from the original papers. 
+
+Method ScanNet++ ScanNetv2 
+
+Acc ↓ Comp ↓ Prec ↑ Recall ↑ F-score ↑ Acc ↓ Comp ↓ Prec ↑ Recall ↑ F-Score ↑
+
+> Impl.
+
+MonoSDF † [39] 0.077 0.082 0.566 0.494 0.524 0.035 0.048 0.799 0.681 0.733 Ash † [7] 0.235 0.065 0.336 0.518 0.400 0.042 0.056 0.751 0.678 0.710 Expl. 2DGS [12] 0.122 0.084 0.583 0.607 0.593 0.262 0.339 0.183 0.171 0.173 GOF [40] 0.188 0.064 0.488 0.618 0.541 0.194 0.267 0.253 0.255 0.252 RadeGS [41] 0.165 0.057 0.471 0.659 0.543 0.179 0.330 0.319 0.247 0.276 PGSR [1] 0.157 0.065 0.640 0.687 0.660 0.272 0.167 0.319 0.342 0.330 PGSR* 0.081 0.047 0.718 0.732 0.723 0.127 0.141 0.396 0.372 0.383 GeoSVR [15] 0.047 0.045 0.783 0.774 0.778 0.066 0.068 0.551 0.527 0.538 GeoSVR* 0.046 0.044 0.788 0.778 0.782 0.061 0.064 0.575 0.551 0.562 Hybr. GSDF [38] 0.182 0.405 0.508 0.391 0.436 0.160 0.207 0.264 0.182 0.215 GSDF* 0.071 0.113 0.612 0.516 0.559 0.158 0.161 0.318 0.257 0.283 GS-Pull [43] 0.240 0.155 0.377 0.348 0.356 0.200 0.194 0.251 0.226 0.236 
+
+Ours 0.076 0.027 0.805 0.890 0.842 0.055 0.034 0.768 0.804 0.785 
+
+On the ScanNetv2 dataset, our method also consistently performs the best in F-score, outperforming SOTA NeRF-based implicit and voxel-based explicit 12 Z. Du et al.                                                               
+
+> Table 2: Quantitative Comparison of Novel View Synthesis (NVS). We eval-uate NVS on both view extrapolation and interpolation set-ups, respectively.
+> Method ScanNet++ (Extra.) DeepBlending (Inter.)
+> PSNR ↑SSIM ↑LPIPS ↓PSNR ↑SSIM ↑LPIPS ↓
+> Expl.
+> 2DGS [12] 23.24 0.849 0.258 29.47 0.903 0.256 GOF [40] 23.54 0.865 0.237 29.36 0.905 0.245 RadeGS [41] 23.27 0.858 0.244 29.16 0.906 0.246 PGSR [1] 23.42 0.851 0.246 28.43 0.887 0.248 GeoSVR [15] 23.13 0.841 0.243 29.31 0.903 0.260 Hybr.  GSDF [38] 23.44 0.857 0.238 30.06 0.911 0.235 GS-Pull [43] 21.93 0.799 0.357 26.14 0.838 0.296
+> Ours 23.76 0.861 0.240 29.70 0.903 0.263
+
+reconstruction methods MonoSDF and GeoSVR*, both of which have access to depth and normal priors. Notably, explicit baselines struggle with ScanNetv2’s noisy COLMAP initialization and motion blur unlike on the high-fidelity Scan-Net++ (See Appendix C.1 for more details). This issue also undermines hybrid approaches that bootstrap SDF learning from optimized Gaussians like GSDF and GS-Pull. By explicitly deleting distant Gaussians and anchoring them to the learned SDF surface, our method effectively prevents drift under noisy initializa-tion, enabling robust reconstruction. Fig. 5 further validates the robustness of our method when processing images captured with motion blur and illumination variation. Our extracted 3D meshes are visually better structured with smooth surfaces and fewer artifacts. 
+
+4.3 Appearance Reconstruction 
+
+Though not exclusively designed for photorealistic novel view synthesis, in ad-dition to accurate surface reconstruction, our method also achieves high-quality image rendering. We tested the NVS performance on two different setups: Scan-Net++ focuses on view extrapolation since its testing views deviate from training-view trajectories, while DeepBlending focuses on the view interpolation setup. As shown in Tab. 2, our method achieves the highest PSNR on the ScanNet++ dataset and competitive rendering quality on the DeepBlending dataset. Quali-tative NVS results are shown in Fig. 6, and textured meshes for DeepBlending scenes are presented in Fig. 7. Since our reconstructions exhibit better geometric fidelity than the RealityCapture reference meshes, we do not report quantitative reconstruction metrics on DeepBlending. Gaussian-Voxel Duet 13 
+
+Fig. 6: Qualitative Results of NVS . We visualize the NVS results on ScanNet++ and DeepBlending scenes, respectively. While baselines suffer from severe ghosting and artifacts, our method consistently achieves superior rendering quality and robustness. 
+
+Fig. 7: Qualitative Results of Surface Reconstruction on DeepBlending . We compare the mesh produced by our method with the GT mesh provided in the official dataset (generated by RealityCapture). Our method recovers faithful geometry and high-fidelity textures comparable to the photogrammetry baseline. 
+
+4.4 Efficiency Analysis 
+
+With the dual-scaffold design, our method learns a local SDF field and only restricts Gaussians close to the surfaces. As a result, we substantially improve convergence efficiency compared to SOTA Gaussian-SDF method GSDF ( 9×
+
+faster) [38] as well as the explicit method GeoSVR [15], as shown in Tab. 3. Note that all methods are evaluated on a single RTX 4090 GPU, except that GSDF is evaluated on an H20 GPU due to Out-of-Memory issue. 14 Z. Du et al. 
+
+Table 3: Efficiency Analysis. Time pro-filing is evaluated by averaging the total time costs of two selected scenes from Scan-Net++ and DeepBlending, respectively.            
+
+> Explicit Hybrid
+> 2DGS PGSR GeoSVR GSDF Ours ScanNet++ [35] 9min 32min 41min ≈3.5h 20min DeepBlending [11] 21min 55min 31min ≈4h26min
+
+Table 4: Ablation Study on Scan-Net++. Each design choice leads to a considerable performance gain across five comprehensive metrics. Method Prec ↑ Recall ↑ F-score ↑ Dgs (cm) ↓ δ5(%) ↓                    
+
+> Anchor Sca. 0.519 0.946 0.659 7.0 14.53 + Voxel Sca. 0.639 0.889 0.735 //+ Exp. 0.774 0.880 0.821 3.2 6.04 + Imp. 0.805 0.890 0.842 2.6 4.81
+
+4.5 Ablation Study 
+
+In this section, we systematically verify the effectiveness of our key design choices in high-quality reconstruction, using the 12 randomly selected scenes from Scan-Net++. In addition to metrics of precision, recall and F-score which concern geometry quality within a pre-defined threshold (typically set to 5cm), we con-duct a further investigation by measuring the average absolute distance between Gaussian positions and ground-truth surface (denoted as Dgs (cm)) as well as the ratio of ‘outlier‘ Gaussian points deviating from ground-truth surface be-yond 5cm (denoted as δ5(%)), aiming to provide a more comprehensive view of underlying reconstruction quality. Tab. 4 reports the contribution of voxel scaf-fold (Voxel Sca.), explicit anchor tethering (Exp.), and implicit surface tethering (Imp.) when successively applied to our 2DGS anchor scaffold (Anchor Sca.). We observe a clear and considerable performance boost from each of our key mod-ules. Our full model reaches an average Gaussian-surface distance of 2.6cm and has only 4.81% of Gaussians more than 5cm away from the ground truth surface. These results also validate our high F-score in Tab. 1. Qualitative comparisons are shown in Fig. 3. We have further explored the ratio of ‘outlier’ Gaussian points given different thresholding distances d ranging from 1cm to 11cm, as shown in Fig. 3. Compared to all popular Gaussian-based approaches, our method consistently has far fewer distant Gaussians under various thresholding distances, with more than 90% of Gaussians located within 3cm of the underlying geometric surface. 
+
+## 5 Conclusion and Limitation 
+
+In this work, we present Gaussian-Voxel Duet, a dual-scaffolding hybrid repre-sentation designed for efficient and accurate surface reconstruction. With a 2D Gaussian anchor scaffold and a concurrently built sparse voxel grid along esti-mated surfaces, we further introduce explicit and implicit tethering strategies to facilitate their mutual regularization and co-optimization. As a result, struc-tured Gaussian primitives are streamlined and lie close to the underlying surface defined by the SDF, greatly improving the compactness and efficacy in 3D re-construction. In addition, we show superior novel view synthesis in extrapolated Gaussian-Voxel Duet 15 
+
+viewpoints owing to reliable geometry and much faster convergence compared to existing Gaussian-SDF hybrid representations. 
+
+Limitation . While our method demonstrates strong performance in monocu-lar indoor reconstruction, we also provide preliminary and promising results on outdoor unbounded scenes in Appendix C.5. Nevertheless, we observe that the SDF inherently favors bounded, watertight surfaces, which are less represen-tative of unbounded outdoor environments. Extending our dual-scaffold design with Unsigned Distance Field (UDF) offers a promising direction. In addition, we adopt a single-resolution voxel scaffold. Integrating a multi-resolution grid, as explored in Instant-NGP [21] and MonoSDF [39], could further enhance the reconstruction of fine-grained geometric details. 
+
+## References 
+
+1. Chen, D., Li, H., Ye, W., Wang, Y., Xie, W., Zhai, S., Wang, N., Liu, H., Bao, H., Zhang, G.: Pgsr: Planar-based gaussian splatting for efficient and high-fidelity sur-face reconstruction. IEEE Transactions on Visualization and Computer Graphics (TVCG) (2024) 2. Chen, H., Wei, F., Li, C., Huang, T., Wang, Y., Lee, G.H.: Vcr-gaus: View con-sistent depth-normal regularizer for gaussian surface reconstruction. Neural Infor-mation Processing Systems (NeurIPS) 37 , 139725–139750 (2024) 3. Choi, J., Lee, Y., Lee, H., Kwon, H., Manocha, D.: Meshgs: Adaptive mesh-aligned gaussian splatting for high-quality rendering. In: Proceedings of the Asian Confer-ence on Computer Vision (ACCV). pp. 3310–3326 (2024) 4. Dai, A., Chang, A.X., Savva, M., Halber, M., Funkhouser, T., Nießner, M.: Scannet: Richly-annotated 3d reconstructions of indoor scenes. In: IEEE Conference on Computer Vision and Pattern Recognition (CVPR). pp. 5828–5839 (2017) 5. Dai, P., Xu, J., Xie, W., Liu, X., Wang, H., Xu, W.: High-quality surface recon-struction using gaussian surfels. In: SIGGRAPH. pp. 1–11 (2024) 6. Dong, W., Choy, C., Loop, C., Litany, O., Zhu, Y., Anandkumar, A.: Fast monocu-lar scene reconstruction with global-sparse local-dense grids. In: IEEE Conference on Computer Vision and Pattern Recognition (CVPR). pp. 4263–4272 (2023) 7. Dong, W., Lao, Y., Kaess, M., Koltun, V.: Ash: A modern framework for paral-lel spatial hashing in 3d perception. IEEE Transactions on Pattern Analysis and Machine Intelligence (TPAMI) 45 (5), 5417–5435 (2022) 8. Fridovich-Keil, S., Yu, A., Tancik, M., Chen, Q., Recht, B., Kanazawa, A.: Plenox-els: Radiance fields without neural networks. In: IEEE Conference on Computer Vision and Pattern Recognition (CVPR). pp. 5501–5510 (2022) 9. Guédon, A., Lepetit, V.: Sugar: Surface-aligned gaussian splatting for efficient 3d mesh reconstruction and high-quality mesh rendering. In: IEEE Conference on Computer Vision and Pattern Recognition (CVPR). pp. 5354–5363 (2024) 10. Guo, H., Peng, S., Lin, H., Wang, Q., Zhang, G., Bao, H., Zhou, X.: Neural 3d scene reconstruction with the manhattan-world assumption. In: IEEE Conference on Computer Vision and Pattern Recognition (CVPR). pp. 5511–5520 (2022) 11. Hedman, P., Philip, J., Price, T., Frahm, J.M., Drettakis, G., Brostow, G.: Deep blending for free-viewpoint image-based rendering. ACM Transactions on Graphics (TOG) 37 (6), 1–15 (2018) 12. Huang, B., Yu, Z., Chen, A., Geiger, A., Gao, S.: 2d gaussian splatting for geo-metrically accurate radiance fields. In: SIGGRAPH. pp. 1–11 (2024) 16 Z. Du et al. 13. Jiang, C., Zhang, H., Liu, P., Yu, Z., Cheng, H., Zhou, B., Shen, S.: H2-mapping: Real-time dense mapping using hierarchical hybrid representation. IEEE Robotics and Automation Letters 8(10), 6787–6794 (2023) 14. Kerbl, B., Kopanas, G., Leimkühler, T., Drettakis, G.: 3d gaussian splatting for real-time radiance field rendering. ACM Transactions on Graphics (TOG) 42 (4), 139–1 (2023) 15. Li, J., Zhang, J., Zhang, Y., Bai, X., Zheng, J., Yu, X., Gu, L.: Geosvr: Tam-ing sparse voxels for geometrically accurate surface reconstruction. arXiv preprint arXiv:2509.18090 (2025) 16. Li, Z., Müller, T., Evans, A., Taylor, R.H., Unberath, M., Liu, M.Y., Lin, C.H.: Neuralangelo: High-fidelity neural surface reconstruction. In: IEEE Conference on Computer Vision and Pattern Recognition (CVPR). pp. 8456–8465 (2023) 17. Liu, J., Wan, Y., Wang, B., Zheng, C., Lin, J., Zhang, F.: Gs-sdf: Lidar-augmented gaussian splatting and neural sdf for geometrically consistent rendering and recon-struction. arXiv preprint arXiv:2503.10170 (2025) 18. Lu, T., Yu, M., Xu, L., Xiangli, Y., Wang, L., Lin, D., Dai, B.: Scaffold-gs: Struc-tured 3d gaussians for view-adaptive rendering. In: IEEE Conference on Computer Vision and Pattern Recognition (CVPR). pp. 20654–20664 (2024) 19. Lyu, X., Sun, Y.T., Huang, Y.H., Wu, X., Yang, Z., Chen, Y., Pang, J., Qi, X.: 3dgsr: Implicit surface reconstruction with 3d gaussian splatting. ACM Transac-tions on Graphics (TOG) 43 (6), 1–12 (2024) 20. Mildenhall, B., Srinivasan, P.P., Tancik, M., Barron, J.T., Ramamoorthi, R., Ng, R.: Nerf: Representing scenes as neural radiance fields for view synthesis. In: Eu-ropean Conference on Computer Vision (ECCV). pp. 405–421. Springer (2020) 21. Müller, T., Evans, A., Schied, C., Keller, A.: Instant neural graphics primitives with a multiresolution hash encoding. ACM Transactions on Graphics (TOG) 41 (4), 1– 15 (2022) 22. Murez, Z., Van As, T., Bartolozzi, J., Sinha, A., Badrinarayanan, V., Rabinovich, A.: Atlas: End-to-end 3d scene reconstruction from posed images. In: European Conference on Computer Vision (ECCV). pp. 414–431. Springer (2020) 23. Oechsle, M., Peng, S., Geiger, A.: Unisurf: Unifying neural implicit surfaces and radiance fields for multi-view reconstruction. In: International Conference on Com-puter Vision (ICCV). pp. 5589–5599 (2021) 24. Ren, K., Jiang, L., Lu, T., Yu, M., Xu, L., Ni, Z., Dai, B.: Octree-gs: Towards consistent real-time rendering with lod-structured 3d gaussians. IEEE Transactions on Pattern Analysis and Machine Intelligence (TPAMI) (2025) 25. Ruan, C., Wang, Y., Guan, T., Zhang, B., Ju, L.: Indoorgs: Geometric cues guided gaussian splatting for indoor scene reconstruction. In: IEEE Conference on Com-puter Vision and Pattern Recognition (CVPR). pp. 844–853 (2025) 26. Sun, C., Choe, J., Loop, C., Ma, W.C., Wang, Y.C.F.: Sparse voxels rasterization: Real-time high-fidelity radiance field rendering. In: IEEE Conference on Computer Vision and Pattern Recognition (CVPR). pp. 16187–16196 (2025) 27. Turkulainen, M., Ren, X., Melekhov, I., Seiskari, O., Rahtu, E., Kannala, J.: Dn-splatter: Depth and normal priors for gaussian splatting and meshing. In: Pro-ceedings of the IEEE Workshop on Applications of Computer Vision (WACV). pp. 2421–2431. IEEE (2025) 28. Wang, J., Wang, P., Long, X., Theobalt, C., Komura, T., Liu, L., Wang, W.: Neuris: Neural reconstruction of indoor scenes using normal priors. In: European Conference on Computer Vision (ECCV). pp. 139–155. Springer (2022) Gaussian-Voxel Duet 17 29. Wang, P., Liu, L., Liu, Y., Theobalt, C., Komura, T., Wang, W.: Neus: Learning neural implicit surfaces by volume rendering for multi-view reconstruction. Neural Information Processing Systems (NeurIPS) 34 , 27171–27183 (2021) 30. Wang, Y., Huang, D., Ye, W., Zhang, G., Ouyang, W., He, T.: Neurodin: A two-stage framework for high-fidelity neural surface reconstruction. Neural Information Processing Systems (NeurIPS) 37 , 103168–103197 (2024) 31. Xiang, H., Li, X., Cheng, K., Lai, X., Zhang, W., Liao, Z., Zeng, L., Liu, X.: Gaus-sianroom: Improving 3d gaussian splatting with sdf guidance and monocular cues for indoor scene reconstruction. In: IEEE International Conference on Robotics and Automation (ICRA). pp. 2686–2693. IEEE (2025) 32. Xu, B., Hu, J., Li, J., He, Y.: Gsurf: 3d reconstruction via signed distance fields with direct gaussian supervision. arXiv preprint arXiv:2411.15723 (2024) 33. Yariv, L., Gu, J., Kasten, Y., Lipman, Y.: Volume rendering of neural implicit surfaces. Neural Information Processing Systems (NeurIPS) 34 , 4805–4815 (2021) 34. Ye, C., Qiu, L., Gu, X., Zuo, Q., Wu, Y., Dong, Z., Bo, L., Xiu, Y., Han, X.: Sta-blenormal: Reducing diffusion variance for stable and sharp normal. ACM Trans-actions on Graphics (TOG) 43 (6), 1–18 (2024) 35. Yeshwanth, C., Liu, Y.C., Nießner, M., Dai, A.: Scannet++: A high-fidelity dataset of 3d indoor scenes. In: International Conference on Computer Vision (ICCV). pp. 12–22 (2023) 36. Yin, W., Zhang, C., Chen, H., Cai, Z., Yu, G., Wang, K., Chen, X., Shen, C.: Met-ric3d: Towards zero-shot metric 3d prediction from a single image. In: International Conference on Computer Vision (ICCV). pp. 9043–9053 (2023) 37. Yu, A., Li, R., Tancik, M., Li, H., Ng, R., Kanazawa, A.: Plenoctrees for real-time rendering of neural radiance fields. In: International Conference on Computer Vision (ICCV). pp. 5752–5761 (2021) 38. Yu, M., Lu, T., Xu, L., Jiang, L., Xiangli, Y., Dai, B.: Gsdf: 3dgs meets sdf for improved neural rendering and reconstruction. Neural Information Processing Sys-tems (NeurIPS) 37 , 129507–129530 (2024) 39. Yu, Z., Peng, S., Niemeyer, M., Sattler, T., Geiger, A.: Monosdf: Exploring monoc-ular geometric cues for neural implicit surface reconstruction. Neural Information Processing Systems (NeurIPS) 35 , 25018–25032 (2022) 40. Yu, Z., Sattler, T., Geiger, A.: Gaussian opacity fields: Efficient adaptive surface reconstruction in unbounded scenes. ACM Transactions on Graphics (TOG) 43 (6), 1–13 (2024) 41. Zhang, B., Fang, C., Shrestha, R., Liang, Y., Long, X., Tan, P.: Rade-gs: Raster-izing depth in gaussian splatting. arXiv preprint arXiv:2406.01467 (2024) 42. Zhang, K., Riegler, G., Snavely, N., Koltun, V.: Nerf++: Analyzing and improving neural radiance fields. arXiv preprint arXiv:2010.07492 (2020) 43. Zhang, W., Liu, Y.S., Han, Z.: Neural signed distance function inference through splatting 3d gaussians pulled on zero-level set. Neural Information Processing Sys-tems (NeurIPS) 37 , 101856–101879 (2024) 44. Zhang, X., Bao, C., Chen, Y., Zhai, H., Dong, Y., Bao, H., Cui, Z., Zhang, G.: Atlasgs: Atlanta-world guided surface reconstruction with implicit structured gaus-sians. arXiv preprint arXiv:2510.25129 (2025) 45. Zhang, Z., Huang, B., Jiang, H., Zhou, L., Xiang, X., Shen, S.: Quadratic gaus-sian splatting for efficient and detailed surface reconstruction. arXiv preprint arXiv:2411.16392 (2024) 46. Zhu, Z.L., Yang, J., Wang, B.: Gaussian splatting with discretized sdf for re-lightable assets. In: International Conference on Computer Vision (ICCV). pp. 25155–25164 (2025) Gaussian-Voxel Duet 1
+
+# Supplementary Material for Gaussian-Voxel Duet 
+
+## A Overview 
+
+This supplementary material is organized as follows: (1) Sec. B provides addi-tional implementation details of our method, including training hyperparameters and mesh extraction. (2) Sec. C presents details on the datasets, evaluation met-rics, qualitative ablation studies, along with additional quantitative and quali-tative experimental results. 
+
+## B Implementation Details 
+
+B.1 Hyperparameters 
+
+Most of our hyperparameters, including loss weights and optimization settings, are inherited from prior works [6, 12, 18]. Here, we summarize the key settings. For the anchor-Gaussian objective in Eq. 3, we follow [12, 18] and set λd =10 and λn = 0 .05 . The weights of the monocular depth and normal loss are initialized as λmd = 0 .1 and λmn = 0 .5, and both are annealed to 0.01 after 10,000 iterations. For the voxel scaffold objective in Eq. 4, we adopt the loss formulation of [6] and set λvd = 0 .5, λvn = 0 .1, and λeik = 0 .1. For the explicit tethering strategy in Eq. 1, we follow Scaffold-GS [18] and use τg = 0 .0002 and τp = 0 .005 as the gradient and opacity thresholds, respectively. The SDF threshold τd is chosen according to the scene scale: 0.1 for ScanNetv2 and ScanNet++ scenes, and 0.3
+
+for DeepBlending scenes. For the implicit tethering loss in Eq. 2, we set the associated loss weight to λt = 5 . We optimize our model for a total of 20,000 iterations. 
+
+B.2 Mesh Extraction 
+
+We extract watertight meshes by directly applying Marching Cubes (MC) to the local SDF learned within our sparse voxel scaffold, requiring no additional post-processing. 
+
+Explicit Gaussian methods. Prior explicit approaches [1, 12, 15, 40, 41] typi-cally extract meshes via TSDF fusion of rendered depth maps. This multi-stage pipeline is computationally expensive and prone to noise and floaters due to multi-view inconsistencies. 
+
+Implicit and hybrid SDF methods. Implicit [39] and hybrid SDF-based methods [38] learn a global SDF over the entire volume. Standard evaluation protocols for these methods involve a multi-step process: first applying Marching 2 Z. Du et al.                                               
+
+> Table 5: Surface Reconstruction on ScanNet++. First , second , and third best results are highlighted. MonoSDF and GSDF* use the standard “MC →render →
+> TSDF fusion” protocol to obtain the mesh. Explicit methods (PGSR*, GeoSVR*) ren-der depth maps and conduct TSDF fusion. In contrast, Ours directly extracts meshes from the local voxel SDF. Ours (Fusion) applies TSDF fusion to tethered Gaussians and already surpasses the baselines. Method Acc ↓Comp ↓Prec ↑Recall ↑F-score ↑
+> MonoSDF [39] 0.077 0.082 0.566 0.494 0.524 GSDF* [38] 0.071 0.113 0.612 0.516 0.559 PGSR* [1] 0.081 0.047 0.718 0.732 0.723 GeoSVR* [15] 0.046 0.044 0.788 0.778 0.782 Ours (Fusion) 0.083 0.022 0.704 0.936 0.798 Ours 0.076 0.027 0.805 0.890 0.842
+
+Cubes to the learned SDF to generate a global mesh, then rendering depth maps from this mesh at the input camera poses, and finally re-fusing these depth maps via TSDF fusion to obtain the final mesh [10,39]. While this procedure effectively restricts evaluation to observed regions, the unconstrained SDF in unobserved areas tends to generate spurious geometry and floaters. Furthermore, the “MC →
+
+depth rendering → TSDF fusion” pipeline significantly increases computational overhead. 
+
+Ours. In contrast, our method allocates sparse voxels around surfaces and learns a local SDF, leaving free space unmeshed. This allows direct, high-quality mesh extraction via Marching Cubes, bypassing the time-consuming TSDF fusion steps required by baselines. We also evaluate a variant using TSDF fusion on depth maps rendered from our tethered Gaussians, denoted as Ours (Fusion). As shown in Tab. 5, our direct extraction yields higher accuracy. Notably, even Ours (Fusion) outperforms the baselines, confirming that our tethering strategy aligns Gaussians closely with the underlying surfaces. 
+
+## C Experiments 
+
+C.1 Dataset Details 
+
+We summarize the scenes used in our experiments in Tab. 6, which cover different spatial scales and layout complexities. Below, we provide additional details on image quality, resolution, and the evaluation setup for each dataset. 
+
+ScanNet++. We use the provided DSLR images at a resolution of 1752 × 1168 
+
+pixels, which offer high-quality, low-noise observations. ScanNet++ scenes are used to evaluate both surface reconstruction and novel view synthesis. Following the official split, ScanNet++ adopts a view extrapolation setup, where testing views deviate from the training trajectories, as illustrated in Fig. 8. This poses Gaussian-Voxel Duet 3
+
+Fig. 8: Dataset Overview. ScanNetv2 contains small-scale single-room scenes with low-resolution, motion-blurred images and is used only for surface reconstruc-tion; ScanNet++ covers a range of scene scales and layout complexities with high-resolution DSLR images and is used for both surface reconstruction and challenging view-extrapolation NVS, where red and blue trajectories denote training and testing views, respectively; DeepBlending consists of large-scale scenes with high-resolution images and is used to evaluate NVS under a view-interpolation setup. 
+
+Table 6: Scene IDs Used in the Experiments. In our experiments, we use 4 small-scale scenes from ScanNetv2 [4], 7 medium-scale scenes and 5 large-scale scenes from ScanNet++ [35], and 2 large-scale scenes from DeepBlending [11]. To evaluate our method under varying layout complexities, we include three multi-room ScanNet++ scenes (0a184cf634, 6f1848d1e3, 281ba69af1), which are marked with † in the table; other scenes are single-room.        
+
+> Dataset Scale Scene IDs
+> ScanNetv2 [4] small scene0050_00, scene0084_00, scene0580_00, scene0616_00 ScanNet++ [35] medium 8b5caf3398, 0a184cf634 †, 13c3e046d7, 1d003b07bd 260db9cf5a, 8be0cd3817, 6464461276 large 578511c8a9, 036bce3393, 6f1848d1e3 †, 281ba69af1 †
+> 9460c8889d DeepBlending [11] large drjohnson, playroom
+
+a much more challenging novel view synthesis setting than view interpolation, as models must generalize to viewpoints that lie outside the observed camera paths. 
+
+DeepBlending. We follow 3DGS [14] and select the drjohnson and playroom scenes. The image resolutions are 1332 × 876 pixels for the drjohnson scene and 
+
+1264 × 832 pixels for the playroom scene. Due to the lack of reliable high-quality ground truth meshes in DeepBlending, we use this dataset exclusively for novel view synthesis evaluation. In contrast to ScanNet++, DeepBlending adopts a view interpolation setup, where testing views lie along the captured camera trajectories, leading to a more benign distribution of novel views. 4 Z. Du et al. 
+
+ScanNetv2. We use all available images for each selected scene for training and focus on evaluating surface reconstruction performance on ScanNetv2. Follow-ing [10, 39], the input RGB images of ScanNetv2 scenes are resized to 640 × 480 
+
+pixels and often exhibit noticeable motion blur and sensor noise, resulting in relatively low image quality. We generate SfM point clouds from the given cam-era poses and images, but the degraded image quality leads to very sparse and noisy SfM points (see the first column of Fig. 8). In our ScanNetv2 experiments, we find that explicit methods tend to overfit to noisy observations, resulting in severe floaters and chaotic geometry. Hybrid baselines that use these optimized, yet noisy, Gaussian point clouds as priors for SDF learning inevitably propagate errors into the subsequent optimization process. In contrast, our method effec-tively resists such initial noise by dynamically pruning distant Gaussians and firmly tethering the remaining primitives to the learned SDF surface, preventing geometric drift and recovering clean structures. 
+
+C.2 Evaluation Metrics 
+
+For surface reconstruction, we follow the evaluation protocol of [22] and compute accuracy (Acc), completeness (Comp), precision (Prec), recall (Recall), and F-score, with the definitions provided in Tab. 7. 
+
+Table 7: Surface Reconstruction Metrics. P and P ∗ denote the point sets of the predicted and ground-truth meshes, respectively. The distance threshold is set to 
+
+T = 5 cm. Metric Definition Acc mean p∈P                            
+
+> 
+> min p∗∈P∗∥p−p∗∥2
+> 
+> Comp mean p∗∈P∗
+> 
+> min p∈P∥p−p∗∥2
+> 
+> Prec mean p∈P
+> 
+> min p∗∈P∗∥p−p∗∥2< T
+> 
+> Recall mean p∗∈P∗
+> 
+> min p∈P∥p−p∗∥2< T
+> 
+> F-score 2×Prec ×Recall Prec +Recall
+
+For novel view synthesis, we report standard PSNR, SSIM, and LPIPS be-tween the rendered and ground-truth images, averaged over all test views. To analyze the Gaussian point distribution in Sec. 4.5, we additionally com-pute the mean distance Dgs and the out-of-surface ratio δt of Gaussian centers. Let Pgs be the point set of generated Gaussian centers and P ∗ be the point set of the ground-truth mesh. Dgs and δt are computed as: 
+
+Dgs = mean pgs ∈Pgs 
+
+
+
+min  
+
+> p∗∈P∗
+
+∥pgs − p∗∥2
+
+
+
+, (6) Gaussian-Voxel Duet 5 
+
+> Fig. 9: Qualitative Results of the Ablation Study. The 2DGS anchor scaffold (Anchor Sca.) exhibits significant floating artifacts (indicated by red arrows). Adding the voxel scaffold (Voxel Sca.) to learn a local SDF effectively eliminates this noise, producing clean geometry. Incorporating explicit anchor tethering (Exp.) and implicit surface tethering (Imp.) further enhances surface details and completeness.
+
+δt = { pgs ∈ Pgs | min p∗∈P ∗ ∥pgs − p∗∥2 > t }
+
+|Pgs | , (7) where t is a predefined distance threshold and | · | denotes the number of points in a set. 
+
+C.3 Qualitative Results of Ablation Study 
+
+We visually verify the effectiveness of our key design choices in Fig. 9. The associ-ated quantitative results can be seen in Tab. 4. As highlighted by the red arrows, the 2DGS anchor scaffold (Anchor Sca.) suffers from severe floating artifacts in free space. By introducing the voxel scaffold (Voxel Sca.), our method leverages local SDF learning to effectively suppress these floaters, yielding a significantly cleaner geometry. Finally, the successive application of explicit anchor tethering (Exp.) and implicit surface tethering (Imp.) further refines surface fidelity and recovers structural details, resulting in high-quality meshes that align closely with the ground truth. 
+
+C.4 Comparison with Feed-Forward Methods 
+
+We also evaluate our method against VGGT, a recent generalizable feed-forward approach. By feeding all training images into VGGT, we extract depth maps and camera poses, which are subsequently processed via TSDF fusion to gen-erate a global mesh. As shown in Fig. 10, while VGGT enables fast single-pass inference, it yields coarse geometry with limited precision despite being pre-trained on large-scale data. In contrast, our per-scene optimization remains essential for capturing intricate details and achieving high-fidelity reconstruc-tion. Consequently, bridging these two paradigms—by employing the output of feed-forward networks as a geometric initialization to accelerate our per-scene optimization—is a compelling direction for future work. 6 Z. Du et al. 
+
+Fig. 10: Qualitative Comparison with VGGT. While VGGT enables fast single-pass inference, it yields coarse geometry. In contrast, our per-scene optimization re-mains essential for achieving high-fidelity reconstruction. 
+
+Fig. 11: Qualitative Comparison on TNT. Compared to baselines like GS-Pull and GeoSVR, our method demonstrates enhanced robustness when handling reflective surfaces. 
+
+Table 8: Quantitative Results on DTU and TNT. Quantitative metrics of the baselines are sourced from their original papers. As shown, our approach achieves superior performance compared to existing hybrid baselines.                
+
+> Method Expl .Hybr .GeoSVR GSDF GS-Pull Ours DTU (CD ↓)0.47 0.80 0.75 0.55
+> TNT (F-score ↑)0.56 -0.43 0.50
+
+C.5 Reconstruction Results on Objects and Outdoor Scenes 
+
+While our method focuses on monocular indoor reconstruction, we also evaluate it on the standard DTU and TNT benchmarks. As illustrated in Tab. 8, our approach outperforms the hybrid baselines GSDF and GS-Pull. Fig. 11 illustrates that our method exhibits greater robustness on challenging reflective surfaces, such as window glass. However, we observe that explicit methods like GeoSVR still lead on these datasets, likely because SDF is advantageous for bounded indoor layouts with watertight objects, rather than open surfaces in unbounded scenes. As discussed in the limitations, integrating multi-resolution grid and Gaussian-Voxel Duet 7
+
+Unsigned Distance Field (UDF) into our voxel-scaffold representation offers a promising direction to further enhance reconstruction quality. 
+
+C.6 Additional Results 
+
+We further present extended qualitative results of surface reconstruction on the ScanNet++ and ScanNetv2 datasets in Fig. 12 and Fig. 13, respectively. To highlight the advantages of our approach, we visualize the error maps of the re-constructed meshes, which clearly demonstrate our superior accuracy. As shown in Fig. 12, existing Gaussian-based methods such as 2DGS and PGSR* struggle in textureless regions and often fail to recover valid geometry. While GeoSVR* utilizes voxel constraints, it tends to produce incomplete meshes with significant holes, resulting in poor coverage of the underlying scene. In contrast, our method generates high-quality 3D meshes with complete and faithful geometry. On ScanNetv2, explicit methods typically undergo significant performance degradation due to challenges such as low image resolution, motion blur, and noisy SfM initializations. However, our method exhibits strong robustness, effec-tively suppressing noise and recovering clean surfaces even under these adverse conditions. In addition to qualitative comparisons, we report detailed scene-wise quanti-tative results of our experiments in Tab. 9, 10, 11, and 12. Furthermore, Fig. 14 illustrates the scalability of our method by showcasing reconstruction results for very large-scale scenes. 
+
+Table 9: Scene-wise Quantitative Results of Surface Reconstruction on ScanNet++. We report Accuracy (Acc), Completeness (Comp), Precision (Prec), Recall (Rec), and F-score. For Acc and Comp, lower is better ( ↓); for others, higher is better ( ↑). Best results are highlighted in bold .Scene PGSR ∗ GeoSVR ∗ Ours Acc ↓ Comp ↓ Prec ↑ Rec ↑ F-score ↑ Acc ↓ Comp ↓ Prec ↑ Rec ↑ F-score ↑ Acc ↓ Comp ↓ Prec ↑ Rec ↑ F-score ↑                                                                                                                                                                                         
+
+> 0a184cf634 0.040 0.041 0.715 0.704 0.710 0.032 0.039 0.855 0.836 0.845 0.025 0.024 0.903 0.923 0.913
+> 036bce3393 0.034 0.038 0.783 0.781 0.782 0.032 0.036 0.836 0.818 0.827 0.029 0.027 0.837 0.872 0.854
+> 13c3e046d7 0.031 0.047 0.816 0.777 0.796 0.035 0.066 0.815 0.737 0.774 0.039 0.035 0.764 0.834 0.798
+> 1d003b07bd 0.037 0.042 0.778 0.784 0.781 0.035 0.038 0.801 0.799 0.800 0.032 0.024 0.839 0.921 0.878
+> 260db9cf5a 0.045 0.048 0.760 0.749 0.754 0.033 0.031 0.809 0.821 0.815 0.028 0.019 0.872 0.950 0.909
+> 281ba69af1 0.056 0.073 0.618 0.559 0.587 0.042 0.061 0.754 0.667 0.708 0.045 0.040 0.767 0.776 0.772
+> 8be0cd3817 0.048 0.040 0.731 0.724 0.727 0.026 0.026 0.860 0.863 0.862 0.018 0.017 0.954 0.969 0.961
+> 8b5caf3398 0.161 0.031 0.628 0.823 0.712 0.052 0.035 0.715 0.799 0.754 0.190 0.021 0.643 0.961 0.770
+> 6464461276 0.045 0.039 0.752 0.766 0.759 0.034 0.040 0.757 0.755 0.756 0.030 0.024 0.867 0.900 0.883
+> 578511c8a9 0.282 0.042 0.676 0.774 0.722 0.057 0.055 0.678 0.700 0.689 0.303 0.025 0.645 0.903 0.752
+> 6f1848d1e3 0.130 0.063 0.681 0.649 0.664 0.123 0.046 0.790 0.772 0.781 0.123 0.039 0.801 0.813 0.807
+> 9460c8889d 0.062 0.057 0.678 0.692 0.685 0.051 0.053 0.784 0.774 0.779 0.055 0.029 0.764 0.859 0.809
+> Average 0.081 0.047 0.718 0.732 0.723 0.046 0.044 0.788 0.778 0.782 0.076 0.027 0.805 0.890 0.842
+
+8 Z. Du et al. 
+
+Table 10: Scene-wise Quantitative Results of Surface Reconstruction on ScanNetv2. We report Accuracy (Acc), Completeness (Comp), Precision (Prec), Re-call (Rec), and F-score. For Acc and Comp, lower is better ( ↓); for others, higher is better ( ↑). Best results are highlighted in bold .Scene PGSR ∗ GeoSVR ∗ Ours Acc ↓ Comp ↓ Prec ↑ Rec ↑ F-score ↑ Acc ↓ Comp ↓ Prec ↑ Rec ↑ F-score ↑ Acc ↓ Comp ↓ Prec ↑ Rec ↑ F-score ↑                                                                  
+
+> scene0050_00 0.122 0.118 0.480 0.471 0.475 0.046 0.051 0.689 0.633 0.660 0.045 0.030 0.818 0.844 0.831
+> scene0084_00 0.116 0.091 0.343 0.353 0.348 0.082 0.082 0.418 0.447 0.432 0.090 0.029 0.780 0.871 0.823
+> scene0580_00 0.137 0.213 0.442 0.379 0.408 0.058 0.062 0.601 0.575 0.587 0.043 0.037 0.733 0.750 0.741
+> scene0616_00 0.131 0.144 0.319 0.283 0.300 0.057 0.061 0.592 0.551 0.571 0.042 0.037 0.741 0.753 0.747
+> Average 0.127 0.141 0.396 0.372 0.383 0.061 0.064 0.575 0.551 0.562 0.055 0.034 0.768 0.804 0.785
+
+Table 11: Scene-wise Quantitative Results of Novel View Synthesis on Scan-Net++. We report PSNR, SSIM, and LPIPS. For PSNR and SSIM, higher is better (↑); for LPIPS, lower is better ( ↓). Best results are highlighted in bold .Scene PGSR GeoSVR Ours PSNR ↑ SSIM ↑ LPIPS ↓ PSNR ↑ SSIM ↑ LPIPS ↓ PSNR ↑ SSIM ↑ LPIPS ↓
+
+036bce3393 25.36 0.851 0.195 23.80 0.808 0.232 25.41 0.849 0.220 0a184cf634 26.80 0.905 0.201 26.67 0.901 0.194 26.67 0.907 0.212 13c3e046d7 21.90 0.823 0.294 22.02 0.812 0.285 21.88 0.835 0.284 
+
+1d003b07bd 20.16 0.795 0.295 19.98 0.802 0.264 20.17 0.814 0.258 
+
+260db9cf5a 26.17 0.885 0.179 25.00 0.860 0.194 26.79 0.891 0.184 281ba69af1 19.00 0.835 0.285 19.51 0.831 0.277 18.13 0.818 0.285 578511c8a9 21.86 0.831 0.246 20.96 0.808 0.261 22.63 0.846 0.251 6464461276 21.61 0.812 0.270 21.73 0.803 0.260 22.08 0.824 0.254 
+
+6f1848d1e3 22.88 0.863 0.271 22.38 0.850 0.254 23.44 0.874 0.272 8b5caf3398 27.06 0.904 0.171 25.96 0.889 0.189 27.57 0.913 0.169 
+
+8be0cd3817 27.35 0.910 0.218 27.77 0.901 0.213 27.63 0.908 0.226 9460c8889d 20.84 0.802 0.323 21.74 0.823 0.292 22.72 0.851 0.267 
+
+Average 23.42 0.851 0.246 23.13 0.841 0.243 23.76 0.861 0.240 
+
+Table 12: Scene-wise Quantitative Results of Novel View Synthesis on Deep-Blending. We report PSNR, SSIM, and LPIPS. For PSNR and SSIM, higher is better (↑); for LPIPS, lower is better ( ↓). Best results are highlighted in bold .Scene PGSR GeoSVR Ours PSNR ↑ SSIM ↑ LPIPS ↓ PSNR ↑ SSIM ↑ LPIPS ↓ PSNR ↑ SSIM ↑ LPIPS ↓
+
+drjohnson 27.06 0.868 0.265 28.82 0.902 0.300 28.78 0.898 0.268 playroom 29.81 0.906 0.231 29.80 0.903 0.220 30.63 0.908 0.258 Average 28.43 0.887 0.248 29.31 0.903 0.260 29.70 0.903 0.263 Gaussian-Voxel Duet 9
+
+Fig. 12: Qualitative Results of Surface Reconstruction on ScanNet++. We show the global mesh (top) and error map of the region indicated by the blue box (bottom) of six scenes. Reconstruction errors are visualized from white (low) to red (high). While 2DGS and PGSR* struggle in textureless areas, GSDF* fails to learn an accurate global SDF in large-scale scenes, and GeoSVR* produces visible holes. In contrast, our method achieves superior geometric accuracy. 10 Z. Du et al. 
+
+Fig. 13: Qualitative Results of Surface Reconstruction on ScanNetv2. We show the global mesh (top) and error map of the region indicated by the blue box (bottom) of three scenes. Existing baselines like 2DGS, PGSR*, and GSDF* suffer from degraded image quality and noisy SfM initializations, leading to poor surface reconstruction. Although GeoSVR* attempts to recover high-frequency details, the absence of planar constraints results in noisy and uneven surface. In contrast, our method achieves a favorable balance between preserving fine details and ensuring sur-face smoothness, yielding the most accurate and structurally coherent reconstructions. 
+
+Fig. 14: Extended Results on Large-Scale Scenes. Our method successfully scales to diverse, expansive scenes.

@@ -1,0 +1,1851 @@
+Title: Uncertainty-driven 3D Gaussian Splatting Active Mapping via Anisotropic Visibility Field
+
+URL Source: https://arxiv.org/pdf/2605.30342v1
+
+Published Time: Fri, 29 May 2026 01:54:25 GMT
+
+Number of Pages: 29
+
+Markdown Content:
+# Uncertainty-driven 3D Gaussian Splatting Active Mapping via Anisotropic Visibility Field 
+
+## Shangjie Xue *† Jesse Dill * Dhruv Ahuja * Frank Dellaert Panagiotis Tsiotras Danfei Xu Georgia Institute of Technology 
+
+## Abstract 
+
+We present Gaussian Splatting Anisotropic Visibility Field (GAVIS), a novel framework for uncertainty quan-tification and active mapping in 3DGS. Our key insight is that regions unseen from the training views yield unreliable predictions from the 3DGS. To address this, we introduce a principled and efficient method for quantifying the visibility field in 3DGS, defined as the anisotropic visibility of each particle with respect to the training views, and represented using spherical harmonics. The resulting visibility field is integrated into a Bayesian Network-based uncertainty-aware 3DGS rasterizer, enabling real-time (200 FPS) un-certainty quantification for synthesized views. Active map-ping is further performed within a maximum information gain framework building on this formulation. Extensive experiments across diverse environments demonstrate that GAVIS consistently and significantly outperforms prior ap-proaches in both accuracy and efficiency. Moreover, beyond standalone use, our method can be applied post-hoc to im-prove the performance of existing approaches. 
+
+## 1. Introduction 
+
+When an autonomous robot is deployed in a new environ-ment, it should explore and understand its surroundings. This process, known as active mapping [7, 51, 105], is essential for applications such as household robots, space robots, and search-and-rescue robots. One common goal of active mapping is to achieve comprehensive visual cov-erage of the scene, formulated as a planning objective that reduces uncertainty in the reconstructed map [8, 104]. Asuitable representation is critical for active mapping, as it must not only enable high-quality and fast reconstruction but also enable accurate uncertainty quantification [66]. Recent advancements in radiance fields [57] have demonstrated remarkable capabilities in high-quality scene reconstruction. Notably, the emergence of 3D Gaussian Splatting (3DGS) [39] has shown superior reconstruction quality and rendering speed. However, due to the large        
+
+> *Equal contribution. †xsj@gatech.edu GT Reconstruction Uncertainty Map
+> Region Visible to
+> Training Views
+> Region Invisible to
+> Training Views
+> High
+> Uncertainty
+> Low
+> Uncertainty
+> Visible
+> Region
+> Invisible
+> Region
+
+Figure 1. GAVIS overview. Gaussian Splatting Anisotropic Visi-bility Field (GAVIS) quantifies uncertainty in 3DGS by modeling 
+
+visibility , i.e., whether a region is observed by the training views. Observed regions have low uncertainty (left room), whereas unob-served regions have high uncertainty (right room). 
+
+number of trainable parameters in 3DGS, accurately and efficiently quantifying its uncertainty remains challeng-ing. Recent approaches to uncertainty quantification in 3DGS adopted established epistemic uncertainty quantifica-tion methods from machine learning, including variational inference [54] and Laplace approximation [32], to tackle this challenge. However, a gap exists between the objec-tive of machine learning uncertainty quantification and ac-tive mapping. In active mapping, the robot aims to achieve high-quality reconstruction by providing visual coverage of the entire scene, where predictions for regions never visi-ble in the training views are always considered unreliable. However, as an approximation method, existing learning-based uncertainty quantification techniques are unable to guarantee this, and often underestimate the uncertainty in these unseen, out-of-distribution regions [22, 63, 95]. We propose 3D Gaussian Splatting Anisotropic Visibil-ity Field (GAVIS), a principled method that reliably assigns high uncertainty to unobserved regions for active mapping, while incurring minimal computational overhead. This method can be used independently or integrated seamlessly, as a post-hoc module, into existing learning-based uncer-tainty quantification framework that estimates uncertainty in 3DGS parameters or volumetric radiance field outputs, thereby improving its performance.        
+
+> arXiv:2605.30342v1 [cs.CV] 28 May 2026 Scene
+> Planned
+> View
+> Synthesized Views
+> arg max
+> Candidate
+> Views
+> Uncertainty Maps
+> Next Best View Sec 4.2, 7 & 8
+> VF
+> CONST
+> VF
+> QUERY
+> UA 3DGS
+> Rasterizer
+> Training Views
+> Visibility
+> Field
+> Directional
+> Visibility
+> 3DGS Sec 4.3 & 9 PSNR
+> SSIM
+> LPIPS
+> CR VIS
+> UQ
+> (FPS)
+> TUP (s)
+> 21
+> 23
+> 25
+> 0.68
+> 0.77
+> 0.85
+> 0.2 0.27 0.33
+> 0.25
+> 0.5
+> 0.75
+> 0.25
+> 0.5
+> 0.75
+> 73
+> 147
+> 220
+> 0.4
+> 3.4
+> 29.2
+> FisherRF
+> VIMC
+> NVF
+> GAVIS (ours)
+
+Figure 2. GAVIS framework. (Left) Given a trained 3DGS, GAVIS constructs a visibility field (VF CONST) to represent regions invisible to the training views. It then quantifies uncertainty over sampled candidate views using an uncertainty-aware 3DGS rasterizer (UA 3DGS Rasterizer) that queries the visibility field (VF QUERY). Finally, the maximum-uncertainty view is selected as the next observation. (Right) GAVIS achieves top performance across all evaluation metrics (see Sec. 5 for details). 
+
+GAVIS extends the 3D Gaussian Splatting framework to quantify the extent to which each region is covered by the training views, inspired by NVF [104], which shows that visibility is closely related to regional uncertainty. However, NVF relies on training a neural network to ap-proximate a view-independent (isotropic) visibility field for NeRF, making it computationally expensive and impractical for real-world applications, while also introducing approxi-mation errors and neglecting the inherently view-dependent nature of visibility. In contrast, GAVIS explicitly mod-els the view-dependent visibility of each Gaussian parti-cle relative to all training views (see Sec. 4.1 for details), with analytical, efficient, gradient-free computation. The uncertainty-aware 3DGS rasterization is then modeled as a Bayesian network, which integrates both field-based uncer-tainty and visibility into the ray-based camera observations. Within this framework, the color distribution along a ray is modeled as a Gaussian Mixture Model (GMM). The en-tropy of the GMM serves as an objective to guide the agent in selecting the optimal poses for active mapping. Extensive evaluations are conducted across diverse envi-ronments, including standard NeRF Blender assets, indoor scenes, and space robot scenarios. The results demonstrate that our method outperforms all existing approaches in both accuracy and efficiency. Moreover, we also demonstrate that our method can be used independently or as a post-hoc method to enhance the performance of existing methods. To summarize, our main contributions are: • We propose a principled uncertainty quantification method for 3DGS that incorporates anisotropic visibility. • The proposed method can be used independently or inte-grated seamlessly as a post-hoc enhancement to improve the performance of existing frameworks. • Through extensive evaluations across diverse environ-ments, we demonstrate that our method is both effective for active mapping tasks and computationally more effi-cient than existing approaches. 
+
+## 2. Related Work 
+
+Uncertainty Quantification in Radiance Fields. With the introduction of NeRF [57], subsequent work has improved efficiency [20, 39, 59] and enabled online SLAM [36, 55] with explicit representations such as 3DGS [39]. Uncer-tainty quantification in radiance fields [41] has seen grow-ing interest for artifact removal [23, 96] and active map-ping [32, 46, 104]. Parameter uncertainty is estimated via ensembles [89], variational inference [48, 54, 76], condi-tional flows [77], Fisher information via Laplace approxi-mation [23, 32, 49], or Monte Carlo dropout [21]. Alterna-tively, radiance field outputs can be modeled as probability distributions [33, 46, 47, 64, 70, 100, 104, 107], including as Gaussian-distributed RGB [64, 70], occupancy from NeRF density [19, 46, 78, 107] or 3DGS opacity [12, 35, 50], or as a volume rendering weighted GMM to incorporate visibility into ray-wise uncertainty [104]. 
+
+Active Mapping. Active mapping is typically posed as an optimization over information gain [5, 6, 9, 10, 14, 43, 56, 58, 65, 71, 82, 85, 86, 94, 98], and augmented with frontier-based [15, 18, 24, 26, 37, 38, 52, 68, 71, 74, 75, 93, 105, 106] or sampling-based [7, 8, 16, 44, 65, 68, 74, 79, 90, 93, 113] heuristics to reduce computational cost [66]. Recent radiance field active mapping methods pair voxel grids [12, 19, 34, 35, 103, 108] or Voronoi graphs [45, 50], while a complementary line of work learns planning policies end-to-end [11, 42, 61, 97, 114]. 
+
+Radiance Fields Visibility. Visibility has received grow-ing attention in radiance fields for uncertainty quantifica-tion and active mapping, providing a measure of where the scene is poorly observed. Matsuki et al. [55] define single-view visibility via an occupancy threshold; in 3DGS this reduces to particle opacity [12, 50]; however, single-view metrics ignore prior observations. Multi-view meth-ods [60, 104] aggregate visibility across views, yet face lim-itations, specifically, NVF [104] requires neural-network training to approximate positional visibility, and ProvN-eRF [60] models per-point provenance via additional post-hoc optimization, both incur minutes to hours of runtime, limiting real-time applicability. Beyond active mapping, visibility also serves as a cue for inpainting by identify-ing high-uncertainty regions [81], and has been incorpo-rated into radiance-field pipelines for relighting [84], ma-terial decomposition [111], occlusion-aware view synthe-sis [13, 27, 80, 109], and scene reconstruction [83, 112]. 3. Background 
+
+This section reviews the background on radiance fields, uncertainty-aware volume rendering, and active mapping, with further details available in appendix Sec. 8, 9, and [39, 57, 104]. 
+
+Radiance field. A radiance field [57] FΘ maps a 3D lo-cation x ∈ R3 and a view direction d ∈ S2 to color 
+
+c(x, d) ∈ R3 and volume density σ(x) ∈ R≥0. Given a camera ray r(t) = o + td with near/far bounds tn, t f , the pixel color is computed via volume rendering: 
+
+C(r) = 
+
+Z tf
+
+> tn
+
+T (t) σ r(t) c r(t), d dt,  (1) where T (t) = exp 
+
+
+
+− R ttn σ r(s) ds
+
+
+
+represents the (accu-mulated) transmittance from the near bounds tn to point t.In practice, the integral is discretized and computed numeri-cally. In NeRF [57], FΘ is a neural network with parameters 
+
+Θ; in 3DGS [39], the scene is explicitly represented by a trainable mixture of ellipsoidal Gaussian primitives param-eterized by Θ.
+
+Active Mapping. Active mapping, or next-best-view (NBV) planning, aims to determine the robot’s next action that most effectively reduces the uncertainty of the recon-structed map. A practical formulation is to select the action with the highest predicted entropy in observation: 
+
+τ ∗ = arg max 
+
+> τ
+
+H(Zτ ) , (2) where τ denotes the action (i.e., a candidate camera pose) and Zτ is the random variable which represents the observa-tion obtained after executing action τ , and H is the entropy. This objective has been widely adopted in methods that rep-resent scenes using radiance fields [46, 54, 104, 107], and can be interpreted as an approximation of the fundamental objective of maximizing the expected information gain of the map obtained from new observations (see Sec. 9 for de-tails). However, a key challenge remains: accurately and efficiently quantifying the uncertainty of synthesized views generated by a radiance field. 
+
+Uncertainty-aware Volume Rendering. To quantify synthesized-view uncertainty, NVF [104] extends determin-istic volume rendering of NeRF to a stochastic formula-tion. By assuming the emitted color c is Gaussian, the probability density functions (PDF) of the pixel colors are modeled as Gaussian mixture models (GMM) induced by a Bayesian-network view of uncertainty-aware volume ren-dering, specifically p(z) = P 
+
+> i
+
+wiN (μci , Qci ), where 
+
+p(z) is the PDF of observed pixel color, μci and Qci are the mean and variance of emission color at point i, wi is the mixture weight, which can be obtained from (1) (details in Sec. 8). NVF [104] highlighted the crucial role of visibil-ity in uncertainty quantification and active mapping, as pre-dictions for regions unseen by training views are unreliable. Accordingly, a visibility correction term is incorporated into the GMM of the pixel-color PDF:             
+
+> p(z0) = X
+> i
+> w∗
+> iviN μci,Qci
+> +N μ0,Q0
+>  X
+> i
+> w∗
+> i(1 −vi).(3)
+
+where w∗ 
+
+> i
+
+denotes the visibility-corrected mixture weight (see Sec. 8 for details), N (μ0, Q0) is a prior distribution with large variance representing emitted color of invisible regions, vi represents the probability that point xi is visi-ble in at least one training view, quantified as vi = V (xi),where V : R3 → [0 , 1] is the (isotropic) visibility field as a function of position. In NVF [104], a neural network is used to both learn the radiance field and approximate the visibility field Vθ (xi). Moreover, its accuracy is limited since it relies on a neural approximation and models visi-bility solely as a function of position, ignoring directional anisotropy. Details are discussed in the next section. 
+
+## 4. Method 
+
+The main challenge in applying radiance-field-based uncer-tainty quantification to active mapping lies in accurately es-timating uncertainty that enables effective exploration while maintaining a practical runtime. Visibility-field-based ap-proach NVF [104], which assigns high uncertainty to un-seen regions, could potentially facilitate effective explo-ration. However, NVF typically require retraining a neural network for the visibility field at every planning step, which takes several minutes and severely limits their applicability to real-world robotic systems. To address this challenge, we propose 3D Gaussian Splatting Anisotropic Visibility Field (GAVIS), which ex-plicitly models the visibility field using the 3DGS represen-tation. This formulation enables analytical construction of the visibility field without training, achieving construction 
+
+within 1 second , which is 500× faster than NVF [104], while providing more accurate uncertainty quantification that leads to more effective exploration. In this section, we first formulate the visibility field within the 3DGS representation (Sec. 4.1). In particular, we introduce a direction-aware visibility field that can ac-count for visibility change given a specific viewing direc-tion. We then introduce an efficient method to construct and query the visibility field (Sec. 4.2) by representing it with spherical harmonics. Finally, we summarize the over-all active mapping pipeline that integrates the visibility field with uncertainty-aware 3DGS rasterization (Sec. 4.3). 
+
+4.1. Formulation 
+
+In this subsection, we introduce a novel formulation of vis-ibility field in 3DGS. Notably, a straightforward extension of the Neural Visibility Field [104] (as a function of po-sition only) from NeRF to 3DGS (i.e. assigning a scalar visibility value to each Gaussian) is insufficient for reliable uncertainty quantification. Since a 3DGS particle can oc-clude itself (i.e. self-occlusion), observing a particle from one direction provides little information about its appear-ance from the opposite side. As a simple example, viewing only one side of a wall reveals nothing about the opposite side (Fig. 7). A reliable uncertainty quantification method should assign high uncertainty there to drive exploration. To account for this, a visibility field should depend on the viewing direction. We therefore define the Anisotropic Visibility Field V (i)(d) for 3DGS, where for each Gaus-sian particle i, the visibility is formulated as a function of the rendering direction d, with d being the unit vector point-ing toward the synthesized view. To obtain V (i)(d), which is the visibility with respect to the entire training set (views observed so far), we first com-pute the visibility with respect to a single training view. Let 
+
+V (i) 
+
+> p
+
+(d) denote the visibility from a specific camera pose 
+
+p ∈ P , where P = {p1, p2, . . . } is the set of camera poses in the training set. We have 
+
+V (i) 
+
+> p
+
+(d) = Φ i, p
+
+|{z} 
+
+> FOV
+
+Tp(tp 
+
+> i
+
+)
+
+| {z } 
+
+> Transmittance
+
+ν(d; dp)
+
+| {z }
+
+> Directional Visibility
+
+(4) where 
+
+ν(d; dp) := ζ exp( κd · dp), ζ = exp( −κ)
+
+This equation consists of three components: 
+
+FOV Φi, p ∈ { 0, 1} is a binary indicator denoting whether the particle i lies within the field of view of camera p, where 
+
+Φi, p = 1 if it is within the field of view and 0 otherwise. 
+
+Transmittance Tp(tp 
+
+> i
+
+) denotes the probability that the ray travels along dp from xp to particle i without occlusion, where dp = xi−xp 
+
+> || xi−xp||
+
+, xp is the position of camera view 
+
+p. This term can be directly obtained from the radiance field output. The first two terms Φi, pTp(tp 
+
+> i
+
+) define isotropic visibility, identical to the formulation of NVF [104]. 
+
+Directional Visibility Function ν(d; dp) captures how vis-ibility V (i) 
+
+> p
+
+(d) changes as the rendering direction d of a novel view deviates from the training view direction dp.Viewing an object from one direction does not imply knowl-edge of its appearance from the opposite side; the larger the angular difference between d and dp, the lower the visi-bility and the higher the uncertainty. We use the spherical function ζ exp( κd · dp), proportional to the widely used von Mises-Fisher distribution, an analogue of the Gaus-sian distribution for spherical data. Here, κ is analogous to the reciprocal of variance in the Gaussian distribution, con-trolling the concentration around the mean direction, and 
+
+ζ = exp( −κ) is a constant factor ensuring ν(dp; dp) = 1 
+
+when the rendering direction matches the training direction. Therefore, the anisotropic visibility field for the entire training set can be computed from the per-training-view anisotropic visibility V (i) 
+
+> p
+
+(d) (i.e., the probability of being Single view                         
+
+> (Full transmission)
+> 3DGS particle
+> Training view
+> Direction
+> Occlusion particle
+> Single view
+> (Partial occlusion)
+> Multiple views
+> Anisotropic Visibility
+> (As a function of viewing direction, in polar coordinates) =
+> 𝑌 0
+> 0𝑌 1
+> −1𝑌 1
+> 0𝑌 1
+> 1
+> …
+> ෨𝑉 (𝐝 )
+> 𝛾 00 ⋅+𝛾 1ഥ1⋅+𝛾 10 ⋅+𝛾 11 ⋅
+> +𝛾 2ഥ2⋅+𝛾 2ഥ1⋅+𝛾 20 ⋅+𝛾 21 ⋅+𝛾 22 ⋅
+> 𝑌 2
+> −2𝑌 2
+> −1𝑌 2
+> 0𝑌 2
+> 1𝑌 2
+> 2
+> High
+> Vis.
+> Low
+> Vis.
+
+Figure 3. Schematic of directional visibility. (Top) A 2D illus-tration of how visibility varies with viewing direction. Anisotropic visibility is plotted in polar coordinates for (1) a single training view, (2) a single training view with occlusion, and (3) multiple training views. (Bottom) A 3D illustration of spherical harmonics expansion of ˜V (d). See Secs. 4.1 and 4.2 for details. 
+
+visible from a single view). Specifically, the probability that particle i is visible to at least one camera in P is given by 
+
+V (i)(d) = 1 − Y
+
+> p∈P
+
+(1 − V (i) 
+
+> p
+
+(d)) . (5) An illustrative example of the anisotropic visibility field un-der different occlusion conditions is provided in Fig. 3. In the following subsection, we present an accurate and effi-cient algorithm for visibility field construction and query-ing, built upon the above formulation. 
+
+4.2. Efficient Construction and Querying of Anisotropic Visibility Field 
+
+So far, we have introduced the formulation of the anisotropic visibility field. However, directly applying the analytical expression obtained by combining (4) and (5) for uncertainty quantification and active mapping is impractical in real-world scenarios. Querying visibility from a single direction d requires accessing all training view directions 
+
+dp, where p ∈ P , causing both runtime and memory cost to scale with the length of the history trajectory. For real-world robotic applications, it is crucial to ensure fast construction and querying of the visibility field. Following the same philosophy as radiance fields, we seek a representation of the anisotropic visibility field V (i)(d) that can be stored in constant memory and queried in constant time, indepen-dent of the trajectory length. Unlike NVF [104], which re-lies on a neural network to approximate the (isotropic) vis-ibility field, we propose an analytical representation of the anisotropic visibility field based on spherical harmonics that is both more accurate and computationally efficient. In this subsection, we present the core components of our method that enable accurate and efficient construction and querying of V (i)(d) for uncertainty-driven active mapping. 
+
+Overview. Inspired by volumetric radiance field [20, 59], and 3DGS, where the directional appearance component (color) is represented using spherical harmonics [39], we express the anisotropic visibility field in the orthonormal basis of spherical harmonics (SH) Y mℓ (d), as in Fig. 3 
+
+˜V (i)(d) = 
+
+> L
+
+X
+
+> ℓ=0
+> ℓ
+
+X
+
+> m=−ℓ
+
+γP 
+
+> ℓm
+
+Y mℓ (d), (6) where ˜V (i)(d) is an auxiliary function related to visibil-ity field V (i)(d), and γP 
+
+> ℓm
+
+denotes the spherical harmonics coefficients, L denotes the maximum degree of the spher-ical harmonics. Next, we describe how auxiliary function 
+
+˜V (i)(d) is used to compute the visibility field V (i)(d), and show how the coefficients γP 
+
+> ℓm
+
+are computed analytically during visibility-field construction. 
+
+SH Representation of ν(d; dp). We notice that the direc-tional visibility function ν(d; dp) can be decomposed into spherical harmonics as 
+
+ν(d; dp) = ζ
+
+> ∞
+
+X
+
+> ℓ=0
+> ℓ
+
+X
+
+> m=−ℓ
+
+aℓm Y mℓ (d), (7) where the coefficients aℓm can be computed analytically as 
+
+aℓm = 4 π i ℓ(κ) Y m∗ 
+
+> ℓ
+
+(dp), (8) and Y mℓ (d) represents the spherical harmonic basis func-tion, and Y m∗ 
+
+> ℓ
+
+(dp) is its complex conjugate, iℓ(κ) denotes the modified spherical Bessel function of the first kind [62]. We include the full derivation in appendix Sec. 7.1. 
+
+SH Representation of V (i)(d). Since spherical harmon-ics form a linear basis, the sum of two functions expressed in spherical harmonics can be obtained by simply adding their corresponding coefficients. However, the multiplica-tion of two spherical harmonics [99] is computationally ex-pensive [53]. Directly substituting (7) and (4) into (5) to compute the SH coefficients of V (i)(d) is impractical, as it requires a computational complexity of O(|P| 4L3) and a memory cost of O(|P| 2L2) to store the parameters of 
+
+V (i)(d) (see Sec. 7.2 for details). Consequently, the query-time complexity scales quadratically with the number of training views |P| , which is not suitable for real-time ap-plications. To address this, we propose an efficient method that bypasses the direct multiplication of spherical harmon-ics, achieving computational complexity that is linear in |P| 
+
+during construction and constant during query time. Specif-ically, we can obtain a lower bound of V (i)(d) by applying the arithmetic-geometric mean (AM-GM) inequality to (5): 
+
+Algorithm 1 Query Anisotropic Visibility Field 
+
+Input: SH coefficients {γ(g) 
+
+> ℓm
+
+} for particle g; query direc-tion d; SH degree L; number of training views |P|  
+
+> 1:
+
+˜V ← PLℓ=0 
+
+Pℓm=−ℓ γ(g) 
+
+> ℓm
+
+Y mℓ (d) 
+
+> 2:
+
+V (g)(d) ← 1 − (1 − ˜V 
+
+> |P|
+
+)|P|  ▷ AM–GM lower-bound estimator  
+
+> 3:
+
+return V (g)(d)
+
+V (i)(d) ≥ 1 −
+
+
+
+1 − ˜V (i)(d)
+
+> |P|
+
+|P| 
+
+. (9) where 
+
+˜V (i)(d) := X
+
+> p
+
+V (i) 
+
+> p
+
+(d) (10) By substituting (4) into (10) and comparing it with (6), we can obtain the SH coefficients of ˜V (i)(d) as 
+
+γP 
+
+> ℓm
+
+= 4 π ζ i ℓ(κ) X
+
+> p∈P
+
+Φi, p Tp(tp 
+
+> i
+
+) Y m∗ 
+
+> ℓ
+
+(dp). (11) More details are provided in Sec. 7.3. 
+
+Visibility Field Construction. During the construction stage of the visibility field, given a trained 3DGS, we first use (11) to compute the SH coefficients of ˜V (i)(d), where the single-view particle visibility Φi, p Tp(tp 
+
+> i
+
+) is efficiently computed using a modified 3DGS rasterizer (see appendix Alg. 2 for details). For each particle, the set of coefficients 
+
+{γP
+
+> ℓm
+
+} is stored as the parameters of the visibility field, re-quiring (L + 1) 2 parameters per particle. In practice, we find that L = 2 is sufficient to accurately capture visibility anisotropy. This SH degree is also commonly used in 3DGS to represent view-dependent color [39]. 
+
+Constant-time Visibility Field Query. So far, we have in-troduced an efficient algorithm that constructs the visibility field using spherical harmonics and stores its parameters in the coefficients {γP
+
+> ℓm
+
+}. When querying the visibility field in a given direction d, we first compute ˜V (i)(d) from (6) us-ing the visibility field parameters {γP
+
+> ℓm
+
+}. We then apply the lower bound in (9) to estimate the anisotropic visibility (see Alg. 1 for details). Importantly, this formulation enables 
+
+constant-time querying of the visibility field .
+
+Visibility Field Density Control. A core component of 3DGS is its adaptive density control [39]: particles are den-sified in regions of interest and pruned in free space, yield-ing high-quality constructions without substantial memory or runtime overhead. However, this mechanism compli-cates uncertainty estimation. Empty regions may corre-spond either to true free space (pruned) or to underexplored areas with too few initialized particles (e.g., from sparse SfM/depth initialization). Because particles in unseen areas contribute no loss, they receive no gradient and thus are not densified, making both cases appear similarly empty. As a result, particle-centric uncertainty measures often overlook such regions and falsely assign uniformly low uncertainty to both, even though distinguishing them is crucial for ac-tive mapping, where the uncertainty quantification method should assign high uncertainty to underexplored areas. To tackle this challenge, we propose using virtual par-ticles to distinguish free space from underexplored re-gions. Given a trained 3DGS, we uniformly sample par-ticles across the scene with zero opacity and compute their visibility as 1 − Q 
+
+> p∈P
+
+(1 − Φi, p Tp(tp 
+
+> i
+
+)) with respect to all training views. Low visibility indicates that a particle lies in an underexplored (unseen) region, while high visibility suggests it resides in free space. Therefore, we prune vir-tual particles in free space using a visibility threshold and concatenate the remaining particles with the trained 3DGS for uncertainty quantification, where the visibility of vir-tual particles is set to V (i)(d) = 0 for all directions. We find that using a relatively small number of virtual particles (approximately 5–10% of the total particles) is sufficient to distinguish underexplored regions from free space. Further implementation details are provided in appendix Sec. 7.5. 
+
+4.3. Active Mapping Pipeline 
+
+So far, we have introduced our core contribution: an ac-curate and efficient method to compute the 3DGS visibility field V (i)(d). We then discuss how to apply it to uncertainty quantification and active mapping. Our approach extends the NeRF-based uncertainty-aware volume rendering pipeline in NVF [104] to 3DGS rasterization, while providing significant improvements in visibility estimation and computational efficiency. Given the observed images and corresponding camera poses, a 3DGS is first trained. We then construct the visibility field by computing the visibility field parameters {γP
+
+> ℓm
+
+} using (11), and integrating virtual particles that identify the un-derexplored regions. Once the visibility field is constructed, uncertainty quantification is performed by evaluating the entropy of synthesized views within a candidate view set sampled from a prior distribution (see Sec. 5.1). For each candidate view, uncertainty-aware 3DGS rasterization (see Alg. 6) is applied following (3), where vi is obtained by querying the visibility field V (i)(d) along ray direction d
+
+using (9). Finally, the next best view is selected as the one that maximizes entropy, as defined in (2). An overview of this pipeline is illustrated in Fig. 2, and further details are provided in appendix Sec. 8 & 9. 
+
+## 5. Experiments 
+
+In this section, we design experiments to address the fol-lowing key questions: ( Q1 ) Can GAVIS accurately quan-tify uncertainty to enable effective active mapping? (Q2 )Can GAVIS operate efficiently in practice? ( Q3 ) How ef-fective is each component of GAVIS? ( Q4 ) Can GAVIS be applied as a post-hoc method to improve the performance of existing uncertainty quantification approaches? 
+
+5.1. Experiment Setups 
+
+Environments. To demonstrate the advantages of our method across diverse scenes and robotic applications, we conduct experiments on three types of scenarios spanning 3 domains and 4 datasets: (1) the standard NeRF Syn-thetic dataset [57] for object reconstruction; (2) a space dataset [104] consisting of the Hubble Space Telescope (HST) and the International Space Station (ISS) for space robotics; and (3) indoor scenes, including 8 environments from the Habitat-Matterport 3D (HM3D) [69] and 8 from Gibson [101] datasets, for household robotics. We set the planning steps to 10 (NeRF-Synthetic), 40 (Gibson), and 80 (HM3D), determined as the minimal steps at which the strongest methods achieve reasonable reconstruction qual-ity. Further details are provided in appendix Sec. 11.1. 
+
+Baselines. We evaluate GAVIS against state-of-the-art (SOTA) uncertainty quantification approaches for radi-ance fields in active mapping, including 3DGS-based Fish-erRF [32], VIMC [54], and NeRF-based NVF [104]. To ensure a fair comparison of uncertainty quantification meth-ods, we use the same active mapping pipeline for all meth-ods by following the setup in NVF [104]. All methods use the same view sampler that uniformly draws collision-free poses from the scene without any additional heuristics to fairly evaluate the performance of the uncertainty quan-tification method. Further details on baseline and training setup are provided in Sec. 11.3. 
+
+Metrics. For each method, we evaluate performance after mapping is complete using PSNR, SSIM, and LPIPS [110], as well as mesh-based metrics including completion ratio (CR) [88] and scene visual coverage (VIS) [104], to as-sess the effectiveness of active mapping. We additionally report mesh metrics, including completion (Comp) and ac-curacy (Acc), in the appendix Sec. 12.1. However, we note that Acc is not well aligned with the objective of ac-tive mapping under 3DGS, further discussion is provided in Appendix Sec. 11.4. To evaluate the computational ef-ficiency of each method, we measure the runtime during active mapping. Since planning time depends on the num-ber of candidate views used for uncertainty quantification, we decompose the runtime into two components: (a) Un-certainty Preparation Time ( TU P ), the additional time re-quired after training the radiance field, independent of the number of candidate views. For GAVIS and NVF, this cor-responds to visibility field construction; for FisherRF, to estimate the Hessian matrix of model parameters; and for VIMC, to the extra time compared to standard 3DGS train-ing. (b) Uncertainty Quantification Time (UQ FPS) , the frame rate (FPS) for evaluating uncertainty for each candi-Method NeRF Synthetic Space PSNR ↑ SSIM ↑ LPIPS ↓ CR ↑ VIS ↑ UQ FPS ↑ TU P ↓ PSNR ↑ SSIM ↑ LPIPS ↓ CR ↑ VIS ↑ UQ FPS ↑ TU P ↓                                                                                                                                            
+
+> FisherRF 22.34 0.870 0.119 0.626 0.376 146 .30.42 24.17 0.834 0.158 0.547 0.474 141 .50.37
+> VIMC 23.14 0.880 0.107 0.651 0.407 144 .59.48 24.56 0.841 0.150 0.612 0.510 127 .617 .75
+> NVF 22.59 0.859 0.147 0.549 0.431 11 .9149 .13 23.76 0.796 0.202 0.499 0.564 10 .7140 .54
+> GAVIS (ours) 24 .26 0.894 0.097 0.711 0.437 251 .50.17 26 .14 0.857 0.140 0.630 0.582 232 .40.17
+> Method Gibson HM3D PSNR ↑SSIM ↑LPIPS ↓CR ↑VIS ↑UQ FPS ↑TU P ↓PSNR ↑SSIM ↑LPIPS ↓CR ↑VIS ↑UQ FPS ↑TU P ↓
+> FisherRF 18.11 0.720 0.419 0.431 0.469 39 .80.90 18.32 0.693 0.446 0.447 0.558 37 .71.59
+> VIMC 15.70 0.668 0.465 0.337 0.366 57 .090 .47 17.15 0.645 0.477 0.476 0.618 50 .1114 .51
+> NVF 23.29 0.798 0.402 0.880 0.915 4.2219 .87 22.69 0.760 0.434 0.819 0.873 4.2285 .26
+> GAVIS (ours) 24 .42 0.812 0.323 0.831 0.890 207 .30.42 23 .97 0.791 0.338 0.820 0.876 192 .60.79
+
+Table 1. Quantitative results. Active mapping performance on all datasets across all baselines and our method. Best results are in bold ;second-best are underlined. Here, TU P denotes the uncertainty preparation time, and UQ FPS is the frame rate (FPS) for quantifying uncertainty for each candidate view. See Sec. 5 for details. 
+
+date view. We also report the Area Under the Sparsification Error curve (AUSE) [29, 67] for uncertainty quality. Noting that the standard depth-based variant (AUSE-D) [23, 32, 54] can be misaligned with active mapping goals, we addition-ally introduce a visibility-based variant (AUSE-V) that bet-ter correlates with active mapping performance. Details and analysis are provided in Sec. 11.4. PSNR ↑ SSIM ↑ LPIPS ↓ CR ↑ VIS ↑                    
+
+> GAVIS 24.70 0.839 0.224 0.748 0.697 Isotropic 23.97 0.827 0.231 0.741 0.671 w/o DC 24.18 0.830 0.234 0.712 0.668 Iso. w/o DC 23.38 0.819 0.240 0.691 0.625
+
+Table 2. Ablation study. We evaluate GAVIS for active mapping by isolating the effects of (i) anisotropic visibility ( ν(d; dp) = 1 )and (ii) the Visibility-Field Density Control module.                              
+
+> PSNR ↑SSIM ↑LPIPS ↓CR ↑VIS ↑
+> Fisher 20.73 0.779 0.285 0.513 0.469 VIMC 20.14 0.758 0.300 0.519 0.475 Fisher+GAVIS 24.70 0.842 0.220 0.748 0.699 VIMC+GAVIS 24.21 0.833 0.227 0.719 0.672
+
+Table 3. GAVIS as post-hoc module. Active mapping results showing that applying GAVIS post hoc improves the performance of baseline 3DGS uncertainty-quantification methods.              
+
+> GAVIS (Ours) NVF FisherRF VIMC AUSE-D ↓0.224 0.381 0.463 0.504 AUSE-V ↓0.176 0.231 0.496 0.447
+
+Table 4. Uncertainty quantification. Quality of uncertainty is evaluated using the depth-based AUSE (AUSE-D) and visibility-based variant (AUSE-V). See Sec. 5 for details. 
+
+5.2. Core Results 
+
+GAVIS accurately quantifies uncertainty and enables ef-fective active mapping. As shown in the quantitative re-sults (Tab. 1) and qualitative results (Fig. 5, and Fig. 4), our method consistently outperforms all 3DGS-based base-lines (FisherRF and VIMC) across all datasets and evalua-tion metrics. The improvement is particularly pronounced in challenging indoor scenes such as Gibson and HM3D, where GAVIS significantly surpasses FisherRF and VIMC. This is because these methods do not model visibility, high-lighting that visibility modeling is crucial for active map-ping in complex scenes, which is consistent with the find-ings in NVF [104]. GAVIS outperforms NVF across all image-based metrics. This highlights the importance of analytical anisotropic visibility modeling for high-quality novel view synthesis. For visibility and mesh metrics, the gains are less pronounced because these metrics are in-herently isotropic and direction-agnostic: a mesh face is marked visible once it is observed from any single direc-tion, and a single depth observation may be sufficient to re-construct the local geometry. Consequently, the benefits of anisotropic visibility, which encourages revisiting the same region from diverse directions, are not fully captured. To further demonstrate that GAVIS accurately quantifies un-certainty and enables effective exploration, particularly by assigning higher uncertainty to unseen regions, we present qualitative results of the quantified uncertainty maps. We train all methods with the same set of views covering only part of a room, leaving remaining areas underexplored to mimic a robot exploration process. As shown in Fig. 6, GAVIS successfully identifies unseen regions, such as ar-eas behind doors or walls, consistent with the ground-truth visibility derived from the mesh (brighter indicates unseen during training, darker indicates seen). In contrast, other 3DGS-based baselines fail to detect these regions, assigning falsely low uncertainty and thus reducing their incentive to explore them. While NVF captures some underexplored re-gions (e.g., behind walls), its neural network-based approx-imation struggles to accurately detect smaller unseen areas (e.g., behind doors). Moreover, we emphasize that a reliable UQ method should assign high uncertainty to regions with low GT visibility; however, high uncertainty does not nec-essarily imply low GT visibility (e.g., when the test view di-rection significantly deviates from training views direction, see Sec.11.4 for details). We additionally evaluate uncer-tainty quantification on 5 representative scenes across all datasets using AUSE-D and AUSE-V, as shown in Tab. 4. GAVIS achieves the best results on both metrics, demon-strating the superior quality of its uncertainty estimates. 
+
+GAVIS is significantly more computationally efficient than existing methods. We conduct extensive runtime evaluations to demonstrate the speed advantage of GAVIS over existing baselines. To ensure fair comparison, all methods are trained with the same views obtained from a representative trajectory that fully explores each scene, and runtime is measured at five evenly spaced steps along the trajectory, mimicking different levels of scene exploration. Experiments were run on a single NVIDIA A40 GPU. As shown in Tab. 1, our method significantly outperforms all baselines in both uncertainty preparation and quantification time. Compared to our closest counterpart, NVF, which is the strongest baseline in active mapping performance, GAVIS achieves about 500 × speedup in visibility field construction, thanks to our efficient spherical-harmonics-based construction and fast visibility query algorithm. It is also 30 × faster in uncertainty quantification. GAVIS further surpasses other 3DGS-based baselines: FisherRF requires gradient backpropagation through the 3DGS ras-terizer, leading to high computational cost for uncertainty preparation and quantification; while VIMC must co-train a stochastic radiance field and, during inference, perform multiple rasterizations from each sample of the field param-eters, resulting in substantially higher runtime. 
+
+Ablation studies show that each major component of GAVIS plays a crucial role. We ablate two key com-ponents of our method: (1) anisotropic visibility and (2) visibility field density control. Results averaged over all datasets are reported in Tab. 2. Removing either component causes a noticeable drop across all metrics, while jointly re-moving both reduces the model to a direct 3DGS extension of NVF, yielding the worst performance. We include ad-ditional qualitative results in the appendix Fig. 7 to further illustrate the importance of each component. 
+
+GAVIS can be applied post-hoc to improve the perfor-mance of existing active mapping methods. We integrate GAVIS into the existing baselines FisherRF and VIMC as a post-hoc module to refine their field uncertainty estima-tion, assigning higher uncertainty to low-visibility regions. Details of the derivation and implementation are provided in appendix Sec. 10. Results averaged over all datasets are reported in Tab. 3. GAVIS significantly improves the per-formance of both baseline methods, highlighting the cru-cial role of visibility in active mapping. Notably, Fish-erRF+GAVIS only marginally outperforms GAVIS alone, consistent with the observation in [104] that visibility mod-eling is the dominant factor in effective active mapping. Meanwhile, VIMC+GAVIS still underperforms GAVIS, as VIMC relies on sampling-based uncertainty estimation, where the noise introduced by sampling overshadows the benefit of visibility modeling. 
+
+## 6. Conclusion 
+
+In this work, we present Gaussian Splatting Anisotropic Visibility Field (GAVIS), a principled approach to quanti-fying uncertainty in 3D Gaussian Splatting through accu-rate visibility modeling. We propose an analytical method for computing the anisotropic visibility field in 3DGS using spherical harmonics, representing a substantial improve-      
+
+> Figure 4. Qualitative active mapping. Reconstruction results and camera-view distributions (green frustums) from different meth-ods’ active-mapping trajectories on Gibson scene (top) and HM3D scene (bottom). Full results are provided in Sec. 12.
+> Figure 5. Qualitative active mapping. Reconstruction results and camera-view distributions (green frustums) from different meth-ods’ active-mapping trajectories on HST scene (top) and Lego scene (bottom). Full results are provided in Sec. 12.
+> Figure 6. Qualitative uncertainty estimation. All methods are trained on the same set of views that only partially cover the scene, leaving some regions underexplored. GT Vis. indicates rasterized ground-truth mesh visibility (binary face labels), where brighter denotes higher uncertainty (invisible faces) and darker denotes lower uncertainty (visible faces). Our method accurately assigns high uncertainty to invisible regions, aligning with GT Vis.
+
+ment over prior work that relies on training neural networks, and achieving significant gains in both efficiency and ac-curacy. Empirically, GAVIS consistently outperforms all baselines across diverse evaluation scenes. The proposed anisotropic visibility field is not limited to active mapping and can potentially be extended to other tasks that require visibility estimation in 3DGS. Acknowledgments 
+
+This work is supported by NSF grant 2101250. We thank the anonymous reviewers for their valuable suggestions. 
+
+## References 
+
+[1] Milton Abramowitz and Irene A Stegun. Handbook of mathematical functions with formulas, graphs, and math-ematical tables . US Government printing office, 1948. 14 [2] Lewis AG Stuart, Andrew Morton, Ian Stavness, and Michael P Pound. 3dgs-to-pc: 3d gaussian splatting to dense point clouds. In Proceedings of the IEEE/CVF In-ternational Conference on Computer Vision , pages 3730– 3739, 2025. 22 [3] NASA Visualization Technology Applications and De-velopment (VTAD). Hubble space telescope 3d model. https://science.nasa.gov/resource/ hubble-space-telescope-3d-model-2/ , 2019. 21 [4] NASA Visualization Technology Applications and De-velopment (VTAD). International space station 3d model. https://science.nasa.gov/resource/ international - space - station - 3d - model/ ,2019. 21 [5] Nikolay Atanasov, Jerome Le Ny, Kostas Daniilidis, and George J Pappas. Decentralized active information acquisi-tion: Theory and application to multi-robot slam. In 2015 IEEE International Conference on Robotics and Automa-tion (ICRA) , pages 4775–4782. IEEE, 2015. 2 [6] Ana Batinovic, Antun Ivanovic, Tamara Petrovic, and Stjepan Bogdan. A shadowcasting-based next-best-view planner for autonomous 3d exploration. IEEE Robotics and Automation Letters , 7(2):2969–2976, 2022. 2 [7] Andreas Bircher, Mina Kamel, Kostas Alexis, Helen Oleynikova, and Roland Siegwart. Receding horizon” next-best-view” planner for 3d exploration. In 2016 IEEE in-ternational conference on robotics and automation (ICRA) ,pages 1462–1468. IEEE, 2016. 1, 2 [8] Andreas Bircher, Mina Kamel, Kostas Alexis, Helen Oleynikova, and Roland Siegwart. Receding horizon path planning for 3d exploration and surface inspection. Au-tonomous Robots , 42(2):291–306, 2018. 1, 2 [9] Luca Carlone, Jingjing Du, Miguel Kaouk Ng, Basilio Bona, and Marina Indri. Active slam and exploration with particle filters using kullback-leibler divergence. Journal of Intelligent & Robotic Systems , 75(2):291–311, 2014. 2 [10] Henry Carrillo, Ian Reid, and Jos´ e A Castellanos. On the comparison of uncertainty criteria for active slam. In 2012 IEEE International Conference on Robotics and Automa-tion , pages 2080–2087. IEEE, 2012. 2 [11] Fanfei Chen, John D Martin, Yewei Huang, Jinkun Wang, and Brendan Englot. Autonomous exploration under uncer-tainty via deep reinforcement learning on graphs. In 2020 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) , pages 6140–6147. IEEE, 2020. 2 [12] Liyan Chen, Huangying Zhan, Kevin Chen, Xiangyu Xu, Qingan Yan, Changjiang Cai, and Yi Xu. Activegamer: Active gaussian mapping through efficient rendering. arXiv preprint arXiv:2501.06897 , 2025. 2 [13] Xingyu Chen, Qi Zhang, Xiaoyu Li, Yue Chen, Ying Feng, Xuan Wang, and Jue Wang. Hallucinated neural radiance fields in the wild. In Proceedings of the IEEE/CVF Confer-ence on Computer Vision and Pattern Recognition , pages 12943–12952, 2022. 2 [14] Cl Connolly. The determination of next best views. In Pro-ceedings. 1985 IEEE international conference on robotics and automation , pages 432–435. IEEE, 1985. 2 [15] Anna Dai, Sotiris Papatheodorou, Nils Funk, Dimos Tzoumanikas, and Stefan Leutenegger. Fast frontier-based information-driven autonomous exploration with an mav. In 2020 IEEE international conference on robotics and au-tomation (ICRA) , pages 9570–9576. IEEE, 2020. 2 [16] Tung Dang, Frank Mascarich, Shehryar Khattak, Christos Papachristos, and Kostas Alexis. Graph-based path plan-ning for autonomous robotic exploration in subterranean environments. In 2019 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) , pages 3105– 3112. IEEE, 2019. 2 [17] Kangle Deng, Andrew Liu, Jun-Yan Zhu, and Deva Ra-manan. Depth-supervised nerf: Fewer views and faster training for free. In Proceedings of the IEEE/CVF con-ference on computer vision and pattern recognition , pages 12882–12891, 2022. 21 [18] Christian Dornhege and Alexander Kleiner. A frontier-void-based approach for autonomous exploration in 3d. Ad-vanced Robotics , 27(6):459–468, 2013. 2 [19] Ziyue Feng, Huangying Zhan, Zheng Chen, Qingan Yan, Xiangyu Xu, Changjiang Cai, Bing Li, Qilun Zhu, and Yi Xu. Naruto: Neural active reconstruction from uncertain target observations. In Proceedings of the IEEE/CVF Con-ference on Computer Vision and Pattern Recognition , pages 21572–21583, 2024. 2 [20] Sara Fridovich-Keil, Alex Yu, Matthew Tancik, Qinhong Chen, Benjamin Recht, and Angjoo Kanazawa. Plenoxels: Radiance fields without neural networks. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 5501–5510, 2022. 2, 5 [21] Yarin Gal and Zoubin Ghahramani. Dropout as a bayesian approximation: Representing model uncertainty in deep learning. In international conference on machine learning ,pages 1050–1059. PMLR, 2016. 2 [22] Jakob Gawlikowski, Cedrique Rovile Njieutcheu Tassi, Mohsin Ali, Jongseok Lee, Matthias Humt, Jianxiang Feng, Anna Kruspe, Rudolph Triebel, Peter Jung, Ribana Roscher, et al. A survey of uncertainty in deep neural net-works. Artificial Intelligence Review , 56(Suppl 1):1513– 1589, 2023. 1 [23] Lily Goli, Cody Reading, Silvia Sell´ an, Alec Jacobson, and Andrea Tagliasacchi. Bayes’ rays: Uncertainty quantifi-cation for neural radiance fields. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 20061–20070, 2024. 2, 7, 20, 22 [24] Clara Gomez, Alejandra C Hernandez, and Ramon Barber. Topological frontier-based exploration and map-building using semantic information. Sensors , 19(20):4595, 2019. 2[25] Chuan Guo, Geoff Pleiss, Yu Sun, and Kilian Q Weinberger. On calibration of modern neural networks. In International conference on machine learning , pages 1321–1330. PMLR, 2017. 22 [26] Dirk Holz, Nicola Basilico, Francesco Amigoni, and Sven Behnke. Evaluating the efficiency of frontier-based explo-ration strategies. In ISR 2010 (41st International Sympo-sium on Robotics) and ROBOTIK 2010 (6th German Con-ference on Robotics) , pages 1–8. VDE, 2010. 2 [27] Xuan Huang, Hanhui Li, Zejun Yang, Zhisheng Wang, and Xiaodan Liang. 3d visibility-aware generalizable neural ra-diance fields for interacting hands. In Proceedings of the AAAI Conference on Artificial Intelligence , pages 2400– 2408, 2024. 2 [28] Marco F Huber, Tim Bailey, Hugh Durrant-Whyte, and Uwe D Hanebeck. On entropy approximation for gaussian mixture random vectors. In 2008 IEEE International Con-ference on Multisensor Fusion and Integration for Intelli-gent Systems , pages 181–188. IEEE, 2008. 18 [29] Eddy Ilg, Ozgun Cicek, Silvio Galesso, Aaron Klein, Osama Makansi, Frank Hutter, and Thomas Brox. Uncer-tainty estimates and multi-hypotheses networks for optical flow. In Proceedings of the European Conference on Com-puter Vision (ECCV) , pages 652–667, 2018. 7, 22 [30] John David Jackson. Classical Electrodynamics . John Wi-ley & Sons, Inc., Hoboken, NJ, 3rd edition, 1999. 14 [31] Wen Jiang, Boshu Lei, Katrina Ashton, and Kostas Dani-ilidis. Ag-slam: Active gaussian splatting slam. 2024. 19 [32] Wen Jiang, Boshu Lei, and Kostas Daniilidis. Fisherrf: Ac-tive view selection and uncertainty quantification for radi-ance fields using fisher information. ECCV , 2024. 1, 2, 6, 7, 16, 18, 20, 22 [33] Liren Jin, Xieyuanli Chen, Julius R¨ uckin, and Marija Popovi´ c. Neu-nbv: Next best view planning using uncer-tainty estimation in image-based neural rendering. In 2023 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) , pages 11305–11312. IEEE, 2023. 2, 22 [34] Liren Jin, Xingguang Zhong, Yue Pan, Jens Behley, Cyrill Stachniss, and Marija Popovi´ c. Activegs: Active scene re-construction using gaussian splatting. IEEE Robotics and Automation Letters , 2025. 2 [35] Rui Jin, Yuman Gao, Yingjian Wang, Yuze Wu, Haojian Lu, Chao Xu, and Fei Gao. Gs-planner: A gaussian-splatting-based planning framework for active high-fidelity recon-struction. In 2024 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) , pages 11202– 11209. IEEE, 2024. 2 [36] Nikhil Keetha, Jay Karhade, Krishna Murthy Jatavallab-hula, Gengshan Yang, Sebastian Scherer, Deva Ramanan, and Jonathon Luiten. Splatam: Splat track & map 3d gaus-sians for dense rgb-d slam. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition ,pages 21357–21366, 2024. 2 [37] Matan Keidar and Gal A Kaminka. Robot exploration with fast frontier detection: Theory and experiments. In 
+
+Proceedings of the 11th International Conference on Au-tonomous Agents and Multiagent Systems-Volume 1 , pages 113–120, 2012. 2 [38] Matan Keidar and Gal A Kaminka. Efficient frontier de-tection for robot exploration. The International Journal of Robotics Research , 33(2):215–236, 2014. 2 [39] Bernhard Kerbl, Georgios Kopanas, Thomas Leimk¨ uhler, and George Drettakis. 3d gaussian splatting for real-time radiance field rendering. ACM Trans. Graph. , 42(4):139–1, 2023. 1, 2, 3, 5, 15, 17, 21 [40] Andreas Kirsch and Yarin Gal. Unifying approaches in active learning and active sampling via fisher informa-tion and information-theoretic quantities. arXiv preprint arXiv:2208.00549 , 2022. 19, 20 [41] Marcus Klasson, Riccardo Mereu, Juho Kannala, and Arno Solin. Sources of uncertainty in 3d scene reconstruction. In 
+
+European Conference on Computer Vision , pages 271–289. Springer, 2025. 2 [42] Thomas Kollar and Nicholas Roy. Trajectory optimization using reinforcement learning for map exploration. The In-ternational Journal of Robotics Research , 27(2):175–196, 2008. 2 [43] Yves Kompis, Luca Bartolomei, Ruben Mascaro, Lucas Teixeira, and Margarita Chli. Informed sampling explo-ration path planner for 3d reconstruction of large scenes. 
+
+IEEE Robotics and Automation Letters , 6(4):7893–7900, 2021. 2 [44] Georgios Kopanas and George Drettakis. Improving nerf quality by progressive camera placement for free-viewpoint navigation. 2023. 2 [45] Zijia Kuang, Zike Yan, Hao Zhao, Guyue Zhou, and Hong-bin Zha. Active neural mapping at scale. In 2024 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) , pages 7152–7159. IEEE, 2024. 2 [46] Soomin Lee, Le Chen, Jiahao Wang, Alexander Liniger, Suryansh Kumar, and Fisher Yu. Uncertainty guided pol-icy for active robotic 3d reconstruction using neural radi-ance fields. IEEE Robotics and Automation Letters , 7(4): 12070–12077, 2022. 2, 3, 19 [47] Sibeak Lee, Kyeongsu Kang, Seongbo Ha, and Hyeon-woo Yu. Bayesian nerf: Quantifying uncertainty with volume density for neural implicit fields. arXiv preprint arXiv:2404.06727 , 2024. 2 [48] Ruiqi Li and Yiu-ming Cheung. Variational multi-scale rep-resentation for estimating uncertainty in 3d gaussian splat-ting. Advances in Neural Information Processing Systems ,37:87934–87958, 2024. 2 [49] You Li, Rui Li, Shengjun Tang, and Yanjie Gu. Bavs-nerf: Batch active view selection for neural radiance field using scene uncertainty. In The First Workshop on Popu-lating Empty Cities–Virtual Humans for Robotics and Au-tonomous Driving at CVPR 2024 . 2 [50] Yuetao Li, Zijia Kuang, Ting Li, Qun Hao, Zike Yan, Guyue Zhou, and Shaohui Zhang. Activesplat: High-fidelity scene reconstruction through active gaussian splatting. IEEE Robotics and Automation Letters , 2025. 2, 22 [51] Iker Lluvia, Elena Lazkano, and Ander Ansuategi. Active mapping and robot exploration: A survey. Sensors , 21(7): 2445, 2021. 1 [52] Liang Lu, Carlos Redondo, and Pascual Campoy. Optimal frontier-based autonomous exploration in unconstructed environment using rgb-d sensor. Sensors , 20(22):6507, 2020. 2 [53] Shengjie Luo, Tianlang Chen, and Aditi S Krish-napriyan. Enabling efficient equivariant operations in the fourier basis via gaunt tensor products. arXiv preprint arXiv:2401.10216 , 2024. 5, 15 [54] Linjie Lyu, Ayush Tewari, Marc Habermann, Shunsuke Saito, Michael Zollh¨ ofer, Thomas Leimk¨ uhler, and Chris-tian Theobalt. Manifold sampling for differentiable uncer-tainty in radiance fields. In SIGGRAPH Asia 2024 Confer-ence Papers , pages 1–11, 2024. 1, 2, 3, 6, 7, 16, 18, 19, 20, 22, 23 [55] Hidenobu Matsuki, Riku Murai, Paul HJ Kelly, and An-drew J Davison. Gaussian splatting slam. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pat-tern Recognition , pages 18039–18048, 2024. 2, 21 [56] Zehui Meng, Hailong Qin, Ziyue Chen, Xudong Chen, Hao Sun, Feng Lin, and Marcelo H Ang. A two-stage opti-mized next-view planning framework for 3-d unknown en-vironment exploration, and structural reconstruction. IEEE Robotics and Automation Letters , 2(3):1680–1687, 2017. 2 [57] Ben Mildenhall, Pratul P Srinivasan, Matthew Tancik, Jonathan T Barron, Ravi Ramamoorthi, and Ren Ng. Nerf: Representing scenes as neural radiance fields for view syn-thesis. Communications of the ACM , 65(1):99–106, 2021. 1, 2, 3, 6, 17, 21 [58] Beipeng Mu, Matthew Giamou, Liam Paull, Ali-akbar Agha-mohammadi, John Leonard, and Jonathan How. Information-based active slam via topological feature graphs. In 2016 IEEE 55th Conference on decision and control (Cdc) , pages 5583–5590. IEEE, 2016. 2 [59] Thomas M¨ uller, Alex Evans, Christoph Schied, and Alexander Keller. Instant neural graphics primitives with a multiresolution hash encoding. ACM transactions on graphics (TOG) , 41(4):1–15, 2022. 2, 5 [60] Kiyohiro Nakayama, Mikaela Angelina Uy, Yang You, Ke Li, and Leonidas J Guibas. Provnerf: Modeling per point provenance in nerfs as a stochastic field. Advances in Neural Information Processing Systems , 37:99145–99160, 2024. 2 [61] Farzad Niroui, Kaicheng Zhang, Zendai Kashino, and Goldie Nejat. Deep reinforcement learning robot for search and rescue applications: Exploration in unknown cluttered environments. IEEE Robotics and Automation Letters , 4 (2):610–617, 2019. 2 [62] Frank WJ Olver. NIST handbook of mathematical functions hardback and CD-ROM . Cambridge university press, 2010. 5, 14 [63] Yaniv Ovadia, Emily Fertig, Jie Ren, Zachary Nado, David Sculley, Sebastian Nowozin, Joshua Dillon, Balaji Laksh-minarayanan, and Jasper Snoek. Can you trust your model’s uncertainty? evaluating predictive uncertainty under dataset shift. Advances in neural information processing systems ,32, 2019. 1 [64] Xuran Pan, Zihang Lai, Shiji Song, and Gao Huang. Ac-tivenerf: Learning where to see with uncertainty estima-tion. In European Conference on Computer Vision , pages 230–246. Springer, 2022. 2 [65] Christos Papachristos, Shehryar Khattak, and Kostas Alexis. Uncertainty-aware receding horizon exploration and mapping using aerial robots. In 2017 IEEE inter-national conference on robotics and automation (ICRA) ,pages 4568–4575. IEEE, 2017. 2 [66] Julio A Placed, Jared Strader, Henry Carrillo, Nikolay Atanasov, Vadim Indelman, Luca Carlone, and Jos´ e A Castellanos. A survey on active simultaneous localization and mapping: State of the art and new frontiers. IEEE Transactions on Robotics , 2023. 1, 2, 19 [67] Matteo Poggi, Filippo Aleotti, Fabio Tosi, and Stefano Mat-toccia. On the uncertainty of self-supervised monocular depth estimation. In Proceedings of the IEEE/CVF con-ference on computer vision and pattern recognition , pages 3227–3237, 2020. 7, 22 [68] Wenchuan Qiao, Zheng Fang, and Bailu Si. Sample-based frontier detection for autonomous robot exploration. In 2018 IEEE International Conference on Robotics and Biomimetics (ROBIO) , pages 1165–1170. IEEE, 2018. 2 [69] Santhosh Kumar Ramakrishnan, Aaron Gokaslan, Erik Wi-jmans, Oleksandr Maksymets, Alexander Clegg, John M Turner, Eric Undersander, Wojciech Galuba, Andrew West-bury, Angel X Chang, Manolis Savva, Yili Zhao, and Dhruv Batra. Habitat-matterport 3d dataset (HM3d): 1000 large-scale 3d environments for embodied AI. In Thirty-fifth Conference on Neural Information Processing Systems Datasets and Benchmarks Track , 2021. 6, 21 [70] Yunlong Ran, Jing Zeng, Shibo He, Jiming Chen, Lincheng Li, Yingfeng Chen, Gimhee Lee, and Qi Ye. Neurar: Neural uncertainty for autonomous 3d reconstruction with implicit neural representations. IEEE Robotics and Automation Let-ters , 8(2):1125–1132, 2023. 2 [71] Victor Massagu´ e Respall, Dmitry Devitt, Roman Fe-dorenko, and Alexandr Klimchik. Fast sampling-based next-best-view exploration algorithm for a mav. In 2021 IEEE International Conference on Robotics and Automa-tion (ICRA) , pages 89–95. IEEE, 2021. 2 [72] Jun John Sakurai and Jim Napolitano. Modern quantum mechanics . Cambridge University Press, 2020. 15 [73] Manolis Savva, Abhishek Kadian, Oleksandr Maksymets, Yili Zhao, Erik Wijmans, Bhavana Jain, Julian Straub, Jia Liu, Vladlen Koltun, Jitendra Malik, et al. Habitat: Aplatform for embodied ai research. In Proceedings of the IEEE/CVF international conference on computer vision ,pages 9339–9347, 2019. 21 [74] Magnus Selin, Mattias Tiger, Daniel Duberg, Fredrik Heintz, and Patric Jensfelt. Efficient autonomous explo-ration planning of large-scale 3-d environments. IEEE Robotics and Automation Letters , 4(2):1699–1706, 2019. 2[75] PGCN Senarathne and Danwei Wang. Towards au-tonomous 3d exploration using surface frontiers. In 2016 IEEE International Symposium on Safety, Security, and Rescue Robotics (SSRR) , pages 34–41. IEEE, 2016. 2 [76] Jianxiong Shen, Adria Ruiz, Antonio Agudo, and Francesc Moreno-Noguer. Stochastic neural radiance fields: Quan-tifying uncertainty in implicit 3d representations. In 2021 International Conference on 3D Vision (3DV) , pages 972– 981. IEEE, 2021. 2 [77] Jianxiong Shen, Antonio Agudo, Francesc Moreno-Noguer, and Adria Ruiz. Conditional-flow nerf: Accurate 3d mod-elling with reliable uncertainty quantification. In European Conference on Computer Vision , pages 540–557. Springer, 2022. 2 [78] Jianxiong Shen, Ruijie Ren, Adria Ruiz, and Francesc Moreno-Noguer. Estimating 3d uncertainty field: Quan-tifying uncertainty for neural radiance fields. In 2024 IEEE International Conference on Robotics and Automa-tion (ICRA) , pages 2375–2381. IEEE, 2024. 2 [79] Shaojie Shen, Nathan Michael, and Vijay Kumar. Stochas-tic differential equation-based exploration algorithm for au-tonomous indoor 3d exploration with a micro-aerial vehi-cle. The International Journal of Robotics Research , 31 (12):1431–1444, 2012. 2 [80] Yujiao Shi, Hongdong Li, and Xin Yu. Self-supervised vis-ibility learning for novel view synthesis. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 9675–9684, 2021. 2 [81] Meng-Li Shih, Wei-Chiu Ma, Lorenzo Boyice, Aleksander Holynski, Forrester Cole, Brian Curless, and Janne Kon-tkanen. Extranerf: Visibility-aware view extrapolation of neural radiance fields with diffusion models. In Proceed-ings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 20385–20395, 2024. 2 [82] Robert Sim and Nicholas Roy. Global a-optimal robot ex-ploration in slam. In Proceedings of the 2005 IEEE in-ternational conference on robotics and automation , pages 661–666. IEEE, 2005. 2 [83] Nagabhushan Somraj and Rajiv Soundararajan. Vip-nerf: Visibility prior for sparse input neural radiance fields. In 
+
+ACM SIGGRAPH 2023 conference proceedings , pages 1– 11, 2023. 2 [84] Pratul P Srinivasan, Boyang Deng, Xiuming Zhang, Matthew Tancik, Ben Mildenhall, and Jonathan T Barron. Nerv: Neural reflectance and visibility fields for relighting and view synthesis. In Proceedings of the IEEE/CVF con-ference on computer vision and pattern recognition , pages 7495–7504, 2021. 2 [85] Cyrill Stachniss, Dirk Hahnel, and Wolfram Burgard. Ex-ploration with active loop-closing for fastslam. In 2004 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)(IEEE Cat. No. 04CH37566) , pages 1505–1510. IEEE, 2004. 2 [86] Cyrill Stachniss, Giorgio Grisetti, and Wolfram Bur-gard. Information gain-based exploration using rao-blackwellized particle filters. In Robotics: Science and sys-tems , pages 65–72, 2005. 2 [87] Edgar Sucar, Shikun Liu, Joseph Ortiz, and Andrew J Davi-son. imap: Implicit mapping and positioning in real-time. In Proceedings of the IEEE/CVF International Conference on Computer Vision , pages 6229–6238, 2021. 22 [88] Edgar Sucar, Shikun Liu, Joseph Ortiz, and Andrew J Davi-son. imap: Implicit mapping and positioning in real-time. In Proceedings of the IEEE/CVF international conference on computer vision , pages 6229–6238, 2021. 6 [89] Niko S¨ underhauf, Jad Abou-Chakra, and Dimity Miller. Density-aware nerf ensembles: Quantifying predictive un-certainty in neural radiance fields. In 2023 IEEE Inter-national Conference on Robotics and Automation (ICRA) ,pages 9370–9376. IEEE, 2023. 2 [90] Donny Sutantyo, Paul Levi, Christoph M¨ oslinger, and Mark Read. Collective-adaptive l´ evy flight for underwater multi-robot exploration. In 2013 IEEE International Conference on Mechatronics and Automation , pages 456–462. IEEE, 2013. 2 [91] Yuezhan Tao, Dexter Ong, Varun Murali, Igor Spasojevic, Pratik Chaudhari, and Vijay Kumar. Rt-guide: Real-time gaussian splatting for information-driven exploration. IEEE Robotics and Automation Letters , 2025. 19 [92] Barry N Taylor, Chris E Kuyatt, et al. Guidelines for evalu-ating and expressing the uncertainty of NIST measurement results . US Department of Commerce, Technology Admin-istration, National Institute of Standards and Technology, 1994. 21 [93] Hassan Umari and Shayok Mukhopadhyay. Autonomous robotic exploration based on multiple rapidly-exploring randomized trees. In 2017 IEEE/RSJ International Con-ference on Intelligent Robots and Systems (IROS) , pages 1396–1402. IEEE, 2017. 2 [94] Rafael Valencia and Juan Andrade-Cetto. Active pose slam. In Mapping, planning and exploration with pose SLAM ,pages 89–108. Springer, 2017. 2 [95] Deng-Bao Wang, Lei Feng, and Min-Ling Zhang. Rethink-ing calibration of deep neural networks: Do not be afraid of overconfidence. Advances in Neural Information Process-ing Systems , 34:11809–11820, 2021. 1 [96] Frederik Warburg, Ethan Weber, Matthew Tancik, Alek-sander Holynski, and Angjoo Kanazawa. Nerfbusters: Re-moving ghostly artifacts from casually captured nerfs. In 
+
+Proceedings of the IEEE/CVF International Conference on Computer Vision , pages 18120–18130, 2023. 2 [97] Shuhuan Wen, Yanfang Zhao, Xiao Yuan, Zongtao Wang, Dan Zhang, and Luigi Manfredi. Path planning for active slam based on deep reinforcement learning under unknown environments. Intelligent Service Robotics , 13(2):263–272, 2020. 2 [98] Peter Whaite and Frank P Ferrie. Autonomous exploration: Driven by uncertainty. IEEE Transactions on Pattern Anal-ysis and Machine Intelligence , 19(3):193–205, 1997. 2 [99] Eugene Wigner. Group theory: and its application to the quantum mechanics of atomic spectra . Elsevier, 2012. 5, 15 [100] Joey Wilson, Marcelino Almeida, Min Sun, Sachit Maha-jan, Maani Ghaffari, Parker Ewen, Omid Ghasemalizadeh, Cheng-Hao Kuo, and Arnie Sen. Modeling uncertainty in 3d gaussian splatting through continuous semantic splat-ting. In 2025 IEEE International Conference on Robotics and Automation (ICRA) , pages 3284–3290. IEEE, 2025. 2 [101] Fei Xia, Amir R Zamir, Zhiyang He, Alexander Sax, Jiten-dra Malik, and Silvio Savarese. Gibson env: Real-world perception for embodied agents. In Proceedings of the IEEE conference on computer vision and pattern recogni-tion , pages 9068–9079, 2018. 6, 21 [102] Hanggao Xin, Zhiqian Zhou, Di An, Ling-Qi Yan, Kun Xu, Shi-Min Hu, and Shing-Tung Yau. Fast and accurate spher-ical harmonics products. ACM Trans. Graph. , 40(6):280–1, 2021. 15 [103] Zijun Xu, Rui Jin, Ke Wu, Yi Zhao, Zhiwei Zhang, Jieru Zhao, Fei Gao, Zhongxue Gan, and Wenchao Ding. Hgs-planner: Hierarchical planning framework for active scene reconstruction using 3d gaussian splatting. In 2025 IEEE International Conference on Robotics and Automa-tion (ICRA) , pages 14161–14167. IEEE, 2025. 2 [104] Shangjie Xue, Jesse Dill, Pranay Mathur, Frank Dellaert, Panagiotis Tsiotras, and Danfei Xu. Neural visibility field for uncertainty-driven active mapping. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 18122–18132, 2024. 1, 2, 3, 4, 6, 7, 8, 17, 18, 19, 21, 22, 23 [105] Brian Yamauchi. A frontier-based approach for au-tonomous exploration. In Proceedings 1997 IEEE In-ternational Symposium on Computational Intelligence in Robotics and Automation CIRA’97.’Towards New Compu-tational Principles for Robotics and Automation’ , pages 146–151. IEEE, 1997. 1, 2 [106] Brian Yamauchi. Frontier-based exploration using multiple robots. In Proceedings of the second international confer-ence on Autonomous agents , pages 47–53, 1998. 2 [107] Dongyu Yan, Jianheng Liu, Fengyu Quan, Haoyao Chen, and Mengmeng Fu. Active implicit object reconstruc-tion using uncertainty-guided next-best-view optimization. 
+
+IEEE Robotics and Automation Letters , 2023. 2, 3, 19 [108] Jing Zeng, Qi Ye, Tianle Liu, Yang Xu, Jin Li, Jinming Xu, Liang Li, and Jiming Chen. Multi-robot autonomous 3d reconstruction using gaussian splatting with semantic guid-ance. IEEE Robotics and Automation Letters , 2025. 2 [109] Dongbin Zhang, Chuming Wang, Weitao Wang, Peihao Li, Minghan Qin, and Haoqian Wang. Gaussian in the wild: 3d gaussian splatting for unconstrained image collections. In 
+
+European Conference on Computer Vision , pages 341–359. Springer, 2024. 2 [110] Richard Zhang, Phillip Isola, Alexei A Efros, Eli Shecht-man, and Oliver Wang. The unreasonable effectiveness of deep features as a perceptual metric. In Proceedings of the IEEE conference on computer vision and pattern recogni-tion , pages 586–595, 2018. 6 [111] Xiuming Zhang, Pratul P Srinivasan, Boyang Deng, Paul Debevec, William T Freeman, and Jonathan T Barron. Ner-factor: Neural factorization of shape and reflectance under an unknown illumination. ACM Transactions on Graphics (ToG) , 40(6):1–18, 2021. 2 [112] Yikang Zhang and Rui Fan. Visibility-aware densification for 3d gaussian splatting in dynamic urban scenes. arXiv preprint arXiv:2510.09364 , 2025. 2 [113] Zichao Zhang and Davide Scaramuzza. Perception-aware receding horizon navigation for mavs. In 2018 IEEE Inter-national Conference on Robotics and Automation (ICRA) ,pages 2534–2541. IEEE, 2018. 2 [114] Yuke Zhu, Roozbeh Mottaghi, Eric Kolve, Joseph J Lim, Abhinav Gupta, Li Fei-Fei, and Ali Farhadi. Target-driven visual navigation in indoor scenes using deep reinforce-ment learning. In 2017 IEEE international conference on robotics and automation (ICRA) , pages 3357–3364. IEEE, 2017. 2 Uncertainty-driven 3D Gaussian Splatting Active Mapping via Anisotropic Visibility Field 
+
+# Supplementary Material 
+
+## 7. Anisotropic Visibility Field Details 
+
+In this section, we provide details on anisotropic visibility field V (i)(d). We first derive the spherical harmonics (SH) representation of the directional visibility function ν(d; dp)
+
+(Sec. 7.1), then discuss the SH representation of the vis-ibility field V (i)(d) (Sec. 7.2, 7.3), and finally describe how V (i)(d) is efficiently constructed and queried during uncertainty-aware rasterization (Sec. 7.4). 
+
+7.1. Derivation of (8) We represent ν(d; dp) in the orthonormal basis of spherical harmonics Y mℓ (d),
+
+ν(d; dp) := ζ exp( κd · dp)=ζ
+
+> ∞
+
+X
+
+> ℓ=0
+> ℓ
+
+X
+
+> m=−ℓ
+
+aℓm Y mℓ (d), (12) and derive an analytical expression for the coefficients aℓm .Since exp( κ d · dp) depends only on the dot-product 
+
+x = d · dp, we first expand in the one-dimensional basis of Legendre polynomials Pℓ(d·dp) [1]: 
+
+exp( κ d·dp) = 
+
+> ∞
+
+X
+
+> ℓ=0
+
+bℓ Pℓ(d·dp), (13) By comparing (13) with the Legendre expansion of the ex-ponential [62]: 
+
+eκx =
+
+> ∞
+
+X
+
+> ℓ=0
+
+(2 ℓ + 1) iℓ(κ) Pℓ(x).
+
+Thus, we can identify the coefficients bℓ as 
+
+bℓ = (2 ℓ + 1) iℓ(κ). (14) where iℓ is the modified spherical Bessel function of the first kind [62]. Then we apply the addition theorem for spherical har-monics [30]: 
+
+Pℓ
+
+ d·dp
+
+ = 4π
+
+2ℓ + 1 
+
+> ℓ
+
+X
+
+> m=−ℓ
+
+Y mℓ (d) Y m∗ 
+
+> ℓ
+
+(dp). (15) where Y m∗ 
+
+> ℓ
+
+(dp) is the complex conjugate of Y mℓ (dp).Substituting (15) and (14) into (13) gives 
+
+ν(d; dp) = 4 πζ 
+
+> ∞
+
+X
+
+> ℓ=0
+> ℓ
+
+X
+
+> m=−ℓ
+
+iℓ(κ) Y mℓ (d) Y m∗ 
+
+> ℓ
+
+(dp). (16) Comparing with (7), we identify the coefficients 
+
+aℓm = 4 π i ℓ(κ) Y m∗ 
+
+> ℓ
+
+(dp). (17) where the modified spherical Bessel function of the first kind iℓ(κ) can be precomputed since κ is a fixed hyperpa-rameter (set to κ = 1 ). Note that ν(d; dp) : S2 → [0 , 1] is real-valued, so in practice we expand it in a real spherical harmonics basis for implementation. 
+
+ν(d; dp) = 4 πζ 
+
+> ∞
+
+X
+
+> ℓ=0
+> ℓ
+
+X
+
+> m=−ℓ
+
+iℓ(κ) Yℓm (d) Yℓm (dp). (18) where Yℓm (d) is the real spherical harmonics function de-fined as 
+
+Yℓm (d) = 
+
+
+
+√2 ( −1) m Im 
+
+h
+
+Y |m| 
+
+> ℓ
+
+(d)
+
+i
+
+, m < 0
+
+Y 0 
+
+> ℓ
+
+(d), m = 0 
+
+√2 ( −1) m Re [ Y mℓ (d)] , m > 0
+
+and it could be verified that (18) is equivalent to (16). Therefore, we obtain a closed-form expression for the coefficients representing the directional visibility function 
+
+ν(d; dp) in spherical harmonics. 
+
+7.2. Details of SH Representation of V (i)(d)
+
+In this subsection, we provide further details on why com-puting the anisotropic visibility field V (i)(d) by directly combining (7) and (5) is impractical due to computational complexity. We first rewrite (5) in a recursive form: 
+
+V (i)
+
+> P∪{ p}
+
+(d) = V (i) 
+
+> P
+
+(d) + V (i) 
+
+> p
+
+(d) − V (i) 
+
+> P
+
+(d)V (i) 
+
+> p
+
+(d) (19) starting from V (i) 
+
+> ∅
+
+(d) = 0 , and then recursively comput-ing the anisotropic visibility field over the entire training set. Since spherical harmonics form a linear basis, the sum of two functions expressed in spherical harmonics can be obtained by simply adding their corresponding coefficients 
+
+aℓm . However, their product poses significant challenges, particularly, the product of two spherical harmonics can be re-expanded as 
+
+Y m1 
+
+> ℓ1
+
+(d) Y m2 
+
+> ℓ2
+
+(d) = 
+
+> ℓ1+ℓ2
+
+X
+
+> L=|ℓ1−ℓ2|
+> L
+
+X 
+
+> M=−L
+
+s
+
+(2 ℓ1 + 1)(2 ℓ2 + 1) 4π(2 L + 1) 
+
+× CL0  
+
+> ℓ10ℓ20
+
+CLM ℓ1m1 ℓ2m2 Y ML (d). (20) Figure 7. Illustration of the two major components of GAVIS: (1) anisotropic visibility (effects highlighted with gray boxes) and (2) visibility-field density control (effects highlighted with red boxes). From left to right: (i) top-down view of the scene with training views (blue frustums) covering only the right room and the queried view (green frustum) for uncertainty quantification; (ii) synthesized RGB image from a 3DGS model trained only on the partially covered region, leaving the rest of the scene unexplored; (iii) uncertainty estimated by full GAVIS; (iv) GAVIS with isotropic visibility; (v) GAVIS without visibility field density control; (vi) GAVIS with isotropic visibility and without density control. All methods are applied to the same learned 3DGS model. 
+
+where CLM ℓ1m1 ℓ2m2 denote the Clebsch–Gordan coeffi-cients [72, 99]. As is shown in the above equation, mul-tiplying two spherical harmonics of degree L produces a spherical harmonics expansion of degree up to 2L. Since the multi-view aggregation in (5) requires performing the multiplication |P| times, the resulting degree can grow to 
+
+|P| L, requiring O(|P| 2L2) parameters to store. Since mul-tiplying two spherical harmonics of degree L can be done in O(L3) time [53, 102], computing the anisotropic visibil-ity field over the entire training set P results in an overall complexity of O(|P| 4L3). Therefore, obtaining a closed-form expression for the spherical harmonics coefficients of the anisotropic visibility field is impractical. 
+
+7.3. Derivation of (9) Starting from (5), we have 
+
+1 − V (i)(d) = Y
+
+> p∈P
+
+(1 − V (i) 
+
+> p
+
+(d))  (21) Applying the arithmetic-geometric mean (AM-GM) in-equality to the right-hand side of (21) yields 
+
+> |P|
+
+s Y
+
+> p∈P
+
+(1 − V (i) 
+
+> p
+
+(d)) ≤ 1
+
+|P| 
+
+X
+
+> p∈P
+
+(1 − V (i) 
+
+> p
+
+(d))  (22) Therefore, combining (21) and (22) yields the lower bound on V (i)(d).
+
+V (i)(d) ≥ 1 −
+
+
+
+1 −   
+
+> P
+> p∈P V(i)
+> p(d)
+> |P|
+
+|P| 
+
+. (23) which is equivalent to (9) since ˜V (d) = P 
+
+> p∈P
+
+V (i) 
+
+> p
+
+(d).This bound is tight when all V (i) 
+
+> p
+
+(d) are equal, i.e., when the visibility contributions from all camera views p are the same. In practice, this bound provides a computationally efficient way to estimate the overall visibility field V (i)(d)
+
+without having to compute the product of spherical harmon-ics of V (i) 
+
+> p
+
+(d) over all camera poses p ∈ P .
+
+7.4. Details of Visibility Field Construction and Query 
+
+We provide additional details on constructing the anisotropic visibility field and on efficient querying. Firstly, we describe our efficient algorithm for computing the single-view (isotropic) particle visibility Φi, p Tp(tp 
+
+> i
+
+)
+
+for each particle i in training view p in Alg. 2, which builds on a modified 3DGS rasterizer. Note that the averaging step at L15 is necessary when 3D Gaussian particles span multiple pixels during rasteri-zation. Since anisotropic visibility is modeled solely as a function of viewing direction, rather than the ray-particle intersection location, similar to view-dependent color in 3DGS [39], different rays from the same camera can in-teract with different points on the same particle, while shar-ing the same viewing direction. Therefore, averaging their transmittance contributions provides a consistent way to ag-gregate them into a single per-view value. Next, we construct the anisotropic visibility field V (i)(d)
+
+by computing the SH coefficients γ(i) 
+
+> ℓm
+
+for each particle i,accumulating contributions from all training views P via (11) as outlined in Alg. 3. The single-view visibility terms 
+
+Φi, p, T p(tp 
+
+> i
+
+) are obtained using Alg. 2. Finally, we describe the algorithm for querying the anisotropic visibility field at a direction d in Alg. 4. Given Algorithm 2 Single-view Particle Visibility 
+
+Input: ug ∈ R2: image-space projection of the Gaussian center to training view p; Σg ∈ R2×2: image-space conic (precision) matrix; zg ∈ R: depth (for front-to-back sorting); og ∈ [0 , 1] : base opacity; ϵT : transmit-tance cutoff (default 10 −4); 
+
+Output: {vg }Ng=1 : isotropic particle visibility with respect to training view p 
+
+> 1:
+
+Initialize vg ← 0, cg ← 0 for all g 
+
+> 2:
+
+for each pixel x in the image do  
+
+> 3:
+
+T ← 1 
+
+> 4:
+
+G ← Gaussians overlapping x (sorted by increasing 
+
+z) 
+
+> 5:
+
+for each g ∈ G do  
+
+> 6:
+
+α ← og exp  −(ug − x)⊤Σg (ug − x) 
+
+> 7:
+
+vg ← vg + T ; cg ← cg + 1  
+
+> 8:
+
+T ← T (1 − α) 
+
+> 9:
+
+if T < ϵ T then break  
+
+> 10:
+
+end if  
+
+> 11:
+
+end for  
+
+> 12:
+
+end for  
+
+> 13:
+
+for g = 1 to N do  
+
+> 14:
+
+if cg > 0 then  
+
+> 15:
+
+vg ← vg /c g ▷ Average when a particle overlaps multiple pixels.  
+
+> 16:
+
+end if  
+
+> 17:
+
+end for  
+
+> 18:
+
+Return {vg }Ng=1 
+
+Algorithm 3 Anisotropic Visibility Field Construction 
+
+Input: Training views P with camera centers {xp}; 3DGS particles G with centers {xg }; SH degree L; concentra-tion κ; scale ζ = exp( −κ)
+
+Output: Coefficients γ ∈ C|G|× (L+1) 2 
+
+> 1:
+
+Precompute {iℓ(κ)}Lℓ=0  ▷ Modified spherical Bessel function of the first kind  
+
+> 2:
+
+aℓ ← 4π ζ i ℓ(κ) for ℓ = 0 , . . . , L  
+
+> 3:
+
+Initialize γ(g) 
+
+> ℓm
+
+← 0 ∀g ∈ G , 0 ≤ ℓ ≤ L, −ℓ ≤ m ≤ ℓ 
+
+> 4:
+
+for p ∈ P do  ▷ Accumulate per-view contributions  
+
+> 5:
+
+v ← SINGLE VIEW PARTICLE VISIBILITY (p, G) ▷
+
+v[g] = Φ g, p Tp(tp 
+
+> g
+
+) via Alg. 2  
+
+> 6:
+
+for all g ∈ G do  
+
+> 7:
+
+d(g) 
+
+> p
+
+← xg − xp
+
+∥xg − xp∥ 
+
+> 8:
+
+γ(g) 
+
+> ℓm
+
+← γ(g) 
+
+> ℓm
+
++ v[g] · aℓ · Yℓm (d(g) 
+
+> p
+
+) for ℓ = 0: L,
+
+m = −ℓ:ℓ 
+
+> 9:
+
+end for  
+
+> 10:
+
+end for  
+
+> 11:
+
+return {γ(g) 
+
+> ℓm
+
+}
+
+Algorithm 4 Query Anisotropic Visibility Field 
+
+Input: SH coefficients {γ(g) 
+
+> ℓm
+
+} for particle g; query direc-tion d; SH degree L; number of training views |P| 
+
+Output: Visibility V (g)(d) for particle g in direction d 
+
+> 1:
+
+y[ℓ, m ] ← SPHERICAL HARMONICS (ℓ, m, d) for ℓ =0: L, m = −ℓ:ℓ 
+
+> 2:
+
+˜V ← PLℓ=0 
+
+Pℓm=−ℓ γ(g) 
+
+> ℓm
+
+y[ℓ, m ] 
+
+> 3:
+
+V (g) ← 1 − (1 − ˜V 
+
+> |P|
+
+)|P|  ▷ AM–GM lower-bound estimator  
+
+> 4:
+
+return V (g)
+
+the stored SH coefficients γ(g) 
+
+> ℓm
+
+for each particle g, we eval-uate the SH basis at the query direction d to obtain ˜V (d),and then compute the visibility V (g)(d) using the AM-GM lower-bound estimator in (9). Because we use L = 2 in practice, each particle requires only 9 SH coefficients, and the query cost is independent of the number of training views |P| , enabling (per particle) constant-time querying. Moreover, our method is significantly memory efficient. The anisotropic visibility field requires ∼ 28% additional parameters over standard 3DGS, including SH coefficients and virtual particles (see next subsection). Consequently, our uncertainty quantification method incurs substantially lower memory overhead compared to other 3DGS-based approaches. For example, FisherRF [32] introduces 100% 
+
+additional parameters to store per-parameter uncertainty, while VIMC [54] requires at least 200% overhead to rep-resent the manifold of radiance field parameters. 
+
+7.5. Details of Visibility Field Density Control 
+
+We use virtual particles to distinguish free space from un-derexplored regions. Given a trained 3DGS, we uniformly sample virtual particles within the scene. Each particle is initialized with zero opacity, identity rotation, and an isotropic scale s. The total number of virtual particles is 
+
+Nvp = ρ · Vscene ,
+
+where Vscene is the scene volume and ρ = 100 is a density hyperparameter specifying the number of virtual particles per unit volume. The scale s is chosen such that the ex-pected total volume of virtual particles per unit volume of the scene slightly exceeds 1, i.e., 
+
+43 πs 3ρ = 1 + η, 
+
+with η = 0 .5 ensuring that the total particle volume slightly exceeds the scene volume, which encourages broad cover-age of the space. Note that s is substantially larger than the scale of the original 3DGS particles. This formulation allows a sparse set of virtual particles to approximate cov-erage of the entire scene, making it significantly more effi-cient than using a dense grid of particles. We then combine virtual particles and original particles to compute the visibility of each virtual particle using the same single-view visibility algorithm as for the original par-ticles, with virtual particles treated as transparent during visibility computation. The multi-view visibility of each virtual particle is then computed as 
+
+1 − Y
+
+> p∈P
+
+(1 − Φi, p Tp(tp 
+
+> i
+
+)) 
+
+Finally, we prune virtual particles using a conservative visibility threshold ϵv = 0.95 . Particles with visibility greater than ϵv are treated as free space and discarded, while those with visibility below ϵv are retained as indicators of underexplored regions. When querying the anisotropic visibility field for virtual particles, we treat all retained virtual particles as invisible in every direction, which is equivalent to setting γ(i) 
+
+> ℓm
+
+= 0 for all ℓ, m . For computational efficiency, however, we simply return V (i)(d) = 0 for all query directions d.Note that, unlike density control in 3DGS training [39], which is applied repeatedly throughout optimization, the visibility-field density control is a post-hoc procedure and needs to be executed only once after training. This makes it substantially faster in practice. Details of the algorithm are provided in Alg. 5. Finally, an illustration of the two major components of GAVIS: (1) anisotropic visibility and (2) visibility-field density control, is provided in Fig. 7. 
+
+## 8. Details of Uncertainty-aware 3DGS Rasteri-zation 
+
+In this section, we provide additional details on uncertainty-aware 3DGS rasterization, specifically how to quantify the uncertainty of the observed color along a ray direction d us-ing the anisotropic visibility field {V (g)(d)}g∈G . This sec-tion extends the uncertainty-aware volume rendering for-mulation introduced in NVF [104], originally developed for NeRF, to 3DGS. The rasterization process for 3DGS (along a ray r(t) = 
+
+o + td) is expressed as: 
+
+ˆC(r) = X
+
+> i
+
+wi ci(d), (24) where 
+
+wi = αii−1Y
+
+> j=0
+
+(1 − αj ),
+
+and αi = 1 − exp( −σiδi) is the opacity of the i-th particle, with σi its density and δi the interval length. In 3DGS, ef-fective αi is computed by evaluating a 2D Gaussian with co-variance Σi at the pixel location, multiplied by the learned per-particle opacity oi, where Σi is obtained by projecting 
+
+Algorithm 5 Visibility Field Density Control 
+
+Input: Training views P; original 3DGS particles G with centers {xg }, rotations {Rg }, scales {sg }, opacities 
+
+{og }; scene volume Vscene ; virtual particle density ρ;visibility threshold ϵv ; hyperparameter η (default 0.5)
+
+Output: Augmented 3DGS eG = G ∪ G keep virt for uncertainty quantification  
+
+> 1:
+
+Nvirt ← ⌊ ρ · | Vscene |⌋  ▷ Number of virtual particles  
+
+> 2:
+
+s ← 3
+
+r 3(1 + η)4πρ  ▷ Scale of virtual particles  
+
+> 3:
+
+Sample virtual centers {xj }Nvirt  
+
+> j=1
+
+uniformly in Vscene  
+
+> 4:
+
+Gvirt ← { (xj , I3, s, 0) }Nvirt  
+
+> j=1
+
+▷ Virtual particles: identity rotation, scale s, zero opacity  
+
+> 5:
+
+Gall ← G ∪ G virt  
+
+> 6:
+
+pg ← 1 ∀g ∈ G virt  ▷ Accumulator for Q
+
+> p
+
+(1 − Φg, pTp(tp 
+
+> g
+
+))  
+
+> 7:
+
+for all p ∈ P do  ▷ Accumulate per-view contributions  
+
+> 8:
+
+vp ← SINGLE VIEW PARTICLE VISIBILITY (p, Gall )
+
+▷ vp[g] = Φ g, p Tp(tp 
+
+> g
+
+) via Alg. 2  
+
+> 9:
+
+for all g ∈ G virt do  
+
+> 10:
+
+pg ← pg · (1 − vp[g])  
+
+> 11:
+
+end for  
+
+> 12:
+
+end for  
+
+> 13:
+
+Gkeep virt ← ∅  
+
+> 14:
+
+for all g ∈ G virt do  
+
+> 15:
+
+˜vg ← 1 − pg ▷ Multi-view visibility 
+
+1 − Q 
+
+> p∈P
+
+(1 − Φg, pTp(tp 
+
+> g
+
+))  
+
+> 16:
+
+if ˜vg ≤ ϵv then  ▷ Low visibility ⇒ underexplored region  
+
+> 17:
+
+Gkeep virt ← G keep virt ∪ { (xg , I3, s, 0) } 
+
+> 18:
+
+else  ▷ High visibility ⇒ free space, discard  
+
+> 19:
+
+continue  
+
+> 20:
+
+end if  
+
+> 21:
+
+end for  
+
+> 22:
+
+eG ← G ∪ G keep virt  
+
+> 23:
+
+return eG
+
+the 3D Gaussian onto the image plane [39]. The emitted color ci(d) is obtained from the spherical harmonics coef-ficients of particle i, evaluated at direction d.To extend (24) to uncertainty-aware rasterization, con-sider computing the posterior distribution of the observed color ˆC(r) along direction d, denoted as p(z0). Each emitted color is modeled as a Gaussian random variable 
+
+ci(d) ∼ N (μci , Qci ), where μci and Qci are respectively the mean and covariance. Since density σi can be inter-preted as the differential probability that a ray terminates at position i [57], the effective opacity αi represents the prob-ability of ray terminating at that position. The rasterization process can thus be expressed as a Bayesian Network [104] via the recursion 
+
+p(zi) = αi p(ci) + (1 − αi) p(zi+1 ), (25) where p(zi) denotes the distribution of the observed color if the camera were placed at position i along the ray. Equa-tion (25) states that with probability αi a ray terminates at particle i, in which case the observed color is ci ; otherwise, with probability 1 − αi, the observed color is inherited from the next position along the ray. The recursion terminates at the last particle, whose emitted color distribution is Gaus-sian. By applying the recursive expression in (25) from the last particle to the first, we can compute the posterior of the observed color at the camera position z0, which is the output of the rasterization process. 
+
+p(z0) = X
+
+> i
+
+wiN (μci , Qci ), (26) which is a Gaussian mixture model (GMM) with N (num-ber of particles along the ray) components. As noted in NVF [104], directly quantifying uncertainty from the GMM in (26) is limited because the predicted color variance Qci is often inaccurate due to approxima-tions in the uncertainty estimation process. To address this issue, NVF [104] introduces a (isotropic) visibility-modulated variance correction which ensures particles with lower visibility exhibit higher uncertainty. We extend this correction to anisotropic visibility and 3DGS. Let Vi be a binary random variable indicating whether particle i is visible along the ray, with visibility probability given by the visibility field, P (Vi = 1) =
+
+V (i)(d). The distribution of the emitted color is therefore modified to 
+
+p(ci | Vi) = 
+
+(N (μci , Qci ), if Vi = 1 ,
+
+N (μ0, Q0), otherwise , (27) where N (μ0, Q0) is a prior with large variance Q0 to re-flect the high uncertainty of invisible particles. Opacity is also visibility-modulated, since opacity pre-dictions are unreliable for particles that are rarely or never observed. Similar to [104], the compensated opacity for 3DGS is 
+
+α∗ 
+
+> i
+
+= ( vi + β(1 − vi)) αi + o0(1 − β) (1 − vi), (28) where vi := V (i)(d) for shorthand, o0 is the prior opac-ity for invisible particles, and β is a hyperparameter repre-senting the reliability of the opacity prediction for invisi-ble regions. The first term in (28) captures the case where the particle is visible or the opacity prediction is reliable. The second term introduces a correction when the particle is invisible and the predicted opacity is unreliable, by sub-stituting the predicted opacity in place of a prior opacity o0.Note that here we use the per-particle opacity o0 instead of the effective opacity that incorporates the Gaussian decay as a function of the distance between the particle center and the pixel location. Therefore, the visibility-modulated uncertainty-aware 3DGS rasterization process can be expressed as the follow-ing Gaussian mixture model: 
+
+p(z0) = X
+
+> i
+
+w∗ 
+
+> i
+
+vi N μci , Qci
+
+ + N μ0, Q0
+
+ X 
+
+> i
+
+w∗ 
+
+> i
+
+(1 −vi),
+
+(29) where w∗ 
+
+> i
+
+= α∗
+
+> i
+
+Qi−1
+
+> j=1
+
+(1 − α∗ 
+
+> j
+
+) denotes the visibility-compensated weights. The entropy of the GMM in (29) is then used to quantify the uncertainty of the observed color z0. Because the en-tropy of a Gaussian mixture lacks a closed-form expression, the following upper bound [28], also adopted in NVF [104], is used as an accurate estimator of the entropy: 
+
+H(z0) ≤
+
+> N
+
+X
+
+> i=0
+
+¯wi
+
+
+
+− log( ¯ wi) + 12 log  (2 πe )D |Qi|
+
+,
+
+(30) where we denote ¯wi := w∗ 
+
+> i
+
+vi for i ≥ 1, and ¯w0 := 
+
+PNi=1 w∗ 
+
+> i
+
+(1 − vi), and Qi := Qci for i ≥ 1 and Q0 for 
+
+i = 0 . Here, D = 3 corresponds to the RGB color chan-nels. It is worth noting that the visibility field vi is estimated using the lower bound in (23). This this approximation underestimates visibility and therefore overestimates how much of the mixture should be attributed to invisible re-gions. Consequently, the RHS in (30) remains a valid upper bound on the entropy computed with exact visibility, since the inequality is preserved under the assumption Q0 ⪰ Qci
+
+for all i. This condition is enforced by construction, as Q0
+
+is chosen to be a large-variance prior. As demonstrated in [104], when using visibility-modulated uncertainty-aware volume rendering, setting 
+
+Qci to a constant already yields strong performance in ac-tive mapping, since the visibility field effectively captures uncertainty in unseen regions, which is the dominant factor for active mapping. Incorporating predicted variances Qci
+
+yields only marginal performance gains. Motivated by this observation, our base GAVIS model adopts a constant variance Qci = σ2 
+
+> c
+
+I, which offers a fa-vorable trade-off between performance and computational cost. In addition, existing uncertainty quantification meth-ods for 3DGS, including FisherRF [32] and VIMC [54], could be used to predict Qci , leading to two variants of the base GAVIS model: (1) FisherRF+GAVIS and (2) VIMC+GAVIS. Further details on how these methods are used to obtain Qci are provided in the Sec. 10, and quan-titative experiments of the two variants are included in the Sec. 12, demonstrating that GAVIS can serve as a post-hoc module that significantly improves the performance of ex-isting methods. Finally, we describe the algorithm for 3DGS uncertainty quantification using the visibility field at a synthesis view p
+
+in Alg. 6. This procedure is efficiently implemented using a modified 3DGS rasterizer, enabling real-time uncertainty quantification at around 200 FPS. 
+
+Algorithm 6 3DGS Uncertainty Quantification with Visi-bility Field 
+
+Input: ug ∈ R2: image-space projection of the Gaussian center to synthesis view p; Σg ∈ R2×2: image-space conic (precision) matrix; zg ∈ R: depth (for front-to-back sorting); og ∈ [0 , 1] : base opacity; vg ∈ [0 , 1] :queried visibility field value for Gaussian g along direc-tion dp; Qcg : predicted color covariance for Gaussian 
+
+g along direction dp; ϵT : transmittance cutoff (default 
+
+10 −4); β, o0, Q0: hyperparameters for visibility com-pensation (default β = 0 .5, o0 = 0 .15 , Q0 = I3). 
+
+Output: Entropy map H ∈ RH×W for synthesis view p. 
+
+> 1:
+
+Initialize H[x] ← 0 for all pixels x in the image  
+
+> 2:
+
+for each pixel x in the image do  
+
+> 3:
+
+T ← 1 ▷ current transmittance  
+
+> 4:
+
+¯w0 ← 0 ▷ accumulated weight of the invisible component  
+
+> 5:
+
+G ← Gaussians overlapping x (sorted by increasing 
+
+z) 
+
+> 6:
+
+for each g ∈ G do  
+
+> 7:
+
+α ← og exp  −(ug − x)⊤Σg (ug − x) 
+
+> 8:
+
+α∗ ← (vg + β(1 − vg )) α + o0 (1 − β) (1 − vg )
+
+▷ Eq. (28)  
+
+> 9:
+
+w∗ ← α∗T 
+
+> 10:
+
+h ← − log( w∗vg ) + 12 log |Qcg | + 32 log(2 πe ) 
+
+> 11:
+
+H[x] ← H[x] + w∗ vg h ▷ Eq. (30)  
+
+> 12:
+
+¯w0 ← ¯w0 + w∗(1 − vg ) 
+
+> 13:
+
+T ← T (1 − α∗) 
+
+> 14:
+
+if T < ϵ T then break  
+
+> 15:
+
+end if  
+
+> 16:
+
+end for  
+
+> 17:
+
+h ← − log ¯ w0 + 12 log |Q0| + 32 log(2 πe ) 
+
+> 18:
+
+H[x] ← H[x] + ¯ w0 h ▷ Add the contribution of the invisible component  
+
+> 19:
+
+end for  
+
+> 20:
+
+Return H
+
+## 9. Active Mapping Details 
+
+In this section, we provide additional details on our active mapping method, which follows a formulation similar to that in [104]. The goal of active mapping or next-best-view planning is to select the camera pose p that maximizes the expected in-formation gain (EIG) about the scene, which can be written as: 
+
+I(Z; θ | p) = H[Z | p] − H [Zp | θ, p], (31) where I(·) denotes mutual information, H[·] is entropy, Z
+
+is the random variable corresponding to the rendered obser-vation, and θ represents the radiance-field parameters. We assume a Gaussian observation model, p(Z |
+
+p, θ) = N (f (p; θ), Σz ) , where f (p; θ) is the rendering function and Σz is the observation noise covariance. As-suming Σz is constant and isotropic, i.e., Σz = σ2 
+
+> z
+
+I then the entropy term H[Z | θ, p] becomes constant and can be omitted during optimization. Hence, maximizing EIG re-duces to maximizing the entropy: 
+
+p∗ = arg max 
+
+> p
+
+H(Zp) , (32) where we use H(Zp) as shorthand for H[Zp | p], which could be obtained from the posterior of the rendered ob-servation. This objective is commonly adopted in radiance-field-based active mapping [46, 54, 104, 107]. Note that un-certainties arising from robot localization or dynamics are not modeled here, as the primary focus of these methods is the uncertainty of the radiance field itself. Moreover, the ac-tion τ is restricted to the next camera pose, and the EIG of an entire trajectory is not considered, since efficiently com-puting the joint entropy over a sequence of observations re-mains an open challenge [40, 66]. A simplified workaround assumes independence across views [31, 91], though this approximation is not the focus of this work. Extending the GAVIS framework to support trajectory-level EIG is a promising direction for future research, but it lies beyond the scope of this paper. We adopt the spatial correlation correction term from NVF [104] to recover the joint image-level entropy from per-pixel entropies: 
+
+H(Zp) = X
+
+> m,n
+
+
+
+H(Zmn  
+
+> p
+
+) − fcorr 
+
+ H(Zmn  
+
+> p
+
+); dmn 
+
+> p
+
+
+
+, (33) where Zmn  
+
+> p
+
+denotes the observed color associated with pixel (m, n ), dmn  
+
+> p
+
+is its expected depth, and fcorr (·) is a depth-dependent correction term that compensates for spa-tial correlations between neighboring pixels. Additional de-tails can be found in [104]. Finally, we describe the active mapping algorithm with GAVIS in Alg. 7. The algorithm iteratively trains the 3DGS model, constructs the visibility field, and selects the next-best view based on the expected information gain computed from the visibility-aware 3DGS uncertainty quantification. 
+
+## 10. Applying GAVIS as a Post-hoc Module 
+
+In this section, we provide additional details on applying GAVIS as a post-hoc module to enhance existing uncer-Algorithm 7 Active Mapping with GAVIS 
+
+Input: P: initial poses; Z: initial images; T : number of active mapping planning steps. 
+
+Output: G: the trained 3DGS model after active mapping.  
+
+> 1:
+
+for i = 1 to T do  
+
+> 2:
+
+G ← train3DGS( P, Z) ▷ train 3DGS  
+
+> 3:
+
+{γ(g) 
+
+> ℓm
+
+} ← VFConstruction( G, P) ▷ Alg. 3  
+
+> 4:
+
+eG ← VFDensityControl( G, P) ▷ Alg. 5  
+
+> 5:
+
+Pc ← samplePoses (G) ▷ sample candidate poses  
+
+> 6:
+
+for p in Pc do  
+
+> 7:
+
+vg ← VFQuery( eG, {γ(g) 
+
+> ℓm
+
+}, p) ▷ Alg. 4  
+
+> 8:
+
+Zp ← UQVF( eG, vg , p) ▷ Alg. 6  
+
+> 9:
+
+end for  
+
+> 10:
+
+pi ← arg max 
+
+> p∈P c
+
+H(Zp) 
+
+> 11:
+
+P ← { pi} ∪ P  
+
+> 12:
+
+Z ← takeImageAt( {pi}) ∪ Z ▷ update training set  
+
+> 13:
+
+end for  
+
+> 14:
+
+return G
+
+tainty quantification methods, including FisherRF [32] and VIMC [54]. The key idea is to use the uncertainty esti-mated by FisherRF or VIMC to refine the variance of emit-ted color Qci in (3) along ray direction d, whereas in base GAVIS this quantity is treated as a constant hyperparameter for all particles. We first describe how to integrate GAVIS with FisherRF and VIMC, and then discuss the relationship between GAVIS and these methods. 
+
+10.1. Integration with FisherRF 
+
+FisherRF [32] approximates the expected information gain of a candidate camera pose by maximizing 
+
+arg max 
+
+> p
+
+tr  H′′ [Zp | p, θ∗] H′′ [θ∗ | Dtrain ]−1 , (34) where the observation Zp is the rendered image for pose 
+
+p, θ∗ are the estimated 3DGS parameters, and the training set is Dtrain := {(p, Zp)}p∈P . The observed information is given by: 
+
+H′′ [θ∗ | Dtrain ] = X
+
+> (p,Zp)∈Dtrain
+
+H′′ [Zp | p, θ∗], (35) where H′′ [Zp | p, θ∗] is the Hessian of the negative log-likelihood under the Gaussian observation model 
+
+− log p(Zp | p, θ) = 12σ2
+
+> z
+
+ Zp −f (p; θ)⊤ Zp −f (p; θ)+C, 
+
+(36) 
+
+with rendering model f (p; θ) and observation noise vari-ance σ2 
+
+> z
+
+. FisherRF adopts the Laplace approximation [40], leading to: 
+
+H′′ [Z|p, θ∗] ≈ 1
+
+σ2
+
+> z
+
+diag  ∇θ f (p; θ)T ∇θ f (p; θ) + λI
+
+(37) Thus the posterior covariance of θ is given by: 
+
+Σθ ≈ H′′ [θ∗|Dtrain ]−1 (38) Further details on these derivations can be found in [23, 32, 40]. We then propagate this parameter uncertainty to the emitted color of each particle. Let θ(i) 
+
+> ℓ,m,k
+
+denote the color coefficient of the i-th particle in channel k, parameterized in the spherical harmonics basis. The emitted color in channel 
+
+k along direction d is given by 
+
+ci,k (d) = 
+
+> L
+
+X
+
+> ℓ=0
+> ℓ
+
+X
+
+> m=−ℓ
+
+θ(i) 
+
+> ℓ,m,k
+
+Yℓ,m (d), (39) which is linear in the coefficients θ(i)
+
+> ℓ,m,k
+
+. The variance of the emitted color in channel k is obtained by linear uncertainty propagation: 
+
+Qci,k (d) = 
+
+> L
+
+X
+
+> ℓ=0
+> ℓ
+
+X
+
+> m=−ℓ
+
+Yℓ,m (d)2 Σ(i)
+
+> ℓ,m,k
+
+, (40) where Σ(i) 
+
+> ℓ,m,k
+
+is the variance of the coefficient θ(i) 
+
+> ℓ,m,k
+
+ex-tracted from the diagonal of Σθ , as in FisherRF [32] all pa-rameters are assumed independent and the covariance ma-trix Σθ is therefore diagonal. Since each color channel is also modeled independently, the covariance of the emitted color vector Qci is diagonal with diagonal entries Qci,k .
+
+10.2. Integration with VIMC 
+
+VIMC [54] estimates the distribution of θ from a learned low-dimensional manifold of the radiance field parameters. We draw J parameter samples (with J = 2 by default in VIMC). For each sampled parameter θj , we compute the emitted color ci,k,j (d) following (39), and estimate the per-channel uncertainty by taking the sample variance across the J samples: 
+
+Qci,k (d) = 1
+
+J − 1
+
+> J
+
+X
+
+> j=1
+
+(ci,k,j (d) − ¯ci,k (d)) 2 , (41) where ¯ci,k (d) = 1
+
+> J
+
+PJj=1 ci,k,j (d) is the sample mean. Un-der the assumption that the three color channels are inde-pendent, the resulting emitted-color covariance Qci simi-larly reduces to a diagonal matrix whose diagonal entries are given by Qci,k (d).10.3. Discussion 
+
+In principle, an accurate radiance-field uncertainty estima-tion method should assign high uncertainty to unseen re-gions, as these areas do not contribute to the training loss. However, existing approaches struggle to capture this be-havior. In FisherRF, the diagonal Laplace approximation consid-ers only the diagonal entries of the Hessian. This ignores the strong correlations among parameters of the same Gaussian particle (e.g., RGB spherical-harmonics coefficients within a color channel), causing the approximation to underesti-mate uncertainty, especially for viewing directions far from the training views. In VIMC, uncertainty is approximated from Monte Carlo samples drawn from a learned low-dimensional manifold. With only a small number of samples, variance estimates are noisy and unreliable, while increasing the sample count significantly raises computational cost, making it unsuitable for real-time applications. Integrating GAVIS provides an efficient way to compen-sate for these limitations. Since GAVIS reliably assigns higher uncertainty to unseen regions, it improves the accu-racy of uncertainty quantification and leads to better active-mapping performance (see Sec. 12). 
+
+## 11. Experimental Details 
+
+11.1. Environment Setup 
+
+We evaluate our method on four datasets: (1) the standard NeRF Synthetic dataset [57]; (2) a space dataset consisting of the Hubble Space Telescope (HST) [3] and the Interna-tional Space Station (ISS) [4] for space robotics scenarios; (3) eight indoor environments from the Habitat-Matterport 3D (HM3D) [69] dataset • 00208-SQqGpSHzfSr 
+
+• 00299-bdp1XNEdvmW 
+
+• 00321-JWWJBQWHv64 
+
+• 00323-yHLr6bvWsVm 
+
+• 00415-rBmEe6ab5VP 
+
+• 00441-4MRLu1yET6a 
+
+• 00446-tL6i2PtktSh 
+
+• 00670-mDdyQ6azhVD 
+
+and (4) eight scenes from the Gibson [101] dataset (annawan , bremerton , creede , eagerville ,
+
+eastville , helix , hometown , quantico ). NeRF Synthetic and the space dataset are simulated in Blender, whereas HM3D and Gibson scenes are simulated in Habitat-Sim [73]. All images are rendered at a resolution of 
+
+512 × 512 pixels, with both horizontal and vertical fields of view set to 90 ◦. For a fair comparison, all methods are ini-tialized from the same set of closely spaced initial views that cover only a portion of the scene, mimicking the starting condition of a robotic active mapping process. The agent begins with 3 initial views for NeRF Synthetic and the space dataset, and with 5 spherically sampled views from a fixed starting position for HM3D and Gibson. We use 10 active-mapping steps for NeRF Synthetic and the space dataset, 
+
+40 steps for Gibson, and 80 steps for HM3D, chosen as the minimal steps at which the strongest methods achieve ac-ceptable reconstruction quality (PSNR > 24 ). Each scene is evaluated over three runs with different random seeds, and the mean and propagated standard error due to seed stochasticity [92] of all metrics are reported. All experi-ments for each scene and each method are performed on a single NVIDIA A40 GPU. 
+
+11.2. Active Mapping Setup 
+
+To ensure a fair comparison of uncertainty quantification methods for active mapping, all methods are evaluated us-ing the same active mapping pipeline, differing only in the uncertainty quantification module, following the setup in NVF [104]. In particular, each method uses the same min-imally biased candidate view sampler, which samples only collision-free candidate poses without additional heuristics. This design reflects the principle that an optimal active map-ping policy should, in principle, be achievable by relying solely on accurate uncertainty quantification, without the need for heuristic guidance. For the NeRF Synthetic and space datasets, candidate poses are sampled from SE(3) 
+
+within the scene bounding box. For the Gibson and HM3D datasets, candidate poses are sampled from SE(2) on a plane at positions known to be collision-free, with a fixed height of 1.5 m , mimicking the active mapping process of a mobile robot. 
+
+11.3. Training Details 
+
+For a fair comparison, we adopt the standard 3DGS training setup from [39] with minimal differences across all 3DGS-based methods. Since FisherRF and GAVIS are post-hoc methods, they share the exact same 3DGS training setup. VIMC uses the same setup as well, with the only differ-ence being an additional loss term used to learn the low-dimensional manifold in the space of 3DGS parameters for uncertainty quantification. NVF is trained following the same configuration as in [104]. For the NeRF Synthetic and space datasets, 3DGS is trained for 3500 iterations at each planning step. For the Gibson and HM3D indoor datasets, 3DGS is trained for 7500 iterations at each plan-ning step, and depth supervision from [55] is incorporated to accelerate convergence for all 3DGS-based methods, us-ing simulator-rendered depth images. For a fair compari-son, a similar depth loss [17] is also applied when training NVF. For shorter-horizon datasets (NeRF Synthetic, space, and Gibson), 3DGS is initialized using a subsampled sparse point cloud constructed from all previously observed depth images, to reduce training time. For the longer-horizon HM3D dataset, 3DGS at each planning step is initialized by merging the previous 3DGS model with a subsampled sparse point cloud derived from the most recent depth im-age. 
+
+11.4. Metrics Details 
+
+Visual Coverage. For visual coverage evaluation, we adopt the ground-truth visibility (VIS) metric from [104]. This metric assigns each face in the ground-truth mesh a binary visibility value, all faces are initialized with value 0, and then the value of a face is set to 1 (visible) if it is observed by the training views without occlusion. The Vis score is computed as the ratio of the total area of visible faces to the total mesh surface area. We also visualize the GT visibility map (used in Figs. 6, 9, and 8) by rendering the visibility-annotated mesh from each candidate query pose. Similar to the uncertainty map, darker regions indicate visible areas (value 1), while brighter regions indicate invisible areas (value 0). Ide-ally, an uncertainty quantification method tailored for ac-tive mapping should produce uncertainty maps that corre-late with the GT visibility map, assigning high uncertainty (bright) to invisible regions and low uncertainty (dark) to visible regions. We note that ground-truth (GT) visibility is inherently an isotropic metric that does not account for the view-dependent nature of visibility. In particular, observing a face from a single direction, regardless of viewing distance, may already be considered fully visible. As a result, such metrics do not favor uncertainty quantification methods that encourage revisiting regions from diverse viewpoints. De-signing evaluation metrics for visual coverage that account for viewpoint diversity and better align with the active map-ping’s objective of acquiring observations from diverse di-rections remains an open problem. 
+
+Mesh Metrics. To assess reconstruction completeness, we also include the completion ratio defined in [87]. Ground-truth 3D points are sampled from the original scene meshes. Predicted points are extracted from a trained 3DGS model using the approach described in [2]. For consistency with prior work [104], we use a completion ratio threshold of 
+
+0.01 for the NeRF Synthetic and space datasets. For HM3D and Gibson environments, we adopt a threshold of 0.05 .We additionally report mesh-based metrics, including completion (Comp) and accuracy (Acc). However, we adopt completion ratio (CR) as the primary mesh metric, as it is widely used, easier to interpret, and more robust to out-liers compared to Comp [33, 50]. Moreover, Acc is not well aligned with the objective of active mapping under 3DGS, despite its use in NeRF-based active mapping [104]. This is because 3DGS cannot distinguish empty space from under-explored regions, causing reconstructed point clouds to re-flect only explored areas. As a result, Acc is biased toward policies that oversample a limited region while penalizing broader exploration in 3DGS active mapping. Empirically, Acc shows minimal improvement with additional views and exhibits no statistically significant differences across meth-ods; accordingly, it is rarely used in 3DGS-based active mapping [32, 54]. As shown in Tab. 6, Acc varies little across methods and shows weak correlation with other met-rics. 
+
+Uncertainty Quantification. To quantitatively evaluate the quality of uncertainty quantification, we adopt the Area Under the Sparsification Error curve (AUSE) met-ric [29, 67], which measures the correlation between pre-dicted uncertainty and actual error. However, the depth-based AUSE metric (AUSE-D) used in [23, 32, 54], which evaluates the correlation between predicted uncertainty and depth error computed from the predicted depth and the ground-truth mesh, can be misaligned with the objective of active mapping. In particular, radiance fields can produce accurate depth predictions in unobserved regions via plau-sible imagination. As a result, generic uncertainty quantifi-cation methods, which are not designed for active mapping and tend to assign low uncertainty to these regions, can still achieve strong AUSE-D scores. In contrast, effective active mapping requires high uncertainty in unobserved regions to encourage exploration. Therefore, a strong AUSE-D score does not necessarily indicate good active mapping perfor-mance. We note that alternative metrics for evaluating uncer-tainty quantification exist, including negative log-likelihood (NLL) and expected calibration error (ECE) [25]. However, these metrics are less commonly used in the context of ra-diance fields, since they emphasize the quality of a fully specified and calibrated predictive distribution, which is not necessary for downstream tasks such as active mapping and artifact removal [23]. Moreover, it is unclear how to fairly compare these metrics across different methods, for exam-ple, GMM-based approaches (GAVIS&NVF), methods as-suming a Gaussian distribution (VIMC), and methods that do not explicitly predict a distribution (FisherRF). Further-more, similar to AUSE-D, these metrics can also be mis-aligned with the objective of active mapping. Therefore, designing uncertainty quantification metrics tailored to active mapping remains an open problem. To-ward this direction, we introduce a ground-truth visibility-based variant, denoted as AUSE-V, which measures the correlation between the predicted uncertainty map and the ground-truth visibility map. The ground-truth visibility map is obtained by assigning binary face-level values on the ground-truth mesh and rendering them using a rasterizer. AUSE-V better captures the requirement of active mapping for high uncertainty in unobserved regions, and thus ex-hibits stronger correlation with both active mapping perfor-mance and qualitative behavior. Further results are provided in Sec. 12.1. However, as discussed above, GT visibility is inherently isotropic and does not account for the view-dependent na-ture of visibility, so it may not fully capture the benefits of anisotropic visibility modeling. Moreover, a reliable un-certainty quantification method for active mapping should assign high uncertainty to regions with low GT visibility, but need not always assign low uncertainty to regions with high GT visibility. High uncertainty in observed regions may arise when the test view direction deviates substantially from the training views direction or when model capacity is limited. As a result, predictions can still be inaccurate even in observed regions. Therefore, although AUSE-V is more informative than AUSE-D, it may not fully capture uncer-tainty quality for active mapping. 
+
+## 12. Additional Results 
+
+12.1. Additional Quantitative Results 
+
+We present the complete active mapping results for all methods, including the baselines FisherRF, VIMC, and NVF, as well as our proposed methods GAVIS, Fish-erRF+GAVIS, and VIMC+GAVIS, with all evaluation met-rics reported for each dataset in Tab. 6, with additional Comp and Acc metrics included. As shown in Tab. 6, our method significantly outper-forms all 3DGS baselines in all metrics excluding Acc. Moreover, integrating GAVIS as a post-hoc module con-sistently yields substantial improvements over each corre-sponding baseline across all datasets and all metrics exclud-ing Acc. Our method also surpasses NVF in active mapping performance while requiring substantially less computation time. GAVIS outperforms NVF on all image-based metrics (PSNR, SSIM, and LPIPS) across all datasets. On the pri-mary mesh metric (CR) and visibility metric (VIS), GAVIS outperforms NVF on all datasets except Gibson. Since these metrics are inherently isotropic and direction agnostic, e.g., observing a region from a single direction may already pro-vide high GT mesh visibility and low point-cloud error (es-pecially when depth loss is used), the performance gains are less pronounced on these metrics. Among the variants of our method (GAVIS, Fish-erRF+GAVIS, and VIMC+GAVIS), FisherRF+GAVIS overall outperforms the base GAVIS model on most datasets except the space dataset. This suggests that more accurately modeling Qci can further improve performance. The ad-vantage is less pronounced in the space dataset, since color variance tends to be more monotonic across these scenes. VIMC+GAVIS outperforms the base GAVIS model only on the NeRF Synthetic dataset and not on the others. This is because VIMC relies on sampling-based uncertainty esti-mation, and with only 2 samples (the default setting in [54]), the sampling noise tends to overshadow the benefits intro-duced by visibility modeling. Although performance gains can be achieved by more accurately modeling Qci , using a constant covariance al-ready yields superior performance, as visibility is the dom-inant factor in active mapping, which is consistent with the findings in [104]. Since obtaining more accurate Qci
+
+with FisherRF+GAVIS or VIMC+GAVIS requires addi-tional processing with substantially higher computational cost, the base GAVIS model provides a more favorable trade-off between performance and efficiency in practice. We include additional uncertainty quantification results using AUSE-D and AUSE-V in Tab. 5, covering all base-line methods and ablations. GAVIS achieves the best per-formance in AUSE-V among all baselines and ablations that disable individual components, which is consistent with its superior active mapping performance and qualitative re-sults. GAVIS also attains the best AUSE-D score among all baseline methods. However, it does not outperform the isotropic ablation that disables anisotropic visibility by setting ν(d; dp) = 1 . This discrepancy arises from the misalignment between AUSE-D and the objective of ac-tive mapping, as discussed in Sec. 11. A simple exam-ple can be constructed from a scenario similar to Fig. 7, where the 3DGS model produces plausible imaginations behind a wall, leading to relatively accurate depth predic-tions in those regions and consequently improving the over-all AUSE-D score, even though the model incorrectly as-signs low uncertainty to unobserved areas without consid-ering anisotropic visibility. GAVIS NVF FisherRF VIMC Iso. w/o DC Iso. w/o DC AUSE-D ↓ 0.224 0.381 0.463 0.504 0.205 0.515 0.413 AUSE-V ↓ 0.176 0.231 0.496 0.447 0.292 0.480 0.514 
+
+> Table 5. Additional uncertainty quantification results
+
+We conduct additional ablation studies on the SH degree 
+
+L, anisotropy parameter κ, and the density of virtual parti-cles ρ in visibility field density control, compared against the default GAVIS settings ( L = 2 , κ = 1 , ρ = 100 ). The results in Tab. 7, averaged over all datasets, indicate that GAVIS is relatively robust to these hyperparameters. Specifically, for κ, the default κ = 1 performs best over-all. Smaller values modestly reduce rendering quality, while overly large values (e.g., κ = 10 , a sharper ν(d; dp)) de-grade visual coverage. For SH degree L, L = 3 yields a slight improvement over L = 2, but gains plateau at higher degrees; we retain L = 2 as the default for efficiency. For virtual particle density ρ, higher values consistently im-prove performance with diminishing returns, and ρ = 100 
+
+provides a practical balance between performance and com-putational cost. 12.2. Additional Qualitative Results 
+
+In this subsection, we provide additional comprehensive qualitative results across a wide variety of scenes, demon-strating the generality of GAVIS compared to baseline methods for uncertainty quantification and active mapping. Fig. 8–9 visualize uncertainty quantification results. For each scene, all methods are trained on the same set of views, which only partially observe the underlying scene. To en-able direct evaluation of uncertainty quantification, we gen-erate ground-truth visibility (GT VIS) maps by marking mesh faces that are invisible from the training views with a bright color (and visible faces with a dark color), and ren-dering this visibility-annotated mesh from the same queried viewpoints. An accurate uncertainty quantification algo-rithm should assign high uncertainty to invisible regions, consistent with the GT visibility. As shown in Figs. 8–9, GAVIS provides uncertainty es-timation that aligns most closely with the GT VIS maps, thanks to its analytical anisotropic visibility modeling. In contrast, NVF relies on a black-box neural network approx-imation of isotropic visibility, leading to a noisy and less accurate uncertainty map. All visibility-aware methods sig-nificantly outperform baselines that ignore visibility, which fail to assign high uncertainty to invisible regions. Qual-itative results for FisherRF+GAVIS and VIMC+GAVIS are also presented, demonstrating significant improvements over the original method by reliably assigning high uncer-tainty to invisible regions. Finally, additional active-mapping reconstruction results for all Gibson and HM3D scenes are shown in Figs. 10 and 11, demonstrating that our method leverages accurate un-certainty quantification to guide more effective exploration, resulting in broader scene coverage and higher-quality re-constructions. Dataset Method PSNR ↑ SSIM ↑ LPIPS ↓ Acc ↓ Comp ↓ CR ↑ VIS ↑
+
+NeRF Synth. FisherRF 22 .34 ±0.31 0.870 ±0.004 0.119 ±0.003 0.014 ±2e−4 0.014 ±0.001 0.626 ±0.011 0.376 ±0.010 
+
+VIMC 23 .14 ±0.25 0.880 ±0.003 0.107 ±0.003 0.013 ±4e−4 0.015 ±0.001 0.651 ±0.010 0.407 ±0.011 
+
+NVF 22 .59 ±0.26 0.859 ±0.005 0.147 ±0.004 0.025 ±0.002 0.020 ±0.001 0.549 ±0.014 0.431 ±0.005 
+
+GAVIS (ours) 24 .26 ±0.25 0.894 ±0.002 0.097 ±0.002 0.014 ±2e−4 0.011 ±0.001 0.711 ±0.009 0.437 ±0.006 
+
+FisherRF+GAVIS (ours) 24 .55 ±0.17 0.898 ±0.002 0.092 ±0.002 0.013 ±3e−4 0.012 ±4e−4 0.703 ±0.008 0.440 ±0.005 
+
+VIMC+GAVIS (ours) 24 .30 ±0.18 0.894 ±0.002 0.096 ±0.001 0.014 ±2e−4 0.012 ±3e−4 0.713 ±0.006 0.433 ±0.005 
+
+Space FisherRF 24 .17 ±0.08 0.834 ±0.004 0.158 ±0.002 0.015 ±3e−4 0.020 ±0.001 0.547 ±0.017 0.474 ±0.016 
+
+VIMC 24 .56 ±0.55 0.841 ±0.004 0.150 ±0.002 0.015 ±4e−4 0.017 ±0.003 0.612 ±0.008 0.510 ±0.009 
+
+NVF 23 .76 ±0.46 0.796 ±0.012 0.202 ±0.010 0.037 ±0.003 0.015 ±0.002 0.499 ±0.019 0.564 ±0.017 
+
+GAVIS (ours) 26 .14 ±0.10 0.857 ±0.003 0.140 ±0.002 0.014 ±4e−4 0.013 ±0.002 0.630 ±0.019 0.582 ±0.017 
+
+FisherRF+GAVIS (ours) 25 .44 ±0.31 0.857 ±0.003 0.139 ±0.002 0.013 ±0.001 0.014 ±0.001 0.631 ±0.014 0.588 ±0.023 
+
+VIMC+GAVIS (ours) 25 .47 ±0.34 0.857 ±0.002 0.141 ±0.001 0.016 ±0.001 0.013 ±2e−4 0.640 ±0.008 0.597 ±0.009 
+
+Gibson FisherRF 18 .11 ±0.50 0.720 ±0.007 0.419 ±0.006 0.038 ±0.001 0.891 ±0.139 0.431 ±0.031 0.469 ±0.035 
+
+VIMC 15 .70 ±0.20 0.668 ±0.003 0.465 ±0.003 0.046 ±0.002 1.006 ±0.067 0.337 ±0.013 0.366 ±0.014 
+
+NVF 23 .29 ±0.12 0.798 ±0.001 0.402 ±0.002 0.029 ±3e−4 0.033 ±0.001 0.880 ±0.002 0.915 ±0.002 
+
+GAVIS (ours) 24 .42 ±0.14 0.812 ±0.003 0.323 ±0.004 0.040 ±0.001 0.044 ±0.002 0.831 ±0.005 0.890 ±0.003 
+
+FisherRF+GAVIS (ours) 24 .58 ±0.12 0.815 ±0.002 0.319 ±0.003 0.041 ±0.001 0.044 ±0.002 0.836 ±0.006 0.890 ±0.007 
+
+VIMC+GAVIS (ours) 24 .04 ±0.19 0.807 ±0.002 0.324 ±0.003 0.041 ±3e−4 0.075 ±0.006 0.772 ±0.009 0.834 ±0.010 
+
+HM3D FisherRF 18 .32 ±0.44 0.693 ±0.009 0.446 ±0.009 0.040 ±0.001 0.503 ±0.097 0.447 ±0.025 0.558 ±0.030 
+
+VIMC 17 .15 ±0.26 0.645 ±0.006 0.477 ±0.006 0.052 ±0.001 0.178 ±0.038 0.476 ±0.017 0.618 ±0.020 
+
+NVF 22 .69 ±0.14 0.760 ±0.002 0.434 ±0.002 0.036 ±0.001 0.040 ±0.001 0.819 ±0.003 0.873 ±0.001 
+
+GAVIS (ours) 23 .97 ±0.07 0.791 ±0.001 0.338 ±0.002 0.043 ±4e−4 0.040 ±3e−4 0.820 ±0.003 0.876 ±0.001 
+
+FisherRF+GAVIS (ours) 24 .23 ±0.07 0.797 ±0.001 0.330 ±0.002 0.043 ±3e−4 0.040 ±3e−4 0.821 ±0.002 0.877 ±0.001 
+
+VIMC+GAVIS (ours) 23 .04 ±0.13 0.774 ±0.002 0.347 ±0.002 0.043 ±5e−4 0.057 ±0.002 0.750 ±0.008 0.826 ±0.005 
+
+Table 6. Quantitative results. Active mapping performance across all datasets and methods. Best results are shown in bold ; second and third best are underlined. 
+
+Setting PSNR ↑ SSIM ↑ LPIPS ↓ Acc ↓ Comp ↓ CR ↑ VIS ↑
+
+GAVIS (default) 24 .70 ±0.08 0.839 ±0.001 0.224 ±0.001 0.028 ±2e−4 0.027 ±0.001 0.748 ±0.006 0.697 ±0.005 
+
+κ = 0 24 .22 ±0.14 0.832 ±0.001 0.223 ±0.001 0.027 ±3e−4 0.027 ±0.001 0.744 ±0.005 0.666 ±0.005 
+
+κ = 0 .1 24 .26 ±0.18 0.834 ±0.001 0.222 ±0.001 0.027 ±4e−4 0.026 ±0.001 0.747 ±0.005 0.671 ±0.005 
+
+κ = 0 .3 24 .39 ±0.13 0.836 ±0.002 0.222 ±0.001 0.028 ±3e−4 0.026 ±4e−4 0.753 ±0.006 0.686 ±0.003 
+
+κ = 3 24 .71 ±0.11 0.843 ±0.001 0.216 ±0.001 0.026 ±2e−4 0.043 ±0.004 0.725 ±0.007 0.676 ±0.006 
+
+κ = 10 24 .04 ±0.16 0.835 ±0.002 0.223 ±0.002 0.024 ±4e−4 0.112 ±0.017 0.662 ±0.009 0.610 ±0.013 
+
+L = 1 24 .61 ±0.10 0.837 ±0.002 0.224 ±0.002 0.027 ±3e−4 0.028 ±0.001 0.749 ±0.005 0.694 ±0.004 
+
+L = 3 24 .90 ±0.09 0.844 ±0.002 0.217 ±0.001 0.027 ±2e−4 0.027 ±0.001 0.761 ±0.003 0.702 ±0.006 
+
+L = 4 24 .73 ±0.10 0.841 ±0.001 0.220 ±0.001 0.027 ±2e−4 0.027 ±0.001 0.758 ±0.004 0.700 ±0.006 
+
+L = 5 24 .74 ±0.15 0.840 ±0.003 0.220 ±0.002 0.028 ±3e−4 0.027 ±0.001 0.755 ±0.008 0.697 ±0.008 
+
+ρ = 10 24 .53 ±0.08 0.837 ±0.001 0.225 ±0.001 0.028 ±3e−4 0.033 ±0.002 0.738 ±0.005 0.685 ±0.006 
+
+ρ = 25 24 .54 ±0.12 0.836 ±0.001 0.224 ±0.001 0.028 ±2e−4 0.031 ±0.001 0.734 ±0.003 0.683 ±0.003 
+
+ρ = 50 24 .54 ±0.11 0.839 ±0.001 0.222 ±0.001 0.028 ±3e−4 0.029 ±0.001 0.750 ±0.003 0.693 ±0.003 
+
+ρ = 200 24 .99 ±0.08 0.844 ±0.001 0.216 ±0.001 0.027 ±2e−4 0.026 ±2e−4 0.765 ±0.003 0.703 ±0.004 
+
+ρ = 400 24 .95 ±0.09 0.844 ±0.001 0.215 ±0.001 0.027 ±2e−4 0.025 ±3e−4 0.766 ±0.005 0.701 ±0.004 
+
+ρ = 1000 25 .07 ±0.10 0.847 ±0.001 0.212 ±0.001 0.026 ±2e−4 0.030 ±0.004 0.763 ±0.004 0.700 ±0.005 
+
+Table 7. Additional ablation studies. Active mapping performance of GAVIS with different hyperparameter settings. GAVIS uses κ = 1 ,
+
+L = 2 and ρ = 100 by default. Figure 8. Qualitative results for uncertainty quantification in indoor scenes (Gibson and HM3D). From left to right: (1) Top-down view of the scene with training views (blue frustums) that cover only part of the room, and the queried view for uncertainty evaluation (green frustum); (2) Ground-truth RGB image rendered from the scene mesh; (3) Synthesized RGB image from a 3DGS model trained on the partial-view dataset; Uncertainty maps produced by (4) FisherRF, (5) VIMC, (6) NVF, (7) GAVIS, (8) FisherRF+GAVIS, (9) VIMC+GAVIS; (10) Ground-truth visibility map used as reference, where bright regions indicate invisible areas and dark regions indicate visible areas. An accurate uncertainty quantification method should closely align with the GT visibility by reliably assigning high uncer-tainty to invisible regions. All methods are trained using the same set of training views. Figure 9. Qualitative results for uncertainty quantification in HST (from space dataset) and Lego (from NeRF Synthetic dataset) scenes. From left to right: (1) Isometric view of the object with training views (blue frustums) that cover only part of the object geometry, and the queried view for uncertainty evaluation (green frustum); (2) Ground-truth RGB image rendered from the scene mesh; (3) Synthesized RGB image from a 3DGS model trained on the partial-view dataset; Uncertainty maps produced by (4) FisherRF, (5) VIMC, (6) NVF, (7) GAVIS, (8) FisherRF+GAVIS, (9) VIMC+GAVIS; (10) Ground-truth visibility map used as reference, where bright regions indicate invisible areas and dark regions indicate visible areas. An accurate uncertainty quantification method should closely align with the GT visibility by reliably assigning high uncertainty to invisible regions. All methods are trained using the same set of training views. Figure 10. Qualitative results for active mapping in all HM3D scenes From left to right: (1) Ground-truth top-down view; Reconstruction results from (2) FisherRF, (3) VIMC, (4) NVF, (5) GAVIS, (6) FisherRF+GAVIS, (7) VIMC+GAVIS. Planned camera poses are shown as green frustums. Figure 11. Qualitative results for active mapping in all Gibson scenes From left to right: (1) Ground-truth top-down view; Reconstruction results from (2) FisherRF, (3) VIMC, (4) NVF, (5) GAVIS, (6) FisherRF+GAVIS, (7) VIMC+GAVIS. Planned camera poses are shown as green frustums.
