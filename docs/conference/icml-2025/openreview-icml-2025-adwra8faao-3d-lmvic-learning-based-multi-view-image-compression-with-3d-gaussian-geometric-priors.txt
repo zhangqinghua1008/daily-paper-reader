@@ -1,0 +1,1377 @@
+Title: 3D-LMVIC: Learning-based Multi-View Image Compression  with 3D Gaussian Geometric Priors
+
+URL Source: https://openreview.net/pdf?id=AdWRA8faAO
+
+Number of Pages: 18
+
+Markdown Content:
+# 3D-LMVIC: Learning-based Multi-View Image Compression with 3D Gaussian Geometric Priors 
+
+Yujun Huang * 1 Bin Chen * 2 Niu Lian 2 Xin Wang 1 Baoyi An 3 Tao Dai 4 Shu-Tao Xia 1
+
+## Abstract 
+
+Existing multi-view image compression methods often rely on 2D projection-based similarities be-tween views to estimate disparities. While effec-tive for small disparities, such as those in stereo images, these methods struggle with the more complex disparities encountered in wide-baseline multi-camera systems, commonly found in virtual reality and autonomous driving applications. To address this limitation, we propose 3D-LMVIC, a novel learning-based multi-view image com-pression framework that leverages 3D Gaussian Splatting to derive geometric priors for accurate disparity estimation. Furthermore, we introduce a depth map compression model to minimize ge-ometric redundancy across views, along with a multi-view sequence ordering strategy based on a defined distance measure between views to en-hance correlations between adjacent views. Ex-perimental results demonstrate that 3D-LMVIC achieves superior performance compared to both traditional and learning-based methods. Addition-ally, it significantly improves disparity estimation accuracy over existing two-view approaches. 
+
+## 1. Introductioin 
+
+The rapid advancement of 3D applications has led to an explosion of multi-view image data across various fields, including virtual reality (VR) (Anthes et al., 2016), aug-mented reality (AR) (Schmalstieg & Hollerer, 2016), visual simultaneous localization and mapping (vSLAM) (Mokssit et al., 2023), 3D scene understanding (Dai et al., 2017), au-            
+
+> *Equal contribution 1Shenzhen International Graduate School, Tsinghua University, Shenzhen, China 2School of Computer Sci-ence and Technology, Harbin Institute of Technology, Shen-zhen, China 3Huawei Technologies Company Ltd., Shenzhen, China 4Department of Software Engineering, Shenzhen Univer-sity, Shenzhen, China. Correspondence to: Bin Chen <chen-bin2021@hit.edu.cn >.
+> Proceedings of the 42 nd International Conference on Machine Learning , Vancouver, Canada. PMLR 267, 2025. Copyright 2025 by the author(s). (a) (b)
+> Figure 1. Illustrations of camera systems. (a) A stereo camera configuration. (b) A wide-baseline multi-camera configuration.
+
+tonomous driving (Chen et al., 2017), and medical imaging (Hosseinian & Arefi, 2015). In particular, applications like VR and AR, which rely on high-quality multi-view visual content to create immersive experiences, generate a massive volume of data that poses significant challenges for storage and transmission. This makes the development of efficient compression techniques crucial for managing the increasing data demands in these fields. As illustrated in Figure 1, unlike the commonly studied stereo camera systems, 3D applications often rely on wide-baseline multi-camera systems to capture global scene infor-mation (Xu et al., 2020; Yan et al., 2024). In such scenarios, the spatial positions and viewing angles of cameras differ significantly compared to stereo setups, resulting in large disparities between images captured from different views. Existing disparity estimation methods typically rely on find-ing similar local regions in the image domain to estimate disparities. However, this approach faces significant chal-lenges when dealing with complex and large disparities. Current multi-view coding standards, such as H.264-based MVC (Vetro et al., 2011) and H.265-based MV-HEVC (Han-nuksela et al., 2015), have been developed to compress multi-view media by extending their respective base stan-dards and exploiting redundancies across multiple views. These standards employ disparity estimation to calculate positional differences of objects between views, aiding in the prediction of pixel values. However, these methods rely on manually designed modules, limiting the system’s ability to fully leverage end-to-end optimization. 13D-LMVIC: Learning-based Multi-View Image Compression with 3D Gaussian Geometric Priors 
+
+Learning-based single image compression has seen remark-able advancements (Ball ´e et al., 2017; 2018; Minnen et al., 2018), inspiring extensions of these methods to multi-view image coding (Deng et al., 2021; Lei et al., 2022; Zhang et al., 2023; Liu et al., 2024). A central challenge in these ex-tensions lies in the accurate estimation of disparities across different views. For example, Deng et al. (2021; 2023) employ a simple 3x3 homography matrix for disparity es-timation, which, while efficient, struggles with complex scene disparities. Alternatively, Ayzik & Avidan (2020); Huang et al. (2023) utilize patch matching method to align the reference view with the target view. This approach is effective for horizontal or vertical view shifts but falls short when addressing non-rigid deformations caused by view rotations. Similarly, Zhai et al. (2022) assume that dis-parity occurs only along the horizontal axis in their stereo matching method, which suffices for stereo images but is inadequate for more complex view transformations where disparity is not limited to the horizontal axis. Some methods leverage cross-attention mechanisms for implicit alignment (W ¨odlinger et al., 2022; Zhang et al., 2023; Liu et al., 2024). For instance, Zhang et al. (2023) enhance the target view’s representation by multiplying its query with the reference view’s key and value, effectively incorporating reference view features into the target view. However, these methods primarily establish correlations between two views by 2D projection similarities, without considering the 3D spatial relationships between the views and the captured objects. Building on prior investigation, we propose a novel learning-based multi-view image compression framework with 3D Gaussian geometric priors (3D-LMVIC), which employs 3D-GS as a geometric prior to guide disparity estimation between views. Specifically, 3D-GS generates a depth map for each view, providing precise spatial information at the pixel level. This enables accurate correspondence between views, allowing the compression model to effectively fuse features from reference views. Due to positional and an-gular disparities between views, images generally do not fully overlap, and merging non-overlapping regions may introduce noise. To address this, we design a mask based on the 3D Gaussian geometric prior to identify overlapping re-gions, ensuring more accurate feature fusion. Additionally, since depth maps are required during decoding, we propose a depth map compression model to efficiently reduce geo-metric redundancy across views, incorporating a cross-view depth prediction module to capture inter-view geometric correlations. Finally, recognizing the importance of field of view (FoV) overlap in redundancy reduction, we introduce a multi-view sequence ordering method to address the issue of low overlap between adjacent views in unordered sequences. This method defines and proves a distance measure between view pairs to guide the ordering of view sequences. • We propose a learning-based multi-view image com-pression framework with 3D Gaussian geometric priors (3D-LMVIC), which utilizes 3D Gaussian geometric priors for precise disparity estimation between views, thereby enhancing multi-view image compression ef-ficiency. Additionally, we design a mask based on these priors to identify overlapping regions between views, effectively guiding the model to retain useful cross-view information. • We also present a depth map compression model aimed at reducing geometric redundancy across views. Ad-ditionally, we define and prove a distance measure between views, upon which a multi-view sequence or-dering method is proposed to improve the correlation between adjacent views. • Experimental results show that our framework sur-passes both traditional and learning-based multi-view image coding methods in compression efficiency. Moreover, our disparity estimation method demon-strates greater visual accuracy compared to existing two-view disparity estimation methods. 
+
+## 2. Related Works 
+
+Single Image Coding. Traditional image codecs, such as JPEG (Wallace, 1992), BPG (Bellard, 2014), and VVC (Bross et al., 2021), employ manually designed modules like DCT, block-based coding, and quadtree plus binary tree partitioning to balance compression and visual quality. These methods, however, do not achieve end-to-end joint optimization, limiting their performance. In recent years, learning-based image compression methods have integrated autoencoders with differentiable entropy models to enable end-to-end optimization of rate-distortion loss. Early works, such as Ball ´e et al. (2017; 2018), in-troduced generalized divisive normalization (GDN) (Ball ´eet al., 2016) and proposed factorized and hyperprior en-tropy models. Subsequent research (Minnen et al., 2018; He et al., 2021; Jiang et al., 2023) incorporated autoregressive structures into entropy models, resulting in more accurate probability predictions. These advancements have laid the foundation for learning-based multi-view image coding. 
+
+Multi-view Image Coding. Traditional multi-view image codecs, such as MVC (Vetro et al., 2011) and MV-HEVC (Hannuksela et al., 2015), extend H.264 and H.265, respec-tively, by incorporating inter-view correlation modeling to eliminate redundant information between different views. However, these modules are manually designed, potentially limiting their ability to fully exploit cross-view information. Learning-based multi-view image coding primarily focuses on stereo image coding (Deng et al., 2021; Lei et al., 2022; 23D-LMVIC: Learning-based Multi-View Image Compression with 3D Gaussian Geometric Priors ...               
+
+> Image x1Image x2Image x3
+> Depth d1Depth d2Depth d3
+> Image xN
+> Depth dN
+> Training Prediction Reference Relationship for Coding
+> 3D -GS
+
+(a) Overview of the 3D-LMVIC pipeline. View n-1 View n         
+
+> 3D World Point
+> Camera Center Cn-1Camera Center Cn
+> H
+> z
+> (xn,yn)
+> (xw,yw,zw)
+> δn=( xn-1-xn,yn-1-yn)
+> (xn-1,yn-1)
+> |C nH|=d n
+
+(b) Depth-based disparity estimation process. 
+
+Figure 2. Overall Pipeline. 
+
+W ¨odlinger et al., 2022; Zhai et al., 2022; Deng et al., 2023; Liu et al., 2024) and distributed image coding (Ayzik & Avi-dan, 2020; Huang et al., 2023; Zhang et al., 2023). These methods either rely on finding explicit pixel coordinate cor-respondences between views or use attention-based implicit correspondence modeling to capture inter-view correlations. However, they model inter-view correlations based solely on two-dimensional view images, which may not fully re-flect the correspondences in the original three-dimensional space. 
+
+3D Gaussian Splatting. 3D Gaussian Splatting (Kerbl et al., 2023; Hamdi et al., 2024) introduces a differentiable point-based rendering technique that represents 3D points as Gaussian functions (mean, variance, opacity, color) and projects these 3D Gaussians onto a view to form an image. This differentiable point-based rendering function allows for the backward update of the attributes of the 3D Gaussians, ensuring that their geometrical and textural properties match the original 3D scene. This approach inspired us to utilize 3D Gaussian Splatting to obtain geometric priors of the original 3D scene, aiding in the task of multi-view image compression. 
+
+## 3. Proposed Method 
+
+Figure 2(a) shows the overall pipeline of 3D-LMVIC. Given a set of multi-view image sequences X =
+
+{x1, x2, x3, · · · , xN }, a 3D-GS is trained to estimate depth map dn for each image xn. Both xn and dn are compressed, with the coding reference relationships indicated by black solid arrows in the figure. Prior to compressing the image 
+
+xn, it is necessary to compress xn−1, dn−1, and dn. The disparity relationship between the (n − 1) -th and n-th views is inferred from the reconstructed depth maps ˆdn−1 and ˆdn.Subsequently, based on the estimated disparity relationship, as well as the extracted features of the (n − 1) -th view, xn
+
+is compressed. When compressing the depth map dn, the model employs the predicted depth map derived from ˆdn−1
+
+as a reference. The same neural network architecture and model parameters are used consistently across all views for both image compression and depth map compression. The remainder of this section is structured as follows: Sec-tion 3.1 elaborates on the method for depth map estimation for a given view using the 3D-GS and the estimation of inter-view disparities. Section 3.2 covers the compression model for both images and depth maps, as well as the multi-view sequence ordering method. 
+
+3.1. 3D-GS Based Depth and Disparity Estimation 
+
+3.1.1. D EPTH ESTIMATION 
+
+For an image xn ∈ RW ×H×3 with spatial dimensions W
+
+and H, we aim to derive a depth map dn ∈ RW ×H , repre-senting the z-axis coordinates of each pixel’s corresponding 3D world point in the camera coordinate system. This depth map facilitates the estimation of disparities between differ-ent views. In the context of the 3D-GS framework, consider a set of 
+
+M ordered 3D points projected along a ray from the camera through a pixel. The rendered pixel color c can be expressed as: 
+
+c =
+
+> M
+
+X
+
+> i=1
+
+Tiαici, with Ti =
+
+> i−1
+
+Y
+
+> j=1
+
+(1 − αj ). (1) Here, ci and αi represent the color and opacity (density) of the point, respectively, derived from the point’s 3D Gaussian properties. The factor Ti denotes the transmittance along the ray, indicating the fraction of light reaching the camera without being occluded. In (1) , Ti serves as a weight for the contribution of each point’s color to the pixel’s final color, diminishing from 1 to 0 as i increases due to cumulative absorption. To estimate the depth of a pixel d, we adopt a median depth estimation approach. Specifically, the depth is determined as the depth of the first point where Ti drops below 0.5: 33D-LMVIC: Learning-based Multi-View Image Compression with 3D Gaussian Geometric Priors 
+
+d = zi∗ , where i∗ = min {i | Ti < 0.5}. (2) It is worth noting that the original 3D-GS (Kerbl et al., 2023) employs a weighted averaging approach, using Tiαi as the weight for each 3D Gaussian along the ray to compute depth. In contrast, alignment experiments in Section 4.3 demon-strate that the median depth estimation approach achieves better alignment performance. 3.1.2. D ISPARITY ESTIMATION 
+
+Next, we aim to estimate the disparity ∆n ∈ RW ×H×2
+
+between views based on the estimated depth map. This disparity represents the pixel-wise shift of each 3D world point’s projection across different views. Disparity estima-tion captures the geometric relationships between views, facilitating the modeling of inter-view correlations. Figure 2(b) illustrates the depth-based disparity estimation. To estimate the disparity, a pixel (xn, y n) in the n-th view is back-projected into 3D space using the depth dn to obtain the world coordinates (xw, y w, z w). This 3D world point is then projected into the (n − 1) -th view to obtain the corresponding pixel coordinates (xn−1, y n−1). The trans-formations involved are as follows: 
+
+
+
+xw
+
+yw
+
+zw
+
+1
+
+ = V −1 
+
+> n
+
+· aug 
+
+K−1dn
+
+
+
+xn
+
+yn
+
+1
+
+ ,d′
+
+> n−1
+
+xn−1
+
+yn−1
+
+1
+
+ = K · deaug 
+
+Vn−1
+
+
+
+xw
+
+yw
+
+zw
+
+1
+
+ ,
+
+(3) where K ∈ R3×3 denotes the camera intrinsic matrix, and 
+
+Vn, V n−1 ∈ R4×4 are the extrinsic matrices corresponding to the n-th and (n − 1) -th views, respectively. The camera parameters are calibrated using SfM (Schonberger & Frahm, 2016). d′ 
+
+> n−1
+
+represents the depth of the 3D world point in the camera coordinate system of the (n − 1) -th view. aug denotes the operation of augmenting a vector by adding an additional dimension with a value of 1 as its final ele-ment. Conversely, deaug refers to the operation of reducing a vector by removing its last dimension. The resulting dis-parity δn = ( xn−1 − xn, y n−1 − yn) for each pixel is then compiled into the disparity map ∆n.Finally, we define a mask xn, m ∈ RW ×H to determine whether the disparity estimation is meaningful, i.e., whether the information from the reference pixel is relevant or merely noise. The mask’s criteria are as follows: 1. The projected pixel must reside within the valid image region in the (n − 1) -th view. 2. The corresponding 3D world point must lie in the positive 
+
+z-half-space of the (n − 1) -th view’s coordinate system. 3. No occlusion must exist along the line of sight, i.e., d′
+
+> n−1
+
+from (3) must be less than the estimated depth along the ray in the (n − 1) -th view. This can be formulated as: 
+
+xn, m[i, j ] = 
+
+
+
+1 if 0 < ∆n[i, j, 0] + i + 0 .5 < W and 
+
+0 < ∆n[i, j, 1] + j + 0 .5 < H and 
+
+0 < d′
+
+> n−1
+
+[i, j ] < Warp (dn−1, ∆n)[ i, j ],
+
+0 otherwise ,
+
+(4) where d′ 
+
+> n−1
+
+∈ RW ×H represents the tensor containing the depth values d′ 
+
+> n−1
+
+for each pixel, and Warp (·, ·) denotes the warping operation based on the given disparity. Ap-pendix A outlines the algorithmic process for disparity and mask estimation. 
+
+3.2. Compression Framework for Images and Depth Maps 
+
+3.2.1. I MAGE COMPRESSION MODEL 
+
+As shown in Figure 3, the disparity extractor DISE utilizes reconstructed depth maps ˆdn−1 and ˆdn to extract multi-scale disparities and feature masks. The reference feature ex-tractor RF E generates multi-scale reference features from the reconstructed image ˆxn−1 and its intermediate recon-struction features {f in−1 | i = 1 , 2, 3}. Subsequently, the image encoder IE and decoder ID incorporate the refer-ence features, aligned using the extracted disparities, into the backbone network. This process is formalized as: 
+
+yn = IE (xn, DISE ( ˆdn−1, ˆdn), RF E (ˆxn−1, {f in−1})) ,
+
+ˆyn = Q(yn),
+
+ˆxn = ID (ˆyn, DISE ( ˆdn−1, ˆdn), RF E (ˆxn−1, {f in−1})) .
+
+(5) For entropy coding, we utilize the hyperprior entropy model (Ball ´e et al., 2018) and the quadtree partition-based entropy model (QPEM) (Li et al., 2023). The hyperprior entropy model transforms yn into a hyperprior representation zn.The quantized hyperprior representation ˆzn is then used to accurately model the probability distribution of ˆyn. The conditional probability distribution pˆyn|ˆzn is defined as: 
+
+pˆyn|ˆzn (ˆyn|ˆzn) ∼ N (μn, σ2
+
+> n
+
+). (6) 
+
+Disparity extractor. As illustrated in Figure 3, we firstly employ the disparity estimation (DPE) module to derive the 43D-LMVIC: Learning-based Multi-View Image Compression with 3D Gaussian Geometric Priors 4 4 
+
+> 1,m
+
+,n- n
+
+h fn
+
+xQ
+
+> AE
+> AD
+
+ˆn
+
+x
+
+> Factorized Entropy Model Q
+> AE
+> AD n
+
+yn
+
+zˆn
+
+zˆn
+
+yn
+
+μn
+
+σ    
+
+> Context and Hyperprior Entropy Model
+> Image Encoder IE
+> Image Decoder ID
+> Disparity and Reference Feature Extractor
+> Conv+GDN
+> ICT Module
+> Conv+GDN
+> ICT Module
+> Conv
+> ICT Module
+> Conv+GDN
+> Reference Feature Extractor RFE
+> Disparity Extractor DISE ,m n
+
+x
+
+> DPE Module 1
+
+ˆ
+
+ˆ
+
+> n-
+> n
+
+d
+
+d1
+
+> n
+
+2
+
+> n
+
+3
+
+> n
+
+n
+
+
+
+> Conv+LR
+> Conv+LR
+> Conv+LR
+> Conv
+> Downsample 1
+> ,m n
+
+f2
+
+> ,m n
+
+f3
+
+> ,m n
+
+f4
+
+> ,m n
+
+f
+
+> Deconv
+> ICT Module
+> IGDN+Deconv
+> ICT Module
+> IGDN+Deconv
+> ICT Module
+> IGDN+Deconv 1
+
+ˆn
+
+x −4
+
+> 1n-
+
+h1
+
+> 1n-
+
+f1
+
+> 1n-
+
+h2
+
+> 1n-
+
+f2
+
+> 1n-
+
+h3
+
+> 1n-
+
+h3
+
+> 1n-
+
+f
+
+> Conv
+> Warp
+> Conv+GDN
+> Conv+GDN
+> Conv+GDN
+
+Figure 3. The architecture of the proposed image compression model. ’LR’ represents the Leaky ReLU activation function, ’Q’ denotes the quantization operation, and ’AE’/’AD’ refer to the arithmetic encoder/decoder, respectively. Conv 
+
+> C*i
+> n
+
+f
+
+> Conv
+> Conv
+> Leaky ReLU
+> Conv
+> Leaky ReLU i
+> n
+
+f,m 
+
+> i
+> n
+
+f
+
+> Residual Block 1
+> i
+> n-
+> i
+> n
+
+h
+
+
+
+> Conv
+> Warp 1
+> i
+> n-
+> i
+> n
+
+h
+
+
+
+> Conv
+> Warp
+
+Figure 4. Illustration of the proposed image context transfer mod-ule. 
+
+disparity map ∆n and the corresponding mask xn, m, using 
+
+ˆdn−1 and ˆdn, following the method outlined in Section 3.1. Subsequently, ∆n undergoes a series of downsampling operations to produce multi-scale disparity maps {∆in | i =1, 2, 3}, which will facilitate multi-scale feature alignment. The mask xn, m is further processed by the disparity mask extractor to extract feature masks {f in, m | i = 1 , 2, 3, 4}.
+
+Reference feature extractor. The reference feature ex-tractor takes ˆxn−1, {f in−1 | i = 1 , 2, 3}, and ∆3 
+
+> n
+
+as in-puts to extract multi-scale reference features {hin−1 | i =1, 2, 3, 4}, as shown in Figure 3. 
+
+Image context transfer module. To incorporate the ref-erence feature {hin−1 | i = 1 , 2, 3} obtained from the 
+
+(n − 1) -th view into the image backbone encoder and de-coder, enhancing feature representation, we introduce the image context transfer (ICT) module. As depicted in Fig-ure 4, the module enhances the input feature f i∗ 
+
+> n
+
+from the backbone network by leveraging the aligned reference fea-ture hin−1 via ∆in. By applying feature masks, the module filters relevant information and refines the features, ulti-mately producing the output feature f in through a residual enhancement process. 3.2.2. D EPTH MAP COMPRESSION MODEL 
+
+The compression and decompression of the depth map dn
+
+leverage ˆdn−1 as a reference. Initially, ˆdn−1 is processed by the depth prediction extractor DEP E , which gener-ates multi-scale depth prediction features and corresponding feature masks. Subsequently, the depth encoder DE and decoder DD integrate these extracted features and masks into the backbone network. This process is formalized as: 
+
+ydn = DE (dn, DEP E ( ˆdn−1)) ,
+
+ˆydn = Q(ydn ),
+
+ˆdn = DD (ˆydn , DEP E ( ˆdn−1)) .
+
+(7) The entropy coding scheme incorporates both the hyperprior entropy model and the QPEM. The latent representation 
+
+ydn is transformed into a hyperprior representation zdn
+
+using the hyperprior entropy model. Similar to the image compression model, the quantized hyperprior representation 
+
+ˆzdn is used to model the probability distribution of ˆydn .Additional details about the depth map compression model are provided in Appendix B. 3.2.3. M ULTI -V IEW SEQUENCE ORDERING 
+
+Given the significant impact of FoV overlap between adja-cent views on inter-view correlations, we propose a multi-view sequence ordering method to alleviate the issue of insufficient overlap in unordered sequences. We define a distance metric to evaluate inter-view overlap and employ a greedy algorithm to find an improved sequence. In (3) , if Vn−1V −1 
+
+> n
+
+= I, then (xn, y n) = ( xn−1, y n−1).This indicates that each pixel in the n-th view lies within the valid image area of the (n − 1) -th view, indicating high overlap. Thus, for any two views i and j, we measure 53D-LMVIC: Learning-based Multi-View Image Compression with 3D Gaussian Geometric Priors 0.2 0.4 0.6 0.8 1.0 
+
+> bpp
+> 30
+> 32
+> 34
+> 36
+> 38
+> PSNR
+
+Tanks&Temples      
+
+> 3D-LMVIC
+> BiSIC
+> BiSIC-Fast
+> LDMIC
+> LDMIC-Fast
+> HESIC
+> HESIC+
+> MASIC
+> SASIC
+> MV-HEVC
+> 0.2 0.4 0.6 0.8 1.0 1.2
+> bpp
+> 29
+> 31
+> 33
+> 35
+> 37
+> PSNR
+
+Mip-NeRF 360       
+
+> 3D-LMVIC
+> BiSIC
+> BiSIC-Fast
+> LDMIC
+> LDMIC-Fast
+> HESIC
+> HESIC+
+> MASIC
+> SASIC
+> MV-HEVC
+> 0.1 0.2 0.3 0.4 0.5 0.6 0.7
+> bpp
+> 30
+> 32
+> 34
+> 36
+> 38
+> PSNR
+
+Deep Blending     
+
+> 3D-LMVIC
+> BiSIC
+> BiSIC-Fast
+> LDMIC
+> LDMIC-Fast
+> HESIC
+> HESIC+
+> MASIC
+> SASIC
+> MV-HEVC
+> 0.2 0.4 0.6 0.8 1.0
+> bpp
+> 0.96
+> 0.97
+> 0.98
+> 0.99
+> MS-SSIM
+
+Tanks&Temples      
+
+> 3D-LMVIC
+> BiSIC
+> BiSIC-Fast
+> LDMIC
+> LDMIC-Fast
+> HESIC
+> HESIC+
+> MASIC
+> SASIC
+> MV-HEVC
+> 0.2 0.4 0.6 0.8 1.0 1.2
+> bpp
+> 0.94
+> 0.95
+> 0.96
+> 0.97
+> 0.98
+> 0.99
+> MS-SSIM
+
+Mip-NeRF 360       
+
+> 3D-LMVIC
+> BiSIC
+> BiSIC-Fast
+> LDMIC
+> LDMIC-Fast
+> HESIC
+> HESIC+
+> MASIC
+> SASIC
+> MV-HEVC
+> 0.1 0.2 0.3 0.4 0.5 0.6 0.7
+> bpp
+> 0.96
+> 0.97
+> 0.98
+> 0.99
+> MS-SSIM
+
+Deep Blending 
+
+> 3D-LMVIC
+> BiSIC
+> BiSIC-Fast
+> LDMIC
+> LDMIC-Fast
+> HESIC
+> HESIC+
+> MASIC
+> SASIC
+> MV-HEVC
+
+Figure 5. Rate-distortion curves of the proposed method compared with baselines. 
+
+overlap by the proximity of ViV −1
+
+j to the identity matrix: 
+
+DV (i, j ) = ∥ViV −1
+
+j − I∥. (8) Appendix C proves that DV (i, j ) is a distance metric for both the 2-norm and Frobenius norm. The Frobenius norm is utilized in our experiments. After determining pairwise distances, a greedy algorithm is employed, starting from an initial sequence with only one view, iteratively selecting the view closest to the last view in the sequence. 3.2.4. T RAINING LOSS 
+
+For each training step, a randomly selected subsequence of length 4 from a multi-view sequence serves as the training sample. The training loss comprises the distortion losses for both the reconstructed image and depth map, as well as the estimated compression rates for the encoded image and depth map: 
+
+L =
+
+s+3 X
+
+n=s
+
+wn−s+1 
+
+h
+
+λimg D(xn, ˆxn) + λdep MSE (dn, ˆdn)+R(ˆyn) + R(ˆzn) + R(ˆydn ) + R(ˆzdn )
+
+i
+
+,
+
+(9) where D(·, ·) denotes the distortion, MSE (·, ·) represents the mean squared error (MSE), and R(·) indicates the es-timated compression rates. The hyperparameters λimg and 
+
+λdep control the contributions of the image and depth map distortion losses, respectively. The weights {wi | i =1, 2, 3, 4} adjust the influence of each view on the overall training loss. 
+
+## 4. Experiments 
+
+4.1. Experimental Setup Datasets. We evaluate our model on three multi-view image datasets: Tanks&Temples (Knapitsch et al., 2017), Mip-NeRF 360 (Barron et al., 2022), and Deep Blending (Hed-man et al., 2018). Further details on the datasets are pro-vided in Appendix D. 
+
+Benchmarks. We compare our approach against several baselines, including traditional multi-view codec: MV-HEVC (Hannuksela et al., 2015); learning-based multi-view image codecs: two variants of HESIC (Deng et al., 2021), MASIC (Deng et al., 2023), SASIC (W ¨odlinger et al., 2022), two variants of LDMIC (Zhang et al., 2023), and two vari-ants of BiSIC (Liu et al., 2024); as well as the 3D-GS com-pression method: HAC (Chen et al., 2024). Further details on the baseline configurations are provided in Appendix D. 
+
+Metrics. Image reconstruction quality is measured using peak signal-to-noise ratio (PSNR) and multi-scale structural similarity index (MS-SSIM) (Wang et al., 2003). Bitrate is expressed in bits per pixel (bpp). In addition to plotting RD curves, the Bjøntegaard Delta bitrate (BDBR) is calculated to quantify the average bitrate savings across varying re-construction qualities. Lower BDBR values indicate better performance. 
+
+Implementation Details. The model was trained using five different configurations of (λimg , λdep ): 
+
+((256 , 64) , (512 , 128) , (1024 , 128) , (2048 , 128) , (4096 , 128)) 
+
+when the image distortion loss is MSE, and 
+
+((8 , 64) , (16 , 128) , (32 , 128) , (64 , 128) , (128 , 128)) when using MS-SSIM. The weights wi for four consecutive 63D-LMVIC: Learning-based Multi-View Image Compression with 3D Gaussian Geometric Priors  
+
+> Table 1. BDBR comparison of different methods relative to MV-HEVC.
+
+Methods Tanks&Temples Mip-NeRF 360 Deep Blending PSNR MS-SSIM PSNR MS-SSIM PSNR MS-SSIM HAC 636.81% 350.72% 374.20% 294.42% 673.57% 418.85% HESIC 12.66% -26.29% 28.41% -6.18% 85.38% 3.91% HESIC+ -4.85% -30.42% 9.48% -5.11% 32.5% -19.14% MASIC -12.57% -34.19% 3.26% -9.11% 43.6% -9.33% SASIC 3.39% -18.59% 2.40% -3.70% 24.64% -9.48% LDMIC-Fast -8.56% -27.76% 1.72% -6.21% 24.25% -23.31% LDMIC -16.27% -44.33% -13.12% -25.39% 16.88% -41.94% BiSIC-Fast -26.59% -42.93% -20.61% -23.23% -8.24% -41.80% BiSIC -30.89% -49.96% -29.87% -30.75% -15.46% -48.47% 3D-LMVIC -47.48% -63.69% -34.69% -40.25% -27.31% -54.15%                             
+
+> Table 2. Average alignment quality (PSNR, MS-SSIM) of different alignment methods on the Train scene of the Tanks&Temples dataset.
+> Metrics Methods HT PM SPyNet PWC-Net FlowFormer++ 3D-GS COLMAP MVSFormer++ Proposed PSNR 15.16 17.94 16.12 17.59 18.08 17.36 14.32 15.31 18.14
+> MS-SSIM 0.5435 0.7633 0.6289 0.7707 0.7863 0.7410 0.7446 0.5544 0.8053
+
+views were set to (0 .5, 1.2, 0.5, 0.9) as referenced from Li et al. (2023). The model was trained for 300 epochs with an initial learning rate of 10 −4, which was progressively decayed by a factor of 0.5 every 60 epochs. 
+
+4.2. Experimental Results Coding performance. Figure 5 presents the rate-distortion curves of the compared methods, while Table 1 summarizes the BDBR of each codec relative to MV-HEVC. Across the three datasets, the proposed 3D-LMVIC consistently outperforms the baselines in both PSNR and MS-SSIM, demonstrating its effectiveness in reducing inter-view re-dundancy. For instance, on the Tanks&Temples dataset, 3D-LMVIC achieves a BDBR reduction of 16.59% for PSNR and 13.73% for MS-SSIM compared to BiSIC. The BDBR of HAC is relatively higher, likely due to the inclusion of 3D scene information in addition to 2D image representations. Appendix F provides examples of visual comparisons. Ap-pendix G presents an analysis of computational complexity. Appendix H includes supplementary experiments on coding performance. 
+
+4.3. Alignment Experiments 
+
+To evaluate the effectiveness of the proposed 3D Gaus-sian geometric priors-based alignment method, we con-ducted alignment experiments on the Train scene from the Tanks&Temples dataset. The baselines for comparison in-clude: 1. Alignment methods commonly used in learning-based multi-view image codecs, such as Homography Transfor-mation (HT) (Deng et al., 2021) and Patch Matching (PM) (Huang et al., 2023). 2. Optical flow estimation methods, such as SPyNet (Ranjan & Black, 2017), PWC-Net (Sun et al., 2018), and Flow-Former++ (Shi et al., 2023). 3. Depth map estimation methods, including original 3D-GS (Kerbl et al., 2023), COLMAP (Schonberger & Frahm, 2016; Sch ¨onberger et al., 2016) and MVSFormer++ (Chen-jie Cao & Fu, 2024). Alignment quality was assessed by computing PSNR and MS-SSIM between the aligned reference view images and the target view images. Table 2 summarizes the average alignment quality and runtime for each method. The pro-posed method outperformed the baselines in both PSNR and MS-SSIM, indicating its effectiveness in capturing complex disparities between views. Figure 6 provides visual com-parisons, demonstrating that the proposed method achieves closer alignment with the target view images. Appendix D further investigates the relationship between the mask de-fined in (4) and the ghosting artifacts introduced during alignment. 
+
+4.4. Ablation Study Codec components. To assess the contribution of codec components, we performed ablation experiments on the Tanks&Temples dataset. The rate-distortion curves are shown in Figure 7. Specifically, we evaluated the following baselines: (1) Separate : encoding and decoding without cross-view information; (2) Concatenation : direct feature concatenation from reference view without alignment; (3) 73D-LMVIC: Learning-based Multi-View Image Compression with 3D Gaussian Geometric Priors 
+
+Reference View 
+
+Target View 
+
+HT 12.82/0.6065 
+
+PWC-Net 9.65/0.2840 
+
+PM 10.05/0.4078 
+
+FlowFormer++ 13.94/0.7216 
+
+SPyNet 10.25/0.1990 
+
+Proposed 13.94/0.7217 
+
+Figure 6. Visual comparison of different alignment methods on an adjacent view pair in the Train scene of the Tanks&Temples dataset. Alignment quality is reported as PSNR/MS-SSIM. 0.1 0.2 0.3 0.4 0.5 
+
+bpp 
+
+> 31
+> 33
+> 35
+> 37
+> PSNR
+
+Tanks&Temples     
+
+> Proposed
+> Separate
+> Concatenation
+> W/O Mask
+> W/O Dep.Pred
+> Sort
+> Random
+> 0.1 0.2 0.3 0.4 0.5
+
+bpp 
+
+> 0.96
+> 0.97
+> 0.98
+> 0.99
+> MS-SSIM
+
+Tanks&Temples 
+
+> Proposed
+> Separate
+> Concatenation
+> W/O Mask
+> W/O Dep.Pred
+> Sort
+> Random
+
+Figure 7. Rate-distortion curves of different ablation baselines on the Tanks&Temples dataset. 
+
+W/O Mask : removal of both image and depth mask; (4) W/O Dep.Pred : excluding depth prediction in the depth map com-pression model. These baselines resulted in bitrate increases of 41.07% (44.24%), 42.75% (47.52%), 7.19% (8.47%), and 8.03% (8.02%) for PSNR (MS-SSIM), respectively, compared to the proposed method. The experimental results validate the effectiveness of the proposed components. 
+
+Multi-view sequence ordering. As illustrated in Figure 7, we evaluated two baselines to assess the effectiveness of the proposed multi-view sequence ordering method: (1) 
+
+Sort : sequences are ordered using the proposed method; (2) 
+
+Random : sequences are randomly ordered. The Random 
+
+baseline led to a 42.4% (50.64%) increase in bitrate for PSNR (MS-SSIM) compared to Sort . Furthermore, Sort 
+
+exhibited only a 3.76% (2.97%) bitrate increase for PSNR (MS-SSIM) compared to the manually sorted sequences in the Tanks&Temples dataset. These results demonstrate the effectiveness of the proposed ordering method for unsorted multi-view sequences, achieving performance close to that of manual sorting. 
+
+## 5. Conclusion 
+
+In this paper, we present 3D-LMVIC, a novel learning-based multi-view image coding framework incorporating 3D Gaussian geometric priors. This framework exploits these geometric priors to estimate complex disparities and masks between views for effectively utilizing reference view information in the compression process. Additionally, we propose a depth map compression model designed to com-pactly and accurately represent the geometry of each view, incorporating a cross-view depth prediction module to cap-ture inter-view geometric correlations. Moreover, we intro-duce a multi-view sequence ordering method for unordered sequences, enhancing the overlap between adjacent views by defining an inter-view distance measure to guide the sequence ordering. Experimental results confirm that 3D-LMVIC surpasses existing learning-based coding schemes in compression efficiency while achieving accurate disparity estimation. 83D-LMVIC: Learning-based Multi-View Image Compression with 3D Gaussian Geometric Priors 
+
+## Acknowledgments 
+
+This work is supported in part by the National Natural Sci-ence Foundation of China under grant 62171248, 62301189, the project of Peng Cheng Laboratory (PCL2023A08), Guangdong Provincial Key Laboratory of Novel Secu-rity Intelligence Technologies (2022B1212010005), and Shenzhen Science and Technology Program under Grant KJZD20240903103702004, JCYJ20220818101012025, GXWD20220811172936001. 
+
+## Impact Statement 
+
+This work introduces 3D-LMVIC, a novel learning-based framework for multi-view image compression that lever-ages 3D Gaussian geometric priors to enable more accurate disparity estimation and efficient inter-view redundancy re-duction. The proposed method demonstrates significant improvements over both traditional and learning-based base-lines in compression efficiency and alignment quality across diverse 3D scene datasets. This advancement is especially valuable for applications requiring scalable and high-quality multi-view data processing, such as immersive virtual and augmented reality, autonomous driving, and 3D reconstruc-tion. By incorporating geometric priors into the learning pipeline, this work contributes to bridging the gap between geometric scene understanding and data-driven compression. We believe our method offers a promising direction for fur-ther research in geometry-aware compression, though care should be taken to evaluate generalization to in-the-wild multi-view scenes with dynamic content. 
+
+## References 
+
+Anthes, C., Garc ´ıa-Hern ´andez, R. J., Wiedemann, M., and Kranzlm ¨uller, D. State of the art of virtual reality tech-nology. In 2016 IEEE aerospace conference , pp. 1–19. IEEE, 2016. Ayzik, S. and Avidan, S. Deep image compression using decoder side information. In European Conference on Computer Vision , pp. 699–714, 2020. Ball ´e, J., Laparra, V., and Simoncelli, E. P. Density model-ing of images using a generalized normalization transfor-mation. In International Conference on Learning Repre-sentations , 2016. Ball ´e, J., Laparra, V., and Simoncelli, E. P. End-to-end opti-mized image compression. In International Conference on Learning Representations , 2017. Ball ´e, J., Minnen, D., Singh, S., Hwang, S. J., and Johnston, N. Variational image compression with a scale hyperprior. In International Conference on Learning Representations ,2018. Barron, J. T., Mildenhall, B., Verbin, D., Srinivasan, P. P., and Hedman, P. Mip-nerf 360: Unbounded anti-aliased neural radiance fields. CVPR , 2022. Bellard, F. Bpg image format. https://bellard. org/bpg/ , 2014. Bross, B., Wang, Y.-K., Ye, Y., Liu, S., Chen, J., Sullivan, G. J., and Ohm, J.-R. Overview of the versatile video coding (vvc) standard and its applications. IEEE Trans-actions on Circuits and Systems for Video Technology , 31 (10):3736–3764, 2021. Chen, X., Ma, H., Wan, J., Li, B., and Xia, T. Multi-view 3d object detection network for autonomous driving. In 
+
+Proceedings of the IEEE conference on Computer Vision and Pattern Recognition , pp. 1907–1915, 2017. Chen, Y., Wu, Q., Cai, J., Harandi, M., and Lin, W. Hac: Hash-grid assisted context for 3d gaussian splatting com-pression. In European Conference on Computer Vision ,2024. Chenjie Cao, X. R. and Fu, Y. Mvsformer++: Revealing the devil in transformer’s details for multi-view stereo. In 
+
+International Conference on Learning Representations (ICLR) , 2024. Dai, A., Chang, A. X., Savva, M., Halber, M., Funkhouser, T., and Nießner, M. Scannet: Richly-annotated 3d recon-structions of indoor scenes. In Proceedings of the IEEE conference on computer vision and pattern recognition ,pp. 5828–5839, 2017. Deng, X., Yang, W., Yang, R., Xu, M., Liu, E., Feng, Q., and Timofte, R. Deep homography for efficient stereo image compression. In 2021 IEEE/CVF Conference on Com-puter Vision and Pattern Recognition (CVPR) , pp. 1492– 1501, 2021. doi: 10.1109/CVPR46437.2021.00154. Deng, X., Deng, Y., Yang, R., Yang, W., Timofte, R., and Xu, M. Masic: Deep mask stereo image compression. 
+
+IEEE Transactions on Circuits and Systems for Video Technology , 2023. Hamdi, A., Melas-Kyriazi, L., Mai, J., Qian, G., Liu, R., Vondrick, C., Ghanem, B., and Vedaldi, A. Ges: Gen-eralized exponential splatting for efficient radiance field rendering. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pp. 19812–19822, June 2024. Hannuksela, M. M., Yan, Y., Huang, X., and Li, H. Overview of the multiview high efficiency video coding (mv-hevc) standard. In 2015 IEEE International Confer-ence on Image Processing (ICIP) , pp. 2154–2158, 2015. doi: 10.1109/ICIP.2015.7351182. 93D-LMVIC: Learning-based Multi-View Image Compression with 3D Gaussian Geometric Priors 
+
+He, D., Zheng, Y., Sun, B., Wang, Y., and Qin, H. Checker-board context model for efficient learned image compres-sion. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pp. 14771– 14780, 2021. Hedman, P., Philip, J., Price, T., Frahm, J.-M., Dret-takis, G., and Brostow, G. Deep blending for free-viewpoint image-based rendering. ACM Trans. Graph. ,37(6), dec 2018. ISSN 0730-0301. doi: 10.1145/ 3272127.3275084. URL https://doi.org/10. 1145/3272127.3275084 .Hosseinian, S. and Arefi, H. 3d reconstruction from multi-view medical x-ray images–review and evaluation of ex-isting methods. The international archives of the pho-togrammetry, remote sensing and spatial information sci-ences , 40:319–326, 2015. Huang, Y., Chen, B., Zhang, J., Han, Q., and Xia, S.-T. Compressive sensing based asymmetric semantic image compression for resource-constrained iot system. In Pro-ceedings of the 59th ACM/IEEE Design Automation Con-ference , pp. 877–882, 2022. Huang, Y., Chen, B., Qin, S., Li, J., Wang, Y., Dai, T., and Xia, S.-T. Learned distributed image compression with multi-scale patch matching in feature domain. In 
+
+Proceedings of the AAAI Conference on Artificial Intelli-gence , volume 37, pp. 4322–4329, 2023. Jiang, W., Yang, J., Zhai, Y., Ning, P., Gao, F., and Wang, R. Mlic: Multi-reference entropy model for learned image compression. In Proceedings of the 31st ACM Interna-tional Conference on Multimedia , pp. 7618–7627, 2023. Kerbl, B., Kopanas, G., Leimkuehler, T., and Drettakis, G. 3d gaussian splatting for real-time radiance field render-ing. ACM Transactions on Graphics (TOG) , 42(4):1–14, 2023. Knapitsch, A., Park, J., Zhou, Q.-Y., and Koltun, V. Tanks and temples: Benchmarking large-scale scene reconstruc-tion. ACM Transactions on Graphics , 36(4), 2017. Langley, P. Crafting papers on machine learning. In Langley, P. (ed.), Proceedings of the 17th International Conference on Machine Learning (ICML 2000) , pp. 1207–1216, Stan-ford, CA, 2000. Morgan Kaufmann. Lei, J., Liu, X., Peng, B., Jin, D., Li, W., and Gu, J. Deep stereo image compression via bi-directional coding. In 
+
+Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pp. 19669–19678, 2022. Li, J., Li, B., and Lu, Y. Neural video compression with diverse contexts. In 2023 IEEE/CVF Conference on Com-puter Vision and Pattern Recognition (CVPR) , pp. 22616– 22626, 2023. doi: 10.1109/CVPR52729.2023.02166. Liu, X., Chen, B., Liu, Z., Wang, Y., and Xia, S.-T. An exploration with entropy constrained 3d gaussians for 2d video compression. In The Thirteenth International Conference on Learning Representations .Liu, Z., Zhang, X., Shao, J., Lin, Z., and Zhang, J. Bidirec-tional stereo image compression with cross-dimensional entropy model. In European Conference on Computer Vision , 2024. Minnen, D., Ball ´e, J., and Toderici, G. Joint autoregressive and hierarchical priors for learned image compression. In 
+
+Proceedings of the 32nd International Conference on Neu-ral Information Processing Systems , pp. 10794–10803, 2018. Mokssit, S., Licea, D. B., Guermah, B., and Ghogho, M. Deep learning techniques for visual slam: A survey. IEEE Access , 11:20026–20050, 2023. Qin, S., Chen, B., Huang, Y., An, B., Dai, T., and Xia, S.-T. Perceptual image compression with cooperative cross-modal side information. arXiv e-prints , pp. arXiv–2311, 2023. Qin, S., Wang, J., Zhou, Y., Chen, B., Luo, T., An, B., Dai, T., Xia, S., and Wang, Y. Mambavc: Learned visual compression with selective state spaces. arXiv preprint arXiv:2405.15413 , 2024a. Qin, S., Zhou, Y.-M., Wang, J.-P., Chen, B., An, B.-Y., Dai, T., and Xia, S.-T. Progressive learning with visual prompt tuning for variable-rate image compression. In 2024 IEEE International Conference on Image Processing (ICIP) , pp. 1767–1773. IEEE, 2024b. Ranjan, A. and Black, M. J. Optical flow estimation using a spatial pyramid network. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR) , July 2017. Schmalstieg, D. and Hollerer, T. Augmented reality: princi-ples and practice . Addison-Wesley Professional, 2016. Schonberger, J. L. and Frahm, J.-M. Structure-from-motion revisited. In Proceedings of the IEEE Conference on Com-puter Vision and Pattern Recognition , pp. 4104–4113, 2016. Sch ¨onberger, J. L., Zheng, E., Pollefeys, M., and Frahm, J.-M. Pixelwise view selection for unstructured multi-view stereo. In European Conference on Computer Vision (ECCV) , 2016. Shi, X., Huang, Z., Li, D., Zhang, M., Cheung, K. C., See, S., Qin, H., Dai, J., and Li, H. Flowformer++: Masked cost volume autoencoding for pretraining optical flow estimation. In Proceedings of the IEEE/CVF Conference 
+
+10 3D-LMVIC: Learning-based Multi-View Image Compression with 3D Gaussian Geometric Priors 
+
+on Computer Vision and Pattern Recognition (CVPR) , pp. 1599–1610, June 2023. Sun, D., Yang, X., Liu, M.-Y., and Kautz, J. Pwc-net: Cnns for optical flow using pyramid, warping, and cost volume. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR) , June 2018. Vetro, A., Wiegand, T., and Sullivan, G. J. Overview of the stereo and multiview video coding extensions of the h. 264/mpeg-4 avc standard. Proceedings of the IEEE , 99 (4):626–642, 2011. Wallace, G. K. The jpeg still picture compression standard. 
+
+IEEE transactions on consumer electronics , 38(1):xviii– xxxiv, 1992. Wang, Z., Simoncelli, E. P., and Bovik, A. C. Multiscale structural similarity for image quality assessment. In 
+
+The Thrity-Seventh Asilomar Conference on Signals, Sys-tems & Computers, 2003 , volume 2, pp. 1398–1402. Ieee, 2003. W ¨odlinger, M., Kotera, J., Xu, J., and Sablatnig, R. Sasic: Stereo image compression with latent shifts and stereo attention. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pp. 661–670, 2022. Xia, Y., Huang, Y., Chen, B., Wang, G., Wang, H., and Wang, Y. Fca-net: Accelerating stereo image compres-sion through cascade alignment of side information. 
+
+Pattern Recognition , 168:111799, 2025. ISSN 0031-3203. doi: https://doi.org/10.1016/j.patcog.2025.111799. URL https://www.sciencedirect.com/ science/article/pii/S0031320325004595 .Xu, L., Su, Z., Han, L., Yu, T., Liu, Y., and Fang, L. Unstruc-turedfusion: Realtime 4d geometry and texture recon-struction using commercial rgbd cameras. IEEE Trans-actions on Pattern Analysis and Machine Intelligence ,42(10):2508–2522, 2020. doi: 10.1109/TPAMI.2019. 2915229. Yan, C., Qu, D., Xu, D., Zhao, B., Wang, Z., Wang, D., and Li, X. Gs-slam: Dense visual slam with 3d gaussian splatting. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pp. 19595–19604, June 2024. Zhai, Y., Tang, L., Ma, Y., Peng, R., and Wang, R. Disparity-based stereo image compression with aligned cross-view priors. In Proceedings of the 30th ACM International Conference on Multimedia , pp. 2351–2360, 2022. Zhang, X., Shao, J., and Zhang, J. Ldmic: Learning-based distributed multi-view image coding. In International Conference on Learning Representations , 2023. 11 3D-LMVIC: Learning-based Multi-View Image Compression with 3D Gaussian Geometric Priors 
+
+## A. Disparity and Mask Estimation Algorithm 
+
+Algorithm 1 Disparity and Mask Estimation 
+
+Input: Depth estimation function GSDE , intrinsic matrix K, extrinsic matrices Vn and Vn−1
+
+Output: Disparity map ∆n, mask xn, m
+
+dn ← GSDE (K, V n)
+
+dn−1 ← GSDE (K, V n−1)
+
+∆n, d′ 
+
+> n−1
+
+← DisparityEstimation (dn, K, V n, V n−1)
+
+xn, m ← MaskEstimation (∆n, d′
+
+> n−1
+
+, dn−1)dn
+
+yQ
+
+> AE
+> AD
+> Factorized Entropy Model Q
+> AE
+> AD n
+
+dˆn
+
+ddn
+
+zˆdn
+
+zdn
+
+μdn
+
+σˆdn
+
+y4 4  
+
+> pmn, n,
+
+g ,g 
+
+> CVDP Module pn,
+
+d1
+
+ˆn-
+
+dmn, 
+
+d1
+
+> pn,
+
+g1
+
+> mn,
+
+g   
+
+> Context and Hyperprior Entropy Model
+> Depth Prediction Extractor
+> Conv+GDN
+> Conv+GDN
+> DCI Module
+> Conv+GDN
+> DCI Module
+> DCI Module
+> Conv
+> Conv+GDN
+> Conv+GDN
+> DCI Module
+> Conv+GDN
+> DCI Module
+> DCI Module
+> Conv
+> DCI Module
+> Deconv+IGDN
+> DCI Module
+> Deconv+IGDN
+> DCI Module
+> Deconv
+> Deconv+IGDN
+> DCI Module
+> Deconv+IGDN
+> DCI Module
+> Deconv+IGDN
+> DCI Module
+> Deconv
+> Deconv+IGDN
+> Depth Encoder DE
+> Depth Decoder DD 2
+> pn,
+
+g3
+
+> pn,
+
+g4
+
+> pn,
+
+g2
+
+> mn,
+
+g3
+
+> mn,
+
+g4
+
+> mn,
+
+g  
+
+> Depth Prediction Feature Extractor
+> Depth Mask Extractor
+> Conv
+> GDN+Conv
+> GDN+Conv
+> GDN+Conv
+> Conv
+> GDN+Conv
+> GDN+Conv
+> GDN+Conv
+> Conv
+> LR+Conv
+> LR+Conv
+> LR+Conv
+> Conv
+> LR+Conv
+> LR+Conv
+> LR+Conv
+> Depth Prediction Extractor
+
+Figure 8. The architecture of the proposed depth map compression model. ’LR’ represents the Leaky ReLU activation function, ’Q’ denotes the quantization operation, and ’AE’/’AD’ refer to the arithmetic encoder/decoder, respectively. 
+
+## B. Supplementary Information for the Depth Map Compression Model 
+
+As illustrated in Figure 8, during the compression and decompression of dn, ˆdn−1 is initially processed by the depth prediction extractor, which extracts multi-scale depth prediction features and associated feature masks. These extracted features and masks are then integrated into the depth backbone encoder and decoder via the depth context integration (DCI) module. Detailed explanations of the depth prediction extractor and the DCI module are provided in the subsequent content. 
+
+Depth prediction extractor. As illustrated in Figure 8, we first utilize the proposed cross-view depth prediction (CVDP) module to predict the depth map dn, p ∈ RW ×H and the associated mask dn, m ∈ RW ×H for the n-th view, based on ˆdn−1.Specifically, for each pixel (xn−1, y n−1) in the (n − 1) -th view and its corresponding reconstructed depth ˆdn−1, the CVDP module determines the corresponding pixel coordinates (xn, y n) and the depth prediction d′ 
+
+> n
+
+in the n-th view using the method described in (3). The depth at the nearest grid point (⌊xn − 0.5⌉, ⌊yn − 0.5⌉) is then set to d′
+
+> n
+
+:
+
+dn, p[⌊xn − 0.5⌉, ⌊yn − 0.5⌉] = d′
+
+> n
+
+. (10) This cross-view depth prediction is applied to each pixel in the (n−1) -th view to construct dn, p. If multiple pixel coordinates map to the same grid point, the depth prediction for that point is set to the minimum of these predicted depths. Additionally, if a grid point has no corresponding pixel coordinates, its depth prediction value is set to 0. The mask dn, m indicates whether each grid point has at least one corresponding pixel coordinate, with values set to 1 where a correspondence exists and 0 otherwise. Subsequently, dn, p is fed into the depth prediction feature extractor to produce multi-scale depth prediction features, denoted as {gin, p | i = 1 , 2, 3, 4}. Concurrently, the mask dn, m is processed by the depth mask extractor to derive the associated multi-scale feature masks {gin, m | i = 1 , 2, 3, 4}.12 3D-LMVIC: Learning-based Multi-View Image Compression with 3D Gaussian Geometric Priors 
+
+Depth Context Integration Module. Each DCI module integrates the input features gi∗ 
+
+> n
+
+from the backbone network with 
+
+gin, p through channel-wise concatenation, followed by element-wise multiplication with gin, m to produce the output feature 
+
+gin:
+
+gin = ( gi∗ 
+
+> n
+
+⊕ gin, p) ⊙ gin, m, (11) where ⊕ denotes channel-wise concatenation and ⊙ denotes element-wise multiplication. 
+
+## C. Proof of DV (i, j ) as a Distance Measure for 2-Norm and Frobenius Norm 
+
+C.1. Proof for 2-Norm 
+
+C.1.1. D EFINITION 
+
+Definition C.1. For u = ( A, B ) and v = ( C, D ), where A, C ∈ Rn×m and B, D ∈ Rn×l, we define (u, v )2 =
+
+∥AC T + BD T ∥2. For any scalar α, αu = ( αA, αB ). Additionally, u + v = ( A + C, B + D).C.1.2. L EMMA 
+
+Lemma C.2. For any u = ( A, B ) and v = ( C, D ) as defined in Definition C.1, the following inequality holds: 
+
+(u, v )2 ≤ p(u, u )2(v, v )2
+
+Proof. For any real number t, we have: 
+
+(u + tv, u + tv )2 = ∥(A + tC )( A + tC )T + ( B + tD )( B + tD )T ∥2
+
+≤ ∥ AA T + BB T ∥2 + t∥AC T + BD T ∥2 + t∥CA T + DB T ∥2 + t2∥CC T + DD T ∥2
+
+= ( u, u )2 + t(u, v )2 + t(v, u )2 + t2(v, v )2
+
+= ( u, u )2 + 2 t(u, v )2 + t2(v, v )2
+
+The right-hand side of the last equation can be viewed as a quadratic expression in t and is greater than or equal to 
+
+(u + tv, u + tv )2, which is non-negative. Therefore, the discriminant of this quadratic must be non-positive: 
+
+(2( u, v )2)2 − 4( u, u )2(v, v )2 ≤ 0
+
+Thus, we obtain: 
+
+(u, v )2 ≤ p(u, u )2(v, v )2
+
+C.1.3. T HEOREM 
+
+Theorem C.3. DV (i, j ) = ∥ViV −1 
+
+> j
+
+− I∥2 is a distance metric. Proof. We need to prove that DV (i, j ) satisfies non-negativity, symmetry, and the triangle inequality. 
+
+Non-negativity: Since DV (i, j ) is a norm, it is non-negative. Additionally, as the extrinsic matrices for different views are distinct, Vi̸ = Vj for i̸ = j. DV (i, j ) = 0 if and only if ViV −1 
+
+> j
+
+− I = 0 , which holds only when Vi = Vj , i.e., i = j.
+
+Symmetry: The extrinsic matrix Vi can be represented as Vi =
+
+Ri ti
+
+0 1
+
+
+
+, where Ri ∈ R3×3 is a rotation matrix 1 and 
+
+ti ∈ R3×1 is a translation vector. We have: 
+
+DV (i, j ) = ∥ViV −1 
+
+> j
+
+− I∥2
+
+> 1
+
+A rotation matrix is an orthogonal matrix, meaning its inverse is equal to its transpose. 
+
+13 3D-LMVIC: Learning-based Multi-View Image Compression with 3D Gaussian Geometric Priors 
+
+=
+
+Ri ti
+
+0 1
+
+  RTj −RTj tj
+
+0 1
+
+
+
+− I
+
+> 2
+
+=
+
+RiRTj − I −RiRTj tj + ti
+
+0 0
+
+
+
+> 2
+
+=
+
+RiRTj − I −RiRTj tj + ti
+
+0 0
+
+  RiRTj − I −RiRTj tj + ti
+
+0 0
+
+T 12
+
+> 2
+
+= 2I − Rj RTi − RiRTj + RiRTj tj tTj Rj RTi − titTj Rj RTi − RiRTj tj tTi + titTi
+
+> 12
+> 2
+
+= Rj RTi (2 I − Rj RTi − RiRTj + RiRTj tj tTj Rj RTi − titTj Rj RTi − RiRTj tj tTi + titTi )RiRTj
+
+> 12
+> 2
+
+= 2I − Rj RTi − RiRTj + tj tTj − Rj RTi titTj − tj tTi RiRTj + Rj RTi titTi RiRTj
+
+> 12
+> 2
+
+= DV (j, i )
+
+The fourth equality follows from the fact that for any matrix A, ∥A∥2 = ∥AA T ∥ 12 
+
+> 2
+
+. The sixth equality is due to the orthogonality of Ri and Rj , and the invariance of the 2-norm under orthogonal transformations. The final equality holds because interchanging the indices i and j in the expression on the right-hand side of the fifth equality leads to the same expression as DV (j, i ), which matches the right-hand side of the seventh equality. 
+
+Triangle inequality: For views i, j, and k, define Ai,j = RTj − RTi , Bi,j = −RTj tj + RTi ti, and similarly for 
+
+Aj,k , B j,k , A k,i , B k,i . Let uj,k = ( Aj,k , B j,k ) and uk,i = ( Ak,i , B k,i ). Starting from the fourth equation in the sym-metry proof, we proceed as follows: 
+
+DV (i, j ) = 
+
+RiRTj − I −RiRTj tj + ti
+
+0 0
+
+  RiRTj − I −RiRTj tj + ti
+
+0 0
+
+T 12
+
+> 2
+
+= (RiRTj − I)( RiRTj − I)T + ( −RiRTj tj + ti)( −RiRTj tj + ti)T 12
+
+> 2
+
+= RTi
+
+ (RiRTj − I)( RiRTj − I)T + ( −RiRTj tj + ti)( −RiRTj tj + ti)T  Ri
+
+> 12
+> 2
+
+= (RTj − RTi )( RTj − RTi )T + ( −RTj tj + RTi ti)( −RTj tj + RTi ti)T 12
+
+> 2
+
+= Ai,j ATi,j + Bi,j BTi,j 
+
+> 12
+> 2
+
+= (Aj,k + Ak,i )( Aj,k + Ak,i )T + ( Bj,k + Bk,i )( Bj,k + Bk,i )T 12
+
+> 2
+
+= Aj,k ATj,k + Bj,k BTj,k + Ak,i ATk,i + Bk,i BTk,i + Aj,k ATk,i + Bj,k BTk,i + Ak,i ATj,k + Bk,i BTj,k 
+
+> 12
+> 2
+
+≤  ∥Aj,k ATj,k + Bj,k BTj,k ∥2 + ∥Ak,i ATk,i + Bk,i BTk,i ∥2 + 2 ∥Aj,k ATk,i + Bj,k BTk,i ∥2
+
+ 12
+
+=  DV (j, k )2 + DV (k, i )2 + 2( uj,k , u k,i )2
+
+ 12
+
+≤
+
+
+
+DV (j, k )2 + DV (k, i )2 + 2 
+
+q
+
+(uj,k , u j,k )2(uk,i , u k,i )2
+
+ 12
+
+=  DV (j, k )2 + DV (k, i )2 + 2 DV (j, k )DV (k, i ) 12
+
+= DV (j, k ) + DV (k, i )
+
+The second inequality follows from Lemma C.2. 
+
+C.2. Proof for Frobenius Norm 
+
+C.2.1. D EFINITION 
+
+Definition C.4. For u = ( A, B ) and v = ( C, D ) as defined in Definition C.1, we define (u, v )F = tr  AC T + BD T .14 3D-LMVIC: Learning-based Multi-View Image Compression with 3D Gaussian Geometric Priors 
+
+C.2.2. L EMMA 
+
+Lemma C.5. For u and v as defined in Definition C.4, the following inequality holds: 
+
+(u, v )F ≤ p(u, u )F (v, v )F .
+
+Proof. The method of proof is analogous to that used in Lemma C.2. By leveraging the properties of the trace and following a similar reasoning process, the result is derived. C.2.3. T HEOREM 
+
+Theorem C.6. DV (i, j ) = ∥ViV −1 
+
+> j
+
+− I∥F is a distance metric. Proof. We need to prove that DV (i, j ) satisfies non-negativity, symmetry, and the triangle inequality. 
+
+Non-negativity: The proof follows a similar approach to that of Theorem C.3, so we omit the details here. 
+
+Symmetry: 
+
+DV (i, j ) = ∥ViV −1 
+
+> j
+
+− I∥F
+
+=
+
+Ri ti
+
+0 1
+
+  RTj −RTj tj
+
+0 1
+
+
+
+− I
+
+> F
+
+=
+
+RiRTj − I −RiRTj tj + ti
+
+0 0
+
+
+
+> F
+
+= tr 
+
+RiRTj − I −RiRTj tj + ti
+
+0 0
+
+  RiRTj − I −RiRTj tj + ti
+
+0 0
+
+T ! 12
+
+= tr  2I − Rj RTi − RiRTj + RiRTj tj tTj Rj RTi − titTj Rj RTi − RiRTj tj tTi + titTi
+
+ 12
+
+=  tr(2 I) − tr( Rj RTi ) − tr( RiRTj ) + tr( RiRTj tj tTj Rj RTi ) − tr( titTj Rj RTi ) − tr( RiRTj tj tTi ) + tr( titTi ) 12
+
+=  tr(2 I) − tr( Rj RTi ) − tr( RiRTj ) + tr( tj tTj ) − tr( RTi titTj Rj ) − tr( RTj tj tTi Ri) + tr( titTi ) 12
+
+=  tr(2 I) − tr( RiRTj ) − tr( Rj RTi ) + tr( titTi ) − tr( RTj tj tTi Ri) − tr( RTi titTj Rj ) + tr( tj tTj ) 12
+
+= DV (j, i )
+
+The fourth equality holds because, for any matrix A, we have ∥A∥F = tr( AA T ) 12 . The sixth equality is a result of the linearity of the trace operator. The seventh equality follows from the cyclic property of the trace, for instance, 
+
+tr( RiRTj tj tTj Rj RTi ) = tr( tj tTj Rj RTi RiRTj ) = tr( tj tTj ).
+
+Triangle Inequality: For views i, j, and k, we follow the same definitions of Ai,j , Bi,j , Aj,k , Bj,k , Ak,i , Bk,i , uj,k , and 
+
+uk,i as in the proof of the triangle inequality in Theorem C.3. Starting from the fourth equality in the proof of symmetry, we have: 
+
+DV (i, j ) = tr 
+
+RiRTj − I −RiRTj tj + ti
+
+0 0
+
+  RiRTj − I −RiRTj tj + ti
+
+0 0
+
+T ! 12
+
+= tr  (RiRTj − I)( RiRTj − I)T + ( −RiRTj tj + ti)( −RiRTj tj + ti)T  12
+
+= tr  RTi
+
+ (RiRTj − I)( RiRTj − I)T + ( −RiRTj tj + ti)( −RiRTj tj + ti)T  Ri
+
+ 12
+
+= tr  (RTj − RTi )( RTj − RTi )T + ( −RTj tj + RTi ti)( −RTj tj + RTi ti)T  12
+
+= tr  Ai,j ATi,j + Bi,j BTi,j 
+
+ 12
+
+= tr  (Aj,k + Ak,i )( Aj,k + Ak,i )T + ( Bj,k + Bk,i )( Bj,k + Bk,i )T  12
+
+15 3D-LMVIC: Learning-based Multi-View Image Compression with 3D Gaussian Geometric Priors 
+
+= tr  Aj,k ATj,k + Bj,k BTj,k + Ak,i ATk,i + Bk,i BTk,i + Aj,k ATk,i + Bj,k BTk,i + Ak,i ATj,k + Bk,i BTj,k 
+
+ 12
+
+=  tr  Aj,k ATj,k + Bj,k BTj,k 
+
+ + tr  Ak,i ATk,i + Bk,i BTk,i 
+
+ + 2tr  Aj,k ATk,i + Bj,k BTk,i 
+
+ 12
+
+=  DV (j, k )2 + DV (k, i )2 + 2( uj,k , u k,i )F
+
+ 12
+
+≤
+
+
+
+DV (j, k )2 + DV (k, i )2 + 2 
+
+q
+
+(uj,k , u j,k )F (uk,i , u k,i )F
+
+ 12
+
+=  DV (j, k )2 + DV (k, i )2 + 2 DV (j, k )DV (k, i ) 12
+
+= DV (j, k ) + DV (k, i )
+
+The third equality holds because the trace is invariant under similarity transformations. 
+
+## D. Experimental Details 
+
+Datasets. Our evaluation is conducted on three multi-view image datasets: Tanks&Temples, Mip-NeRF 360, and Deep Blending. Tanks&Temples consists of 21 diverse indoor and outdoor scenes, ranging from sculptures and large vehicles to complex large-scale environments, with intricate geometry and varied lighting conditions. Mip-NeRF 360 includes 9 scenes—5 outdoor and 4 indoor—captured in unbounded settings, allowing for 360-degree camera rotations and capturing content at varying distances. From the Deep Blending dataset, we selected 9 representative scenes that span indoor, outdoor, vegetation-rich, and nighttime environments. For all datasets, 90% of the images in each scene were allocated for training, with the remaining 10% used for testing. 
+
+Benchmarks. We assess the coding performance of MV-HEVC using the HTM-16.3 software 2. The learning-based multi-view image codecs used as baselines, along with our proposed method, are trained under the same conditions on a shared training set and evaluated on a common test set. For the 3D Gaussian Splatting compression method (HAC), we train the 3D Gaussian representations on each scene’s test data and measure the reconstruction quality of the rendered images. The bpp is determined by dividing the size of the compressed 3D Gaussian file by the total number of pixels in the test images. 
+
+Implementation Details. We utilize the Adam optimizer for training with a batch size of 2. To facilitate data augmentation and optimize memory usage, each image is randomly cropped to 256 × 256 . Correspondingly, the principal point in the intrinsic matrix K is adjusted to reflect the new crop. The intrinsic matrix K is given by: 
+
+K =
+
+
+
+fx 0 cx
+
+0 fy cy
+
+0 0 1
+
+ ,
+
+where fx and fy represent the focal lengths along the x and y axes, respectively, and cx and cy are the principal point coordinates. If the top-left corner of the crop is located at (px, p y ) in the original image, the updated intrinsic matrix K′
+
+becomes: 
+
+K′ =
+
+fx 0 cx − px
+
+0 fy cy − py
+
+0 0 1
+
+ .
+
+Ablation study details. To implement Separate , we set the reference view images, predicted depth maps, and masks to full-zero tensors, with λdep set to zero. In Concatenation , alignment operations in the ICT modules are removed. For W/O Mask , we eliminate all mask-related multiplications in the ICT and DCI modules. In W/O Dep.Pred , the predicted depth maps are replaced with full-zero tensors. For both Sort and Random , sequences in the training and test sets are reordered accordingly. 
+
+> 2https://vcgit.hhi.fraunhofer.de/jvet/HTM/-/tags
+
+16 3D-LMVIC: Learning-based Multi-View Image Compression with 3D Gaussian Geometric Priors      
+
+> Reference View Target View Proposed Mask
+> Figure 9. Visual examples of proposed alignment method and the mask from (4).
+> Table 3. Complexity of learning-based image codecs evaluated on images with the resolution as 978×546 in the Tanks&Temples dataset.
+
+Codecs MACs Enc. MACs Dec. Params Enc. Params Dec. Time Enc. Time Dec. Memory HESIC+ 48.16G 134.31G 17.18M 15.1M 4.35s 10.73s 2248M MASIC 65.62G 511.34G 32.03M 30.73M 4.38s 10.78s 5202M SASIC 91.80G 438.09G 3.57M 4.44M 0.06s 0.09s 4498M LDMIC-Fast 37.49G 94.43G 7.73M 11.15M 0.11s 0.09s 1168M LDMIC 30.91G 87.84G 7.73M 11.15M 4.24s 10.63s 1096M BiSIC-Fast 1880G (Enc.+Dec.) 85.9M (Enc.+Dec.) - - 3552M BiSIC 1770G (Enc.+Dec.) 78.21M (Enc.+Dec.) - - 3006M 3D-LMVIC 479.43G 436.16G 41.92M 36.87M 0.19s 0.18s 3164M 
+
+## E. Supplementary Alignment Experiments 
+
+Figure 9 shows visual examples of proposed alignment method along with the corresponding masks. Notably, ghosting artifacts due to occlusion, such as those involving the iron bars and the edge of the train shell, are effectively identified by the mask, aiding the codec in filtering out irrelevant information when merging features from the reference view. 
+
+## F. Visualization 
+
+In Figure 10, we present examples from the Tanks&Temples dataset to visually compare the performance of LDMIC, BiSIC, and 3D-LMVIC. The results demonstrate that 3D-LMVIC preserves more texture details and achieves higher reconstruction quality for elements like branches, humans, and text, while consuming fewer bits. 
+
+## G. Complexity Analysis 
+
+Table 3 summarizes the Multiply-Accumulate Operations (MACs), model parameters, coding speed, and memory usage of eight learning-based image codecs. These evaluations were conducted on a platform with an Intel(R) Xeon(R) Gold 6330 CPU @ 2.00GHz and a GPU containing 10,752 parallel processing cores. The neural network components were executed on the GPU, while entropy coding was performed on the CPU. Due to the absence of separate encoder and decoder implementations in the open-source code of BiSIC, we measured only its overall computational complexity. The proposed 3D-LMVIC demonstrates computational complexity within an acceptable range, comparable to the SOTA BiSIC and slightly better than BiSIC-Fast. Specifically, 3D-LMVIC achieved encoding and decoding times of 0.19s and 0.18s, respectively, ranking it among the faster methods. 17 3D-LMVIC: Learning-based Multi-View Image Compression with 3D Gaussian Geometric Priors   
+
+> Ground truth
+> 0.9482/36.88/0.9900
+> 1.1425/36.06/0.9917
+> 1.1475/34.95/0.9938
+> 0.8110/37.85/0.9952 LDMIC
+> 0.7685/36.18/0.9887
+> 0.8934/35.34/0.9913
+> 0.9431/33.52/0.9927
+> 0.6574/36.75/0.9950 BiSIC
+> 0.6050/37.73/0.9908
+> 0.6545/37.14/0.9924
+> 0.7596/36.72/0.9946
+> 0.6063/38.89/0.9950 3D-LMVIC
+> Figure 10. Visual Comparison of LDMIC, BiSIC, and 3D-LMVIC on the Tanks&Temples Dataset. Compression performance is reported as bpp/PSNR/MS-SSIM.
+> Table 4. BDBR of 3D-LMVIC relative to HEVC.
+
+Methods Tanks&Temples Mip-NeRF 360 Deep Blending PSNR MS-SSIM PSNR MS-SSIM PSNR MS-SSIM 3D-LMVIC -20.69% -40.75% -14.48% -22.06% -17.29% -43.06% While the MACs of the 3D-LMVIC encoder are relatively high, they remain lower than those of BiSIC, which employs a symmetric encoder-decoder structure. For BiSIC, we estimate that the MACs for its encoder and decoder each account for approximately half of the total MACs. Additionally, the inclusion of a depth map codec in 3D-LMVIC contributes to the higher MACs and model parameter count. 
+
+## H. Supplementary Coding Performance 
+
+We present a supplementary comparison of the coding performance between the proposed 3D-LMVIC and the HEVC video coding standard. The multi-view sequences are treated as a single video and compressed using HEVC with the lowdelay P 
+
+configuration and YUV444 input format. HEVC’s coding efficiency is evaluated using the HM-18.0 software 3. Table 4 reports the BDBR of 3D-LMVIC relative to HEVC. On the three datasets, 3D-LMVIC consistently surpasses HEVC in both PSNR and MS-SSIM, demonstrating its effectiveness in reducing inter-view redundancy in multi-view sequences. 
+
+> 3https://vcgit.hhi.fraunhofer.de/jvet/HM/-/tags
+
+18

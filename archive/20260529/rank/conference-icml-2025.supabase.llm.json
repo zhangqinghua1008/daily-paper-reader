@@ -1,0 +1,926 @@
+{
+  "top_k": 200,
+  "generated_at": "2026-05-29T08:10:39.818728+00:00",
+  "papers": [
+    {
+      "id": "openreview-icml-2025-ij0vj0bc72",
+      "source": "ICML-2025-Accepted",
+      "title": "Perceptual-GS: Scene-adaptive Perceptual Densification for Gaussian Splatting",
+      "abstract": "3D Gaussian Splatting (3DGS) has emerged as a powerful technique for novel view synthesis. However, existing methods struggle to adaptively optimize the distribution of Gaussian primitives based on scene characteristics, making it challenging to balance reconstruction quality and efficiency. Inspired by human perception, we propose scene-adaptive perceptual densification for Gaussian Splatting (Perceptual-GS), a novel framework that integrates perceptual sensitivity into the 3DGS training process to address this challenge. We first introduce a perception-aware representation that models human visual sensitivity while constraining the number of Gaussian primitives. Building on this foundation, we develop a perceptual sensitivity-adaptive distribution to allocate finer Gaussian granularity to visually critical regions, enhancing reconstruction quality and robustness. Extensive evaluations on multiple datasets, including BungeeNeRF for large-scale scenes, demonstrate that Perceptual-GS achieves state-of-the-art performance in reconstruction quality, efficiency, and robustness. The code is publicly available at: https://github.com/eezkni/Perceptual-GS",
+      "authors": [
+        "Hongbi Zhou",
+        "Zhangkai Ni"
+      ],
+      "primary_category": "Novel View Synthesis",
+      "categories": [
+        "Novel View Synthesis",
+        "3D Gaussian Splatting",
+        "Adaptive Density Control",
+        "Human Visual System"
+      ],
+      "published": "2025-05-01T13:13:04.77+00:00",
+      "link": "https://openreview.net/forum?id=ij0vj0BC72",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-icml-2025-6mqv4fnsj0",
+      "source": "ICML-2025-Accepted",
+      "title": "HybridGS: High-Efficiency Gaussian Splatting Data Compression using Dual-Channel Sparse Representation and Point Cloud Encoder",
+      "abstract": "Most existing 3D Gaussian Splatting (3DGS) compression schemes focus on producing compact 3DGS representation via implicit data embedding. They have long encoding and decoding times and highly customized data format, making it difficult for widespread deployment. This paper presents a new 3DGS compression framework called HybridGS, which takes advantage of both compact generation and standardized point cloud data encoding. HybridGS first generates compact and explicit 3DGS data. A dual-channel sparse representation is introduced to supervise the primitive position and feature bit depth. It then utilizes a canonical point cloud encoder to carry out further data compression and form standard output bitstreams. A simple and effective rate control scheme is proposed to pivot the interpretable data compression scheme. HybridGS does not include any modules aimed at improving 3DGS quality during generation. But experiment results show that it still provides comparable reconstruction performance against state-of-the-art methods, with evidently faster encoding and decoding speed. The code is publicly available at https://github.com/Qi-Yangsjtu/HybridGS .",
+      "authors": [
+        "Qi Yang",
+        "Le Yang",
+        "Geert Van der Auwera",
+        "Zhu Li"
+      ],
+      "primary_category": "3D Gaussian Splatting",
+      "categories": [
+        "3D Gaussian Splatting",
+        "Compression",
+        "Sparse Representation"
+      ],
+      "published": "2025-05-01T13:11:38.609+00:00",
+      "link": "https://openreview.net/forum?id=6mQv4fnsj0",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-icml-2025-vji1nnsw4t",
+      "source": "ICML-2025-Accepted",
+      "title": "PF3plat: Pose-Free Feed-Forward 3D Gaussian Splatting for Novel View Synthesis",
+      "abstract": "We consider the problem of novel view synthesis from unposed images in a single feed-forward. Our framework capitalizes on fast speed, scalability, and high-quality 3D reconstruction and view synthesis capabilities of 3DGS, where we further extend it to offer a practical solution that relaxes common assumptions such as dense image views, accurate camera poses, and substantial image overlaps. We achieve this through identifying and addressing unique challenges arising from the use of pixel-aligned 3DGS: misaligned 3D Gaussians across different views induce noisy or sparse gradients that destabilize training and hinder convergence, especially when above assumptions are not met. To mitigate this, we employ pre-trained monocular depth estimation and visual correspondence models to achieve coarse alignments of 3D Gaussians. We then introduce lightweight, learnable modules to refine depth and pose estimates from the coarse alignments, improving the quality of 3D reconstruction and novel view synthesis. Furthermore, the refined estimates are leveraged to estimate geometry confidence scores, which assess the reliability of 3D Gaussian centers and condition the prediction of Gaussian parameters accordingly. Extensive evaluations on large-scale real-world datasets demonstrate that PF3plat sets a new state-of-the-art across all benchmarks, supported by comprehensive ablation studies validating our design choices. We will make the code and weights publicly available.",
+      "authors": [
+        "Sunghwan Hong",
+        "Jaewoo Jung",
+        "Heeseong Shin",
+        "Jisang Han",
+        "Jiaolong Yang",
+        "Chong Luo",
+        "Seungryong Kim"
+      ],
+      "primary_category": "Pose-free",
+      "categories": [
+        "Pose-free",
+        "novel view synthesis",
+        "3D reconstruction"
+      ],
+      "published": "2025-05-01T13:16:13.476+00:00",
+      "link": "https://openreview.net/forum?id=VjI1NnsW4t",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-icml-2025-adwra8faao",
+      "source": "ICML-2025-Accepted",
+      "title": "3D-LMVIC: Learning-based Multi-View Image Compression with 3D Gaussian Geometric Priors",
+      "abstract": "Existing multi-view image compression methods often rely on 2D projection-based similarities between views to estimate disparities. While effective for small disparities, such as those in stereo images, these methods struggle with the more complex disparities encountered in wide-baseline multi-camera systems, commonly found in virtual reality and autonomous driving applications. To address this limitation, we propose 3D-LMVIC, a novel learning-based multi-view image compression framework that leverages 3D Gaussian Splatting to derive geometric priors for accurate disparity estimation. Furthermore, we introduce a depth map compression model to minimize geometric redundancy across views, along with a multi-view sequence ordering strategy based on a defined distance measure between views to enhance correlations between adjacent views. Experimental results demonstrate that 3D-LMVIC achieves superior performance compared to both traditional and learning-based methods. Additionally, it significantly improves disparity estimation accuracy over existing two-view approaches.",
+      "authors": [
+        "Yujun Huang",
+        "Bin Chen",
+        "Niu Lian",
+        "Xin Wang",
+        "Baoyi An",
+        "Tao Dai",
+        "Shu-Tao Xia"
+      ],
+      "primary_category": "Multi-View Image Compression; 3D Gaussian Splatting; Deep Learning",
+      "categories": [
+        "Multi-View Image Compression; 3D Gaussian Splatting; Deep Learning"
+      ],
+      "published": "2025-05-01T13:15:38.598+00:00",
+      "link": "https://openreview.net/forum?id=AdWRA8faAO",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-icml-2025-vkmi3jztyg",
+      "source": "ICML-2025-Accepted",
+      "title": "VTGaussian-SLAM: RGBD SLAM for Large Scale Scenes with Splatting View-Tied 3D Gaussians",
+      "abstract": "Jointly estimating camera poses and mapping scenes from RGBD images is a fundamental task in simultaneous localization and mapping (SLAM). State-of-the-art methods employ 3D Gaussians to represent a scene, and render these Gaussians through splatting \nfor higher efficiency and better rendering. However, these methods cannot scale up to extremely large scenes, due to the inefficient tracking and mapping strategies that need to optimize all 3D Gaussians in the limited GPU memories throughout the training to maintain the geometry and color consistency to previous RGBD observations. To resolve this issue, we propose novel tracking and mapping strategies to work with a novel 3D representation, dubbed view-tied 3D Gaussians, for RGBD SLAM systems. View-tied 3D Gaussians is a kind of simplified Gaussians, which is tied to depth pixels, without needing to learn locations, rotations, and multi-dimensional variances. Tying Gaussians to views not only significantly saves storage but also allows us to employ many more Gaussians to represent local details in the limited GPU memory. Moreover, our strategies remove the need of maintaining all Gaussians learnable throughout the training, while improving rendering quality, and tracking accuracy. We justify the effectiveness of these designs, and report better performance over the latest methods on the widely used benchmarks in terms of rendering and tracking accuracy and scalability. Please see our project page for code and videos at https://machineperceptionlab.github.io/VTGaussian-SLAM-Project.",
+      "authors": [
+        "Pengchong Hu",
+        "Zhizhong Han"
+      ],
+      "primary_category": "3D Gaussian Splatting",
+      "categories": [
+        "3D Gaussian Splatting",
+        "view-tied 3D Gaussians",
+        "RGBD-SLAM"
+      ],
+      "published": "2025-05-01T13:11:45.774+00:00",
+      "link": "https://openreview.net/forum?id=vkmi3jZtYG",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-icml-2025-ruj5ilbuuk",
+      "source": "ICML-2025-Accepted",
+      "title": "Enhancing Visual Localization with Cross-Domain Image Generation",
+      "abstract": "Visual localization aims to predict the absolute camera pose for a single query image. However, predominant methods focus on single-camera images and scenes with limited appearance variations, limiting their applicability to cross-domain scenes commonly encountered in real-world applications. Furthermore, the long-tail distribution of cross-domain datasets poses additional challenges for visual localization. In this work, we propose a novel cross-domain data generation method to enhance visual localization methods. To achieve this, we first construct a cross-domain 3DGS to accurately model photometric variations and mitigate the interference of dynamic objects in large-scale scenes. We introduce a text-guided image editing model to enhance data diversity for addressing the long-tail distribution problem and design an effective fine-tuning strategy for it. Then, we develop an anchor-based method to generate high-quality datasets for visual localization. Finally, we introduce positional attention to address data ambiguities in cross-camera images. Extensive experiments show that our method achieves state-of-the-art accuracy, outperforming existing cross-domain visual localization methods by an average of 59\\% across all domains. Project page: https://yzwang-sjtu.github.io/CDG-Loc.",
+      "authors": [
+        "Yuanze Wang",
+        "Yichao Yan",
+        "Shiming Song",
+        "Songchang Jin",
+        "Yilan Huang",
+        "Xingdong Sheng",
+        "Dianxi Shi"
+      ],
+      "primary_category": "Cross-Domain Visual Localization; Image Generation; 3D Gaussian Splatting; Image Editing",
+      "categories": [
+        "Cross-Domain Visual Localization; Image Generation; 3D Gaussian Splatting; Image Editing"
+      ],
+      "published": "2025-05-01T13:18:17.727+00:00",
+      "link": "https://openreview.net/forum?id=ruj5ILBUuK",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    },
+    {
+      "id": "openreview-icml-2025-imp2vzs4f8",
+      "source": "ICML-2025-Accepted",
+      "title": "High Dynamic Range Novel View Synthesis with Single Exposure",
+      "abstract": "High Dynamic Range Novel View Synthesis (HDR-NVS) aims to establish a 3D scene HDR model from Low Dynamic Range (LDR) imagery. Typically, multiple-exposure LDR images are employed to capture a wider range of brightness levels in a scene, as a single LDR image cannot represent both the brightest and darkest regions simultaneously. While effective, this multiple-exposure HDR-NVS approach has significant limitations, including susceptibility to motion artifacts (e.g., ghosting and blurring), high capture and storage costs.\nTo overcome these challenges, we introduce, for the first time, the  single-exposure HDR-NVS problem, where only single exposure LDR images are available during training. We further introduce a novel approach, Mono-HDR-3D, featuring two dedicated modules formulated by the LDR image formation principles, one for converting LDR colors to HDR counterparts, and the other for transforming HDR images to LDR format so that unsupervised learning is enabled in a closed loop. Designed as a meta-algorithm, our approach can be seamlessly integrated with existing NVS models. Extensive experiments show that Mono-HDR-3D significantly outperforms previous methods.\nSource code is released at https://github.com/prinasi/Mono-HDR-3D.",
+      "authors": [
+        "Kaixuan Zhang",
+        "HuWang",
+        "Minxian Li",
+        "Mingwu Ren",
+        "Mao Ye",
+        "Xiatian Zhu"
+      ],
+      "primary_category": "High Dynamic Range",
+      "categories": [
+        "High Dynamic Range",
+        "Novel View Synthesis",
+        "Low Dynamic Range",
+        "Data Synthesis"
+      ],
+      "published": "2025-05-01T13:11:57.671+00:00",
+      "link": "https://openreview.net/forum?id=iMp2vzs4f8",
+      "pdf_url": null,
+      "tags": [
+        "keyword:GS-SLAM",
+        "query:GS-SLAM"
+      ]
+    }
+  ],
+  "queries": [
+    {
+      "type": "intent_query",
+      "tag": "GS-SLAM",
+      "paper_tag": "query:GS-SLAM",
+      "query_text": "3D Gaussian Splatting for simultaneous localization and mapping",
+      "sim_scores": {
+        "openreview-icml-2025-vkmi3jztyg": {
+          "score": 0.03252247488101534,
+          "rank": 1
+        },
+        "openreview-icml-2025-ruj5ilbuuk": {
+          "score": 0.015873015873015872,
+          "rank": 3
+        },
+        "openreview-icml-2025-vji1nnsw4t": {
+          "score": 0.013888888888888888,
+          "rank": 12
+        },
+        "openreview-icml-2025-ij0vj0bc72": {
+          "score": 0.0136986301369863,
+          "rank": 13
+        },
+        "openreview-icml-2025-adwra8faao": {
+          "score": 0.01282051282051282,
+          "rank": 18
+        },
+        "openreview-icml-2025-6mqv4fnsj0": {
+          "score": 0.01098901098901099,
+          "rank": 31
+        }
+      },
+      "ranked": [
+        {
+          "paper_id": "openreview-icml-2025-vji1nnsw4t",
+          "score": 1.0,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-icml-2025-vkmi3jztyg",
+          "score": 1.0,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-icml-2025-ij0vj0bc72",
+          "score": 0.9586435070306036,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-icml-2025-adwra8faao",
+          "score": 0.9586435070306036,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-icml-2025-6mqv4fnsj0",
+          "score": 0.8798076923076922,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-icml-2025-ruj5ilbuuk",
+          "score": 0.8422090729783037,
+          "star_rating": 4
+        }
+      ]
+    },
+    {
+      "type": "intent_query",
+      "tag": "GS-SLAM",
+      "paper_tag": "query:GS-SLAM",
+      "query_text": "Monocular 3D Gaussian splatting SLAM system for real time dense mapping",
+      "sim_scores": {
+        "openreview-icml-2025-vkmi3jztyg": {
+          "score": 0.01639344262295082,
+          "rank": 1
+        },
+        "openreview-icml-2025-ruj5ilbuuk": {
+          "score": 0.015384615384615385,
+          "rank": 5
+        },
+        "openreview-icml-2025-adwra8faao": {
+          "score": 0.014705882352941176,
+          "rank": 8
+        },
+        "openreview-icml-2025-vji1nnsw4t": {
+          "score": 0.014492753623188406,
+          "rank": 9
+        },
+        "openreview-icml-2025-ij0vj0bc72": {
+          "score": 0.014084507042253521,
+          "rank": 11
+        },
+        "openreview-icml-2025-6mqv4fnsj0": {
+          "score": 0.0125,
+          "rank": 20
+        }
+      },
+      "ranked": [
+        {
+          "paper_id": "openreview-icml-2025-vkmi3jztyg",
+          "score": 1.0,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-icml-2025-vji1nnsw4t",
+          "score": 1.0,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-icml-2025-ij0vj0bc72",
+          "score": 0.9586435070306036,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-icml-2025-6mqv4fnsj0",
+          "score": 0.9185999185999183,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-icml-2025-adwra8faao",
+          "score": 0.8798076923076922,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-icml-2025-ruj5ilbuuk",
+          "score": 0.702712746191007,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-icml-2025-imp2vzs4f8",
+          "score": 0.21328671328671328,
+          "star_rating": 3
+        }
+      ]
+    },
+    {
+      "type": "intent_query",
+      "tag": "GS-SLAM",
+      "paper_tag": "query:GS-SLAM",
+      "query_text": "Novel view synthesis and camera tracking via Gaussian splatting",
+      "sim_scores": {
+        "openreview-icml-2025-ruj5ilbuuk": {
+          "score": 0.016129032258064516,
+          "rank": 2
+        },
+        "openreview-icml-2025-ij0vj0bc72": {
+          "score": 0.015873015873015872,
+          "rank": 3
+        },
+        "openreview-icml-2025-vkmi3jztyg": {
+          "score": 0.015625,
+          "rank": 4
+        },
+        "openreview-icml-2025-vji1nnsw4t": {
+          "score": 0.015384615384615385,
+          "rank": 5
+        },
+        "openreview-icml-2025-adwra8faao": {
+          "score": 0.014925373134328358,
+          "rank": 7
+        },
+        "openreview-icml-2025-imp2vzs4f8": {
+          "score": 0.011627906976744186,
+          "rank": 26
+        }
+      },
+      "ranked": [
+        {
+          "paper_id": "openreview-icml-2025-vkmi3jztyg",
+          "score": 1.0,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-icml-2025-vji1nnsw4t",
+          "score": 1.0,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-icml-2025-ij0vj0bc72",
+          "score": 0.9586435070306036,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-icml-2025-adwra8faao",
+          "score": 0.9185999185999183,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-icml-2025-imp2vzs4f8",
+          "score": 0.8798076923076922,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-icml-2025-6mqv4fnsj0",
+          "score": 0.8422090729783037,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-icml-2025-ruj5ilbuuk",
+          "score": 0.7703788748564866,
+          "star_rating": 4
+        }
+      ]
+    },
+    {
+      "type": "intent_query",
+      "tag": "GS-SLAM",
+      "paper_tag": "query:GS-SLAM",
+      "query_text": "efficient visual SLAM with 3D Gaussian scene representations",
+      "sim_scores": {
+        "openreview-icml-2025-vkmi3jztyg": {
+          "score": 0.01639344262295082,
+          "rank": 1
+        },
+        "openreview-icml-2025-ruj5ilbuuk": {
+          "score": 0.015625,
+          "rank": 4
+        },
+        "openreview-icml-2025-adwra8faao": {
+          "score": 0.015384615384615385,
+          "rank": 5
+        },
+        "openreview-icml-2025-vji1nnsw4t": {
+          "score": 0.013333333333333334,
+          "rank": 15
+        },
+        "openreview-icml-2025-ij0vj0bc72": {
+          "score": 0.009708737864077669,
+          "rank": 43
+        }
+      },
+      "ranked": [
+        {
+          "paper_id": "openreview-icml-2025-vkmi3jztyg",
+          "score": 1.0,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-icml-2025-ij0vj0bc72",
+          "score": 1.0,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-icml-2025-vji1nnsw4t",
+          "score": 0.9586435070306036,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-icml-2025-adwra8faao",
+          "score": 0.8798076923076922,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-icml-2025-6mqv4fnsj0",
+          "score": 0.8798076923076922,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-icml-2025-ruj5ilbuuk",
+          "score": 0.8422090729783037,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-icml-2025-imp2vzs4f8",
+          "score": 0.0319204604918889,
+          "star_rating": 2
+        }
+      ]
+    },
+    {
+      "type": "keyword",
+      "tag": "GS-SLAM",
+      "paper_tag": "keyword:GS-SLAM",
+      "query_text": "3D Gaussian splatting",
+      "sim_scores": {
+        "openreview-icml-2025-ij0vj0bc72": {
+          "score": 0.01639344262295082,
+          "rank": 1
+        },
+        "openreview-icml-2025-6mqv4fnsj0": {
+          "score": 0.015625,
+          "rank": 4
+        },
+        "openreview-icml-2025-vji1nnsw4t": {
+          "score": 0.015384615384615385,
+          "rank": 5
+        },
+        "openreview-icml-2025-adwra8faao": {
+          "score": 0.015151515151515152,
+          "rank": 6
+        },
+        "openreview-icml-2025-vkmi3jztyg": {
+          "score": 0.014925373134328358,
+          "rank": 7
+        }
+      }
+    },
+    {
+      "type": "keyword",
+      "tag": "GS-SLAM",
+      "paper_tag": "keyword:GS-SLAM",
+      "query_text": "Monocular visual SLAM using a single camera",
+      "sim_scores": {
+        "openreview-icml-2025-vkmi3jztyg": {
+          "score": 0.01639344262295082,
+          "rank": 1
+        },
+        "openreview-icml-2025-ruj5ilbuuk": {
+          "score": 0.016129032258064516,
+          "rank": 2
+        },
+        "openreview-icml-2025-adwra8faao": {
+          "score": 0.013888888888888888,
+          "rank": 12
+        },
+        "openreview-icml-2025-vji1nnsw4t": {
+          "score": 0.011904761904761904,
+          "rank": 24
+        },
+        "openreview-icml-2025-imp2vzs4f8": {
+          "score": 0.011363636363636364,
+          "rank": 28
+        }
+      }
+    },
+    {
+      "type": "keyword",
+      "tag": "GS-SLAM",
+      "paper_tag": "keyword:GS-SLAM",
+      "query_text": "RGB-D SLAM based on 3D Gaussian Splatting",
+      "sim_scores": {
+        "openreview-icml-2025-vkmi3jztyg": {
+          "score": 0.01639344262295082,
+          "rank": 1
+        },
+        "openreview-icml-2025-ruj5ilbuuk": {
+          "score": 0.015384615384615385,
+          "rank": 5
+        },
+        "openreview-icml-2025-adwra8faao": {
+          "score": 0.014925373134328358,
+          "rank": 7
+        },
+        "openreview-icml-2025-vji1nnsw4t": {
+          "score": 0.014705882352941176,
+          "rank": 8
+        },
+        "openreview-icml-2025-ij0vj0bc72": {
+          "score": 0.013333333333333334,
+          "rank": 15
+        }
+      }
+    },
+    {
+      "type": "keyword",
+      "tag": "GS-SLAM",
+      "paper_tag": "keyword:GS-SLAM",
+      "query_text": "Simultaneous Localization Mapping",
+      "sim_scores": {
+        "openreview-icml-2025-vkmi3jztyg": {
+          "score": 0.01639344262295082,
+          "rank": 1
+        }
+      }
+    },
+    {
+      "type": "keyword",
+      "tag": "GS-SLAM",
+      "paper_tag": "keyword:GS-SLAM",
+      "query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation",
+      "sim_scores": {
+        "openreview-icml-2025-ij0vj0bc72": {
+          "score": 0.016129032258064516,
+          "rank": 2
+        },
+        "openreview-icml-2025-vji1nnsw4t": {
+          "score": 0.015625,
+          "rank": 4
+        },
+        "openreview-icml-2025-adwra8faao": {
+          "score": 0.015384615384615385,
+          "rank": 5
+        },
+        "openreview-icml-2025-vkmi3jztyg": {
+          "score": 0.014285714285714285,
+          "rank": 10
+        },
+        "openreview-icml-2025-ruj5ilbuuk": {
+          "score": 0.013888888888888888,
+          "rank": 12
+        },
+        "openreview-icml-2025-imp2vzs4f8": {
+          "score": 0.013157894736842105,
+          "rank": 16
+        }
+      }
+    },
+    {
+      "type": "keyword",
+      "tag": "GS-SLAM",
+      "paper_tag": "keyword:GS-SLAM",
+      "query_text": "Visual SLAM methods for camera tracking and mapping",
+      "sim_scores": {
+        "openreview-icml-2025-vkmi3jztyg": {
+          "score": 0.01639344262295082,
+          "rank": 1
+        },
+        "openreview-icml-2025-ruj5ilbuuk": {
+          "score": 0.016129032258064516,
+          "rank": 2
+        },
+        "openreview-icml-2025-adwra8faao": {
+          "score": 0.013157894736842105,
+          "rank": 16
+        },
+        "openreview-icml-2025-vji1nnsw4t": {
+          "score": 0.010869565217391304,
+          "rank": 32
+        },
+        "openreview-icml-2025-imp2vzs4f8": {
+          "score": 0.01,
+          "rank": 40
+        }
+      }
+    },
+    {
+      "type": "keyword",
+      "tag": "GS-SLAM",
+      "paper_tag": "keyword:GS-SLAM",
+      "query_text": "accurate camera pose tracking",
+      "sim_scores": {
+        "openreview-icml-2025-ruj5ilbuuk": {
+          "score": 0.015384615384615385,
+          "rank": 5
+        },
+        "openreview-icml-2025-vkmi3jztyg": {
+          "score": 0.014705882352941176,
+          "rank": 8
+        },
+        "openreview-icml-2025-adwra8faao": {
+          "score": 0.01282051282051282,
+          "rank": 18
+        },
+        "openreview-icml-2025-vji1nnsw4t": {
+          "score": 0.011494252873563218,
+          "rank": 27
+        },
+        "openreview-icml-2025-imp2vzs4f8": {
+          "score": 0.010526315789473684,
+          "rank": 35
+        }
+      }
+    },
+    {
+      "type": "keyword",
+      "tag": "GS-SLAM",
+      "paper_tag": "keyword:GS-SLAM",
+      "query_text": "camera pose estimation",
+      "sim_scores": {
+        "openreview-icml-2025-vkmi3jztyg": {
+          "score": 0.01639344262295082,
+          "rank": 1
+        },
+        "openreview-icml-2025-vji1nnsw4t": {
+          "score": 0.016129032258064516,
+          "rank": 2
+        }
+      }
+    },
+    {
+      "type": "keyword",
+      "tag": "GS-SLAM",
+      "paper_tag": "keyword:GS-SLAM",
+      "query_text": "visual SLAM with learned representations",
+      "sim_scores": {
+        "openreview-icml-2025-vkmi3jztyg": {
+          "score": 0.01639344262295082,
+          "rank": 1
+        },
+        "openreview-icml-2025-ruj5ilbuuk": {
+          "score": 0.016129032258064516,
+          "rank": 2
+        },
+        "openreview-icml-2025-adwra8faao": {
+          "score": 0.010869565217391304,
+          "rank": 32
+        }
+      }
+    }
+  ],
+  "global_candidate_ids": [
+    "openreview-icml-2025-vkmi3jztyg",
+    "openreview-icml-2025-fki6yjxwcn",
+    "openreview-icml-2025-sux6wzy9t1",
+    "openreview-icml-2025-zqs9yrynhs",
+    "openreview-icml-2025-ruj5ilbuuk",
+    "openreview-icml-2025-ij0vj0bc72",
+    "openreview-icml-2025-reushgihdg",
+    "openreview-icml-2025-oamdljezm4",
+    "openreview-icml-2025-pnz3piokrn",
+    "openreview-icml-2025-hm9fnezz6z",
+    "openreview-icml-2025-vji1nnsw4t",
+    "openreview-icml-2025-adwra8faao",
+    "openreview-icml-2025-yoaerylge9",
+    "openreview-icml-2025-7dt3nh5tzq",
+    "openreview-icml-2025-ax550vokon",
+    "openreview-icml-2025-vhr9cdeffu",
+    "openreview-icml-2025-9aeygpsv6v",
+    "openreview-icml-2025-r6ornpridv",
+    "openreview-icml-2025-rmcyr6vsom",
+    "openreview-icml-2025-o1scma6d1d",
+    "openreview-icml-2025-vwpzkn6usz",
+    "openreview-icml-2025-x4ytgv2wkj",
+    "openreview-icml-2025-s09b5wna6j",
+    "openreview-icml-2025-3vn8fxszda",
+    "openreview-icml-2025-f7boaymwl7",
+    "openreview-icml-2025-4ssnofuqf1",
+    "openreview-icml-2025-advzd958yy",
+    "openreview-icml-2025-pqyjmq39gi",
+    "openreview-icml-2025-tiynbkwl7t",
+    "openreview-icml-2025-6qnbvtkgy2",
+    "openreview-icml-2025-oyzdcczdr9",
+    "openreview-icml-2025-jzijxr9kso",
+    "openreview-icml-2025-qw6f72tutx",
+    "openreview-icml-2025-cvqwqp9v1d",
+    "openreview-icml-2025-cjcrotfmem",
+    "openreview-icml-2025-sdk6bsmhgm",
+    "openreview-icml-2025-4gs48lcx49",
+    "openreview-icml-2025-imp2vzs4f8",
+    "openreview-icml-2025-ne5brb1tkn",
+    "openreview-icml-2025-g5cijb2ery",
+    "openreview-icml-2025-ymjchwcb2z",
+    "openreview-icml-2025-u74moxpejd",
+    "openreview-icml-2025-vf5f7cl76i",
+    "openreview-icml-2025-rmqnijtu6h",
+    "openreview-icml-2025-rgol3duxnm",
+    "openreview-icml-2025-2fdsh5d2th",
+    "openreview-icml-2025-mqpwfstn6b",
+    "openreview-icml-2025-tkdtioeltx",
+    "openreview-icml-2025-ku2fvcepwx",
+    "openreview-icml-2025-9rg2oawj0s",
+    "openreview-icml-2025-hemldrnffy",
+    "openreview-icml-2025-neba0bs5lr",
+    "openreview-icml-2025-souzxkresn",
+    "openreview-icml-2025-j07qnzjyiu",
+    "openreview-icml-2025-6mqv4fnsj0",
+    "openreview-icml-2025-u5nrmos8ed",
+    "openreview-icml-2025-vprweqjltg",
+    "openreview-icml-2025-uhf0km7r5m",
+    "openreview-icml-2025-swxyv7ciw9",
+    "openreview-icml-2025-w8mcyyavqd",
+    "openreview-icml-2025-bgdsssjwot",
+    "openreview-icml-2025-bwfifv8kg2",
+    "openreview-icml-2025-dikilmw4f8",
+    "openreview-icml-2025-us8v5tdofd",
+    "openreview-icml-2025-wmiueircam",
+    "openreview-icml-2025-migcz3zmmx",
+    "openreview-icml-2025-o2fupyerws",
+    "openreview-icml-2025-nhaanf5com",
+    "openreview-icml-2025-0flogptlo1",
+    "openreview-icml-2025-fcteo26afz",
+    "openreview-icml-2025-0qrrokhvdz",
+    "openreview-icml-2025-6vp20u55ba",
+    "openreview-icml-2025-0odiwdifb7",
+    "openreview-icml-2025-0yxxh8walf",
+    "openreview-icml-2025-6srcnb5kcc",
+    "openreview-icml-2025-jmocqueaqw",
+    "openreview-icml-2025-7exlwkfcgl",
+    "openreview-icml-2025-80faipz67s",
+    "openreview-icml-2025-fjxcrsfyiv",
+    "openreview-icml-2025-mumoaos9hy",
+    "openreview-icml-2025-jvp1wbd0xh",
+    "openreview-icml-2025-p0bqivwnez",
+    "openreview-icml-2025-cuasys6xzw",
+    "openreview-icml-2025-jkvh7nlzur",
+    "openreview-icml-2025-yhpwi6a2xt",
+    "openreview-icml-2025-magosim8ut",
+    "openreview-icml-2025-nv70eguaa7",
+    "openreview-icml-2025-4xnqm4f71y",
+    "openreview-icml-2025-bp975diajt",
+    "openreview-icml-2025-0yzhfumsjv",
+    "openreview-icml-2025-dgdokuubzf",
+    "openreview-icml-2025-7sg4s8d8aq",
+    "openreview-icml-2025-v7ebdkptng",
+    "openreview-icml-2025-wisfjyoa6m",
+    "openreview-icml-2025-wfhq9owxoh",
+    "openreview-icml-2025-rsegdeipt9",
+    "openreview-icml-2025-cr9qfd3qrc",
+    "openreview-icml-2025-ngc7wdmfao",
+    "openreview-icml-2025-u8ca3qis0v",
+    "openreview-icml-2025-jijagtw98t",
+    "openreview-icml-2025-yxcy4wkag7",
+    "openreview-icml-2025-oeo53q93ip",
+    "openreview-icml-2025-mmasoshovt",
+    "openreview-icml-2025-rc7y9hfc34",
+    "openreview-icml-2025-xivuqzz59o",
+    "openreview-icml-2025-jcuswrwkkw",
+    "openreview-icml-2025-yfoi5o68rf",
+    "openreview-icml-2025-vutmczl50l",
+    "openreview-icml-2025-dqln1yfyxn",
+    "openreview-icml-2025-qg9p1i5lmp",
+    "openreview-icml-2025-capngwkeek",
+    "openreview-icml-2025-jvdfkvf4qy",
+    "openreview-icml-2025-kwyov6xrxs",
+    "openreview-icml-2025-pgjufjuxh9",
+    "openreview-icml-2025-li4rieeclo",
+    "openreview-icml-2025-yj1my9tten",
+    "openreview-icml-2025-5qakpbvdfh",
+    "openreview-icml-2025-9w3csuhofa",
+    "openreview-icml-2025-lioemocq3h",
+    "openreview-icml-2025-p9gwpjdo8i"
+  ],
+  "global_pool_lane_top_k": 30,
+  "global_pool_limit": 120,
+  "global_pool_guaranteed_per_lane": 2,
+  "global_pool_effective_size": 120,
+  "reranked_at": "2026-05-29T08:11:50.388670+00:00",
+  "llm_ranked": [
+    {
+      "paper_id": "openreview-icml-2025-ij0vj0bc72",
+      "score": 10.0,
+      "evidence_en": "Adaptive densification of Gaussian primitives based on perceptual sensitivity for novel view synthesis.",
+      "evidence_cn": "基于感知敏感度的自适应高斯原语稠密化用于新视角合成。",
+      "canonical_evidence": "基于感知敏感度的自适应高斯原语稠密化用于新视角合成。",
+      "tldr_en": "Perceptual-GS introduces a perception-aware representation to adaptively densify 3D Gaussian primitives, balancing reconstruction quality and efficiency in novel view synthesis.",
+      "tldr_cn": "Perceptual-GS针对3D高斯泼溅在新视角合成中难以平衡重建质量与效率的问题，提出一种场景自适应感知稠密化方法。受人类感知启发，该方法通过建模视觉敏感度来约束高斯原语数量，实现感知敏感度自适应的分布优化，从而在保持高重建质量的同时减少原语数量，提升了效率。实验表明，该方法在多种场景下均能取得竞争力的表现。",
+      "title_zh": "Perceptual-GS: 场景自适应的感知稠密化高斯泼溅",
+      "motivation_cn": "现有3D高斯泼溅方法难以根据场景特性自适应优化高斯原语分布，导致质量与效率难以平衡。",
+      "method_cn": "提出感知感知的表示方法，通过建模人类视觉敏感度约束高斯原语数量，并开发感知敏感度自适应的分布策略。",
+      "result_cn": "在多个场景中实现了与最先进方法相当或更优的重建质量，同时使用更少的高斯原语。",
+      "conclusion_cn": "通过引入感知敏感度，有效指导高斯泼溅的稠密化过程，提升了新视角合成的效率与质量平衡。",
+      "matched_requirement_id": "req-1",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation"
+    },
+    {
+      "paper_id": "openreview-icml-2025-vji1nnsw4t",
+      "score": 10.0,
+      "evidence_en": "proposes a pose-free feed-forward 3D Gaussian splatting framework for novel view synthesis",
+      "evidence_cn": "提出无位姿前馈3D高斯泼溅新视角合成框架",
+      "canonical_evidence": "提出无位姿前馈3D高斯泼溅新视角合成框架",
+      "tldr_en": "PF3plat is a feed-forward 3D Gaussian Splatting method for novel view synthesis from unposed images, using monocular depth and cross-view alignment to overcome misalignment issues, enabling high-quality reconstruction without camera poses.",
+      "tldr_cn": "本文针对无标定图像的新视角合成问题，提出PF3plat，一种不需要相机位姿的前馈式3D高斯泼溅框架。通过引入单目深度估计和跨视图对齐训练策略，解决了像素对齐3DGS在稀疏视图下训练不稳、模糊退化等挑战，在不依赖密集视图、准确位姿和大重叠的情况下实现高质量3D重建和视图合成。实验表明该方法在复杂场景下仍能生成细节丰富的新视角图像，显著拓展了3DGS的实用范围。",
+      "title_zh": "PF3plat：无位姿前馈三维高斯泼溅新视角合成",
+      "motivation_cn": "现有3DGS方法依赖密集视图、精确位姿和大重叠，限制了实际应用。",
+      "method_cn": "提出无位姿前馈框架，利用单目深度估计弥补跨视图高斯对齐不足，并设计训练策略处理稀疏梯度问题。",
+      "result_cn": "在不给定相机位姿的条件下，成功实现高质量新视角合成，重建细节清晰。",
+      "conclusion_cn": "该方法放松了3DGS的关键假设，使单次前馈即可从无位姿图像生成新视角，提升了实用性。",
+      "matched_requirement_id": "req-1",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation"
+    },
+    {
+      "paper_id": "openreview-icml-2025-vkmi3jztyg",
+      "score": 9.0,
+      "evidence_en": "Proposes RGBD SLAM using view-tied 3D Gaussians and splatting for large-scale scenes",
+      "evidence_cn": "提出使用视图绑定三维高斯和泼溅技术的大规模场景RGB-D SLAM方法",
+      "canonical_evidence": "提出使用视图绑定三维高斯和泼溅技术的大规模场景RGB-D SLAM方法",
+      "tldr_en": "VTGaussian-SLAM enables scalable RGBD SLAM by introducing view-tied 3D Gaussians and local optimization strategies, avoiding global Gaussian maintenance; it achieves high-quality rendering and accurate camera tracking on large real-world scenes.",
+      "tldr_cn": "VTGaussian-SLAM针对现有基于3D高斯泼溅的RGB-D SLAM方法难以扩展至大规模场景的问题，提出视图绑定的3D高斯表示及相应的跟踪与建图策略。该方法通过只优化与当前视图相关的局部高斯集，避免在有限GPU内存中维护全部高斯的几何与颜色一致性，从而显著提升可扩展性。实验结果表明，该方法在大规模室内场景中实现了高质量的渲染与准确的相机跟踪，为实际应用中的大场景实时SLAM提供了新思路。",
+      "title_zh": "VTGaussian-SLAM：基于视图绑定三维高斯泼溅的大规模场景RGB-D SLAM",
+      "motivation_cn": "现有基于3D高斯的RGB-D SLAM方法因需优化全部高斯而无法扩展至大规模场景，受限于GPU内存和一致性维护。",
+      "method_cn": "提出视图绑定的3D高斯表示，并设计局部跟踪与建图策略，仅优化与当前视图相关的局部高斯集，以支持大场景。",
+      "result_cn": "在大规模场景中，该方法实现了高效的渲染质量与准确的相机姿态估计，优于现有不可扩展的方法。",
+      "conclusion_cn": "通过视图绑定高斯和局部优化，解决了3D高斯SLAM的可扩展性瓶颈，为实际大规模环境下的实时稠密建图奠定基础。",
+      "matched_requirement_id": "req-5",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "RGB-D SLAM based on 3D Gaussian Splatting"
+    },
+    {
+      "paper_id": "openreview-icml-2025-ruj5ilbuuk",
+      "score": 9.0,
+      "evidence_en": "enhances visual localization for absolute camera pose tracking using cross-domain 3DGS",
+      "evidence_cn": "利用跨域3DGS增强视觉定位以实现绝对相机位姿跟踪",
+      "canonical_evidence": "利用跨域3DGS增强视觉定位以实现绝对相机位姿跟踪",
+      "tldr_en": "Proposes a cross-domain image generation method using 3D Gaussian splatting to model photometric variations and text-guided editing to enhance visual localization. It improves absolute camera pose estimation from a single query image.",
+      "tldr_cn": "针对视觉定位方法在跨域场景中表现受限的问题，本文利用跨域3D高斯泼溅精确建模光度变化，并结合文本引导图像编辑生成多样化数据，增强视觉定位模型。实验表明该方法有效提升了绝对相机位姿预测的准确性和鲁棒性。将3DGS引入定位任务，为相机跟踪提供了新思路。",
+      "title_zh": "利用跨域图像生成增强视觉定位",
+      "motivation_cn": "现有方法聚焦单相机图像和有限外观变化，难以应对真实跨域场景和长尾分布。",
+      "method_cn": "构建跨域3DGS建模光度变化，使用文本引导图像编辑增强数据多样性，训练视觉定位模型。",
+      "result_cn": "生成的跨域数据显著提升了视觉定位方法的性能，特别是在复杂场景下。",
+      "conclusion_cn": "跨域3DGS和文本编辑能有效增强视觉定位，为SLAM中的相机跟踪提供了可迁移的技术。",
+      "matched_requirement_id": "req-3",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "accurate camera pose tracking"
+    },
+    {
+      "paper_id": "openreview-icml-2025-6mqv4fnsj0",
+      "score": 7.0,
+      "evidence_en": "introduces efficient 3DGS compression via dual-channel sparse representation and point cloud encoding",
+      "evidence_cn": "通过双通道稀疏表示和点云编码实现高效3DGS压缩",
+      "canonical_evidence": "通过双通道稀疏表示和点云编码实现高效3DGS压缩",
+      "tldr_en": "HybridGS combines dual-channel sparse representation with a point cloud encoder to achieve fast and compact 3DGS compression, supporting standard formats for easier deployment.",
+      "tldr_cn": "为解决3DGS隐式压缩方案编码耗时且格式不通用的问题，HybridGS提出双通道稀疏表示引导的显式紧凑生成方法，监督基元位置和特征位宽，并结合点云编码器实现标准化压缩。实验表明，该方法在保证快速编解码的同时显著减小模型体积，并兼容标准化点云格式，便于部署和交换。这一高效压缩技术有望降低3DGS场景表示在SLAM等应用中的存储与传输开销。",
+      "title_zh": "HybridGS：基于双通道稀疏表示和点云编码器的高效高斯泼溅数据压缩",
+      "motivation_cn": "现有3DGS压缩方法编码慢、格式私有，难以实际部署。",
+      "method_cn": "提出双通道稀疏表示监督生成紧凑基元，结合点云编码器进行标准化压缩。",
+      "result_cn": "实现快速编解码，显著压缩3DGS模型，且保持渲染质量。",
+      "conclusion_cn": "为3DGS的高效存储和交换提供了通用解决方案，对SLAM等应用具有潜在价值。",
+      "matched_requirement_id": "req-7",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "efficient visual SLAM with 3D Gaussian scene representations"
+    },
+    {
+      "paper_id": "openreview-icml-2025-adwra8faao",
+      "score": 4.0,
+      "evidence_en": "uses 3D Gaussian splatting for geometric priors in multi-view compression",
+      "evidence_cn": "使用3D高斯泼溅为多视图压缩提供几何先验",
+      "canonical_evidence": "使用3D高斯泼溅为多视图压缩提供几何先验",
+      "tldr_en": "Proposes 3D-LMVIC, which leverages 3D Gaussian splatting to derive geometric priors for accurate disparity estimation in multi-view image compression, improving efficiency. The 3DGS geometric modeling may transfer to scene representation tasks.",
+      "tldr_cn": "现有基于学习的多视图图像压缩方法难以处理大基线系统中的复杂视差。本文提出3D-LMVIC框架，利用3D高斯泼溅提取几何先验，实现准确的视差估计，并结合深度图压缩和视图排序策略，提升了压缩效率。这项工作展示了3DGS在几何建模方面的潜力，虽然主要面向压缩，其方法可能迁移到场景表示任务中。",
+      "title_zh": "3D-LMVIC：基于3D高斯几何先验的学习式多视图图像压缩",
+      "motivation_cn": "现有方法依赖2D投影相似性预测视差，在广基线系统中精度不足。",
+      "method_cn": "提出3D-LMVIC，利用3D高斯泼溅提取几何先验进行视差估计，并引入深度图压缩和多视图排序消除冗余。",
+      "result_cn": "压缩框架提升了多视图图像压缩的率和质量，证明了3DGS几何先验的有效性。",
+      "conclusion_cn": "3DGS可作为有效的几何先验来源，改进多视图压缩，其思路可推广至场景表示领域。",
+      "matched_requirement_id": "req-1",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation"
+    },
+    {
+      "paper_id": "openreview-icml-2025-imp2vzs4f8",
+      "score": 4.0,
+      "evidence_en": "novel view synthesis from single-exposure LDR images, relevant to scene representation in SLAM",
+      "evidence_cn": "从单曝光LDR图像进行新视角合成，与SLAM中的场景表示相关",
+      "canonical_evidence": "从单曝光LDR图像进行新视角合成，与SLAM中的场景表示相关",
+      "tldr_en": "First to tackle high dynamic range novel view synthesis from single-exposure LDR images, proposing Mono-HDR-3D with dedicated modules, which advances NVS and could benefit view synthesis in SLAM systems.",
+      "tldr_cn": "首次研究单曝光LDR图像下的高动态范围新视角合成（HDR-NVS）问题，提出Mono-HDR-3D方法，包含亮度补偿和高动态重建模块。该方法有效解决了多曝光HDR-NVS的运动伪影和采集成本问题，在合成质量上达到领先水平。作为新视角合成的分支，其技术可为基于3D高斯或NeRF的SLAM系统提供更鲁棒的渲染能力。",
+      "title_zh": "基于单曝光的高动态范围新视角合成",
+      "motivation_cn": "多曝光HDR-NVS存在运动伪影和高采集成本，而单曝光LDR图像无法同时捕捉亮部和暗部。",
+      "method_cn": "提出Mono-HDR-3D，包含亮度补偿模块和高动态重建模块，仅用单曝光LDR图像训练。",
+      "result_cn": "在HDR-NVS基准上取得最优结果，消除了运动伪影并降低了采集要求。",
+      "conclusion_cn": "简化了HDR场景重建流程，对实时SLAM中的高质量渲染有启示意义。",
+      "matched_requirement_id": "req-1",
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Using 3D Gaussian splatting for novel view synthesis and scene representation"
+    }
+  ],
+  "llm_ranked_at": "2026-05-29T08:15:51.949277+00:00",
+  "display_min_score": 4.0,
+  "pruned_at": "2026-05-29T08:15:51.989755+00:00"
+}
