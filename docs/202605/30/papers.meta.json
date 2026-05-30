@@ -1,0 +1,39 @@
+{
+  "label": "2026-05-30",
+  "date": "2026-05-30",
+  "generated_at": "2026-05-30T21:06:25",
+  "count": 2,
+  "papers": [
+    {
+      "paper_id": "202605/30/2605.24304v1-artsplat-feed-forward-articulated-3d-gaussian-splatting-from-sparse-multi-state-uncalibrated-views",
+      "section": "deep",
+      "title_en": "ArtSplat: Feed-Forward Articulated 3D Gaussian Splatting from Sparse Multi-State Uncalibrated Views",
+      "authors": "Inseo Lee, Yoonji Kim, Eugene Sohn, Jiwoong Lee, Jungmin You, Joonseok Lee, Jin-Hwa Kim",
+      "date": "2026-05-23",
+      "pdf": "https://arxiv.org/pdf/2605.24304v1",
+      "score": "9.0",
+      "evidence": "使用3D高斯泼溅进行关节物体重建与渲染",
+      "tldr": "从稀疏多视图图像重建铰接物体是病态问题，现有方法依赖密集视图或强先验且需逐物体优化。ArtSplat作为首个前馈式铰接3D高斯泼溅框架，引入逐像素关节图和跨状态注意力，从多状态稀疏视图单次前向传递中同时重建几何与关节参数。在68个单/多关节物体上，速度超基线400倍且性能相当，首次实现快速前馈铰接重建。",
+      "tags": "query:gs-slam",
+      "abstract_en": "Articulated object reconstruction from sparse-view images is an ill-posed problem that requires simultaneous inference of geometry and underlying articulation structure. Existing methods for articulated object reconstruction based on NeRF and 3D Gaussian Splatting (3DGS) typically rely on dense views or strong priors (e.g., depth maps, joint types, predefined number of joints) and require costly per-object optimization. In this paper, we propose ArtSplat, the first feed-forward framework for articulated 3D Gaussian Splatting. It reconstructs both geometry and joint parameters from sparse multi-view images across multiple articulation states in a single forward pass. To address the challenges of single-pass articulated reconstruction, we introduce a per-pixel joint map representation that enables the integration of joint parameter estimation into the feed-forward pipeline. We further propose a Cross-State Attention (CSA) mechanism with state tokens, which effectively captures discrete motion across input states. Experiments on 68 articulated objects from PartNet-Mobility, including both single- and multi-joint configurations, demonstrate that ArtSplat achieves competitive performance in both geometry and joint estimation, while being over 400 times faster than baselines.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202605/30/2605.30060v1-towards-consistent-video-geometry-estimation",
+      "section": "quick",
+      "title_en": "Towards Consistent Video Geometry Estimation",
+      "authors": "Zhu Yu, Jingnan Gao, Runmin Zhang, Lingteng Qiu, Zhengyi Zhao, Rui Peng, Yichao Yan, Kejie Qiu, Siyu Zhu, Si-Yuan Cao, Hui-Liang Shen",
+      "date": "2026-05-28",
+      "pdf": "https://arxiv.org/pdf/2605.30060v1",
+      "score": "6.0",
+      "evidence": "前馈视频深度估计模型适用于内窥镜序列",
+      "tldr": "面对从视频序列中恢复稠密且时序一致的几何信息的挑战，ViGeo提出一种前馈基础模型，通过动态分块注意力机制统一支持流式、全序列和长视频推理。模型补充了基于补全的数据精炼框架，利用视频/多视图上下文提升监督质量。该方法在通用视频上取得优异深度估计性能，有望迁移至内窥镜场景以解决深度估计难题。",
+      "tags": "query:endo-dgs",
+      "abstract_en": "This work presents ViGeo, a feed-forward foundation model for recovering spatially dense and temporally consistent geometry from video sequences. Built upon a plain transformer architecture without task-specific architectural modifications, ViGeo supports streaming, full-sequence, and long-video inference within a unified model. The key design is dynamic chunking attention, which exposes the model to both bidirectional and causal temporal contexts during training and allows it to adapt its attention pattern at test time without retraining. To improve supervision quality, we further introduce a completion-based data refinement framework. This framework trains a video depth completion teacher that conditions on sparse and noisy annotations and exploits video/multi-view context to produce dense, temporally coherent, and geometrically reliable training targets. Beyond depth and point maps, ViGeo also predicts surface normals within the same framework. Trained solely on public datasets, ViGeo achieves state-of-the-art performance across online, offline, and long-video depth estimation, surface normal estimation, and video point map estimation.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

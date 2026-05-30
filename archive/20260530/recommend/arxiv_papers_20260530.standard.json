@@ -1,0 +1,108 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-05-30T20:59:41.429694+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 1,
+    "deep_cap": 7,
+    "deep_selected": 1,
+    "quick_candidates": 1,
+    "quick_skim_target": 12,
+    "quick_selected": 1
+  },
+  "deep_dive": [
+    {
+      "id": "2605.24304v1",
+      "source": "arxiv",
+      "title": "ArtSplat: Feed-Forward Articulated 3D Gaussian Splatting from Sparse Multi-State Uncalibrated Views",
+      "abstract": "Articulated object reconstruction from sparse-view images is an ill-posed problem that requires simultaneous inference of geometry and underlying articulation structure. Existing methods for articulated object reconstruction based on NeRF and 3D Gaussian Splatting (3DGS) typically rely on dense views or strong priors (e.g., depth maps, joint types, predefined number of joints) and require costly per-object optimization. In this paper, we propose ArtSplat, the first feed-forward framework for articulated 3D Gaussian Splatting. It reconstructs both geometry and joint parameters from sparse multi-view images across multiple articulation states in a single forward pass. To address the challenges of single-pass articulated reconstruction, we introduce a per-pixel joint map representation that enables the integration of joint parameter estimation into the feed-forward pipeline. We further propose a Cross-State Attention (CSA) mechanism with state tokens, which effectively captures discrete motion across input states. Experiments on 68 articulated objects from PartNet-Mobility, including both single- and multi-joint configurations, demonstrate that ArtSplat achieves competitive performance in both geometry and joint estimation, while being over 400 times faster than baselines.",
+      "authors": [
+        "Inseo Lee",
+        "Yoonji Kim",
+        "Eugene Sohn",
+        "Jiwoong Lee",
+        "Jungmin You",
+        "Joonseok Lee",
+        "Jin-Hwa Kim"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-05-23T00:31:47+00:00",
+      "link": "https://arxiv.org/pdf/2605.24304v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "uses 3D Gaussian Splatting for articulated object reconstruction and rendering",
+      "llm_evidence_cn": "使用3D高斯泼溅进行关节物体重建与渲染",
+      "llm_evidence": "使用3D高斯泼溅进行关节物体重建与渲染",
+      "canonical_evidence": "使用3D高斯泼溅进行关节物体重建与渲染",
+      "llm_tldr_en": "ArtSplat is the first feed-forward framework for articulated 3D Gaussian Splatting, reconstructing geometry and joint parameters from sparse multi-view images in a single forward pass.",
+      "llm_tldr_cn": "针对从稀疏多视角图像重建关节物体的病态问题，提出首个前馈式的关节3D高斯泼溅框架ArtSplat。该框架无需逐物体优化，在单次前向传播中同时推理几何与关节参数。实验验证了其在多个关节状态下的有效重建，为关节物体建模提供了高效方案。",
+      "llm_tldr": "针对从稀疏多视角图像重建关节物体的病态问题，提出首个前馈式的关节3D高斯泼溅框架ArtSplat。该框架无需逐物体优化，在单次前向传播中同时推理几何与关节参数。实验验证了其在多个关节状态下的有效重建，为关节物体建模提供了高效方案。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2605.30060v1",
+      "source": "arxiv",
+      "title": "Towards Consistent Video Geometry Estimation",
+      "abstract": "This work presents ViGeo, a feed-forward foundation model for recovering spatially dense and temporally consistent geometry from video sequences. Built upon a plain transformer architecture without task-specific architectural modifications, ViGeo supports streaming, full-sequence, and long-video inference within a unified model. The key design is dynamic chunking attention, which exposes the model to both bidirectional and causal temporal contexts during training and allows it to adapt its attention pattern at test time without retraining. To improve supervision quality, we further introduce a completion-based data refinement framework. This framework trains a video depth completion teacher that conditions on sparse and noisy annotations and exploits video/multi-view context to produce dense, temporally coherent, and geometrically reliable training targets. Beyond depth and point maps, ViGeo also predicts surface normals within the same framework. Trained solely on public datasets, ViGeo achieves state-of-the-art performance across online, offline, and long-video depth estimation, surface normal estimation, and video point map estimation.",
+      "authors": [
+        "Zhu Yu",
+        "Jingnan Gao",
+        "Runmin Zhang",
+        "Lingteng Qiu",
+        "Zhengyi Zhao",
+        "Rui Peng",
+        "Yichao Yan",
+        "Kejie Qiu",
+        "Siyu Zhu",
+        "Si-Yuan Cao",
+        "Hui-Liang Shen"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-05-28T15:11:17+00:00",
+      "link": "https://arxiv.org/pdf/2605.30060v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "feed-forward video depth estimation model applicable to endoscopic sequences",
+      "llm_evidence_cn": "前馈视频深度估计模型适用于内窥镜序列",
+      "llm_evidence": "前馈视频深度估计模型适用于内窥镜序列",
+      "canonical_evidence": "前馈视频深度估计模型适用于内窥镜序列",
+      "llm_tldr_en": "ViGeo is a foundation model for dense and temporally consistent depth estimation from video. Its general-purpose architecture could be fine-tuned for endoscopic depth estimation, bridging the gap for surgical vision.",
+      "llm_tldr_cn": "面对从视频序列中恢复稠密且时序一致的几何信息的挑战，ViGeo提出一种前馈基础模型，通过动态分块注意力机制统一支持流式、全序列和长视频推理。模型补充了基于补全的数据精炼框架，利用视频/多视图上下文提升监督质量。该方法在通用视频上取得优异深度估计性能，有望迁移至内窥镜场景以解决深度估计难题。",
+      "llm_tldr": "面对从视频序列中恢复稠密且时序一致的几何信息的挑战，ViGeo提出一种前馈基础模型，通过动态分块注意力机制统一支持流式、全序列和长视频推理。模型补充了基于补全的数据精炼框架，利用视频/多视图上下文提升监督质量。该方法在通用视频上取得优异深度估计性能，有望迁移至内窥镜场景以解决深度估计难题。",
+      "llm_tags": [
+        "query:endo-dgs"
+      ],
+      "matched_query_tag": "query:endo-dgs",
+      "matched_query_text": "depth estimation for endoscopic scenes",
+      "matched_requirement_id": "req-12",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
