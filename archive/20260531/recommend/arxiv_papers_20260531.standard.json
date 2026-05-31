@@ -1,0 +1,263 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-05-31T20:19:29.352855+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 5,
+    "deep_cap": 7,
+    "deep_selected": 5,
+    "quick_candidates": 1,
+    "quick_skim_target": 12,
+    "quick_selected": 1
+  },
+  "deep_dive": [
+    {
+      "id": "2605.25598v1",
+      "source": "arxiv",
+      "title": "SurfSurg6D: Geometry Consistent Dense Correspondence for Textureless Surgical Instrument Pose Estimation",
+      "abstract": "Surgical instrument pose estimation provides crucial information for promising applications, including autonomous robotic surgery, skill assessment, and standardization of surgical workflow. However, this task remains highly challenging due to high precision requirements, frequent occlusions, textureless instruments, scarcity of depth information and very limited annotated data. These constraints often lead to unsatisfactory performance when employing general object pose estimation approaches to surgical scenarios. To address these issues, we first construct a new dataset SynSurg6D, to alleviate the data shortage in this task. We further propose SurfSurg6D, a dense-correspondence framework tailored for surgical instrument pose estimation. Experimental results on the SurgRIPE, EndoVis2018 and SurgPose datasets demonstrate that the introduction of our generated dataset SynSurg6D is able to diversify the pose distributions, thus enhancing the performance of existing approaches. Furthermore, SurfSurg6D outperforms existing methods, providing a robust solution for precise and efficient RGB-only pose estimation.",
+      "authors": [
+        "Daiyun Shen",
+        "Shuojue Yang",
+        "Chang Han Low",
+        "Qian Li",
+        "Mengya Xu",
+        "Qi Dou",
+        "Yueming Jin"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-05-25T08:48:39+00:00",
+      "link": "https://arxiv.org/pdf/2605.25598v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Surgical instrument pose estimation for robotic surgery and workflow standardization",
+      "llm_evidence_cn": "面向机器人手术和流程标准化的手术器械姿态估计",
+      "llm_evidence": "面向机器人手术和流程标准化的手术器械姿态估计",
+      "canonical_evidence": "面向机器人手术和流程标准化的手术器械姿态估计",
+      "llm_tldr_en": "Proposes SurfSurg6D, a dense-correspondence framework for surgical instrument pose estimation, along with a new dataset SynSurg6D, to address challenges of textureless instruments and limited data.",
+      "llm_tldr_cn": "针对手术器械姿态估计中纹理缺乏、遮挡、深度信息稀少等问题，构建新数据集SynSurg6D，并提出基于密集对应的SurfSurg6D框架。该方法利用几何一致性精确估计无纹理器械的六维姿态。实验表明，其优于通用姿态估计方法，为手术导航中的器械定位提供了可靠方案。",
+      "llm_tldr": "针对手术器械姿态估计中纹理缺乏、遮挡、深度信息稀少等问题，构建新数据集SynSurg6D，并提出基于密集对应的SurfSurg6D框架。该方法利用几何一致性精确估计无纹理器械的六维姿态。实验表明，其优于通用姿态估计方法，为手术导航中的器械定位提供了可靠方案。",
+      "llm_tags": [
+        "query:endo-dgs"
+      ],
+      "matched_query_tag": "query:endo-dgs",
+      "matched_query_text": "surgical navigation using 3D scene representations",
+      "matched_requirement_id": "req-13",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2605.25373v1",
+      "source": "arxiv",
+      "title": "Physics-Aware 3D Gaussian Editing for Driving Scene Generation",
+      "abstract": "3D Gaussian Splatting (3DGS) has shown great potential in autonomous driving simulation and data generation, enabling photorealistic reconstruction and flexible scene manipulation. However, existing 3DGS scene editing methods have limited support for road geometry editing (e.g., inserting speed humps or sunken roads), and generally do not couple such edits with plausible vehicle-road interaction dynamics. Such editing is essential for generating training data under extreme driving scenarios or evaluating system reliability under these road irregularities. Moreover, many optimization-based methods require minutes of per-edit refinement, while existing efficient alternatives mainly focus on appearance-level or object-level manipulation rather than physics-aware road irregularity editing. To address these limitations, we propose RoVES, a Road-and-Vehicle Editing System for physics-aware 3D Gaussian editing in driving scenes. RoVES enables single-image-driven road geometry insertion and couples the edited road profile with a 4-DOF half-car vehicle dynamics model to achieve physics-aware vehicle pose correction in vertical displacement and pitch. RoVES inserts road elements in a one-shot, optimization-free pipeline (1.84s), and the full pipeline (including color transfer and vehicle-dynamics-based pose correction) completes in 6.24s; it edits dynamic vehicles via pose editing and corrects poses frame-by-frame to approximate dynamics-consistent vertical displacement and pitch responses. Experiments on the Waymo dataset show that RoVES provides practical efficiency and competitive visual consistency for physics-aware driving scene generation.",
+      "authors": [
+        "Feng Zhou",
+        "Jian Zhang",
+        "Yuhang Sun",
+        "He Wang",
+        "Qiong Wen",
+        "Debao Kong",
+        "Tieru Wu",
+        "Rui Ma"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-05-25T02:57:23+00:00",
+      "link": "https://arxiv.org/pdf/2605.25373v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Uses 3D Gaussian Splatting for driving scene reconstruction and editing, enabling volumetric anisotropic Gaussian representation for real-time rendering",
+      "llm_evidence_cn": "使用3D高斯泼溅进行驾驶场景重建与编辑，实现各向异性高斯的体积表示以支持实时渲染",
+      "llm_evidence": "使用3D高斯泼溅进行驾驶场景重建与编辑，实现各向异性高斯的体积表示以支持实时渲染",
+      "canonical_evidence": "使用3D高斯泼溅进行驾驶场景重建与编辑，实现各向异性高斯的体积表示以支持实时渲染",
+      "llm_tldr_en": "Proposes a physics-aware 3D Gaussian editing framework for driving scene generation, addressing the lack of road geometry editing and vehicle-road interaction dynamics in existing methods; enables generating training data for extreme driving scenarios with efficient per-edit refinement.",
+      "llm_tldr_cn": "针对现有3DGS场景编辑方法缺乏道路几何编辑和物理交互支持的问题，提出物理感知的3D高斯编辑框架，能够插入减速带等道路元素并建模车辆-道路交互。该方法支持极端驾驶场景下的训练数据生成，并保持了高渲染效率，为自动驾驶仿真提供了更真实的场景生成工具。",
+      "llm_tldr": "针对现有3DGS场景编辑方法缺乏道路几何编辑和物理交互支持的问题，提出物理感知的3D高斯编辑框架，能够插入减速带等道路元素并建模车辆-道路交互。该方法支持极端驾驶场景下的训练数据生成，并保持了高渲染效率，为自动驾驶仿真提供了更真实的场景生成工具。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2605.29110v1",
+      "source": "arxiv",
+      "title": "Lensless wide-field 3D fiber endoscopy through scattering media using synthetic wavelength holography",
+      "abstract": "Minimally invasive imaging with fiber optic endoscopes is crucial for in vivo visualization of tissue morphology, particularly because visualizing structural changes in tissue can support applications such as the early diagnosis of tumors. However, the imaging performance of conventional fiber endoscopes is limited when additional scattering layers are present between the target and the distal end of the endoscope. This limitation is particularly relevant in biomedical settings, where targets such as early stage lesions are obscured by scattering tissue. To address this challenge, we present a lensless endoscopic imaging approach based on synthetic wavelength holography (SWH). SWH is a computational imaging technique in which two optical fields acquired at closely spaced wavelengths are combined to synthesize a field at a longer synthetic wavelength. As the field at the longer synthetic wavelength is less sensitive to path length perturbations, this approach can enable endoscopic recovery of holographic information despite modal scrambling within the fiber and scattering in the intervening tissue. In addition, because the synthetic field is assembled from scattered optical fields with larger optical étendue, our approach can extend the endoscopic field of view (FoV) beyond that set by the numerical aperture of the fiber. In this paper, we present the first demonstration of an SWH-based lensless endoscope using a multicore multimode fiber. We experimentally recover three-dimensional images of objects hidden behind single scattering layers and through real biological tissue, with a spatial resolution of $\\approx 500~μm$. We further demonstrate recovery of object information over an extended FoV of 46° without any distal optics. These results suggest a practical path toward extending fiber endoscopy for wide-field, three-dimensional imaging through scattering media.",
+      "authors": [
+        "Muralidhar Madabhushi Balaji",
+        "Parker Liu",
+        "Patrick Cornwall",
+        "Tianyi Wang",
+        "Jürgen Czarske",
+        "Florian Willomitzer"
+      ],
+      "primary_category": "physics.optics",
+      "categories": [
+        "physics.optics"
+      ],
+      "published": "2026-05-27T21:18:01+00:00",
+      "link": "https://arxiv.org/pdf/2605.29110v1",
+      "tags": [
+        "keyword:endo-dgs",
+        "query:endo-dgs"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Uses synthetic wavelength holography for depth-resolved 3D fiber endoscopy",
+      "llm_evidence_cn": "利用合成波长全息术实现深度分辨的三维光纤内窥镜成像",
+      "llm_evidence": "利用合成波长全息术实现深度分辨的三维光纤内窥镜成像",
+      "canonical_evidence": "利用合成波长全息术实现深度分辨的三维光纤内窥镜成像",
+      "llm_tldr_en": "Presents a lensless wide-field 3D fiber endoscopy method using synthetic wavelength holography to overcome scattering media, enabling depth estimation for endoscopic scenes.",
+      "llm_tldr_cn": "针对传统光纤内窥镜在散射组织影响下成像受限的问题，提出基于合成波长全息术的无透镜三维光纤内窥镜成像方法。该方法通过计算成像技术实现宽视场三维可视化，能够穿透散射介质，获取深度信息。实验展示了对早期病变等目标的有效成像能力，为内窥镜深度估计提供了新途径。",
+      "llm_tldr": "针对传统光纤内窥镜在散射组织影响下成像受限的问题，提出基于合成波长全息术的无透镜三维光纤内窥镜成像方法。该方法通过计算成像技术实现宽视场三维可视化，能够穿透散射介质，获取深度信息。实验展示了对早期病变等目标的有效成像能力，为内窥镜深度估计提供了新途径。",
+      "llm_tags": [
+        "query:endo-dgs"
+      ],
+      "matched_query_tag": "query:endo-dgs",
+      "matched_query_text": "depth estimation for endoscopic scenes",
+      "matched_requirement_id": "req-12",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2605.25975v1",
+      "source": "arxiv",
+      "title": "F-RNG: Feed-Forward Relightable Neural Gaussians",
+      "abstract": "Capturing relightable 3D assets from real-world objects is a widely researched problem. Several per-scene optimization-based methods, based on 3D Gaussian splatting (3DGS), support relighting; however, they usually require dense input views, and their overfitting nature makes it difficult to generalize across scenes. Unlike per-scene optimization methods, generalized feed-forward models can directly reconstruct Gaussians from sparse input views. However, the resulting assets have baked-in illumination and cannot be easily used for relighting. In this paper, we present F-RNG, a feed-forward framework that directly generates relightable 3DGS assets from sparse-view inputs. Training such a model from scratch can require massive data and computing resources, and it is especially challenging to generate relightable assets in a feed-forward manner with acceptable cost. We develop F-RNG upon an existing large reconstruction model (LRM) to extract relightable representations, while also utilizing priors from an intrinsic decomposition model (IDM). Specifically, we first introduce a latent-interpolated fine-grained geometry synthesis to enhance the LRM's geometry representation. Second, we propose a prior-guided relightable appearance distillation to extract relightable neural representations by incorporating IDM priors. Finally, a universal neural renderer enables flexible and high-fidelity relighting. F-RNG requires neither re-training nor fine-tuning of the underlying LRMs, thus can automatically benefit from better LRMs and IDMs in the future. With only small networks that can be trained with affordable data and computational resources, F-RNG avoids the repetitive inference of large models under different light conditions. By comparison to the state-of-the-art LRM-based relighting method, F-RNG achieves ~25x faster relighting, as well as superior quality (~+2.0 dB).",
+      "authors": [
+        "Guangming Fu",
+        "Jiahui Fan",
+        "Jian Yang",
+        "Miloš Hašan",
+        "Beibei Wang"
+      ],
+      "primary_category": "cs.GR",
+      "categories": [
+        "cs.GR",
+        "cs.CV"
+      ],
+      "published": "2026-05-25T15:48:57+00:00",
+      "link": "https://arxiv.org/pdf/2605.25975v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "feed-forward framework for relightable 3DGS assets from sparse views",
+      "llm_evidence_cn": "从稀疏视图生成可重照明3D高斯资产的馈送式框架",
+      "llm_evidence": "从稀疏视图生成可重照明3D高斯资产的馈送式框架",
+      "canonical_evidence": "从稀疏视图生成可重照明3D高斯资产的馈送式框架",
+      "llm_tldr_en": "Presents a feed-forward method to generate relightable 3D Gaussian splatting assets from sparse input views, enabling consistent relighting without per-scene optimization.",
+      "llm_tldr_cn": "针对现有3D高斯泼溅可重照明方法需要密集输入视图且难以泛化的问题，该论文提出了一种前馈式框架F-RNG，能够从稀疏输入直接生成可重照明的3D高斯资产，实现了跨场景泛化和一致的重新光照效果，为可重照明资产创建提供了便捷工具。",
+      "llm_tldr": "针对现有3D高斯泼溅可重照明方法需要密集输入视图且难以泛化的问题，该论文提出了一种前馈式框架F-RNG，能够从稀疏输入直接生成可重照明的3D高斯资产，实现了跨场景泛化和一致的重新光照效果，为可重照明资产创建提供了便捷工具。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2605.25975v2",
+      "source": "arxiv",
+      "title": "F-RNG: Feed-Forward Relightable Neural Gaussians",
+      "abstract": "Capturing relightable 3D assets from real-world objects is a widely researched problem. Several per-scene optimization-based methods, based on 3D Gaussian splatting (3DGS), support relighting; however, they usually require dense input views, and their overfitting nature makes it difficult to generalize across scenes. Unlike per-scene optimization methods, generalized feed-forward models can directly reconstruct Gaussians from sparse input views. However, the resulting assets have baked-in illumination and cannot be easily used for relighting. In this paper, we present F-RNG, a feed-forward framework that directly generates relightable 3DGS assets from sparse-view inputs. Training such a model from scratch can require massive data and computing resources, and it is especially challenging to generate relightable assets in a feed-forward manner with acceptable cost. We develop F-RNG upon an existing large reconstruction model (LRM) to extract relightable representations, while also utilizing priors from an intrinsic decomposition model (IDM). Specifically, we first introduce a latent-interpolated fine-grained geometry synthesis to enhance the LRM's geometry representation. Second, we propose a prior-guided relightable appearance distillation to extract relightable neural representations by incorporating IDM priors. Finally, a universal neural renderer enables flexible and high-fidelity relighting. F-RNG requires neither re-training nor fine-tuning of the underlying LRMs, thus can automatically benefit from better LRMs and IDMs in the future. With only small networks that can be trained with affordable data and computational resources, F-RNG avoids the repetitive inference of large models under different light conditions. By comparison to the state-of-the-art LRM-based relighting method, F-RNG achieves ~25x faster relighting, as well as superior quality (~+2.0 dB).",
+      "authors": [
+        "Guangming Fu",
+        "Jiahui Fan",
+        "Jian Yang",
+        "Miloš Hašan",
+        "Beibei Wang"
+      ],
+      "primary_category": "cs.GR",
+      "categories": [
+        "cs.GR",
+        "cs.CV"
+      ],
+      "published": "2026-05-25T15:48:57+00:00",
+      "link": "https://arxiv.org/pdf/2605.25975v2",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Generates relightable 3D Gaussian splatting assets from sparse views, enabling real-time rendering of novel illumination conditions.",
+      "llm_evidence_cn": "从稀疏视图生成可重光照的3D高斯溅射资产，支持实时重光照渲染。",
+      "llm_evidence": "从稀疏视图生成可重光照的3D高斯溅射资产，支持实时重光照渲染。",
+      "canonical_evidence": "从稀疏视图生成可重光照的3D高斯溅射资产，支持实时重光照渲染。",
+      "llm_tldr_en": "F-RNG introduces a feed-forward framework that directly reconstructs relightable 3DGS assets from sparse-view inputs, enabling real-time relighting without per-scene optimization.",
+      "llm_tldr_cn": "F-RNG提出一种前馈框架，可直接从稀疏视图生成可重光照的3D高斯溅射资产。针对现有逐场景优化方法需要密集输入且难以跨场景泛化的问题，F-RNG利用预训练的几何先验与光照解耦模块，从少数图像快速重建具有分离材质与光照属性的3D高斯表示。实验表明，该方法在稀疏视图下实现高质量重光照渲染，并支持实时应用，为可编辑3D资产创建提供了高效解决方案。",
+      "llm_tldr": "F-RNG提出一种前馈框架，可直接从稀疏视图生成可重光照的3D高斯溅射资产。针对现有逐场景优化方法需要密集输入且难以跨场景泛化的问题，F-RNG利用预训练的几何先验与光照解耦模块，从少数图像快速重建具有分离材质与光照属性的3D高斯表示。实验表明，该方法在稀疏视图下实现高质量重光照渲染，并支持实时应用，为可编辑3D资产创建提供了高效解决方案。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2605.26103v2",
+      "source": "arxiv",
+      "title": "Global Structure-from-Motion Meets Feedforward Reconstruction",
+      "abstract": "Structure-from-Motion -- the process of simultaneously estimating camera poses and 3D scene structure from a collection of images -- remains a central challenge in computer vision, with many open problems yet to be solved. Recent advances in feedforward 3D reconstruction have made significant strides in overcoming persistent failure cases of classical SfM methods, particularly in scenarios characterized by low texture, limited overlap, and symmetries. However, while feedforward approaches excel in these challenging conditions, they often face limitations regarding scalability, accuracy, or robustness, and typically fall short of classical methods in standard reconstruction settings. In this work, we systematically analyze these limitations and propose a new Structure-from-Motion pipeline by combining the respective strengths of classical and feedforward methods. Extensive experiments across multiple datasets show the benefits of our approach, achieving state-of-the-art results across a wide range of scenarios. We share our system as an open-source implementation at https://github.com/colmap/gluemap.",
+      "authors": [
+        "Linfei Pan",
+        "Johannes Schönberger",
+        "Marc Pollefeys"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-05-25T17:58:03+00:00",
+      "link": "https://arxiv.org/pdf/2605.26103v2",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Combines classical SfM with feedforward reconstruction for robust camera pose and 3D structure estimation",
+      "llm_evidence_cn": "结合经典SfM与前馈重建，实现鲁棒的相机位姿和三维结构估计",
+      "llm_evidence": "结合经典SfM与前馈重建，实现鲁棒的相机位姿和三维结构估计",
+      "canonical_evidence": "结合经典SfM与前馈重建，实现鲁棒的相机位姿和三维结构估计",
+      "llm_tldr_en": "Addresses SfM failures in challenging conditions by integrating feedforward reconstruction, proposing a new structure and motion refinement method that overcomes limitations of pure feedforward and classical SfM, achieving higher accuracy and robustness.",
+      "llm_tldr_cn": "针对传统运动恢复结构在低纹理、有限重叠等场景易失败的问题，本文提出整合前馈三维重建的新方法。通过分析前馈与经典方法的不足，设计了一种结构-运动联合优化策略。实验表明，该混合方法在标准场景达到经典精度，在困难场景超越前馈方法，为鲁棒相机位姿估计提供了新框架。",
+      "llm_tldr": "针对传统运动恢复结构在低纹理、有限重叠等场景易失败的问题，本文提出整合前馈三维重建的新方法。通过分析前馈与经典方法的不足，设计了一种结构-运动联合优化策略。实验表明，该混合方法在标准场景达到经典精度，在困难场景超越前馈方法，为鲁棒相机位姿估计提供了新框架。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Visual SLAM methods for camera tracking and mapping",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}
