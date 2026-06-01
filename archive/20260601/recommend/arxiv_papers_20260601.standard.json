@@ -1,0 +1,345 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-01T23:03:43.167858+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 3,
+    "deep_cap": 7,
+    "deep_selected": 3,
+    "quick_candidates": 5,
+    "quick_skim_target": 12,
+    "quick_selected": 5
+  },
+  "deep_dive": [
+    {
+      "id": "2605.30396v1",
+      "source": "arxiv",
+      "title": "Smaller and Faster 3DGS via Post-Training Dictionary Learning",
+      "abstract": "3D Gaussian Splatting (3DGS) is a promising neural scene representation for real-time rendering, but trained models often suffer from large memory footprints, limiting deployment on less powerful devices. Existing compression techniques often lead to architectures with several additional trainable parameters. While achieving outstanding compression ratios, they introduce noticeable drops in image quality. In this work, we introduce the first dictionary-learning-based compression framework for 3DGS. The proposed post-training compression pipeline can be deployed in virtually any 3DGS model without the need for re-training or modifications to existing 3DGS models. Our compression framework is straightforward to implement, yet provides significant compression capabilities, preserves image quality, and improves real-time rendering performance. Across 13 benchmark scenes, our approach achieves an average compression ratio of 3.95x, 3.10x, and 4.55x when applied to 3DGS, 3DGS-MCMC, and PixelGS, respectively. This yields consistent rendering speedups of 23.3%, 24.3%, and 25.3%, while maintaining image quality.",
+      "authors": [
+        "Jiarong Gong",
+        "Jonas Unger",
+        "Ehsan Miandji"
+      ],
+      "primary_category": "cs.GR",
+      "categories": [
+        "cs.GR",
+        "cs.LG"
+      ],
+      "published": "2026-05-28T14:14:40+00:00",
+      "link": "https://arxiv.org/pdf/2605.30396v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "post-training dictionary learning for compressing 3D Gaussian Splatting for real-time rendering",
+      "llm_evidence_cn": "通过字典学习后训练压缩3D高斯泼溅以实现实时渲染",
+      "llm_evidence": "通过字典学习后训练压缩3D高斯泼溅以实现实时渲染",
+      "canonical_evidence": "通过字典学习后训练压缩3D高斯泼溅以实现实时渲染",
+      "llm_tldr_en": "Introduces the first dictionary-learning-based compression framework for 3DGS to reduce memory footprint and accelerate rendering without retraining, offering significant compression with minimal quality loss.",
+      "llm_tldr_cn": "针对3D高斯泼溅模型占用内存过大、不利于实时部署的问题，提出首个基于字典学习的后训练压缩框架。该方法无需重新训练或修改模型，即插即用，在保证图像质量的同时大幅压缩模型尺寸并提升渲染速度，为3DGS在资源受限设备上的高效实时渲染铺平道路。",
+      "llm_tldr": "针对3D高斯泼溅模型占用内存过大、不利于实时部署的问题，提出首个基于字典学习的后训练压缩框架。该方法无需重新训练或修改模型，即插即用，在保证图像质量的同时大幅压缩模型尺寸并提升渲染速度，为3DGS在资源受限设备上的高效实时渲染铺平道路。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2605.30488v1",
+      "source": "arxiv",
+      "title": "CoMo3R-SLAM: Collaborative Monocular Dense SLAM with Learned 3D Reconstruction Priors for Outdoor Multi-Agent Systems",
+      "abstract": "Collaborative dense SLAM is essential for multi-robot teams to achieve scalable and consistent 3D perception across large-scale outdoor environments. Existing systems typically depend on depth sensors, incurring significant payload, power, and calibration costs. Monocular RGB cameras are a lightweight alternative, but collaborative monocular dense SLAM remains difficult due to scale ambiguity, unreliable inter-agent data association, especially in outdoor scenes where low overlap and repetitive structures make traditional feature matching unreliable, motivating robust geometric information. We propose CoMo3R-SLAM, the first collaborative monocular dense RGB SLAM system that leverages robust learned feed-forward 3D reconstruction priors for outdoor multi-agent mapping. Each agent runs a prior-guided front-end for real-time tracking and local dense fusion, while a coordinator performs dense pointmap matching for cross-agent verification, closed-form Sim(3) gauge synchronization, and GPU-accelerated global bundle adjustment with segment-level depth optimization. Requiring neither depth sensors nor parametric intrinsics, our system produces robust cross-agent constraints and globally consistent metric maps from monocular RGB alone. On Tanks and Temples and Waymo sequences, CoMo3R-SLAM achieves the best ATE on three of four Tanks and Temples scenes and competitive Waymo accuracy, matching or exceeding state-of-the-art RGB-D methods while running online at 8 FPS.",
+      "authors": [
+        "Zhihao Cao",
+        "Qi Shao",
+        "Shuhao Zhai",
+        "Feng Tian",
+        "Anh Nguyen",
+        "Hesheng Wang",
+        "Baoru Huang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-05-28T19:06:19+00:00",
+      "link": "https://arxiv.org/pdf/2605.30488v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Monocular dense SLAM with learned 3D reconstruction priors",
+      "llm_evidence_cn": "利用学习型三维重建先验的单目密集SLAM",
+      "llm_evidence": "利用学习型三维重建先验的单目密集SLAM",
+      "canonical_evidence": "利用学习型三维重建先验的单目密集SLAM",
+      "llm_tldr_en": "CoMo3R-SLAM is the first collaborative monocular dense RGB SLAM that uses learned feed-forward 3D reconstruction priors to achieve consistent multi-agent 3D perception outdoors, solving scale ambiguity and unreliable inter-agent association.",
+      "llm_tldr_cn": "CoMo3R-SLAM是首个协同式单目密集RGB SLAM系统，利用学习到的前馈三维重建先验，实现户外多智能体一致的三维感知，解决了尺度模糊和智能体间数据关联不可靠的问题。通过仅使用单目相机，降低了系统成本和重量。实验表明该系统在低重叠和重复纹理的户外环境中仍能稳定运行，为轻量级多机器人协同感知提供了新的技术路线。",
+      "llm_tldr": "CoMo3R-SLAM是首个协同式单目密集RGB SLAM系统，利用学习到的前馈三维重建先验，实现户外多智能体一致的三维感知，解决了尺度模糊和智能体间数据关联不可靠的问题。通过仅使用单目相机，降低了系统成本和重量。实验表明该系统在低重叠和重复纹理的户外环境中仍能稳定运行，为轻量级多机器人协同感知提供了新的技术路线。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "visual SLAM with learned representations",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2605.31419v1",
+      "source": "arxiv",
+      "title": "Triangle Splatting SLAM",
+      "abstract": "We present a dense RGB-D SLAM system using differentiable triangles as the 3D map representation. While 3D Gaussian Splatting has emerged as the leading method for novel-view synthesis, triangles remain the standard primitive for traditional rendering hardware, game engines, and downstream tasks requiring explicit geometry such as simulation, collision, and editing. Recent offline methods have demonstrated that an unstructured 'triangle soup' can be optimised into a photorealistic mesh via Delaunay triangulation across a set of posed images. Building upon this insight, we present the first dense SLAM system to employ Triangle Splatting to perform both tracking and mapping through online differentiable rendering of a triangle soup. The map can be converted into a connected mesh on-the-fly via restricted Delaunay triangulation, enabling new online capabilities such as mesh deformation and collision checking. On Replica and TUM-RGBD, our system outperforms baselines on 3D geometry, matches the camera-tracking accuracy, and enables online mesh-based scene editing.",
+      "authors": [
+        "Nicholas Fry",
+        "Eric Dexheimer",
+        "Kirill Mazur",
+        "Paul H. J. Kelly",
+        "Andrew J. Davison"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.RO"
+      ],
+      "published": "2026-05-29T15:20:38+00:00",
+      "link": "https://arxiv.org/pdf/2605.31419v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "dense RGB-D SLAM with differentiable triangle splatting for tracking and mapping",
+      "llm_evidence_cn": "使用可微分三角形泼溅的稠密RGB-D SLAM系统进行相机跟踪和建图",
+      "llm_evidence": "使用可微分三角形泼溅的稠密RGB-D SLAM系统进行相机跟踪和建图",
+      "canonical_evidence": "使用可微分三角形泼溅的稠密RGB-D SLAM系统进行相机跟踪和建图",
+      "llm_tldr_en": "Presents the first dense RGB-D SLAM system that uses differentiable triangle splatting as the 3D map representation, performing both tracking and mapping via online differentiable rendering, with on-the-fly mesh conversion.",
+      "llm_tldr_cn": "针对稠密RGB-D SLAM任务，提出使用可微分三角形泼溅作为三维地图表示，通过在线可微分渲染同时进行跟踪和建图，并支持实时网格转换。该系统是首个采用三角形泼溅的稠密SLAM系统，在保持传统渲染硬件兼容性的同时，实现了高效、可微的优化。",
+      "llm_tldr": "针对稠密RGB-D SLAM任务，提出使用可微分三角形泼溅作为三维地图表示，通过在线可微分渲染同时进行跟踪和建图，并支持实时网格转换。该系统是首个采用三角形泼溅的稠密SLAM系统，在保持传统渲染硬件兼容性的同时，实现了高效、可微的优化。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Visual SLAM methods for camera tracking and mapping",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2605.26500v1",
+      "source": "arxiv",
+      "title": "3D Gaussian Map with Open-Set Semantic Grouping for Vision-Language Navigation",
+      "abstract": "Vision-language navigation (VLN) requires an agent to traverse complex 3D environments based on natural language instructions, necessitating a thorough scene understanding. While existing works equip agents with various scene representations to enhance spatial awareness, they often neglect the complex 3D geometry and rich semantics in VLN scenarios, limiting the ability to generalize across diverse and unseen environments. To address these challenges, this work proposes a 3D Gaussian Map that represents the environment as a set of differentiable 3D Gaussians and accordingly develops a navigation strategy for VLN. Specifically, Egocentric Scene Map is constructed online by initializing 3D Gaussians from sparse pseudo-lidar point clouds, providing informative geometric priors for scene understanding. Each Gaussian primitive is further enriched through Open-Set Semantic Grouping operation, which groups 3D Gaussians based on their membership in object instances or stuff categories within the open world, resulting in a unified 3D Gaussian Map. Building on this map, Multi-Level Action Prediction strategy, which combines spatial-semantic cues at multiple granularities, is designed to assist agents in decision-making. Extensive experiments conducted on three public benchmarks (i.e., R2R, R4R, and REVERIE) validate the effectiveness of our method.",
+      "authors": [
+        "Jianzhe Gao",
+        "Rui Liu",
+        "Wenguan Wang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-05-26T03:25:49+00:00",
+      "link": "https://arxiv.org/pdf/2605.26500v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Constructs a 3D Gaussian Map for environment representation in vision-language navigation",
+      "llm_evidence_cn": "为视觉语言导航构建三维高斯地图作为环境表示",
+      "llm_evidence": "为视觉语言导航构建三维高斯地图作为环境表示",
+      "canonical_evidence": "为视觉语言导航构建三维高斯地图作为环境表示",
+      "llm_tldr_en": "Proposes a 3D Gaussian Map that online builds an egocentric scene representation from sparse pseudo-lidar for VLN, integrating open-set semantic grouping for better generalization.",
+      "llm_tldr_cn": "针对视觉语言导航忽略3D几何与语义的问题，本文从稀疏伪激光点云在线构建三维高斯自中心地图，并融入开放集语义分组，使导航智能体在未知环境中具备更强的空间理解和泛化能力，拓展了3DGS在具身导航中的应用。",
+      "llm_tldr": "针对视觉语言导航忽略3D几何与语义的问题，本文从稀疏伪激光点云在线构建三维高斯自中心地图，并融入开放集语义分组，使导航智能体在未知环境中具备更强的空间理解和泛化能力，拓展了3DGS在具身导航中的应用。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2605.31534v1",
+      "source": "arxiv",
+      "title": "Feature-Optimized Vision for Adaptive 3D Scene Reconstruction",
+      "abstract": "Three-dimensional scene reconstruction depends on local image evidence that is both visually discriminative and geometrically useful. Fixed feature thresholds and uniform feature budgets are easy to deploy, but they can waste computation on repeated texture, low-parallax regions, or unstable points. This paper proposes an adaptive feature-optimized vision front end for 3D reconstruction. The method scores candidate features by texture, repeatability, distinctiveness, expected triangulation angle, and spatial coverage, then allocates a per-view feature budget to maximize useful tracks under a fixed reconstruction pipeline. A small synthetic multi-view prototype evaluates four selection policies across corridor, facade, object-table, and cluttered scenes. Compared with random, texture-only, and uniform-grid baselines, the adaptive policy obtains the best quality-aware completeness and the lowest aggregate reconstruction RMSE while preserving broad image coverage. The result is not a replacement for modern learned matching or neural reconstruction systems; it is a modular front-end policy that can make classical and learned 3D pipelines more deliberate about which visual evidence they spend compute on.",
+      "authors": [
+        "Eric Liang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-05-29T16:49:27+00:00",
+      "link": "https://arxiv.org/pdf/2605.31534v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "adaptive feature selection for 3D reconstruction front-end improves camera tracking and mapping",
+      "llm_evidence_cn": "自适应特征选择用于三维重建前端，改善相机跟踪与建图",
+      "llm_evidence": "自适应特征选择用于三维重建前端，改善相机跟踪与建图",
+      "canonical_evidence": "自适应特征选择用于三维重建前端，改善相机跟踪与建图",
+      "llm_tldr_en": "Proposes an adaptive feature-optimized vision front-end that scores and selects features to maximize useful tracks for 3D reconstruction, benefiting camera tracking and mapping in visual SLAM.",
+      "llm_tldr_cn": "针对固定特征阈值和均匀特征预算在三维重建中效率低下的问题，提出一种自适应特征优化视觉前端，通过纹理、重复性、独特性、预期三角测量角度和空间覆盖度评分候选特征，并按视图动态分配特征预算以最大化有用轨迹。在走廊、立面等场景中的合成多视图实验表明，该方法能提升重建管线中的特征跟踪稳定性与效率，为视觉SLAM系统提供更鲁棒的相机跟踪与建图基础。",
+      "llm_tldr": "针对固定特征阈值和均匀特征预算在三维重建中效率低下的问题，提出一种自适应特征优化视觉前端，通过纹理、重复性、独特性、预期三角测量角度和空间覆盖度评分候选特征，并按视图动态分配特征预算以最大化有用轨迹。在走廊、立面等场景中的合成多视图实验表明，该方法能提升重建管线中的特征跟踪稳定性与效率，为视觉SLAM系统提供更鲁棒的相机跟踪与建图基础。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Visual SLAM methods for camera tracking and mapping",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2605.30863v1",
+      "source": "arxiv",
+      "title": "DSD-GS: Dynamic-Static Decomposition of Gaussian Splatting for Efficient and High-Fidelity Dynamic Scene Reconstruction",
+      "abstract": "Dynamic scene reconstruction and novel view synthesis are fundamental to next-generation visual intelligence applications such as virtual reality, robotics, and digital twins. However, high-fidelity reconstruction of complex, time-varying scenes from arbitrary viewpoints remains a significant challenge. Existing dynamic 3DGS methods suffer from computational inefficiency, since they model all Gaussians as dynamic components. While recent decomposition-based approaches address this issue, they still struggle with degraded reconstruction quality and prolonged training time. To mitigate these limitations, we propose a novel dynamic reconstruction framework built upon an efficient static-dynamic decomposition strategy using a Feed-Forward Gaussian Splatting encoder and an optical flow model. By eliminating redundant computations on static regions, our method achieves state-of-the-art performance, outperforming existing baselines across rendering quality, training and rendering speed, and storage efficiency. Notably, on the Neural 3D dataset, our framework requires only 10 minutes for training and achieves a rendering speed of over 700 FPS on a single NVIDIA RTX 5090 GPU at resolution of 1352x1014. Furthermore, our decomposition strategy eliminates the need for COLMAP preprocessing and enables deterministic initialization, thereby enhancing both efficiency and reproducibility.",
+      "authors": [
+        "Youngtae Han",
+        "Sung-hwan Han",
+        "Youngmin Yi"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.GR"
+      ],
+      "published": "2026-05-29T05:38:00+00:00",
+      "link": "https://arxiv.org/pdf/2605.30863v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "dynamic-static decomposition of 3D Gaussians for efficient and high-fidelity scene reconstruction",
+      "llm_evidence_cn": "3D高斯动静态分解实现高效高保真场景重建",
+      "llm_evidence": "3D高斯动静态分解实现高效高保真场景重建",
+      "canonical_evidence": "3D高斯动静态分解实现高效高保真场景重建",
+      "llm_tldr_en": "DSD-GS decomposes dynamic scenes into static and dynamic Gaussians, improving efficiency and reconstruction quality over full-dynamic models.",
+      "llm_tldr_cn": "现有动态 3DGS 方法对所有高斯建模为动态导致效率低下，而分解方法质量退化。DSD-GS 提出一种高效的动静态分解框架，通过自适应分离静态背景和动态前景，在保持高重建质量的同时显著降低计算成本。实验表明该方法在动态场景渲染质量和训练速度上均优于现有方法，为实时动态场景表示提供了新思路。",
+      "llm_tldr": "现有动态 3DGS 方法对所有高斯建模为动态导致效率低下，而分解方法质量退化。DSD-GS 提出一种高效的动静态分解框架，通过自适应分离静态背景和动态前景，在保持高重建质量的同时显著降低计算成本。实验表明该方法在动态场景渲染质量和训练速度上均优于现有方法，为实时动态场景表示提供了新思路。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2605.31595v1",
+      "source": "arxiv",
+      "title": "Learning Global Motion with Compact Gaussians for Feed-Forward 4D Reconstruction",
+      "abstract": "Dynamic scene reconstruction from monocular video remains a fundamental challenge in computer vision. Existing feed-forward methods predict 3D Gaussians pixel-wise for each frame, suffering from duplicated Gaussians and view-dependent biases that hinder effective learning of scene motion. We present C4G, a feed-forward 4D reconstruction framework built upon a compact set of timestamp-conditioned learnable Gaussian query tokens. Each token aggregates corresponding features across the full temporal context and decodes a 3D Gaussian whose position is modulated by the target timestamp, enabling globally coherent motion modeling without per-scene optimization. To capture fine-grained details, we further introduce a video diffusion model-based rendering enhancement module. Since our framework effectively aggregates features into Gaussians, we extend this capability to feature lifting, producing a 4D feature field that supports point tracking and dynamic scene understanding. C4G achieves strong novel-view synthesis performance using significantly fewer Gaussians and without requiring camera poses, while exhibiting stronger motion modeling and robustness to large temporal gaps.",
+      "authors": [
+        "Mungyeom Kim",
+        "Minkyeong Jeon",
+        "Honggyu An",
+        "Jaewoo Jung",
+        "Hyuna Ko",
+        "Jisang Han",
+        "Hyeonseo Yu",
+        "Donghwan Shin",
+        "Sunghwan Hong",
+        "Takuya Narihira",
+        "Kazumi Fukuda",
+        "Yuki Mitsufuji",
+        "Seungryong Kim"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-05-29T17:57:41+00:00",
+      "link": "https://arxiv.org/pdf/2605.31595v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Learned compact Gaussians for monocular dynamic scene reconstruction",
+      "llm_evidence_cn": "学习紧凑高斯表示用于单目动态场景重建",
+      "llm_evidence": "学习紧凑高斯表示用于单目动态场景重建",
+      "canonical_evidence": "学习紧凑高斯表示用于单目动态场景重建",
+      "llm_tldr_en": "This paper proposes C4G, a feed-forward method that uses compact timestamp-conditioned Gaussian tokens for dynamic scene reconstruction from monocular video, enabling global motion learning without per-scene optimization.",
+      "llm_tldr_cn": "现有的前馈4D重建方法逐帧预测3D高斯，导致高斯重复和视角偏差，阻碍了有效的运动学习。本文提出C4G，采用一组紧凑的、带时间戳条件的学习式高斯查询令牌，跨帧聚合特征并解码出位置受时间调制的3D高斯，实现了全局一致的动态场景重建。为了恢复细节，还引入了视频扩散模型辅助渲染。实验表明C4G在动态场景重建质量上优于现有方法，且无需逐场景优化，为单目视觉SLAM中的动态表示提供了可能的组件。",
+      "llm_tldr": "现有的前馈4D重建方法逐帧预测3D高斯，导致高斯重复和视角偏差，阻碍了有效的运动学习。本文提出C4G，采用一组紧凑的、带时间戳条件的学习式高斯查询令牌，跨帧聚合特征并解码出位置受时间调制的3D高斯，实现了全局一致的动态场景重建。为了恢复细节，还引入了视频扩散模型辅助渲染。实验表明C4G在动态场景重建质量上优于现有方法，且无需逐场景优化，为单目视觉SLAM中的动态表示提供了可能的组件。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "visual SLAM with learned representations",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2605.31124v1",
+      "source": "arxiv",
+      "title": "QVGGT: Post-Training Quantized Visual Geometry Grounded Transformer",
+      "abstract": "Estimating 3D attributes directly from images has advanced rapidly with the Visual Geometry Grounded Transformer (VGGT), which predicts camera parameters, depth maps, and point clouds in a single forward pass. However, its 1.2B-parameter scale severely limits deployment on resource-constrained platforms such as UAVs and mobile AR devices. To address this limitation, we introduce QVGGT, a tailored quantization framework designed to compress VGGT. Our approach starts from the observation that transformer blocks within VGGT exhibit heterogeneous sensitivity to quantization. We thus analyze per-block quantization sensitivity and propose a selective mixed-precision strategy that allocates higher precision to the most fragile transformer blocks. To address the amplification of quantization error caused by high-variance camera and register tokens, we further introduce token filtering with camera information compensation, which removes these outliers from activation calibration and restores their geometric cues using a PCA-derived global compensation token. Finally, we develop a task-aware scale search mechanism that evaluates candidate quantization scales not only through layer reconstruction but also through multi-head supervision and cross-head geometric consistency among camera poses, depth maps, and point maps. Extensive experiments on multiple geometry perception benchmarks demonstrate that QVGGT achieves near-lossless W4A16 quantization, preserving the accuracy of all 3D prediction heads while delivering 3$\\sim$4.9$\\times$ memory reduction and up to 2.8$\\times$ real hardware speedup over FP32. Our approach makes high-fidelity 3D perception feasible on edge devices, enabling practical deployment of feed-forward 3D reconstruction models in real-world constrained environments.",
+      "authors": [
+        "Zhizhen Pan",
+        "Hesong Wang",
+        "Huan Wang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-05-29T10:32:52+00:00",
+      "link": "https://arxiv.org/pdf/2605.31124v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Efficient camera parameter prediction for real-time pose tracking",
+      "llm_evidence_cn": "高效的相机参数预测用于实时位姿跟踪",
+      "llm_evidence": "高效的相机参数预测用于实时位姿跟踪",
+      "canonical_evidence": "高效的相机参数预测用于实时位姿跟踪",
+      "llm_tldr_en": "This paper presents QVGGT, a quantization framework for VGGT to predict 3D geometry efficiently on edge devices, enabling resource-constrained camera tracking.",
+      "llm_tldr_cn": "该论文提出QVGGT，一种针对VGGT的量化框架，使其能在资源受限设备上高效预测相机参数和深度图，为实时的相机位姿跟踪提供了一种轻量化解决方案。VGGT本身可从单张图像直接回归相机参数和点云，但模型庞大，难以部署在无人机或移动AR设备上。QVGGT通过分析各Transformer块的量化敏感度差异，采用选择性混合精度量化策略，在保持精度的同时大幅压缩模型体积，使得几何估计可以在低功耗平台运行，从而推动视觉SLAM和实时跟踪的实际应用。",
+      "llm_tldr": "该论文提出QVGGT，一种针对VGGT的量化框架，使其能在资源受限设备上高效预测相机参数和深度图，为实时的相机位姿跟踪提供了一种轻量化解决方案。VGGT本身可从单张图像直接回归相机参数和点云，但模型庞大，难以部署在无人机或移动AR设备上。QVGGT通过分析各Transformer块的量化敏感度差异，采用选择性混合精度量化策略，在保持精度的同时大幅压缩模型体积，使得几何估计可以在低功耗平台运行，从而推动视觉SLAM和实时跟踪的实际应用。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "accurate camera pose tracking",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}
