@@ -6,46 +6,35 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-06-01
-- 运行时间：2026-06-01 23:13:11 UTC
+- 最新运行日期：2026-06-02
+- 运行时间：2026-06-02 23:14:35 UTC
 - 运行状态：成功
-- 本次总论文数：8
-- 精读区：3
-- 速读区：5
+- 本次总论文数：5
+- 精读区：2
+- 速读区：3
 
 ### 今日简报（AI）
-今日精读2篇高分3D视觉论文，速览6篇，聚焦3DGS效率优化与多智能体SLAM前沿。  
-最值得看方向：3DGS后训练字典学习实现小型化加速，以及室外协作单目稠密SLAM的3D重建先验融合。  
-建议可尝试用字典学习压缩自己的3DGS场景，或关注多机器人协同建图的语义-几何联合优化。
-- 详情：[/202606/01/README](/202606/01/README)
+今日精读两篇8分论文，聚焦视觉SLAM的尺度一致性重建与单目视频驱动的结构感知3D高斯泼溅；ScaRF-SLAM将前馈模型与经典SLAM融合实现稳定尺度，WebSpline则用结构导向样条让实时3D高斯更平滑。最值得关注的是：离线学习的几何先验正快速注入实时系统，有望解决单目重建的漂移与模糊。建议开发者优先追踪这类“传统+学习”协同框架，在AR/VR项目中可提前评估WebSpline的实时渲染管线。
+- 详情：[/202606/02/README](/202606/02/README)
 
 ### 精读区论文标签
-1. [Smaller and Faster 3DGS via Post-Training Dictionary Learning](/202606/01/2605.30396v1-smaller-and-faster-3dgs-via-post-training-dictionary-learning)  
-   标签：评分：9.0/10、query:gs-slam
-   evidence：通过字典学习后训练压缩3D高斯泼溅以实现实时渲染
-2. [CoMo3R-SLAM: Collaborative Monocular Dense SLAM with Learned 3D Reconstruction Priors for Outdoor Multi-Agent Systems](/202606/01/2605.30488v1-como3r-slam-collaborative-monocular-dense-slam-with-learned-3d-reconstruction-priors-for-outdoor-multi-agent-systems)  
-   标签：评分：9.0/10、query:gs-slam
-   evidence：利用学习型三维重建先验的单目密集SLAM
-3. [Triangle Splatting SLAM](/202606/01/2605.31419v1-triangle-splatting-slam)  
-   标签：评分：9.0/10、query:gs-slam
-   evidence：使用可微分三角形泼溅的稠密RGB-D SLAM系统进行相机跟踪和建图
+1. [ScaRF-SLAM: Scale-Consistent Reconstruction with Feed-Forward Models and Classical Visual SLAM](/202606/02/2606.00307v1-scarf-slam-scale-consistent-reconstruction-with-feed-forward-models-and-classical-visual-slam)  
+   标签：评分：8.0/10、query:gs-slam
+   evidence：集成经典视觉SLAM实现稳健的相机跟踪和位姿估计
+2. [WebSpline: Structure-Informed Splines for Real-Time 3D Gaussians from Monocular Videos](/202606/02/2606.02096v1-webspline-structure-informed-splines-for-real-time-3d-gaussians-from-monocular-videos)  
+   标签：评分：8.0/10、query:gs-slam
+   evidence：动态3D高斯框架用于单目视频实时渲染
 
 ### 速读区论文标签
-1. [3D Gaussian Map with Open-Set Semantic Grouping for Vision-Language Navigation](/202606/01/2605.26500v1-3d-gaussian-map-with-open-set-semantic-grouping-for-vision-language-navigation)  
+1. [Optimizing 3D Gaussian Splatting via Point Cloud Upsampling](/202606/02/2606.00450v1-optimizing-3d-gaussian-splatting-via-point-cloud-upsampling)  
    标签：评分：7.0/10、query:gs-slam
-   evidence：为视觉语言导航构建三维高斯地图作为环境表示
-2. [DSD-GS: Dynamic-Static Decomposition of Gaussian Splatting for Efficient and High-Fidelity Dynamic Scene Reconstruction](/202606/01/2605.30863v1-dsd-gs-dynamic-static-decomposition-of-gaussian-splatting-for-efficient-and-high-fidelity-dynamic-scene-reconstruction)  
-   标签：评分：7.0/10、query:gs-slam
-   evidence：3D高斯动静态分解实现高效高保真场景重建
-3. [QVGGT: Post-Training Quantized Visual Geometry Grounded Transformer](/202606/01/2605.31124v1-qvggt-post-training-quantized-visual-geometry-grounded-transformer)  
-   标签：评分：7.0/10、query:gs-slam
-   evidence：高效的相机参数预测用于实时位姿跟踪
-4. [Feature-Optimized Vision for Adaptive 3D Scene Reconstruction](/202606/01/2605.31534v1-feature-optimized-vision-for-adaptive-3d-scene-reconstruction)  
+   evidence：通过点云上采样改进3D高斯泼溅初始化，提升实时渲染质量
+2. [GeoSAM-3D: Geodesic Prompt Propagation for Open-Vocabulary 3D Scene Segmentation from Monocular Video](/202606/02/2606.00447v1-geosam-3d-geodesic-prompt-propagation-for-open-vocabulary-3d-scene-segmentation-from-monocular-video)  
    标签：评分：6.0/10、query:gs-slam
-   evidence：自适应特征选择用于三维重建前端，改善相机跟踪与建图
-5. [Learning Global Motion with Compact Gaussians for Feed-Forward 4D Reconstruction](/202606/01/2605.31595v1-learning-global-motion-with-compact-gaussians-for-feed-forward-4d-reconstruction)  
+   evidence：使用单目3D高斯泼溅进行场景重建，实现体积高斯表示
+3. [Beyond Static Gaussians: An Empirical Investigation of Architectural Paradigms for Dynamic 3D Scene Reconstruction](/202606/02/2606.00452v1-beyond-static-gaussians-an-empirical-investigation-of-architectural-paradigms-for-dynamic-3d-scene-reconstruction)  
    标签：评分：6.0/10、query:gs-slam
-   evidence：学习紧凑高斯表示用于单目动态场景重建
+   evidence：全面分析动态3D高斯泼溅方法用于场景重建，比较不同范式。
 
 
 <div class="dpr-home-promo-card">

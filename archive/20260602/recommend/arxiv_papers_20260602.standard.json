@@ -1,0 +1,213 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-02T23:08:18.919450+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 2,
+    "deep_cap": 7,
+    "deep_selected": 2,
+    "quick_candidates": 3,
+    "quick_skim_target": 12,
+    "quick_selected": 3
+  },
+  "deep_dive": [
+    {
+      "id": "2606.00307v1",
+      "source": "arxiv",
+      "title": "ScaRF-SLAM: Scale-Consistent Reconstruction with Feed-Forward Models and Classical Visual SLAM",
+      "abstract": "Recent works have explored unifying SLAM with geometric foundation models (GFMs). However, directly using GFM predictions for tracking is highly sensitive to model capability and uncertainty, as geometric inaccuracies in the predictions can adversely affect pose estimation. To address this limitation, we present a decoupled framework that integrates classical feature-based SLAM with GFMs, which achieves higher quality and more consistent dense reconstruction. In brief, we use classical visual SLAM for robust low-latency tracking and use GFMs exclusively for mapping. By anchoring mapping to poses produced by the SLAM module and optimizing across depth scales, the proposed design avoids propagating inaccuracies from GFM predictions into pose estimation while imposing geometric constraints on the reconstruction. The system builds submaps from multiple posed keyframes and enforces scale consistency via lightweight frame and submap scale optimization. It also performs projection-based point cloud fusion within each submap, and updates submaps online to reflect trajectory updates from the feature-based SLAM. To evaluate tracking and reconstruction of our method, we introduce a loop-rich, building-scale indoor dataset with accurate sensor trajectories and LiDAR ground-truth. Experiments show that our approach achieves superior trajectory accuracy while improving reconstruction precision by 10%-20% over existing methods, with about 2 cm reconstruction error per 10 m chunk on building-scale dataset. On large-scale outdoor datasets, it attains 10 cm error per 30 m chunk (w.r.t LiDAR ground-truth models).",
+      "authors": [
+        "Yuhao Zhang",
+        "Yifu Tao",
+        "Frank Dellaert",
+        "Maurice Fallon"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-05-29T19:34:00+00:00",
+      "link": "https://arxiv.org/pdf/2606.00307v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Integrates classical visual SLAM for robust camera tracking and pose estimation",
+      "llm_evidence_cn": "集成经典视觉SLAM实现稳健的相机跟踪和位姿估计",
+      "llm_evidence": "集成经典视觉SLAM实现稳健的相机跟踪和位姿估计",
+      "canonical_evidence": "集成经典视觉SLAM实现稳健的相机跟踪和位姿估计",
+      "llm_tldr_en": "ScaRF-SLAM decouples tracking (classical SLAM) and mapping (GFMs) to achieve scale-consistent dense reconstruction",
+      "llm_tldr_cn": "ScaRF-SLAM解耦跟踪和建图，用经典SLAM做稳健低延迟跟踪，用几何基础模型做密集建图，避免模型预测误差影响位姿，实现尺度一致性重建",
+      "llm_tldr": "ScaRF-SLAM解耦跟踪和建图，用经典SLAM做稳健低延迟跟踪，用几何基础模型做密集建图，避免模型预测误差影响位姿，实现尺度一致性重建",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Visual SLAM methods for camera tracking and mapping",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.02096v1",
+      "source": "arxiv",
+      "title": "WebSpline: Structure-Informed Splines for Real-Time 3D Gaussians from Monocular Videos",
+      "abstract": "Dynamic scene reconstruction from monocular videos remains highly challenging, as existing methods often struggle to balance global structural coherence and local fine-grained details under limited multi-view cues. To address this challenge, we propose WebSpline, a novel dynamic 3D Gaussian framework that enables structurally coherent and high-fidelity reconstruction from monocular videos with fast rendering. The core of WebSpline is the Structure-Informed Spline (SIS) representation, which models each dynamic Gaussian trajectory using a learnable cubic Hermite spline whose motion is structurally organized with an auxiliary Structural Proxy Graph (SPG). The proposed framework is optimized in two stages: (i) in the first stage, the SPG is initialized from 2D point tracks and refined with temporal rigidity regularization to establish structural coherence for moving objects across the sequence; and (ii) in the second stage, the SIS representation is initialized from the refined SPG and optimized under both spatial and structural neighborhood constraints. At inference, Gaussian motion is obtained solely by evaluating the learned SIS, enabling fast rendering. Extensive experiments on the challenging monocular dynamic scene benchmarks, iPhone and NVIDIA, demonstrate that our WebSpline achieves state-of-the-art rendering quality while rendering over 10 times faster than WorldTree, the second-best method on the iPhone dataset.",
+      "authors": [
+        "Jongmin Park",
+        "Jeonghwan Yun",
+        "Minh-Quan Viet Bui",
+        "Munchurl Kim"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-01T11:28:17+00:00",
+      "link": "https://arxiv.org/pdf/2606.02096v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "dynamic 3D Gaussian framework for real-time rendering from monocular video",
+      "llm_evidence_cn": "动态3D高斯框架用于单目视频实时渲染",
+      "llm_evidence": "动态3D高斯框架用于单目视频实时渲染",
+      "canonical_evidence": "动态3D高斯框架用于单目视频实时渲染",
+      "llm_tldr_en": "WebSpline introduces a dynamic 3D Gaussian framework using Structure-Informed Splines to achieve structurally coherent and high-fidelity reconstruction from monocular videos with real-time rendering.",
+      "llm_tldr_cn": "WebSpline提出了一种动态3D高斯框架，利用结构引导样条（SIS）表示，结合辅助结构代理图（SPG），从单目视频中实现结构连贯且高保真的动态场景重建与实时渲染，解决了现有方法在有限多视图线索下难以平衡全局结构一致性与局部细节的问题。",
+      "llm_tldr": "WebSpline提出了一种动态3D高斯框架，利用结构引导样条（SIS）表示，结合辅助结构代理图（SPG），从单目视频中实现结构连贯且高保真的动态场景重建与实时渲染，解决了现有方法在有限多视图线索下难以平衡全局结构一致性与局部细节的问题。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2606.00450v1",
+      "source": "arxiv",
+      "title": "Optimizing 3D Gaussian Splatting via Point Cloud Upsampling",
+      "abstract": "3D Gaussian Splatting (3DGS) is a technique for creating and rendering 3D scenes, however its performance depends heavily on the quality of initial seed points. To improve 3DGS initialization, this study presents and evaluates several point cloud upsampling approaches: linear interpolation, triangular interpolation, spline-based surface reconstruction, moving least squares surface fitting, and Voronoi-based point generation. Additionally, this research introduces a depth-guided point lifting method that leverages depth maps to maintain geometric consistency with Structure-from-Motion (SfM) reconstructions. Through extensive experiments on the Mip-NeRF360 and Replica datasets, the proposed methods demonstrate improvements in reconstruction quality across diverse scene types. Results indicate that different upsampling strategies excel in different scenarios: surface reconstruction methods perform better with organic, detailed scenes, while simpler interpolation approaches are more suited for scenes dominated by piecewise-smooth geometries. In comparison, the depth-guided approach shows promise for adding geometry-aware points across the entire scene, importantly in texture-less regions. These findings, which provide preliminary practical guidelines for selecting appropriate upsampling methods based on scene characteristics and computational constraints, advances the understanding of how point cloud initialization affects 3DGS quality.",
+      "authors": [
+        "Adrian Ramlal",
+        "Yan Song Hu",
+        "John S. Zelek"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.GR"
+      ],
+      "published": "2026-05-30T00:42:17+00:00",
+      "link": "https://arxiv.org/pdf/2606.00450v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Improves 3D Gaussian Splatting by point cloud upsampling for better initialization, leading to higher quality real-time rendering",
+      "llm_evidence_cn": "通过点云上采样改进3D高斯泼溅初始化，提升实时渲染质量",
+      "llm_evidence": "通过点云上采样改进3D高斯泼溅初始化，提升实时渲染质量",
+      "canonical_evidence": "通过点云上采样改进3D高斯泼溅初始化，提升实时渲染质量",
+      "llm_tldr_en": "This paper presents several point cloud upsampling approaches to improve 3D Gaussian Splatting initialization, including a depth-guided point lifting method. Experiments on Mip-NeRF360 and Replica show improved reconstruction quality, enhancing the real-time rendering capabilities of 3DGS.",
+      "llm_tldr_cn": "针对3D高斯泼溅对初始种子点质量的依赖，本文系统评估了点云上采样策略以优化初始化，并引入深度引导的点提升方法来保持几何一致性。在多个基准数据集上的广泛实验证明，所提方法有效提升了场景重建质量，为基于高斯的实时渲染提供了更稳定的初始化方案。",
+      "llm_tldr": "针对3D高斯泼溅对初始种子点质量的依赖，本文系统评估了点云上采样策略以优化初始化，并引入深度引导的点提升方法来保持几何一致性。在多个基准数据集上的广泛实验证明，所提方法有效提升了场景重建质量，为基于高斯的实时渲染提供了更稳定的初始化方案。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.00447v1",
+      "source": "arxiv",
+      "title": "GeoSAM-3D: Geodesic Prompt Propagation for Open-Vocabulary 3D Scene Segmentation from Monocular Video",
+      "abstract": "Open-vocabulary 3D scene segmentation usually assumes RGB-D video, calibrated multi-view imagery, or a reconstructed mesh. GeoSAM-3D studies a lighter setting: a user uploads a short monocular video, clicks or names an object in one frame, and receives a propagated 3D mask over a Gaussian scene. The implementation combines frozen image and video foundation models with a monocular 3D Gaussian Splatting reconstruction and a differentiable graph-geodesic propagation kernel over Gaussian centroids. The central design choice is to propagate prompts by heat-kernel distance on the reconstructed scene graph, rather than by Euclidean nearest neighbors in 3D. This preserves continuity around curved surfaces and reduces leakage across nearby but disconnected objects. This paper describes the repository state, the mathematical kernel implemented in geosam3d.propagate, the feature head trained from Segment Anything masks, and the validation already present in the codebase. The evaluation protocol separates implementation validation, graph propagation quality, leakage control, and interactive latency.",
+      "authors": [
+        "Arun Sharma"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-05-30T00:34:37+00:00",
+      "link": "https://arxiv.org/pdf/2606.00447v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Uses monocular 3D Gaussian Splatting for scene reconstruction, enabling volumetric Gaussian representation",
+      "llm_evidence_cn": "使用单目3D高斯泼溅进行场景重建，实现体积高斯表示",
+      "llm_evidence": "使用单目3D高斯泼溅进行场景重建，实现体积高斯表示",
+      "canonical_evidence": "使用单目3D高斯泼溅进行场景重建，实现体积高斯表示",
+      "llm_tldr_en": "GeoSAM-3D achieves open-vocabulary 3D segmentation from monocular video by integrating 3DGS reconstruction with geodesic prompt propagation",
+      "llm_tldr_cn": "GeoSAM-3D利用单目视频的3D高斯泼溅重建，结合测地线提示传播实现开放词汇3D分割，生成高斯场景表示，为轻量级场景理解提供新途径",
+      "llm_tldr": "GeoSAM-3D利用单目视频的3D高斯泼溅重建，结合测地线提示传播实现开放词汇3D分割，生成高斯场景表示，为轻量级场景理解提供新途径",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.00452v1",
+      "source": "arxiv",
+      "title": "Beyond Static Gaussians: An Empirical Investigation of Architectural Paradigms for Dynamic 3D Scene Reconstruction",
+      "abstract": "Dynamic scene reconstruction via 3D Gaussian Splatting (3DGS) has emerged as a compelling approach for representing evolving environments, yet understanding trade-offs between methodologies remains crucial. This paper presents a comprehensive analysis of dynamic 3DGS methods, categorizing them into two paradigms: structure-guided methods employing auxiliary representations (deformation fields, canonical spaces, grids) to model temporal changes, and gaussian-centric methods encoding dynamics directly into primitives via continuous functions or 4D representations. We evaluate representative methods from both paradigms on the D-NeRF benchmark. Our findings reveal that structure-guided methods achieve superior reconstruction fidelity and compact model sizes, while gaussian-centric approaches demonstrate significantly higher rendering speeds enabling real-time performance, though with greater quality variability and potentially substantial storage overhead. This analysis highlights a fundamental trade-off between reconstruction quality/compactness versus rendering speed, providing insights to guide future research and application development in dynamic scene reconstruction.",
+      "authors": [
+        "Adrian Ramlal",
+        "John S. Zelek"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.GR"
+      ],
+      "published": "2026-05-30T00:42:38+00:00",
+      "link": "https://arxiv.org/pdf/2606.00452v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Comprehensive analysis of dynamic 3D Gaussian Splatting methods for scene reconstruction, comparing paradigms.",
+      "llm_evidence_cn": "全面分析动态3D高斯泼溅方法用于场景重建，比较不同范式。",
+      "llm_evidence": "全面分析动态3D高斯泼溅方法用于场景重建，比较不同范式。",
+      "canonical_evidence": "全面分析动态3D高斯泼溅方法用于场景重建，比较不同范式。",
+      "llm_tldr_en": "Presents an analysis of dynamic 3DGS methods, categorizing them into structure-guided and gaussian-centric paradigms, and evaluates on D-NeRF, revealing trade-offs in reconstruction quality.",
+      "llm_tldr_cn": "对动态3D高斯泼溅方法进行了实证分析，将其分为结构引导和高斯中心两类范式，并在D-NeRF基准上评估，揭示了重建质量与效率之间的权衡。研究发现结构引导方法通常重建质量更高，而高斯中心方法参数更少，为后续动态场景表示研究提供了方向指导。",
+      "llm_tldr": "对动态3D高斯泼溅方法进行了实证分析，将其分为结构引导和高斯中心两类范式，并在D-NeRF基准上评估，揭示了重建质量与效率之间的权衡。研究发现结构引导方法通常重建质量更高，而高斯中心方法参数更少，为后续动态场景表示研究提供了方向指导。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
