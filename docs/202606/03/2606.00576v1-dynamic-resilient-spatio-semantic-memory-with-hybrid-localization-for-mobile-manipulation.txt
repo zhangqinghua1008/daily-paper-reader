@@ -1,0 +1,548 @@
+Title: Dynamic Resilient Spatio-Semantic Memory with Hybrid Localization for Mobile Manipulation
+
+URL Source: https://arxiv.org/pdf/2606.00576v1
+
+Published Time: Tue, 02 Jun 2026 00:48:21 GMT
+
+Number of Pages: 11
+
+Markdown Content:
+> 1
+
+# DREAM : Dynamic Resilient Spatio-Semantic Memory with Hybrid Localization for Mobile Manipulation 
+
+Zhijie Yan, Shufei Li, Ze Zhang, Xin Liu, Yuhang Zheng, Zuoxu Wang 1
+
+Initial Position 
+
+> Without Any Pre-Built Map
+
+: Pick up the  Orange and place it in the  Green  Bowl .
+
+Acquire ( Orange )
+
+Reacquire ( Orange )
+
+Orange  Relocated 
+
+> 2
+
+Before 
+
+# 3
+
+Relocated 
+
+Acquire ( Green Bowl )
+
+# 4
+
+Pickup ( Orange )
+
+Place ( Orange )
+
+to ( Green Bowl )
+
+# 2
+
+Fig. 1. Overview of the DREAM framework. DREAM is a mobile manipulation framework for dynamic, previously unseen indoor environments without any pre-built map. Given a natural-language instruction, the robot actively explores the scene to acquire the target object. When human intervention relocates the object, DREAM leverages hybrid localization and a dynamic spatio-semantic memory to reacquire the target, continuously updating task-relevant scene entities and replanning its actions. This enables consistent scene understanding and reliable mobile manipulation under frequent environment changes. 
+
+Abstract —Reliable mobile manipulation in dynamic indoor environments requires a scene representation that remains geo-metrically consistent, semantically queryable, and computationally bounded as the world changes. Existing systems often rely on pre-built maps, static-scene assumptions, or highly accurate camera poses; when target objects are relocated or pose estimates are corrected, navigation and manipulation may be driven by stale or misaligned scene information. This paper presents DREAM , a real-robot mobile manipulation framework that couples perception, memory, localization, navigation, and manipulation for previously unseen indoor environments without a pre-built map. DREAM 
+
+builds an online spatio-semantic voxel memory from RGB-D observations registered by a LiDAR-inertial-visual SLAM backend, uses pose-graph-aware Redundancy-Aware Memory Pruning (RMP) to update historical observations under pose corrections while keeping long-horizon observation history bounded, and combines language-conditioned 3D retrieval, open-vocabulary image detection, and multimodal large-language-model (mLLM)-based verification for target localization and reacquisition. Real-robot experiments in four dynamic indoor laboratory scenes show that DREAM improves long-horizon task success from 40% –
+
+Corresponding author: Zuoxu Wang, e-mail: zuoxu_wang@buaa.edu.cn. 
+
+> 1
+
+Zhijie Yan, Ze Zhang, Xin Liu and Zuoxu Wang are with School of Mechanical Engineering and Automation, Beihang University, Beijing 100191, China. 
+
+> 2
+
+Shufei Li is with Department of Systems Engineering, City University of Hong Kong, Hong Kong SAR 518057, China. 
+
+> 3
+
+Yuhang Zheng is with School of Computing, National University of Singapore, 21 Lower Kent Ridge Rd 119077, Singapore. 
+
+60% to 55% –70% compared with DynaMem, while maintaining a 
+
+0.37 –0.63 GB memory footprint and a 0.43 –0.53 s online memory-update time across scenes. Code, CAD model, and demonstrations are available at: https://bjhyzj.github.io/dream-web. 
+
+Index Terms —Spatio-Semantic Memory, Dynamic Environ-ments, Hybrid Localization, Mobile Manipulation. 
+
+I. I NTRODUCTION 
+
+# MOBILE MANIPULATION in real-world settings re-quires a closed loop over perception, spatio-semantic memory, localization, navigation, and manipulation. Human activity and robot actions continuously change object layouts, occlusions, and traversability. Systems that depend on pre-built maps [1], [2], static-scene assumptions [3], or drift-free camera poses [4], [5] can therefore operate on obsolete scene representations, leading to brittle navigation and manipulation in dynamic environments. Recent open-vocabulary robotic systems have made sub-stantial progress by combining foundation models with 3D maps, semantic fields, scene graphs, and modular naviga-tion/manipulation pipelines [1], [3]–[5]. These systems make language-conditioned manipulation more flexible than category-specific or training-scene-specific policies. However, many of them are designed around an offline or pre-built scene 
+
+> arXiv:2606.00576v1 [cs.RO] 30 May 2026 2
+
+representation, or they evaluate in settings where the pose stream and the scene state are assumed to remain sufficiently stable. Such assumptions are restrictive for service robots deployed in previously unseen homes, offices, and laboratories, where objects may be moved after being observed, temporary occlusions can invalidate earlier detections, and the robot must continue operating while its SLAM pose graph is being refined. This paper considers previously unseen indoor environments in which no offline pre-built map, manually annotated scene model, or scene-specific prior is available before deployment. The robot must instead observe the environment online and build its internal representation during execution. The central challenge is therefore not only to detect a target object once, but to maintain an actionable scene memory throughout the task. Such a memory should be built online from raw robot observations, remain geometrically consistent when loop closures or pose-graph updates occur, support open-vocabulary target localization and reacquisition after object relocation, and stay compact enough for long-horizon operation. 
+
+DREAM addresses this setting as a complete real-robot framework for dynamic, previously unseen indoor environments without a pre-built map. It maintains an online spatio-semantic voxel memory from RGB-D observations and SLAM poses, updates this memory when the scene changes, and uses a lightweight RMP mechanism to reintegrate historical obser-vations under pose-graph updates while keeping the stored observation history bounded. On top of this memory, a hybrid localization and reacquisition pipeline combines language-conditioned 3D retrieval, open-vocabulary image detection, and mLLM-based verification. A value-guided exploration and navigation module then selects task-relevant frontiers and manipulation-aware docking poses, while a modular grasping and placement stack completes the pickup/place stages in cluttered scenes. Unlike methods that primarily study static reconstruction or offline scene querying, DREAM is evaluated as a closed-loop robot system. The SLAM backend provides local odometry and global pose-graph consistency; the dynamic spatio-semantic memory stores task-relevant 3D semantic evidence; the hybrid localizer grounds language queries by combining memory retrieval, image-space detection, and semantic verification; and the navigation/manipulation modules convert the recovered target state into executable robot actions. This system-level integration is important because failures in dynamic mobile manipulation often arise from mismatches between modules, for example when a semantic memory is not updated after pose correction, when a moved target is still localized at an obsolete position, or when a successful detection cannot be converted into a reachable manipulation pose. The main contributions are summarized as follows:  
+
+> •
+
+A closed-loop real-robot framework is introduced for mobile manipulation in dynamic, previously unseen in-door environments without a pre-built map, integrating SLAM, semantic memory, target reacquisition, navigation, grasping, and placement.  
+
+> •
+
+A dynamic spatio-semantic memory is developed with pose-graph-aware reintegration of historical observations and keyframe-guided RMP, enabling task-relevant 3D semantic evidence to remain aligned under pose-graph cor-rections and object relocation while keeping observation history bounded.  
+
+> •
+
+A hybrid target-localization and task-oriented naviga-tion pipeline is developed by combining language-conditioned 3D retrieval, open-vocabulary image detection, mLLM-based verification, value-guided exploration, and manipulation-aware docking.  
+
+> •
+
+The integrated system is evaluated on a real mobile manipulation platform in four dynamic indoor scenes, with task success, memory usage, update time, and module ablations reported against representative baselines. II. R ELATED WORK 
+
+A. Open-Vocabulary Mobile Manipulation 
+
+Open-vocabulary mobile manipulation enables robots to execute user-specified instructions in everyday environments, such as “pick A from B and place C” [3]. Large language models (LLMs) [6], [7] and vision-language models (VLMs) are commonly used to parse the instruction and decompose it into subtasks [8]. Unlike pure navigation [9], mobile manipulation requires the robot to approach target objects, maintain sufficient visibility and reachability, and operate safely in cluttered surroundings. Deep-reinforcement-learning approaches [10], [11] and imitation-learning systems [12], [13] have shown promising manipulation skills, but their real-world generalization remains limited when object categories, layouts, or environments differ from training data. Modular frameworks [3]–[5] that combine language understanding, environment mapping, planning, and low-level control are therefore attractive for real robotic systems. DREAM follows this modular paradigm but focuses on dynamic target relocation, online memory maintenance, and active target reacquisition in previously unseen indoor environments. 
+
+B. 3D Semantic Scene Representation 
+
+Mainstream semantic 3D scene representations can be broadly divided into voxel/field representations [3], [14] and object-level scene graphs [1], [5], [15]. A 3D voxel or semantic field assigns features or labels to points/voxels and therefore supports direct object localization. However, dense spatial rep-resentations can require substantial memory in large-scale envi-ronments and may not explicitly encode object relations needed by high-level planning. In contrast, 3D scene graphs model objects as nodes and spatial or semantic relations as edges, explicitly capturing scene structure in a graphical form. This makes them particularly attractive for hierarchical navigation and large-scale navigation tasks. Nonetheless, when it comes to fusing geometry and semantics, constructing and maintaining a consistent 3D scene graph is computationally expensive. In tasks that require real-time scene reconstruction and continuous detection of environmental changes, their efficiency is typically much lower than that of 3D voxel maps. Recent work has leveraged NeRF [16], [17] or 3D Gaussian Splatting [18], [19] for scene reconstruction. While these methods can produce high-fidelity representations, real-time constraints generally force the assumption of a static environment. Extending them to dynamic 3
+
+scenes usually demands substantial computational and time overheads, making them difficult to deploy for online mobile manipulation. The relationship among representative open-vocabulary representations is important for positioning DREAM .ConceptGraphs [1] primarily builds an object-centric scene graph under a static-scene assumption. DovSG [5] extends this line toward dynamic object-level scene graphs. CLIP-Fields [14] is a representative semantic-field representation, while DynaMem [4] extends voxel/semantic-field memory toward online mobile manipulation in changing scenes. DREAM 
+
+adopts a voxel map as a pragmatic representation for online operation, but augments it with pose-graph-aware reintegration, stale-observation removal, and keyframe-guided pruning so that the active memory remains compact and consistent under dynamic target relocation. 
+
+C. Mapping and Navigation in Dynamic Environments 
+
+For navigation, Simultaneous Localization and Mapping (SLAM) is fundamental, as it determines the quality of geometric and semantic reconstruction and thus impacts downstream planning and manipulation. Some recent works evaluate purely in simulation under known or near-perfect robot state [20], [21]; others discard explicit maps and rely only on images [22], using large models to output end-to-end actions or short-horizon policies [23]. Although these approaches are promising in certain regimes, the lack of an explicit, maintainable scene memory makes it difficult to guarantee consistent behavior over long horizons in complex real-world environments. DynaMem [4] brings voxel-based semantic mapping to real-world mobile manipulation by using a SLAM system to provide camera poses and a 3D voxel memory to detect scene changes and trigger updates, which in turn supports downstream replanning. However, when historical camera poses are later refined by loop closure or pose-graph optimization, previously integrated semantic observations may become misaligned with the updated global trajectory. DynaMem does not explicitly maintain and reintegrate historical semantic observations under such pose corrections. In contrast, DREAM 
+
+associates stored observations with pose-graph keyframes and uses optimized historical poses to selectively rebuild the active spatio-semantic memory. This pose-graph-aware memory maintenance, together with keyframe-guided pruning, keeps the memory compact and temporally consistent for long-horizon target localization, reacquisition, and navigation-manipulation in dynamic environments. III. M ETHOD 
+
+This section presents the overall architecture of DREAM and its three main modules: (i) a multi-sensor SLAM backend with a dynamic spatio-semantic voxel memory and redundancy-aware pruning, (ii) a hybrid localization and task-oriented navigation module, and (iii) a grasping and placement stack for mobile manipulation in dynamic, previously unseen indoor environments without any pre-built map. 
+
+A. Multi-Sensor SLAM and Dynamic Spatio-Semantic Memory 
+
+To support long-horizon mobile manipulation in dynamic, previously unseen environments, DREAM uses a practical multi-sensor geometric backend and a 3D spatio-semantic memory. This subsection describes the LiDAR-inertial-visual SLAM pipeline that provides camera poses and registered geometry for downstream perception, the voxel-based spatio-semantic memory built on top of this pipeline, and the Redundancy-Aware Memory Pruning (RMP) mechanism that keeps the memory compact while preserving long-horizon consistency. 
+
+1) Multi-Sensor SLAM Backend : The platform uses an RGB-D camera and a 3D LiDAR with a built-in IMU to provide geometric and visual information for mapping and localization (see the top-left part of Fig. 2). The extrinsic transforms between the camera, LiDAR, and robot base are exported from the robot CAD model, and sensor streams are aligned using software timestamps. This deployment choice avoids specialized calibration and hardware synchronization requirements; remaining practical residual errors are reduced by the downstream visual loop closure and pose-graph refinement in RTAB-Map [24]. For multi-sensor fusion, LiDAR and IMU measurements from the MID-360 are processed by Fast-LIO2 [25] to obtain local LiDAR-inertial odometry and de-skewed registered point clouds. These odometry estimates, together with RGB and depth images from the D435i, are provided to RTAB-Map [24], which performs RGB-D loop closure and pose-graph optimization to produce temporally consistent camera trajectories. RTAB-Map organizes incoming frames into keyframes and intermediate frames: keyframes are inserted into the pose graph for long-term optimization, whereas intermediate frames are used locally and then discarded. The optimized camera poses and RTAB-Map keyframes are then consumed by the spatio-semantic memory and by RMP. In this work, the SLAM backend serves as a practical geometric foundation for online memory maintenance, target reacquisition, navigation, and manipulation. 
+
+2) Dynamic Spatio-Semantic Memory : DREAM constructs an updatable spatio-semantic memory that maintains geometric and open-vocabulary semantic information of the environment. A sparse 3D voxel map is used as the representation. Each non-empty voxel stores its 3D location (x, y, z ), observation count 
+
+C, source image ID I, semantic feature vector f extracted from a VLM such as CLIP [26] or SigLIP [27], and latest observation time t, following the general voxel-memory design of DynaMem [4]. The dynamic update process consists of adding new observations and removing outdated voxels whose corresponding surfaces have been moved or removed. 
+
+Adding Points. When DREAM receives a new set of observa-tions from RTAB-Map, i.e., RGB-D images, camera parameters, and pose-graph information, the depth image is back-projected into the global reference frame and a semantic feature vector is generated for each point. Pixel-level semantic features from SigLIP [27] are associated with the corresponding 3D points; details of mapping image features to 3D points follow prior work [3], [5]. The new points are clustered and assigned to their nearest voxel grid cells. As shown in the top-right of Fig. 2, each voxel count tracks the total number of assigned points, while the feature vector stores the weighted average of 4Redundancy -Aware Memory Pruning 
+
+Loop-Aware 
+
+Global Reintegration 
+
+Observation History  Keyframe 
+
+> Intermediate Frame
+
+𝑡𝑡 
+
+Regional Reintegration 
+
+Local Memory Refresh 
+
+> Latest previous
+
+Affected Region 
+
+> Affected Region
+> Affected Region
+> Affected Region
+> Pose-Inconsistent Keyframe
+> Pose-Graph-Aware Reintegration
+
+Observation History (Length = 𝒍𝒍 𝒎𝒎𝒎𝒎 + 𝒎𝒎 , assume 𝒎𝒎 = 𝟑𝟑 )     
+
+> 𝑜𝑜 1𝑜𝑜 2𝑜𝑜 3𝑜𝑜 𝑛𝑛+1 𝑜𝑜 𝑛𝑛+2 𝑜𝑜 𝑛𝑛+3
+
+𝑡𝑡 
+
+Memory Capacity (Length = 𝒍𝒍 𝒎𝒎𝒎𝒎 ), Keyframe Capacity （Max Length= 𝒍𝒍 𝒌𝒌 ）  
+
+> 𝑜𝑜 2𝑜𝑜 𝑛𝑛+1 𝑜𝑜 𝑛𝑛+2
+
+𝑡𝑡 
+
+𝒊𝒊𝒊𝒊 𝒍𝒍𝒍𝒍𝒍𝒍 ≤ 𝒍𝒍𝒌𝒌 : After Pruning 
+
+𝑡𝑡 
+
+𝒊𝒊𝒊𝒊 𝒍𝒍𝒍𝒍𝒍𝒍 > 𝒍𝒍𝒌𝒌 : After Pruning   
+
+> 𝑜𝑜 𝑛𝑛+1 𝑜𝑜 𝑛𝑛+2 𝑜𝑜 𝑛𝑛+3
+> Keyframe -Guided Memory Pruning
+
+Hardware and SLAM system 
+
+> Livox MID-360 with Built-in IMU
+> Intel RealSense D435i
+
+3D LiDAR 
+
+> (20Hz)
+
+IMU 
+
+> (200Hz)
+
+Color 
+
+> (15Hz)
+
+Depth 
+
+> (15Hz)
+
+Fast-LIO2 
+
+> (20Hz)
+
+Odom 
+
+> (20Hz)
+
+Registered 
+
+Cloud 
+
+> (20Hz)
+
+RTAB-Map 
+
+> (5Hz)
+> 6DoF Pose Estimation
+> Loop Closure
+> & Global Optimization
+> UFACTORY xArm6
+> Control Box, Information Transmission Module
+> and Basket
+> Agilex Ranger Mini 3.0
+
+Spatio-Semantic Memory  
+
+> Pose Graph RGBD Camera
+
+Observations                
+
+> Voxel
+> Location: ( 𝑥𝑥 ,𝑦𝑦 ,𝑧𝑧 )∈ℝ3Point Semantic Features: 𝑓𝑓 ∈ℝ𝑑𝑑
+> Observation Count: 𝐶𝐶 ∈ ℕ Source Image ID: 𝐼𝐼 ∈ ℕ
+> Latest Observation Time: 𝑡𝑡 ∈ ℝ
+
+SigLIP 
+
+OV VLM  Voxelization            
+
+> New points assigned to voxel
+> 𝑓𝑓 ⟵ 𝐶𝐶 ·𝑓𝑓 +∑𝑖𝑖=1 𝑁𝑁 𝑓𝑓 𝑖𝑖 𝐶𝐶 +𝑁𝑁
+> 𝐶𝐶 ⟵ 𝐶𝐶 +𝑁𝑁
+> 𝑡𝑡 ⟵ 𝑚𝑚𝑚𝑚 𝑥𝑥 𝑖𝑖 𝑡𝑡 𝑖𝑖
+> 𝐼𝐼 ⟵ 𝐼𝐼 𝑚𝑚𝑚𝑚𝑚𝑚 𝑖𝑖 𝑡𝑡 𝑖𝑖
+> Dynamic Memory Update
+
+𝒕𝒕 𝟎𝟎 
+
+> Memory  Real-World Scene
+
+New cup observed 
+
+Unchanged voxels 
+
+𝒕𝒕 𝟏𝟏 
+
+New hamburger observed 
+
+Added voxels 
+
+𝒕𝒕 𝟐𝟐 
+
+Observed hamburger moved 
+
+Removed voxels 
+
+𝑡𝑡 
+
+𝑡𝑡 
+
+𝑡𝑡 
+
+Fig. 2. Hardware system and dynamic spatio-semantic memory in DREAM . The multi-sensor SLAM backend provides temporally consistent poses to build a voxel-based spatio-semantic memory, which is continuously updated with incoming observations. A Redundancy-Aware Memory Pruning mechanism performs pose-graph-aware reintegration and keyframe-guided pruning to maintain a compact and consistent map in dynamic environments. 
+
+all assigned features. The observation timestamp and image ID are also updated so that the memory can identify recent evidence for future localization and pruning. If a voxel is empty before assignment, its count is initialized as C = 0 and its feature vector f is the zero vector. 
+
+Removing Points. When an object is moved or removed in a real-world environment, its associated voxels in DREAM 
+
+may also need to be removed. Ray casting is used to identify obsolete voxels: if a voxel lies inside the frustum between the camera plane and the currently observed surface, that voxel should be empty in the updated scene. To reduce the impact of long-range depth noise and ensure that the map built from the current frame supports short-range navigation, pixels whose associated depth values exceed 3 m are ignored. A simplified 2D illustration is shown in the middle of Fig. 2. In practice, each existing voxel is projected onto the camera plane and its distance to the camera is computed. Suppose the image has height and width (H, W ), and the depth image is D. If a voxel is projected to image coordinates (h, w ) on the camera plane with depth d, then the voxel is removed when d satisfies the following two conditions. 
+
+0 ≤ h < H, 0 ≤ w < W (1) 
+
+d ∈  0, min(3 , D[h, w ] + ϵ) (2) 5
+
+Eq. 1 guarantees that the projected pixel falls inside the camera view, whereas Eq. 2 enforces that (a) d > 0 so the voxel is in front of the camera, (b) d < 3 m so it is not excessively far away, and (c) d < D[h, w ] + ϵ so it lies between the camera and the surface observed at pixel (h, w ) up to a small depth tolerance ϵ.
+
+3) Redundancy-Aware Memory Pruning : DREAM maintains a spatio-semantic voxel memory that grows over time as new observations are integrated. Redundancy-Aware Mem-ory Pruning (RMP) is designed as a memory-maintenance mechanism rather than only a frame-discarding strategy. It performs two coupled operations: pose-graph-aware refreshing of historical observations and keyframe-guided pruning of redundant observation history. Each stored observation keeps the pose and frame-transform information needed to reconstruct its camera pose when the SLAM pose graph is updated. RMP compares the pose used during the original integration of a keyframe with the corresponding optimized pose from the updated pose graph. When the change is sufficiently large, the affected part of the active spatio-semantic memory is refreshed by reprocessing the relevant historical observations with their optimized poses. This allows the semantic memory to follow loop-closure and pose-graph corrections, rather than accumulating stale semantic evidence at outdated positions. All observations that appear as nodes in the pose graph are treated as keyframes, and the keyframe set is denoted by K.For each keyframe, the camera pose used during its original integration is compared with the optimized pose from the pose graph. Let ∆t and ∆θ denote the translation and rotation differences; if ∥∆t∥2 > τ trans or ∆θ > τ rot , where τtrans and 
+
+τrot are translational and rotational thresholds, the keyframe is marked as pose-inconsistent and added to Ku ⊂ K , as illustrated in Fig. 2. 
+
+Pose-Graph-Aware Reintegration. Pose-graph-aware rein-tegration decides which part of the observation history should be rebuilt using optimized keyframe poses. Let wrt and wsm be the lengths of the real-time and short-term windows over the keyframe history, and let Krt and Ksm be the corresponding subsets of K. When a large fraction of keyframes is pose-inconsistent, i.e., |K u|/|K| > ρ L with ρL = 2 /3, the system regards this as a large loop closure and resets the voxel-level semantic memory, followed by reintegrating all keyframes in chronological order using their optimized poses ( Loop-Aware Global Reintegration , see the bottom-left of Fig. 2). If instead more than a fraction ρM ≈ 1/3 of the keyframes in the short-term window are pose-inconsistent, i.e., |K u∩K sm |/|K sm | > ρ M,and at least one pose-inconsistent keyframe lies in the real-time window ( |K u ∩ K rt | > 0), the affected observations in the last 
+
+wsm frames are refreshed by rebuilding the corresponding part of the active memory using their optimized poses ( Regional Reintegration ). Otherwise, if |K u ∩ K rt | > 0 but the above two conditions are not met, keyframes within Krt are refreshed using their optimized poses to perform a lightweight local refresh ( Local Memory Refresh ); otherwise, the pose update is ignored for the spatio-semantic memory. 
+
+Keyframe-Guided Memory Pruning. Let lmc denote the memory capacity (maximum history length), m the current overflow length beyond this capacity, and lk the maximum Query : “hot dog”          
+
+> Top voxel match: 𝑉𝑉
+> Latest image index: 𝑉𝑉 𝐼𝐼 :𝐼𝐼 51
+> Owl-v2 query: “hot dog”
+> · mLLM verify
+> Query :“red chili ”
+> Latest image index: 𝑉𝑉 𝐼𝐼 :𝐼𝐼 36
+> Owl-v2 query: “red chili”
+> · mLLM verify
+> Top voxel match: 𝑉𝑉
+> Fig. 3. Hybrid Localization. The VLM feature field in the spatio-semantic memory is first queried with a language embedding to retrieve a high-confidence voxel and its associated RGB frame, which is then passed through an open-vocabulary detector to obtain object proposals. Finally, an mLLM inspects the retrieved image and either confirms or rejects the presence of the queried object, yielding a verified 3D target pose.
+
+number of keyframes allowed in memory, as illustrated in the bottom-right of Fig. 2. When the history length reaches 
+
+lmc + m, the m oldest observations are removed in a keyframe-aware manner: intermediate frames are discarded first, and keyframes are removed only when their count exceeds lk.Here m is determined online as the current excess history length rather than tuned as an additional fixed hyperparameter. To further reduce the cost of storing and decoding high-dimensional semantic features, feature vectors are retained only for keyframes and for the most recent wrt observations, which serve as a buffer for real-time updates, while older non-keyframe observations keep only geometric information. The experimental configuration uses τtrans = 0 .1 m, τrot = 5 ◦,
+
+wsm = 50 , wrt = 10 , lmc = 500 , and lk = 100 . In combination, pose-graph-aware reintegration and keyframe-guided pruning keep the spatio-semantic memory compact and consistent over long horizons with low computational overhead. 
+
+B. Hybrid Localization and Task-Oriented Navigation 
+
+This subsection describes how DREAM uses dynamic spatio-semantic memory for hybrid localization, task-oriented naviga-tion, and target reacquisition. 
+
+1) Hybrid Localization: The hybrid localizer builds on VLMs such as CLIP [26] and SigLIP [27], which embed images and text into a shared latent space for coarse memory retrieval, followed by image-space detection and high-level semantic verification. As described in Sec. III-A , RGB-D observations are converted into per-point visual features and integrated into the voxelized memory. Given a language query, the text is encoded by the VLM text encoder, and coarse localization identifies the voxel whose stored feature has the highest inner product with this embedding. Conditioned on the selected voxel, the most recent associated RGB image is retrieved from the spatio-semantic memory and passed to an open-vocabulary object detector (e.g., OWL-v2 [28]) to detect instances of the queried category in image space. The 3D position of the 6Semantic-Similarity Map  
+
+> Recency Map
+> Value-based Exploration Map
+> Explored/Obstacles/Frontier Map
+> Start Pose
+> Target Pose
+> 𝑨𝑨 ∗for Path Planning
+
+(a)  (b) 
+
+(c)  (d)      
+
+> Fig. 4. Task-oriented Navigation and Exploration. (a) A* path planning on the explored/obstacle/frontier map from the current start pose to the task-specific target pose. (b) Exploration score map obtained by combining the recency and semantic-similarity values; high-score frontier cells are selected as exploration goals. (c) Recency map VTthat assigns a higher value to regions that have not been observed for a long time. (d) Semantic-similarity map VS
+> computed from VLM features, highlighting regions whose appearance is most relevant to the language query.
+
+candidate object is then obtained by back-projecting the center pixel of the detected bounding box into the world frame. A purely similarity-threshold-based approach is brittle with semantically or visually similar objects; for example, a “hot dog” query may still retrieve a “hamburger” as a confident match. Multimodal large language models (mLLMs) [6] can better resolve such distinctions, so an mLLM-based semantic verification stage is introduced. As shown in Fig. 3, the pipeline has three stages: (i) memory-based coarse localization, which retrieves the highest-confidence voxel and its most recent image; (ii) open-vocabulary detection on this image to generate 3D object hypotheses; and (iii) mLLM-based re-ranking and verification to reject visually inconsistent detections. This design enables DREAM to localize the actual target rather than the closest semantic surrogate. The implementation uses SigLIP-so400m for language-conditioned feature extraction and OWL-V2 Large ensemble for open-vocabulary detection. The object and grasp feature-matching thresholds are both set to 0.05, and the OWL-V2 detector uses a confidence threshold of 0.15. Qwen-VL-Max [29] is used as the mLLM verifier, which returns a short caption and a binary Answer: True/False decision for each candidate target. The decision is then parsed to accept or reject the candidate target. If no candidate survives the verification stage, the query is treated as not grounded in the current memory, the object is marked as “object not found”, and control is passed to the exploration policy described next. Meanwhile, RMP refreshes pose-inconsistent historical observations and prunes redundant history, so retrieval and verification operate over a bounded and temporally consistent set of voxels and images, keeping the hybrid localizer efficient even in long-horizon tasks. 
+
+2) Task-Oriented Navigation and Exploration: To real-ize task-oriented navigation, DREAM combines a grid-based A* [30] planner with the dynamic spatio-semantic memory. Depending on whether the target is localized, the system tracks a known target pose or explores with a value-based map and distance-aware heuristics. Near the object, a docking point is introduced for manipulation-ready base poses, and paths are executed in a receding-horizon fashion to remain robust to scene changes. 
+
+Obstacle Map Construction. A 2D obstacle map is first constructed from the spatio-semantic memory. A sparse 3D point cloud is normalized with respect to the sensor height and the ground plane is translated to z = 0 . To account for noise in depth measurements, a ground threshold is used (0.2 m in the experiments): voxels above this height are marked as obstacles, while voxels below are projected onto a 2D grid as navigable cells. Grid cells that are neither labeled as obstacles nor as navigable are treated as explorable frontier cells, from which the planner can expand the explored region. 
+
+Exploration and Goal Selection. Given the robot pose and a target pose, the planner treats the target pose as the navigation goal and runs A* on the obstacle map when Hybrid Local-ization confidently localizes the target (Fig. 4(a)). If Hybrid Localization returns “object not found”, DREAM switches to exploration mode and selects frontier cells as intermediate goals. Rather than exploring uniformly, this frontier-based exploration is biased by a value-based exploration map (Fig. 4(b)) toward promising regions. This map is decomposed into two terms. The first term is a recency map (Fig. 4(c)) that prioritizes locations that have not been observed for a long time. Let the current time be T and the last-seen time of voxel (x, y, z ) be 
+
+tx,y,z . The recency map VT is defined as 
+
+T ∗[x, y ] = max 
+
+> z
+
+ T − tx,y,z 
+
+, (3) 
+
+VT [x, y ] = σ βT
+
+ T ∗[x, y ] − μT
+
+ , (4) where βT and μT are hyperparameters, and σ denotes the sigmoid function. The second term is a semantic-similarity map (Fig. 4(d)) that exploits the VLM features stored in the spatio-semantic memory. Let fx,y,z be the VLM feature at voxel (x, y, z ) and fq be the VLM feature of the language query. The semantic-similarity map VS is defined as 
+
+S∗[x, y ] = max 
+
+> z
+
+ fq · fx,y,z 
+
+, (5) 
+
+VS [x, y ] = σ βS
+
+ S∗[x, y ] − μS
+
+ , (6) where βS and μS are also hyperparameters. A linear com-bination of VT and VS defines the exploration score map in Fig. 4(b), balancing temporal novelty and semantic relevance. During exploration, a distance-dependent heuristic is further imposed to reduce local oscillations when sampling exploration goals from this score map. Let pt ∈ R2 denote the robot base position at time t, and let Gt be the set of frontier cells sorted by their exploration score. Frontier cells that lie outside a small neighborhood of the base are first identified as 
+
+Ft = {g ∈ G t | ∥ g − pt∥2 ≥ de} , (7) with de = 0 .85 m in the implementation. In practice, the planner samples the next exploration goal from 
+
+Gexplore  
+
+> t
+
+=
+
+(Ft, if Ft̸ = ∅,
+
+Gt, otherwise , (8) 7
+
+Thus, the planner prefers high-score frontier cells at least de
+
+away from the current base when available, and otherwise falls back to all frontier cells. This reduces local goal oscillations near the robot. 
+
+Docking and Receding-horizon Execution. Once the target object has been localized, navigation near the goal is driven by manipulation requirements rather than pure coverage. Let 
+
+ot ∈ R2 denote the 2D position of the queried object at time t.A manipulation range dm, also set to 0.85 m, defines a docking point : a base pose that places the robot within reach of the object while keeping a collision-free corridor between the base and the object. Formally, let Dt be a set of navigable cells in a neighborhood of ot; feasible docking candidates are 
+
+Ddock  
+
+> t
+
+= {g ∈ D t | ∥ g − ot∥2 ≤ dm, localFree (g, o t)} , (9) where localFree (g, o t) is a lightweight local collision check that rejects base goals whose corridor to the object is occupied in the obstacle map. In the implementation, gdock  
+
+> t
+
+is selected from Ddock  
+
+> t
+
+as the feasible goal with the lowest path cost from pt, encouraging sufficient clearance and line of sight for manipulation. To handle scene changes, navigation is executed in a semi-closed-loop, receding-horizon fashion. Instead of executing the full A* path, the robot follows only the first 16 waypoints (about 1-1.5 m), then re-senses, updates the map, and replans. Once ∥pt − ot∥2 ≤ dm, this truncation is disabled to avoid unnecessary detours near the goal. The cycle repeats until the robot is close enough to the target and no obstacles block manipulation; the base is then aligned to face the object and the camera centers the target in the image. The receding-horizon strategy does not discard useful target history. When a target has been localized, DREAM caches the corresponding navigation goal and plans toward it while continuing to verify the scene. In the released configuration, once the robot is within 2.0 m of the cached target, it switches from a full look-around sweep to focused verification toward that goal. If the new detection differs from the cached goal by more than 0.50 m, the old candidate is treated as stale and the system replans toward the updated detection. This lets the robot exploit long-range target observations while still rechecking near the target to handle relocation. 
+
+C. Grasping and Placement Strategy 
+
+Manipulation requires the base to approach the target with sufficient visibility, reachability, and collision-free arm workspace. Once the robot reaches a suitable docking point and the target is visible to the wrist-mounted RGB-D camera, 
+
+DREAM triggers the grasping or placement routine in Fig. 5. 
+
+1) Grasping Strategy: Despite recent progress in Vision Language Action (VLA) Models [31], [32], their robustness and open-vocabulary grasping capability in real-world settings remain limited. DREAM therefore adopts a modular grasping stack with three components: (i) AnyGrasp-based grasp pro-posal generation, (ii) a heuristic fallback for top-down grasps, and (iii) a two-stage execution policy. 
+
+AnyGrasp. Given a language-specified target, once the robot has navigated to a docking point (Sec. III-B ), the wrist-mounted Robot View             
+
+> Robot View Robot View
+> Pre-grasp
+> Pickup
+> Place
+> AnyGrasp/
+> Heuristic
+> Pre-place
+> Heuristic:
+> Pickup point
+> Heuristic:
+> Place point
+> (a) (b) (c)
+> (d) (e) (f)
+> (g) (h) (i)
+> (j) (k) (l)
+> Fig. 5. Grasping and placement in DREAM .(a)–(c) AnyGrasp / heuristic grasp proposal, pre-grasp pose, and executed pickup. (d)–(f) Heuristic selection of the placement point in the bowl and the pickup point in the basket. (g)–(i) Two-stage approach and grasp execution inside the basket. (j)–(l) Pre-place pose, descent, and final placement of the object in the bowl.
+
+RGB-D camera is oriented toward the object and captures a local RGB-D observation. Grounding DINO [33] and Segment Anything-2 [34] segment the queried object, and the masked RGB-D pixels are back-projected into a 3D point cloud in the robot base frame. AnyGrasp [35] then generates collision-free grasp candidates, which are further filtered using the segmentation mask, retaining only those whose contact regions lie on the target object. The remaining candidate with the highest confidence is executed, yielding target-specific grasps rather than grasps on nearby distractors. 
+
+Heuristic grasp. In real-world experiments, AnyGrasp can fail on specular or noisy surfaces where depth is unreliable. A top-down fallback is then invoked, choosing a yaw angle that closes the gripper along the shorter footprint axis of the segmented object point cloud. The segmented object is projected into the horizontal plane, and the median (x, y ) is subtracted to obtain centered points pi ∈ R2. From these points, the covariance matrix and its two orthogonal eigenvectors e1, e 2
+
+are computed. For each axis ek, the extent is measured as 
+
+ℓk = max  
+
+> i
+
+(pi · ek) − min  
+
+> i
+
+(pi · ek), k ∈ { 1, 2}. (10) The gripper closing direction is set to the shorter axis, 
+
+c =
+
+(e1, ℓ1 ≤ ℓ2,e2, otherwise , θyaw = atan2( cy , c x), (11) where (cx, c y ) are the components of c and θyaw is wrapped to 
+
+(−π, π ). For elongated objects, this aligns the closing direction with the shorter axis of the footprint; for nearly isotropic shapes, either axis is acceptable. In practice, this provides a simple shape-adaptive yaw estimate whenever learned grasps are unavailable. 8
+
+Two-stage execution. Once a grasp pose has been selected, it is executed using a short, staged approach to ensure safe and stable contact. Let ⃗p denote the grasp point in the base frame and ⃗a a unit approach direction for the grasp. The end-effector follows the trajectory  ⃗ p − 0.25 ⃗a,⃗p , (12) moving from a pre-grasp waypoint to the final grasp point, as shown in Fig. 5(b),(c). This keeps the arm collision-free until the final approach and reduces object disturbance. The gripper then closes in 5 mm increments while motion is monitored. When additional commanded closing produces little motion before the mechanical limit, the object is regarded as grasped. The robot then lifts it and places it into the rear storage basket. 
+
+2) Placement Strategy: Placement starts after the object has been stored in the rear basket and the robot is commanded to a target region, such as a bowl (Fig. 5(d)). The procedure estimates a safe placement pose inside the target container, re-grasps the object from the basket (Fig. 5(e)–(i)), and executes a two-stage placement motion (Fig. 5(j)–(l)). The robot first navigates to a docking point facing the target container and reuses the same open-vocabulary perception stack as in grasping. Grounding DINO and Segment Anything 2 segment the container, and the masked pixels are back-projected with depth to form a point cloud Pplace = {(x, y, z )} in the robot base frame. The median horizontal coordinates (xm, y m)
+
+provide a robust estimate of the region center. Around this center, points within a small window ( |x − xm| < 0.1 m, 
+
+|y − ym| < 0.1 m) are considered, and the safe placement height is defined as 
+
+zmax = 0 .1+max z |x−xm| < 0.1, |y−ym| < 0.1 , (13) where the constant 0.1 m is a vertical safety margin above the local support surface. This yields a top-down placement pose at (xm, y m, z max ), shown in Fig. 5(d). After fixing the placement pose, the arm is redirected toward the rear basket, and the same heuristic top-down grasping procedure as in the pickup phase is reused to grasp the object from the basket, as illustrated in Fig. 5(f). Finally, with the object firmly held, the arm moves from the basket to the pre-computed placement pose using the same two-stage pattern as in grasping. It first goes to a pre-place waypoint above (xm, y m, z max ), then follows a straight-line trajectory to the final pose before opening the gripper (Fig. 5(j)–(l)), which minimizes lateral motion and reduces collisions with the container or surrounding clutter. IV. E XPERIMENTS 
+
+DREAM is evaluated on a real mobile manipulation platform in four dynamic indoor laboratory scenes. The evaluation focuses on three aspects: target navigation and exploration, object pickup and placement, and spatio-semantic memory efficiency. The experiments include (i) closed-loop mobile manipulation under dynamic target relocation, (ii) memory consumption and update efficiency under identical RGB-D and pose streams, and (iii) ablation studies for grasping and hybrid localization modules. 6m         
+
+> Scene 1 Scene 2
+> Scene 4 Scene 3
+> Fig. 6. Real-world laboratory scenes used for evaluation. S1–S4 are dynamic indoor rooms of size 8×8,6×12 ,12 ×14 , and 12 ×14 m, respectively, with obstacle density and corridor narrowness increasing from S1 to S4.
+
+A. Hardware Platform and Real-world Environments 
+
+The mobile manipulation platform (Fig. 2) consists of an AgileX Ranger Mini 3.0 base, a UFACTORY xArm6 manipulator, a wrist-mounted Intel RealSense D435i RGB-D camera, and a Livox MID-360 LiDAR with a built-in IMU. The robot-side system runs on a laptop with Ubuntu 22.04, ROS 2 Humble, and 64 GB system RAM; compute-intensive perception and grasping services run on a server equipped with an NVIDIA RTX 4090 GPU with 24 GB VRAM. For the closed-loop mobile-manipulation comparison, DREAM and DynaMem use the same low-level control stack and the same LiDAR-inertial-visual SLAM backend. Experiments are conducted in four real-world laboratory scenes (S1–S4; 64 ,
+
+72 , 168 , and 168 m 2; Fig. 6) with different obstacle densities and corridor widths. Everyday objects are randomly placed as manipulation targets. During execution, the target object is manually relocated after initial localization to evaluate memory update, target reacquisition, replanning, and task completion under scene changes. The runtime is decoupled: RTAB-Map observations are processed at 5 Hz, low-level control runs at 20 Hz, servo observations at about 10 Hz, RGB-D input at 15 Hz, and Fast-LIO2 odometry at 20 Hz. Semantic-memory updates and RMP maintenance run asynchronously and do not block odometry, control, or command execution. 
+
+B. Mobile Manipulation in Dynamic Environments 
+
+In this task, given a natural-language instruction (e.g., “put the orange into the green bowl”), the robot must operate in an unknown and dynamically changing environment to complete the full pipeline from task-oriented navigation and exploration to pickup and placement. Each complete long-horizon task is executed as a cascade of Navigation, Pickup, second Navigation, and Place; if one stage fails, subsequent stages in that trial are not executed. The following four evaluation metrics are used: Navigation Success Rate: The robot must actively explore and navigate from the initial pose to the vicinity of the target. Navigation is regarded as successful if, when the robot stops, the Euclidean distance to the target is less than 1 m and the target is fully visible in the wrist camera image, even when the target has been moved one or more times by a human during execution. Pickup Success Rate: Conditioned on successful navigation, a stage attempt is counted as successful 9                                                                              
+
+> TABLE I
+> SUCCESS RATES (%) ON DYNAMIC MOBILE MANIPULATION TASKS .
+> DREAM IS COMPARED WITH DYNA MEM ACROSS FOUR REAL -WORLD SCENES . S UBTASK RATES USE STAGE -CONDITIONED DENOMINATORS ,LONG -TERM SUCCESS REQUIRES ALL STAGES TO SUCCEED ,AND RAW COUNTS ARE SHOWN IN PARENTHESES .Task Method S1 S2 S3 S4 Navigation DynaMem 85.7 (30/35) 82.4 (28/34) 72.7 (24/33) 68.8 (22/32)
+> DREAM 89.2 (33/37) 86.1 (31/36) 83.8 (31/37) 80.0 (28/35)
+> Pickup DynaMem 88.2 (15/17) 87.5 (14/16) 92.9 (13/14) 92.3 (12/13)
+> DREAM 94.4 (17/18) 94.1 (16/17) 94.4 (17/18) 93.8 (15/16)
+> Place DynaMem 92.3 (12/13) 91.7 (11/12) 80.0 (8/10) 88.9 (8/9)
+> DREAM 93.3 (14/15) 92.9 (13/14) 92.3 (12/13) 91.7 (11/12)
+> Long-term DynaMem 60.0 (12/20) 55.0 (11/20) 40.0 (8/20) 40.0 (8/20)
+> DREAM 70.0 (14/20) 65.0 (13/20) 60.0 (12/20) 55.0 (11/20)
+
+if the robot stably grasps the target and transports it into the rear storage basket. Place Success Rate: Conditioned on the preceding stages reaching placement, a stage attempt is counted as successful if the robot places the target stably inside or on the specified container. Long-term Success Rate: Each trial consists of Navigation, Pickup, a second Navigation, and Place. Long-term success requires all four stages to succeed. Since each long-horizon trial contains two navigation stages, Navigation Success Rate is computed over all first- and second-navigation attempts that are reached. Navigation, Pickup, and Place percentages are computed over the valid attempts that reach the corresponding stage, whereas Long-term success is computed over complete task trials. Raw counts are reported with percentages in Tab. I to make these denominators explicit. 
+
+Results. The quantitative results are summarized in Tab. I. Across all four scenes, DREAM achieves higher Navigation, Pickup, Place, and Long-term success rates than DynaMem. Navigation increases from 68 .8% -85 .7% with DynaMem to 
+
+80 .0% -89 .2% with DREAM , with the largest gains observed in the cluttered S3/S4 scenes. Pickup success improves from 
+
+87 .5% -92 .9% to 93 .8% -94 .4% , and Place success improves from 80 .0% -92 .3% to 91 .7% -93 .3% . For the complete cascade, 
+
+DREAM reaches 55% -70% Long-term success, compared with 
+
+40% -60% for DynaMem. Aggregating the Long-term trials over all scenes, DREAM achieves 50 /80 = 62 .5% success, compared with 39 /80 = 48 .8% for DynaMem. The corresponding Wilson 95% confidence intervals are approximately 51 .5% –72 .3% and 
+
+38 .1% –59 .5% , respectively, reflecting the modest sample size of physical real-robot trials. These repeated gains across scenes suggest that online memory update, target reacquisition, and staged manipulation improve robustness when the target is manually relocated during execution. 
+
+C. Memory Consumption and Update Efficiency 
+
+To fairly compare the memory consumption and update efficiency of different scene representations under identical conditions, a log-and-replay protocol is adopted. In each scene, the robot is first teleoperated along a predefined exploration trajectory while a unified SLAM system records a continuous stream of RGB-D observations and corresponding camera/base poses. During logging, some target objects are moved to introduce human-induced scene dynamics. No scene representation is built during this data-collection phase. The                                     
+
+> TABLE II
+> MEMORY USAGE AND PER -FRAME UPDATE TIME ACROSS SCENES .
+> MEMORY IS MEASURED IN GB, TIME IN SECONDS (S). L OWER IS BETTER .Memory (GB) ↓Time (s) ↓
+> Method S1 S2 S3 S4 S1 S2 S3 S4 DovSG 0.23 0.35 0.83 0.89 113 115 124 128 DynaMem 1.32 2.45 8.96 10.43 0.82 1.11 2.21 2.38
+> DREAM 0.37 0.46 0.61 0.63 0.43 0.49 0.53 0.52
+
+same RGB-D and pose sequence is then replayed from an empty map into DovSG [5], DynaMem [4], and DREAM . Each method incrementally reconstructs and updates its own scene representation frame by frame. For each scene, the final memory footprint and the average per-frame update time are recorded over the entire sequence. All methods use a spatial resolution of 0.05 m. This log-and-replay protocol removes trajectory differences and isolates memory-update behavior; identical RGB-D observations and SLAM poses are provided to all memory baselines, so the reported differences reflect memory-maintenance and update behavior rather than different pose inputs. In live operation, DREAM uses the same memory-update logic asynchronously as described above. 
+
+Results. Tab. II reports the memory footprint and average per-frame update time for DovSG, DynaMem, and DREAM across all four scenes. As the number of processed frames increases, the voxel count and memory usage of DynaMem grow rapidly, reaching up to 10 .43 GB in S4. Its per-frame update time also increases to more than 2 s in the larger scenes. DovSG maintains a more compact memory footprint (below 1 GB in all scenes) thanks to its node-level semantic representation, but its per-frame update time exceeds 110 s, dominated by repeated calls to heavy vision-language models and graph maintenance. This makes it impractical for real-time online operation on the robotic platform. In contrast, DREAM keeps both memory and update time nearly flat as the task progresses. Across all four scenes, DREAM uses only 0.37 –0.63 GB of memory, which is roughly 3-15 × smaller than DynaMem at the same map resolution, and achieves average per-frame update times of 0.43 –
+
+0.53 s, which are about 2-4× faster than DynaMem, even as loop closures and dynamic scene changes accumulate over long trajectories. These results show that the proposed Redundancy-Aware Memory Pruning allows DREAM to maintain a compact and consistent spatio-semantic representation while keeping memory and computation bounded during long-term operation. 
+
+D. Ablation Studies 
+
+To analyze the contribution of key components in DREAM ,ablation studies are conducted on the grasping and hybrid localization modules. 
+
+(1) Grasping module. The following configurations are compared: (i) Full configuration : AnyGrasp for grasp candidate generation + heuristic for grasp pose generation + two-stage trajectory execution; (ii) Without two-stage execution :AnyGrasp for grasp candidate generation and the heuristic for grasp pose generation are retained, but only a single-stage grasp trajectory is executed; (iii) AnyGrasp only : directly execute the grasp candidates output by AnyGrasp without heuristic or 10              
+
+> TABLE III
+> ABLATION STUDY OF PICKUP AND HYBRID LOCALIZATION MODULES .
+> SUCCESS RATES (%) AVERAGED OVER ALL TRIALS .Task Method / Variant Success ↑
+> Pickup Heuristic only 67 AnyGrasp only 79 AnyGrasp + Heuristic (no two-stage) 88 AnyGrasp + Heuristic + two-stage ( DREAM )94
+> Query object VLM (CLIP) + OWL-V2 75 VLM (SigLIP) + OWL-V2 77 Full hybrid localization ( DREAM )83
+
+two-stage execution; (iv) Heuristic only : do not use AnyGrasp; grasp poses are generated purely by the heuristic and executed directly. These variants are evaluated in a tabletop setting with a fixed-base manipulator. Ten common household objects are used to test the grasping-related modules. During evaluation, each object is placed in different poses and is attempted ten times, resulting in 100 grasp trials per configuration. 
+
+Results. Tab. III (top) summarizes the Pickup success rates of different grasping configurations in a tabletop setting. Using only the heuristic top-down grasp yields a 67% success rate, while using only AnyGrasp improves this to 79% . Combining AnyGrasp with the heuristic refinement (without two-stage execution) further increases the success rate to 88% , and the full configuration with two-stage execution reaches 94% . These results indicate that (i) learned grasp proposals are important for difficult objects, (ii) the heuristic refinement helps when AnyGrasp fails or returns suboptimal poses, and (iii) the two-stage execution reduces collisions and stabilizes contact, leading to the best overall performance. 
+
+(2) Hybrid localization module. For the hybrid localization mechanism, the following variants are evaluated: (i) VLM feature field + OWL-V2 (SigLIP) : use a VLM feature field built from SigLIP features combined with OWL-V2 detection, and determine the target position via nearest-neighbor retrieval in the feature space; (ii) VLM feature field + OWL-V2 (CLIP) :replace SigLIP with CLIP features while keeping the rest of the pipeline unchanged; (iii) Full hybrid localization :build on VLM feature retrieval and OWL-V2 detection, and additionally introduce an mLLM-based semantic verification step to filter and confirm candidate targets. The same log-and-replay protocol as the memory experiment is used to collect RGB-D and pose sequences. Before data collection, objects in each scene are arranged to satisfy two conditions: (i) the scene contains object categories that are truly present and can be used as query targets; and (ii) semantically or visually similar distractor objects (e.g., peppers of different colors from the same category, or a hamburger placed near a hot dog) are deliberately included to assess robustness in the presence of distractors. The DREAM pipeline then builds a scene representation from the recorded RGB-D and pose sequence. For each scene, query targets are sampled only from object categories that actually exist in that reconstructed scene. For each variant, 25 query episodes are run per scene, resulting in 100 query episodes in total across the four scenes. 
+
+Results. Tab. III (bottom) reports the success rates for localizing queried objects in the reconstructed scenes. Using a CLIP-based feature field with OWL-V2 detection achieves a 75% success rate. Replacing CLIP with SigLIP provides a modest improvement to 77% , suggesting slightly better open-vocabulary retrieval. The full hybrid localization of DREAM ,which adds an mLLM-based semantic verification stage on top of the SigLIP feature field and OWL-V2 detections, achieves an 83% success rate. This shows that semantic verification effectively rejects spurious nearest-neighbor matches, especially with semantically or visually similar distractors. Together with the feature-field retrieval and open-vocabulary detection described in Sec. III-B 1 and Fig. 3, this indicates that the full hybrid localization pipeline is beneficial for robustly grounding language queries in complex, dynamic scenes. V. C ONCLUSIONS 
+
+DREAM is a closed-loop mobile manipulation framework for dynamic, previously unseen indoor environments without a pre-built map. By coupling a LiDAR-inertial-visual SLAM backend with a dynamic spatio-semantic voxel memory and Redundancy-Aware Memory Pruning, DREAM maintains a compact and temporally consistent 3D representation under frequent scene changes. On top of this representation, the hybrid localization module, value-guided exploration/navigation scheme, and grasping-placement stack jointly enable language-conditioned target acquisition, reacquisition, and manipulation in cluttered real-world settings. Real-robot experiments across four dynamic indoor laboratory scenes show repeated empirical gains over a strong voxel-map baseline in Navigation, Pickup, Place, and Long-term success rates, while maintaining bounded memory usage and online memory-update cost. The current system still has several limitations. Its modular and heuristic design may accumulate errors during long-horizon execution, and its manipulation capability is mainly limited to pick-and-place tasks rather than contact-rich or articulated-object interactions. Future work will explore active re-sensing, task rollback, tactile/force-aware manipulation, and deployment in larger cross-room environments toward long-term autonomy. REFERENCES [1] Q. Gu, A. Kuwajerwala, S. Morin et al. , “ConceptGraphs: Open-Vocabulary 3D Scene Graphs for Perception and Planning,” in Proceed-ings of the IEEE International Conference on Robotics and Automation (ICRA) . IEEE, 2024, pp. 5021–5028. [2] A. Werby, C. Huang, M. Büchner et al. , “Hierarchical Open-Vocabulary 3D Scene Graphs for Language-Grounded Robot Navigation,” in Pro-ceedings of Robotics: Science and Systems (RSS) , 2024. [3] P. Liu, Y. R. Orru, J. Vakil et al. , “OK-Robot: What Really Matters in Integrating Open-Knowledge Models for Robotics,” in Proceedings of Robotics: Science and Systems (RSS) , 2024. [4] P. Liu, Z. Guo, M. Warke et al. , “DynaMem: Online Dynamic Spatio-Semantic Memory for Open World Mobile Manipulation,” in Proceedings of the IEEE International Conference on Robotics and Automation (ICRA) .IEEE, 2025, pp. 13 346–13 355. [5] Z. Yan, S. Li, Z. Wang et al. , “Dynamic Open-Vocabulary 3D Scene Graphs for Long-Term Language-Guided Mobile Manipulation,” IEEE Robotics and Automation Letters , 2025. [6] OpenAI, J. Achiam, S. Adler et al. , “GPT-4 Technical Report,” arXiv preprint arXiv:2303.08774 , 2024. [7] Gemini Team, R. Anıl, S. Borgeaud et al. , “Gemini: A Family of Highly Capable Multimodal Models,” arXiv preprint arXiv:2312.11805 , 2024. [8] B. Li, P. Wu, P. Abbeel et al. , “Interactive Task Planning with Language Models,” Transactions on Machine Learning Research (TMLR) , 2025. 11 
+
+[9] A. Bar, G. Zhou, D. Tran et al. , “Navigation World Models,” in 
+
+Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , 2025. [10] A. Shukla, S. Tao, and H. Su, “ManiSkill-HAB: A Benchmark for Low-Level Manipulation in Home Rearrangement Tasks,” in Proceedings of the IEEE International Conference on Robotics and Automation (ICRA) ,2025. [11] J. Li, X. Cheng, T. Huang et al. , “AMO: Adaptive Motion Optimization for Hyper-Dexterous Humanoid Whole-Body Control,” arXiv preprint arXiv:2505.03738 , 2025. [12] Z. Fu, T. Z. Zhao, and C. Finn, “Mobile ALOHA: Learning Bimanual Mobile Manipulation with Low-Cost Whole-Body Teleoperation,” in 
+
+Proceedings of the IEEE International Conference on Robotics and Automation (ICRA) . IEEE, 2024, pp. 5515–5522. [13] Q. Liao, T. E. Truong, X. Huang et al. , “BeyondMimic: From Motion Tracking to Versatile Humanoid Control via Guided Diffusion,” arXiv preprint arXiv:2508.08241 , 2025. [14] N. M. M. Shafiullah, C. Paxton, L. Pinto et al. , “CLIP-Fields: Weakly Supervised Semantic Fields for Robotic Memory,” in Proceedings of Robotics: Science and Systems (RSS) , 2023. [15] H. Jiang, B. Huang, R. Wu et al. , “RoboEXP: Action-Conditioned Scene Graph via Interactive Exploration for Robotic Manipulation,” in 
+
+Conference on Robot Learning (CoRL) . PMLR, 2025, pp. 3027–3052. [16] A. Rosinol, J. J. Leonard, and L. Carlone, “NeRF-SLAM: Real-Time Dense Monocular SLAM with Neural Radiance Fields,” in Proceedings of the IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) . IEEE, 2023, pp. 3437–3444. [17] D. Maggio, M. Abate, J. Shi et al. , “Loc-NeRF: Monte Carlo Localization using Neural Radiance Fields,” in Proceedings of the IEEE/RSJ Inter-national Conference on Intelligent Robots and Systems (IROS) . IEEE, 2023, pp. 4018–4025. [18] B. Kerbl, G. Kopanas, T. Leimkühler et al. , “3D Gaussian Splatting for Real-Time Radiance Field Rendering,” ACM Transactions on Graphics (TOG) , vol. 42, no. 4, pp. 1–14, 2023. [19] L. Ge, X. Zhu, Z. Yang et al. , “DynamicGSG: Dynamic 3D Gaus-sian Scene Graphs for Environment Adaptation,” arXiv preprint arXiv:2502.15309 , 2025. [20] Z. Wu, Z. Wang, X. Xu et al. , “Embodied Instruction Following in Unknown Environments,” in Proceedings of the IEEE International Conference on Robotics and Automation (ICRA) , 2025. [21] H. Yin, X. Xu, L. Zhao et al. , “UniGoal: Towards Universal Zero-Shot Goal-Oriented Navigation,” arXiv preprint arXiv:2503.10630 , 2025. [22] J. Haviland, N. Sunderhauf, and P. Corke, “A Holistic Approach to Reactive Mobile Manipulation,” IEEE Robotics and Automation Letters ,vol. 7, no. 2, pp. 3122–3129, 2022. [23] A.-C. Cheng, Y. Ji, Z. Yang et al. , “NaVILA: Legged Robot Vision-Language-Action Model for Navigation,” in Proceedings of the IEEE International Conference on Robotics and Automation (ICRA) , 2025. [24] M. Labbé and F. Michaud, “RTAB-Map as an open-source lidar and visual simultaneous localization and mapping library for large-scale and long-term online operation,” Journal of Field Robotics , vol. 36, no. 2, pp. 416–446, 2018. [25] W. Xu, Y. Cai, D. He et al. , “FAST-LIO2: Fast Direct LiDAR-Inertial Odometry,” IEEE Transactions on Robotics , vol. 38, no. 4, pp. 2053– 2073, 2022. [26] A. Radford, J. W. Kim, C. Hallacy et al. , “Learning Transferable Visual Models from Natural Language Supervision,” in Proceedings of the International Conference on Machine Learning (ICML) . PMLR, 2021, pp. 8748–8763. [27] X. Zhai, B. Mustafa, A. Kolesnikov et al. , “Sigmoid Loss for Language Image Pre-Training,” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , 2023, pp. 11 975– 11 986. [28] M. Minderer, A. Gritsenko, and N. Houlsby, “Scaling Open-Vocabulary Object Detection,” Advances in Neural Information Processing Systems (NeurIPS) , vol. 36, pp. 72 983–73 007, 2023. [29] S. Bai, K. Chen, X. Liu et al. , “Qwen2.5-VL Technical Report,” arXiv preprint arXiv:2502.13923 , 2025. [30] P. E. Hart, N. J. Nilsson, and B. Raphael, “A formal basis for the heuristic determination of minimum cost paths,” IEEE Transactions on Systems Science and Cybernetics , vol. 4, no. 2, pp. 100–107, 1968. [31] Y. Wang, X. Li, W. Wang et al. , “Unified Vision-Language-Action Model,” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , 2026. [32] Y. Liao, P. Zhou, S. Huang et al. , “Genie Envisioner: A Unified World Foundation Platform for Robotic Manipulation,” arXiv preprint arXiv:2508.05635 , 2025. [33] S. Liu, Z. Zeng, T. Ren et al. , “Grounding DINO: Marrying DINO with Grounded Pre-Training for Open-Set Object Detection,” in Proceedings of the European Conference on Computer Vision (ECCV) . Springer, 2024, pp. 38–55. [34] N. Ravi, V. Gabeur, Y.-T. Hu et al. , “SAM 2: Segment Anything in Images and Videos,” in Proceedings of the International Conference on Learn Represent (ICLR) , 2025. [35] H.-S. Fang, C. Wang, H. Fang et al. , “AnyGrasp: Robust and Efficient Grasp Perception in Spatial and Temporal Domains,” IEEE Transactions on Robotics , vol. 39, no. 6, pp. 4455–4472, 2023.

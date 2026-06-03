@@ -1,0 +1,474 @@
+Title: TIDES: Time-Derivative Event Simulation via Deformable Reconstruction
+
+URL Source: https://arxiv.org/pdf/2606.02058v1
+
+Published Time: Tue, 02 Jun 2026 02:31:24 GMT
+
+Number of Pages: 18
+
+Markdown Content:
+# TIDES: Time-Derivative Event Simulation via Deformable Reconstruction 
+
+Christopher Thirgood, Dipon Kumar Ghosh, Simon Hadfield 
+
+{c.thirgood, d.ghosh, s.hadfield}@surrey.ac.uk 
+
+University of Surrey, Guildford, Surrey, UK Log(I)  Time Derivative of Log(I) 
+
+> Time Derivative of transmittance Transmittance
+
+Event Rasterizer  Event Simulation 
+
+> Ground Truth
+> DVS -Voltmeter
+> Ours
+> V2E Coloured events by timestamp
+> New
+> Old
+
+Fig. 1: TIDES at a glance: a physically grounded, end-to-end event synthesis pipeline that couples consistent scene geometry with robustness to event bursting generation 
+
+Abstract. Event cameras emit asynchronous events in response to envi-ronmental appearance changes. The scarcity of real-world event datasets makes simulation essential. However, most simulators infer event times-tamps from frame sequences, forcing many threshold crossings to share a small set of discrete times; a failure mode we term timestamp batching that worsens under fast motion and occlusion. We present TIDES, a continuous-time event simulator built on dynamic Gaussian splatting. Because TIDES operates on an explicit 3D scene representation with learnt geometry and motion, it can derive per-pixel intensity dynamics directly from the scene, rather than by differencing rendered frames. This enables accurate threshold-crossing prediction, in-cluding multiple crossings per rendering step, without temporal upsam-pling or frame interpolation. The same 3D scene model reveals where objects partially occlude one another; TIDES uses this to guide adaptive time stepping, concentrating computation only in regions where occlu-sion dynamics make simple models of brightness change unreliable. Finally, we model finite sensor bandwidth using a tile-level arbiter whose throughput, jitter, and event drops reproduce realistic sensor artifacts. Across paired RGB-event benchmarks, TIDES attains state-of-the-art event-stream fidelity. We also show that events simulated by TIDES transfer more effectively to real downstream tasks than competitors’. 
+
+Keywords: Event Camera · Asynchronous Vision · Simulation  
+
+> arXiv:2606.02058v1 [cs.CV] 1 Jun 2026 2F. Author et al.
+
+## 1 Introduction 
+
+Event cameras measure visual change asynchronously by emitting events when the per-pixel log-intensity change exceeds a contrast threshold [2, 6, 19]. This sensing principle provides microsecond-scale temporal resolution and high dy-namic range, enabling robust perception under fast motion and challenging il-lumination. These capabilities make it well suited for a wide range of computer vision applications [8,9,17]. Since collecting and labelling large event datasets is expensive, simulation is central for training and evaluation [23, 25]. Faithful event simulation remains difficult because event timestamps are a consequence of the 3D motion and visibility at each pixel, not of differences between discretely sampled frames. The dominant failure mode in event simula-tion is timestamp-batching, where many threshold crossings are forced to share a small set of timestamps determined by the rendering schedule. As illustrated in Fig. 1, the issue cannot be simply resolved by interpolating sub-frame crossing points based on brightness change. This is because the real 3D world is charac-terised by discrete object boundaries that move continuously through space, not by smooth global appearance changes. The timestamp-batching issue has traditionally persisted even in fully syn-thetic pipelines, which theoretically have access to the exact 3D motion of the scene, because existing simulators use a rendered sequence of frames as their in-termediate representation. Rendering at extremely high rates can somewhat mit-igate (but not fully remove) timestamp batching, but this becomes prohibitively slow and inaccurate in highly dynamic areas due to the reliance on temporal video interpolation models, which introduce artifacts. Dynamic scenes amplify these issues. Finite-difference estimates of intensity slope mix distinct visibil-ity regimes when occlusions or disocclusions occur between samples, yielding unstable local models precisely where accurate timing matters most [11, 25]. In parallel, recent work in the field of Gaussian Splatting has provided mech-anisms for real-time differentiable rendering with explicit visibility composit-ing. 4DGS extends these ideas to dynamic scenes via time-conditioned defor-mations [16, 37]. Because the scene is represented as an explicit collection of 3D primitives with known geometry and motion, the renderer provides direct access to which objects are visible, how they overlap, and how that visibility is changing. This is precisely the information that is most lacking in current frame-based event simulation methods. However, a better 3D scene model alone is not enough. The simulator must translate scene-level geometry and motion into per-pixel rates of brightness changes that are consistent with the current visibility ordering, and must allocate computation adaptively to regions where objects overlap and simple brightness models break down. To this end, we present TIDES, a continuous-time event simulator built on dynamic 4D Gaussian splatting [37]. Rather than rendering frames and differenc-ing them, TIDES differentiates the 3D-to-2D rendering process itself via Gaus-sian time dependent Jacobian vector products. Under TIDES custom Gaussian splatting rasterization method, these time-derivative rasterizations can be used to compute how fast each pixel’s brightness is changing at any instant, while TIDES 3
+
+correctly accounting for which objects are visible. Concretely, a forward-mode rendering pass produces log-luminance L and its instantaneous derivative ˙L to-gether with opacity dynamics (α, ˙α), all in the same compositing order as the primal image. This yields stable per-pixel threshold-crossing time prediction, in-cluding multiple crossings per step, without relying on a discretized rendering schedule. Because the 3D scene model knows where objects overlap and how visibil-ity is evolving, TIDES uses this information to guide adaptive time stepping, concentrating computation only where occlusion dynamics make a local linear model unreliable. Finally, TIDES models finite sensor bandwidth with a tile-level arbiter whose throughput and degradation are conditioned on the same scene-derived burst and visibility cues, reproducing burst-induced timestamp spreading and event drops. Overall, TIDES derives events from an explicit understanding of 3D scene structure and motion, rather than from frame differences. We make the following contributions: 
+
+– A forward-mode time-derivative renderer that produces visibility-consistent 
+
+(L, ˙L), enabling continuous-time threshold-crossing prediction without tem-poral upsampling. 
+
+– Risk-guided adaptive stepping that concentrates computation where occlu-sion dynamics invalidate local linearity. 
+
+– An optional tile-level readout arbiter conditioned on renderer-derived burst cues, reproducing realistic timestamp spreading and drops. 
+
+– A motion-scaled spatiotemporal fidelity metric for event streams, evaluated alongside downstream transfer benchmarks. 
+
+## 2 Related Work 
+
+2.1 Event simulators 
+
+Most event simulators generate events by querying intensity at discrete times and estimating threshold-crossing timestamps by interpolating changes in log I.ESIM popularized this renderer-coupled design and remains a common baseline due to its simplicity and scalability [25]. However, timestamp structure is fun-damentally constrained by the sampling schedule, so fast motion and visibility changes can collapse many events onto a small set of timestamps even when the comparator model is otherwise correct. A complementary line of work improves simulator realism by modeling sensor stages beyond an ideal comparator. v2e composes photoreceptor-style dynam-ics with leak, threshold mismatch, background activity, and timestamp noise to better match device behavior [13]. V2CE [41] extends this with a learned noise model calibrated to specific hardware. Circuit-inspired models such as DVS-Voltmeter provide a more mechanistic account of event generation and show how stochastic dynamics affect temporal statistics [20]. These approaches im-prove noise and readout realism, but when driven by discretely sampled video or 4 F. Author et al. 
+
+renders, timestamp batching persists because event times are still inferred from under-sampled intensity signals. Even with realistic pixel dynamics, temporal fidelity can fail if readout con-straints are ignored. ICNS and related characterization work show that shared readout and arbitration can impose structured delays and drops under bursts, motivating explicit bottleneck models rather than treating timestamps as ideal crossing times [15]. Such models, however, still rely on the upstream simulator to generate realistic continuous-time bursts as input to the arbiter. Physically grounded analytical pipelines such as PECS aim to close the re-alism gap by modeling image formation and sensor behavior more explicitly, including lens simulation and multispectral rendering [11]. The trade-off is prac-tical complexity and compute [31–33], since accurate timing can require dense temporal querying and physics-heavy rendering is difficult to scale or integrate into modern learning workflows. Our work targets the common bottleneck across these analytical simulator families: producing faithful continuous-time timestamps under non-linear visibil-ity, without brute-force high-rate rendering. We introduce an event rasterization module that renders instantaneous temporal derivatives and visibility-consistent cues to directly support continuous-time threshold-crossing prediction, and can optionally be paired with explicit arbitration models. 
+
+2.2 Dynamic neural rendering as a substrate for event simulation 
+
+Neural rendering offers a convenient intermediate representation for event data because it supports view-dependent image formation and can be queried at arbi-trary poses and times. Most prior event-based NeRF work addresses the inverse problem, learning radiance fields from events for reconstruction and novel-view synthesis [4,14,18,21,27], with extensions to dynamic scenes via time-conditioned or deformation-based fields [1, 28]. While relevant as background, volumetric NeRF rendering is typically too slow for event-rate simulation and exposes lim-ited visibility diagnostics near occlusions. Gaussian splatting provides real-time differentiable rendering with explicit visibility compositing [16, 30], and 4DGS extends it to dynamic scenes via time-conditioned deformations [37]. Recent event-based splatting work similarly fo-cuses on the inverse direction, recovering Gaussian scene representations from events (sometimes with auxiliary frames) for reconstruction and novel-view ren-dering [5, 10, 38–40]. In contrast, we are the first to study the forward prob-lem; using a learned 4DGS scene as input, and simulating events by predicting continuous-time threshold crossings from renderer-native dynamics and visibility signals. 
+
+## 3 Method 
+
+The central design goal of TIDES is to predict event timestamps from an under-standing of the underlying 3D structure and motion of the environment, rather TIDES 5Static 3D                  
+
+> Gaussians
+> Time conditioned
+> MLP
+> Deformed 3D
+> Gaussians: 𝐺 (𝑡 )
+> Time -Tangent 3D
+> Gaussians: 𝛿 𝐺 (𝑡 )
+> 𝛿 𝑡
+> 𝑡 0𝑡 1
+> Viewpoints at time t: 𝑉 𝑡 ,𝛿 𝑉 (𝑡 )
+> 𝛿 𝑡
+> ሶ
+> 𝐹 (𝜃 )
+> ሶ
+> 𝜇 3𝑑
+> 𝜇 3𝑑
+> Event Rasterization
+> Time Tangent 3D -2D
+> projection kernels
+> Log(I) & ሶLog(I)
+> 𝛼 &ሶ𝜶
+> 𝑡 +∆𝑡
+> Ideal Realistic
+> Larger spread and
+> dropped events to
+> match camera
+> characteristics
+> Accurate continuous
+> output but hardware
+> unrealistic
+> Tile -tangent risk arbitration
+> 𝑡
+> Event Readout
+> current event -batched methods
+> TIDE: Continuous timestamped events TIDE: Continuous timestamped events
+> Tile risk from time -
+> tangent renderings
+> Time -Tangent Event Generator with
+> residual signal updates
+> +C
+> -C
+> 𝐹𝑟𝑎𝑚𝑒 𝑡0
+> Risk
+> tt
+> 𝐹𝑟𝑎𝑚𝑒 𝑡1
+> Adaptive subposes rendering request
+> Pose and Time conditioned Jacobian Vector Products Event Generation Method
+
+Fig. 2: System diagram for TIDES. A primal and time-derivative splatting pass outputs 
+
+(L, ˙L, α, ˙α) with visibility-consistent compositing. These dynamics drive continuous-time threshold-crossing event times, avoid timestamp batching, and trigger risk-guided adaptive sub-posing under high motion and mixed visibility. An optional tile-level arbiter conditions readout spreading and drops on the same burst and visibility cues. 
+
+than from finite differences between discretely rendered frames. To this end, our event rasterizer takes a continuous-time dynamic Gaussian splatting scene (fit from RGB videos), and produces an event stream by solving per-pixel con-trast threshold crossings in continuous time. Between consecutive camera times-tamps, we advance time with an adaptive step ∆t and query a time-derivative splatting renderer. At each query time t and pixel location u TIDES outputs log-luminance L(u, t ) and its instantaneous derivative ˙L(u, t ). It also outputs opacity 
+
+α(u, t ) and its derivative ˙α(u, t ), as well as lightweight accumulation diagnos-tics (b(u, t ), c (u, t )) . Crucially, both ˙L and ˙α are differentiated under the active front-to-back compositing order, yielding visibility-consistent instantaneous dy-namics. This makes the threshold-crossing timestamp estimation a well-posed root-finding problem and provides renderer-native signals for adaptive stepping and readout modelling. 
+
+3.1 Dynamic Gaussian splatting image formation 
+
+We use EWA Gaussian splatting and front-to-back compositing as in 3DGS [16], with time-dependent parameters as in dynamic Gaussian representations [37]. At time t, each Gaussian k induces a screen-space elliptical kernel with projected mean uk(t) and precision (inverse covariance) Qk(t). For rendered pixel u, the unnormalized contribution from Gaussian k is 
+
+gk(u, t ) = exp 
+
+
+
+− 12 (u − uk(t)) ⊤Qk(t)( u − uk(t)) 
+
+
+
+. (1) We define the per-splat opacity contribution 
+
+τk(u, t ) = clamp  σk(t) gk(u, t ), 0, τ max 
+
+, (2) where σk(t) is the Gaussian’s time dependent opacity and τmax < 1 is a fixed saturation constant for numerical stability. To find the Gaussians’ final visibil-6 F. Author et al. 
+
+ity weights wk, their transmittance is composited in front-to-back order, with transmittance T0(u, t ) = 1 ,
+
+wk(u, t ) = Tk−1(u, t ) τk(u, t ), Tk(u, t ) = Tk−1(u, t ) 1 − τk(u, t ). (3) Thus, the rendered RGB ( I) and opacity ( α) are combined across Gaussians as 
+
+I(u, t ) = X
+
+> k
+
+wk(u, t ) ck(t) + TK (u, t ) Ibg (t), α(u, t ) = 1 − TK (u, t ). (4) Where ck(t) is the time-dependent color of Gaussian k and Ibg is the time-dependent background color. We convert to luminance Y (u, t ) = w⊤I(u, t ) using channel-weightings w and define the log signal that defines event-generation 
+
+L(u, t ) = log  Y (u, t ) + ϵ. (5) This compositing chain defines the visibility ordering; TIDES evaluates time dynamics under the same ordering to obtain visibility-consistent event timings. We provide the full projection Jacobians and screen-space covariance expressions used to compute uk(t) and Qk(t) in the supplementary material. 
+
+3.2 Forward-mode time-derivative Gaussian splatting 
+
+Accurate crossing-time prediction requires an instantaneous log-luminance slope that is consistent with renderer visibility. To be clear, the volumetric rendering process described above is differentiable. However, the derivatives of the render-ing process itself are not what drives event-generation. Rather, we must first extract the derivatives of the scene parameters with respect to time, and then propagate them through the derivatives of our rendering process. This allows us to understand analytically and explicitly, how the final rendered appearance will change with respect to time ( ˙L), instead of approximating it by differencing two rendering outputs. More formally, a learned deformation model maps time to Gaussian param-eters 
+
+Θ(t) =  μ(t), sraw (t), qraw (t), σ raw (t), a(t), Θ : R → RP ×d, (6) where P is the number of Gaussians. This model is differentiable, so we recover the time derivatives ˙Θ(t) ≜ ddt Θ(t) via a Jacobian-vector product (JVP) along the time axis, yielding per-Gaussian ( ˙ μk, ˙sraw ,k , ˙qraw ,k , ˙σraw ,k , ˙ak). This gives ex-act time derivatives in one evaluation, avoiding the inaccuracy of finite difference approximation, while remaining lightweight compared to reverse-mode differen-tiation through the rasterizer. We compute this Jacobian–vector product in forward-mode automatic dif-ferentiation through the deformation network, not by finite differences in time. Because the renderer applies element-wise activations to the raw deformation TIDES 7
+
+outputs, we propagate the time derivatives through these activations analyti-cally via the chain rule, for example 
+
+sk = exp( sraw ,k ), ˙sk = sk ⊙ ˙sraw ,k , (7) 
+
+σk = sigmoid( σraw ,k ), ˙σk = σk(1 − σk) ˙ σraw ,k . (8) Quaternions are normalized before rasterization, and we propagate ˙qk consis-tently through this normalization. If the camera is nonstatic, we treat the camera parameters as time-dependent renderer inputs. When ground truth camera time derivatives ˙V(t), ˙P(t), ˙c(t) are not available, they are estimated from neighboring camera timestamps. Note that this does not reintroduce finite differences for contrast slopes, since ˙L is still computed analytically by differentiating the resulting renderer traversal itself. The time-tangent renderer computes per-Gaussian screen-space primitives 
+
+(uk, ˙uk, Qk, ˙Qk) and appearance (ck, ˙ck), then composites them in the same front-to-back order as the primal pass. This ensures that temporal derivatives are consistent with visibility decisions such as early termination, clamping, and oc-clusion ordering. In particular, ˙ck includes derivatives through the view direction 
+
+vk(t) and the spherical-harmonic basis, and therefore captures motion-induced view-dependent appearance changes. We now derive ˙L by differentiating each stage of the compositing chain in Sec. 3.1, starting from per-Gaussian screen-space contributions and propagating through front-to-back blending. Using Eq. 1, let 
+
+pk(u, t ) = − 12 d⊤ 
+
+> k
+
+Qk dk, dk = u − uk(t). (9) Since u is fixed, ˙dk = − ˙uk and 
+
+˙pk = − 12
+
+
+
+d⊤ 
+
+> k
+
+˙Qk dk + 2 ˙d⊤ 
+
+> k
+
+Qk dk
+
+
+
+, ˙gk = gk ˙pk. (10) Using Eq. 2, define τ raw  
+
+> k
+
+= σkgk and 
+
+˙τ raw  
+
+> k
+
+= ˙ σk gk + σk ˙gk, ˙τk =
+
+(
+
+0 if τk is saturated at τmax ,
+
+˙τ raw  
+
+> k
+
+otherwise.  (11) With per-Gaussian derivatives in hand, we differentiate the front-to-back com-positing. Differentiating Eq. 3 yields 
+
+wk = Tk−1τk, ˙wk = ˙Tk−1τk + Tk−1 ˙τk, (12) 
+
+Tk = Tk−1(1 − τk), ˙Tk = ˙Tk−1(1 − τk) − Tk−1 ˙τk. (13) The final opacity derivative follows from α = 1 − TK as ˙α = − ˙TK . Finally, differentiating Eq. 4 yields the time derivative of the rendered image 
+
+˙I = X
+
+> k
+
+  ˙wk ck + wk ˙ck
+
+ + ˙TK Ibg + TK ˙Ibg . (14) With luminance Y = w⊤I and ˙Y = w⊤ ˙I, we obtain 
+
+˙L(u, t ) = ˙Y (u, t )
+
+Y (u, t ) + ϵ . (15) 8 F. Author et al. 
+
+3.3 Comparator and sensor model 
+
+We next extend (L, ˙L) from the time-derivative renderer to define a per-pixel driving signal S(u, t ) = F(L(u, t )) , where F is an optional sensor-front-end operator that models pixel-level analog processing. By default F is identity, so 
+
+S = L and ˙S = ˙L directly. When enabled, F composes standard sensor-modelling blocks: optical Point-Spread-Function blur (applied to both L and ˙L), a first-order photoreceptor low-pass, a center-surround spatial filter, and additive leak or noise terms. This sensor front-end is orthogonal to our continuous-time timing formulation. We adopt a residual-state comparator. Each pixel maintains a reference 
+
+Sref (u), initialized to S(u, t 0) and updated at each firing. An event is trig-gered when the signal departure from this reference reaches a contrast threshold: 
+
+S(u, t ) − Sref (u) = + C+ 
+
+> u
+
+for a positive event, or = −C− 
+
+> u
+
+for a negative one. In the simplest case both polarities share a single global threshold C+ 
+
+> u
+
+= C− 
+
+> u
+
+= C.To model realistic sensor variation we optionally allow asymmetric thresholds (C+̸ = C−) and per-pixel jitter by drawing C+ 
+
+> u
+
+, C − 
+
+> u
+
+independently around nom-inal values; once sampled, thresholds remain fixed for the simulation. We option-ally also model comparator leak as a slow reference drift Sref ← Sref − λleak ∆t .Within a simulation window (t0, t 0 + ∆t ] we approximate S locally. The first-order (linear) model is 
+
+S(u, t 0 + δ) ≈ S0(u) + ˙S0(u) δ, δ ∈ (0 , ∆t ], (16) where S0 = S(·, t 0) and ˙S0 = ˙S(·, t 0). Because ˙S0 is obtained by analytic differ-entiation of the rendering pipeline, it inherits per-pixel visibility ordering and reflects occlusion and disocclusion dynamics without finite-difference approxi-mation. When a second render S1 = S(·, t 0 + ∆t ) is available, we optionally fit a quadratic local model using S0, ˙S0, and S1, improving timing under signal curvature. Given the local model, we solve for crossing times. Under the linear model with ˙S0(u)̸ = 0 , the candidates are 
+
+δ+(u) = Sref (u) + C+ 
+
+> u
+
+− S0(u)˙S0(u) , δ−(u) = Sref (u) − C− 
+
+> u
+
+− S0(u)˙S0(u) . (17) Under the quadratic model, the candidates are the smallest positive roots of the corresponding quadratic in (0 , ∆t ]. We consider δ+ only when ˙S0 > 0 and δ−
+
+only when ˙S0 < 0, and accept a candidate only if δ ∈ (0 , ∆t ]. The earliest valid crossing δ∗ yields the event timestamp t∗ = t0 + δ∗. We append (t∗, u, +1) to the output stream E and set Sref ← Sref + C+ 
+
+> u
+
+if the positive threshold was reached, or append (t∗, u, −1) and set Sref ← Sref − C− 
+
+> u
+
+otherwise. The procedure repeats on the remaining interval (t∗, t 0 + ∆t ], up to Nmax events per pixel per step. 
+
+3.4 Adaptive rendering 
+
+Crossing-time prediction is least reliable near disocclusions and mixed visibil-ity. The compositing loop exposes three diagnostic signals at negligible extra TIDES 9
+
+cost. The transmittance rate | ˙α(u, t )| (rapid visibility change), the contributor count c(u, t ) (depth competition), and the coverage proxy b(u, t ) (accumulated blending mass). We combine them into a per-pixel risk score 
+
+r(u, t ) = clip( wb (1 − norm( b)) + wc norm( c) + wα norm( | ˙α|)) , (18) and use r to shrink the step size via ∆t ← ∆t κ (r) with κ(r) ∈ (0 , 1] , and to suppress event emission when b < b min .
+
+3.5 Derivative-conditioned finite-bandwidth readout 
+
+Real sensors serialize events through a finite-bandwidth readout, so localized bursts cause queuing delays, jitter, and drops. We optionally model this with a tile-scanning arbiter: tiles maintain FIFO queues and a deterministic scanner releases at most Km events from tile m per tick, with drop probability pdrop ,m 
+
+and additive timestamp jitter σt,m . We condition these on a tile-level activity score ψm ∈ [0 , 1] aggregating the event-rate proxy | ˙L|/C , the transmittance rate 
+
+| ˙α|, and the contributor count c:
+
+Km = ⌊K0 (1 − βK ψm)⌋ , pdrop ,m = p0 +η ψ m, σt,m = σ0 +γσ ψm, (19) where K0, p 0, σ 0 are steady-state baselines and βK , η, γ σ control the degradation rate. Under high activity, throughput falls while drops and jitter grow, repro-ducing realistic readout saturation. 
+
+## 4 Experiments 
+
+4.1 Experimental setting 
+
+We evaluate simulators along three axes: (i) event-stream fidelity against real events, (ii) event timestamp ratio metrics to analyze event bursts and (iii) synthetic-to-real transfer when training on simulated events and testing on real data. The results presented here are the average across all sequences in each dataset, while the supplementary material provides per-sequence results. We compare TIDES against ESIM [25], V2E [13], DVS-Voltmeter [20], and ICNS/IEBCS [24]. We do not include PECS [11] as a baseline because its released pipeline targets a different scene-based setup than our shared-renderer protocol; evaluating PECS within our shared 4DGS-renderer protocol would require dis-abling its native physical image-formation pipeline, yielding a comparison that is methodologically misaligned and potentially unfair to PECS. Furthermore, PECS uses its own benchmarking protocol isolating other methods against it-self. We report a fixed-budget setting with a 10 × query schedule for all methods and additionally ablate our adaptive rendering setting for TIDES as a separate row of results. Our adaptive pose-sampler varied greatly in the frequency of sub-pose requests for each scene. Baseline methods struggled to operate with non-linear timestamp intervals at inference time, and performed universally worse when combined with our adaptive rendering. 10 F. Author et al. 
+
+4.2 Datasets and shared renderer 
+
+We evaluate on four real datasets spanning ego-motion and dynamic-scene regimes: EDS and DSEC capture ego-motion, while HS-ERGB and BS-ERGB contain dy-namic objects [7, 12, 34, 35]. When 6-DoF trajectories are provided, we use the official poses; otherwise, we estimate camera motion and sparse geometry from RGB using COLMAP for static scenes and Easi3R for dynamic scenes [3, 36]. For each sequence we fit a dynamic Gaussian splatting scene from which we can render log-luminance L(u, t ) at any timestamp, providing a shared continuous-time rendering source for all simulators. Frame-driven baselines are given renders at regular intervals, while step-based methods query only at their chosen times. This isolates differences in time-stamping, thresholding, readout modeling, and occlusion handling from interpolation artifacts in the inputs. 
+
+4.3 Metrics 
+
+We report three complementary metric families that target distinct simulator failure modes: (i) inter-event timing statistics, (ii) spatiotemporal alignment to real events, and (iii) batching/burst distortions. Event generation can be characterized by the distribution of inter-spike in-tervals (ISI) τ at each pixel. Following DVS-Voltmeter-style analysis, we fit an inverse-Gaussian (IG) model to observed ISIs and report the negative log-likelihood (IG-NLL) of real events under the simulator’s ISI distribution. Lower IG-NLL indicates that the simulator reproduces the fine-grained timing of events rather than only their spatial support as a batch. To measure whether simulated events occur at the correct location and time, we compare polarity-matched real and simulated event sets in a motion-scaled spatiotemporal embedding. Each event (x, y, t ) is mapped to e = ( x, y, vt ), where 
+
+v (pixels/s) converts time errors into an expected spatial displacement so that a temporal offset ∆t is penalized as v∆t . We compute a bidirectional nearest-neighbour (Chamfer-style) distance between the embedded point sets over fixed temporal windows, with voxel-grid density control to reduce sensitivity to re-peated near-duplicate events. Lower values indicate better spatiotemporal agree-ment without requiring explicit correspondences. To diagnose timestamp artifacts that are visually evident as “layered” event bands, we report: (i) Same-ts, the fraction of events sharing identical timestamps within a window (higher implies stronger batching); (ii) ISI spike ratio, the fraction of ISIs near zero or concentrated at discrete clock quanta (indicating over-quantized timestamps); and (iii) Fano-factor error, which measures whether the simulator matches real burst dispersion by comparing the Fano factor F =Var( N )/E[N ] of event counts in fixed spatiotemporal bins: 
+
+EFano = 1
+
+|B| 
+
+X
+
+> b∈B
+
+log F pred 
+
+> b
+
+F gt 
+
+> b
+
+. (20) Lower Same-ts, lower ISI spike ratio, and lower EFano indicate reduced batching and more realistic burst statistics. Full definitions and implementation details TIDES 11 
+
+Table 1: Event fidelity per dataset. Best, second-best, and third-best per column are highlighted in red, orange, and yellow, respectively (excluding TIDES (adaptive) from color ranking). 
+
+EDS HS-ERGB BS-ERGB DSEC Simulator IG-NLL ↓ Chamfer ↓ IG-NLL ↓ Chamfer ↓ IG-NLL ↓ Chamfer ↓ IG-NLL ↓ Chamfer ↓
+
+ESIM 0.004748 0.046932 0.006763 0.021335 0.007669 0.039233 0.096768 0.150414 V2E 0.004058 0.044124 0.005823 0.016149 0.006092 0.035944 0.099792 0.153248 ICNS/IEBCS 0.004575 0.046710 0.008341 0.028272 0.010608 0.045028 0.092576 0.142781 DVS-Voltmeter 0.006050 0.050914 0.006388 0.014871 0.005163 0.033895 0.080542 0.133779 
+
+TIDES (10x) 0.003840 0.043245 0.004984 0.014892 0.004392 0.033002 0.068641 0.121962 TIDES (adaptive) 0.003733 0.042622 0.002343 0.013772 0.004251 0.032260 0.068439 0.120611 
+
+Table 2: Batching diagnostics across datasets (average)                                                                                                    
+
+> EDS HS-ERGB BS-ERGB DSEC Simulator Same-ts ↓Fano ↓ISI spike ↓Same-ts ↓Fano ↓ISI spike ↓Same-ts ↓Fano ↓ISI spike ↓Same-ts ↓Fano ↓ISI spike ↓
+> ESIM 0.281985 0.506379 0.096938 0.166213 3.305385 0.064902 0.279757 1.689136 0.111152 0.165757 3.296069 0.050237 V2E 0.076272 4.284378 0.047712 0.126701 6.409716 0.081733 0.155642 6.473020 0.089496 0.226925 6.495386 0.141100 ICNS/IEBCS 0.046909 2.417609 0.034290 0.074536 4.975071 0.049699 0.102743 5.063936 0.065669 0.114483 4.957434 0.073942 DVS-Voltmeter 0.102028 0.313285 0.061608 0.076948 2.698272 0.051943 0.112803 1.436576 0.069397 0.060686 3.155488 0.039239
+> TIDES (10x) 0.040882 0.228440 0.052497 0.050215 2.069280 0.038454 0.085554 0.816516 0.041768 0.057469 2.332386 0.024181 TIDES (adaptive) 0.025234 0.338062 0.055599 0.051124 2.017263 0.046340 0.080981 0.608790 0.033215 0.056436 2.199856 0.021470
+
+(binning, windowing, and normalization) are provided in the supplementary ma-terial. 
+
+4.4 Downstream tasks 
+
+To measure downstream task transfer, we train a range of models on simulated events and evaluate on real data. The specific tasks and models we use are: (1) E2VID [26] for reconstruction, (2) TimeLens-XL [22] for video frame interpo-lation (VFI), (3) Depth Any Event Stream [42] for depth estimation, and (4) ESS on DSEC [29] for segmentation. For VFI, we use the image reconstructed from the ground-truth event stream as reference and report PSNR and LPIPS. Additional motion-task results (flow and odometry) are reported in the supple-mentary tables. 
+
+4.5 State-of-the-art comparison 
+
+Table 1 and Table 2 report event-stream fidelity and timestamp-burst diagnos-tics, while Table 3 reports downstream transfer. TIDES achieves the best fidelity across all four datasets under both a fixed 10 × query budget and our adaptive budget (Table 1). Gains are largest under fast motion and occlusions, where frame-driven simulators alias visibility changes and finite-difference slope estimates collapse events onto a few timestamps. In contrast, TIDES renders instantaneous, visibility-consistent ˙L in the same com-positing order as the primal image, enabling continuous-time threshold crossings (including multi-crossing per pixel) without choosing an arbitrary differencing interval. Burst diagnostics in Table 2 show that improvements come from corrected timestamp structure, not event-rate inflation like v2e typically highlights from 12 F. Author et al. EDS_00_Dark_Peanuts  DSEC  – Zurich City  - 4b 
+
+> GT Events Output  TIDES (Ours)  DVS -Voltmeter  V2E  RGB Frame
+
+HSERGB –Spinning Umbrella 
+
+Fig. 3: Illustrations of the event frames created from the ground truth, TIDES and popular event simulation methods V2E and ESIM TIDES 13 V2E DVS -Voltmeter TIDES (Ours) GT Events Output    
+
+> E2Vid ESS Depth Estimation TimeLensXL
+
+Fig. 4: Visualizations of the downstream models using individual event generations including the ground truth event. 
+
+its extreme batching. TIDES consistently reduces Same-ts batching and burst distortion (Fano, ISI spikes). Adaptive stepping further improves IG-NLL and Chamfer by refining time only in mixed-visibility regions indicated by (α, ˙α, b, c ),with the largest gains on HS/BS-ERGB where pose sampling is sparse. Among baselines, V2E and ICNS/IEBCS improve realism via sensor/readout blocks, and DVS-Voltmeter models stochastic timing, but they remain limited by discretely sampled driving signals; TIDES removes this bottleneck by coupling continuous-time rendering with visibility-consistent derivatives and risk-aware time control. These results are exhasterbated by the visual event frames seen in Fig. 3. TIDES produces smoother temporal dispersion along motion boundaries and fewer frame-aligned timestamp bands than frame-driven baselines, matching the reduced batching statistics in Table 2. These improvements translate to down-stream transfer, models trained on TIDES events achieve the best overall per-formance across reconstruction, frame interpolation, depth, and segmentation (Table 3), with qualitative examples shown in Fig. 4. 
+
+4.6 Ablations 
+
+We ablate each module while keeping the rendering source, sensor parameters, and evaluation protocol fixed. Table 4 shows that visibility-consistent time-tangent derivatives are the largest contributor as replacing the time-tangent slope with finite differences increases 14 F. Author et al. 
+
+Table 3: Quantitative downstream transfer (train on simulated, test on real).                                                     
+
+> E2VID (HS-ERGB) VFI (BS-ERGB) EDA (DSEC) ESS (DSEC) Simulator PSNR ↑LPIPS ↓PSNR ↑LPIPS ↓RMSE ↓RMSE log ↓mIoU ↑
+> ESIM 12.2321 0.3283 28.5777 0.0580 12.6627 0.3163 17.2170
+> V2E 16.3587 0.2469 28.1585 0.0616 12.6108 0.3125 7.5678 ICNS/IEBCS 15.2137 0.2097 31.0376 0.0422 19.6507 0.8791 16.3643 DVS-Voltmeter 17.7328 0.2254 28.6220 0.0514 10.9048 0.2865 16.9245
+> TIDES (ours) 18.1587 0.1997 34.3054 0.0335 10.8160 0.2795 17.6898
+
+IG-NLL and Chamfer substantially. Adaptive control is the next most important factor, confirming that refining time in mixed visibility improves timing beyond a fixed query schedule. Disabling multi-crossing or mixed-visibility masking also degrades fidelity, while removing the readout model causes a smaller but consis-tent drop. 
+
+Table 4: Ablations isolating TIDES components on EDS scenes. Variant IG-NLL ↓ Chamfer ↓
+
+Full TIDES 0.00373 0.04262 Finite-diff slope ( ˙L by FD) 0.00521 0.04801 No multi-crossing (1 event max / step) 0.00439 0.04487 Fixed step size (no controller) 0.00486 0.04672 No risk-gated refinement (no (α, ˙α, b, c ) shrink) 0.00458 0.04593 No mixed-visibility masking (emit even when b < b min ) 0.00422 0.04431 No ˙α cue 0.00461 0.04711 No readout model (ideal timestamps) 0.00388 0.04294 Compute-matched TIDES (adaptivity off, fixed #queries) 0.00405 0.04371 
+
+## 5 Conclusion 
+
+We presented TIDES, a continuous-time event simulator built on dynamic Gaus-sian splatting that predicts per-pixel threshold crossings without discretizing time. TIDES renders log-luminance and its instantaneous derivative in the same visibility ordering, making threshold-crossing prediction well-posed without the timestamp batching artifacts prevalent in rendering-based simulators. Across four paired RGB-event benchmarks, TIDES achieves state-of-the-art fidelity and demonstrates stronger synthetic-to-real transfer on downstream event-vision tasks than existing frame-based simulators. The quality of events simulated through TIDES is ultimately bounded by the fidelity of the underlying 4DGS scene reconstruction. However, our technique is agnostic to any particular 4DGS technique. Future efforts to improve the 4DGS rendering substrate will naturally translate to TIDES ongoing improvement. TIDES 15 
+
+## References 
+
+1. Bhattacharya, A., Madaan, R., Cladera, F., Vemprala, S., Bonatti, R., Daniilidis, K., Kapoor, A., Kumar, V., Matni, N., Gupta, J.K.: Evdnerf: Reconstructing event data with dynamic neural radiance fields. In: Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision (WACV). pp. 5846–5855 (Jan 2024) 2. Brandli, C., Berner, R., Yang, M., Liu, S.C., Delbruck, T.: A 240 ×180 130 db 3 
+
+μs latency global shutter spatiotemporal vision sensor 49 (10), 2333–2341 (2014). 
+
+https://doi.org/10.1109/JSSC.2014.2342715 
+
+3. Chen, Y., Alliez, P., Aubry, M., Barrau, A., Cabon, Y., Revaud, J.: Easi3r: Es-timating disentangled motion from dust3r. In: Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV) (2025). https://doi. org/10.48550/arXiv.2503.24391 , https://www.cvlibs.net/publications/ Chen2025ICCV.pdf 
+
+4. Feng, C., Yu, W., Cheng, X., Tang, Z., Zhang, J., Yuan, L., Tian, Y.: Ae-nerf: Augmenting event-based neural radiance fields for non-ideal conditions and larger scene. arXiv preprint arXiv:2501.02807 (2025) 5. Feng, C., Yu, W., Cheng, X., Tang, Z., Zhang, J., Yuan, L., Tian, Y.: E-4dgs: High-fidelity dynamic reconstruction from the multi-view event cameras. In: Proceedings of the 33rd ACM International Conference on Multimedia (ACM MM). pp. 7356– 7365 (2025). https://doi.org/10.1145/3746027.3754777 
+
+6. Gallego, G., Delbrück, T., Orchard, G., Bartolozzi, C., Taba, B., Censi, A., Leutenegger, S., Davison, A.J., Conradt, J., Daniilidis, K., Scaramuzza, D.: Event-based vision: A survey 44 (1), 154–180 (2022). https://doi.org/10.1109/TPAMI. 2020.3008413 
+
+7. Gehrig, M., Aarents, W., Gehrig, D., Scaramuzza, D.: Dsec: A stereo event camera dataset for driving scenarios. IEEE Robotics and Automation Letters (7 2021). 
+
+https://doi.org/10.1109/LRA.2021.3068942 , https://magehrig.github.io/ publication/gehrig-2021-ral-dsec/ 
+
+8. Ghosh, D.K., Jung, Y.J.: Two-stage cross-fusion network for stereo event-based depth estimation. Expert Systems with Applications 241 , 122743 (2024). https: //doi.org/https://doi.org/10.1016/j.eswa.2023.122743 , https://www. sciencedirect.com/science/article/pii/S0957417423032451 
+
+9. Ghosh, D.K., Jung, Y.J.: Depth cue fusion for event-based stereo depth estimation. Information Fusion 117 , 102891 (2025). https://doi.org/https://doi.org/ 10.1016/j.inffus.2024.102891 , https://www.sciencedirect.com/science/ article/pii/S1566253524006699 
+
+10. Han, H., Li, J., Wei, H., Ji, X.: Event-3dgs: Event-based 3d reconstruc-tion using 3d gaussian splatting. In: Advances in Neural Information Pro-cessing Systems. vol. 37 (2024). https : / / doi . org / 10 . 52202 / 079017 -4069 , https : / / proceedings . neurips . cc / paper _ files / paper / 2024 / hash / e73ad1f690542144ce354637bb913c35-Abstract-Conference.html 
+
+11. Han, H., Lyu, J., Li, J., Wei, H., Li, C., Wei, Y., Chen, S., Ji, X.: Physical-based event camera simulator. In: Computer Vision – ECCV 2024. pp. 19–35 (2024). 
+
+https://doi.org/10.1007/978- 3- 031- 72995- 9_2 , https://www.ecva.net/ papers/eccv_2024/papers_ECCV/papers/06110.pdf 
+
+12. Hidalgo-Carrió, J., Gallego, G., Scaramuzza, D.: Event-aided direct sparse odome-try. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) (2022). https://doi.org/10.48550/arXiv.2204.07640 ,16 F. Author et al. 
+
+https://openaccess.thecvf.com/content/CVPR2022/html/Hidalgo- Carrio_ Event-Aided_Direct_Sparse_Odometry_CVPR_2022_paper.html 
+
+13. Hu, Y., Liu, S.C., Delbruck, T.: v2e: From video frames to realistic dvs events. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition Workshops (CVPRW). pp. 1312–1319 (2021). https://doi.org/ 10.1109/CVPRW53098.2021.00152 , https://openaccess.thecvf.com/content/ CVPR2021W/EventVision/html/Hu_v2e_From_Video_Frames_to_Realistic_DVS_ Events_CVPRW_2021_paper.html 
+
+14. Hwang, I., Kim, J., Kim, Y.M.: Ev-nerf: Event based neural radiance field. In: Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision (WACV). pp. 837–847 (Jan 2023) 15. Joubert, D., Marcireau, A., Ralph, N., Jolley, A., van Schaik, A., Cohen, G.: Event camera simulator improvements via characterized parameters 15 , 702765 (2021). 
+
+https://doi.org/10.3389/fnins.2021.702765 
+
+16. Kerbl, B., Kopanas, G., Leimkühler, T., Drettakis, G.: 3d gaussian splatting for real-time radiance field rendering (2023). https://doi.org/10.1145/3592433 
+
+17. Kim, J., Ghosh, D.K., Jung, Y.J.: Event-based video deblurring based on image and event feature fusion. Expert Systems with Applications 223 , 119917 (2023). 
+
+https://doi.org/https://doi.org/10.1016/j.eswa.2023.119917 , https:// www.sciencedirect.com/science/article/pii/S0957417423004189 
+
+18. Klenk, S., Koestler, L., Scaramuzza, D., Cremers, D.: E-nerf: Neural radiance fields from a moving event camera. IEEE Robotics and Automation Letters 8(3), 1587– 1594 (2023). https://doi.org/10.1109/LRA.2023.3240646 
+
+19. Lichtsteiner, P., Posch, C., Delbruck, T.: A 128 ×128 120 db 15 μs latency asyn-chronous temporal contrast vision sensor 43 (2), 566–576 (2008). https://doi. org/10.1109/JSSC.2007.914337 
+
+20. Lin, S., Ma, Y., Guo, Z., Wen, B.: Dvs-voltmeter: Stochastic process-based event simulator for dynamic vision sensors. In: Computer Vision – ECCV 2022. pp. 578– 593 (2022). https://doi.org/10.1007/978-3-031-20071-7_34 
+
+21. Low, W.F., Lee, F.C., Lim, L.P., Khor, K.H., Ng, H.Z., Cheong, L.F.: Robust e-nerf: Nerf from sparse & noisy events under non-uniform motion. In: Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV) (Oct 2023) 22. Ma, Y., Guo, S., Chen, Y., Xue, T., Gu, J.: Timelens-xl: Real-time event-based video frame interpolation with large motion. In: European Conference on Computer Vision (ECCV) (2024) 23. Mueggler, E., Gallego, G., Rebecq, H., Scaramuzza, D.: The event-camera dataset and simulator: Event-based data for pose estimation, visual odometry, and slam (2017) 24. neuromorphicsystems: IEBCS: ICNS event based camera simulator (2023), https: //github.com/neuromorphicsystems/IEBCS 
+
+25. Rebecq, H., Gehrig, D., Scaramuzza, D.: Esim: An open event camera simulator. In: Proceedings of the Conference on Robot Learning (CoRL). pp. 969–982 (2018), 
+
+https://proceedings.mlr.press/v87/rebecq18a.html 
+
+26. Rebecq, H., Ranftl, R., Koltun, V., Scaramuzza, D.: High speed and high dynamic range video with an event camera (2019) 27. Rudnev, V., Elgharib, M., Theobalt, C., Golyanik, V.: Eventnerf: Neural radiance fields from a single colour event camera. In: Proceedings of the IEEE/CVF Confer-ence on Computer Vision and Pattern Recognition (CVPR). pp. 4992–5002 (Jun 2023) TIDES 17 28. Rudnev, V., Fox, G., Elgharib, M., Theobalt, C., Golyanik, V.: Dynamic eventnerf: Reconstructing general dynamic scenes from multi-view rgb and event streams. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) Workshops. pp. 4905–4915 (Jun 2025) 29. Sun*, Z., Messikommer*, N., Gehrig, D., Scaramuzza, D.: Ess: Learning event-based semantic segmentation from still images. European Conference on Computer Vision. (ECCV) (2022) 30. Thirgood, C., Mendez, O., Ling, E., Storey, J., Hadfield, S.: HyperGS: Hyper-spectral 3d gaussian splatting. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR). pp. 5970–5979. https: / / doi . org / 10 . 1109 / CVPR52734 . 2025 . 00560 , https : / / openaccess . thecvf . com/content/CVPR2025/html/Thirgood_HyperGS_Hyperspectral_3D_Gaussian_ Splatting_CVPR_2025_paper.html 
+
+31. Thirgood, C., Mendez Maldonado, O., Ling, E.C., Storey, J., Hadfield, S.: Fea-tureSLAM: Feature-enriched 3d gaussian splatting SLAM in real time, https: //arxiv.org/abs/2601.05738 
+
+32. Thirgood, C., Mendez Maldonado, O., Ling, E.C., Storey, J., Hadfield, S.: HYDRA: HYbrid knowledge distillation and spectral reconstruction algorithm for high-channel hyperspectral camera applications, https://arxiv.org/abs/2510.16664 
+
+33. Thirgood, C.T., Mendez Maldonado, O.A., Ling, C., Storey, J., Hadfield, S.J.: RaSpectLoc: RAman SPECTroscopy-dependent robot LOCalisation. In: 2023 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS). pp. 5296–5303. IEEE. https://doi.org/10.1109/IROS55552.2023.10342198 
+
+34. Tulyakov, S., Bochicchio, A., Gehrig, D., Georgoulis, S., Li, Y., Scaramuzza, D.: Time lens++: Event-based frame interpolation with parametric non-linear flow and multi-scale fusion. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) (2022), https : / / openaccess.thecvf.com/content/CVPR2022/html/Tulyakov_Time_Lens_Event-Based_Frame_Interpolation_With_Parametric_Non- Linear_Flow_and_CVPR_ 2022_paper.html 
+
+35. Tulyakov, S., Gehrig, D., Georgoulis, S., Erbach, J., Gehrig, M., Li, Y., Scara-muzza, D.: Time lens: Event-based video frame interpolation. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) (2021), https://openaccess.thecvf.com/content/CVPR2021/html/Tulyakov_ Time_Lens_Event-Based_Video_Frame_Interpolation_CVPR_2021_paper.html 
+
+36. Wang, S., Leroy, V., Cabon, Y., Chidlovskii, B., Revaud, J.: Dust3r: Geometric 3d vision made easy. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) (2024), https://github.com/naver/ dust3r 
+
+37. Wu, G., Yi, T., Fang, J., Xie, L., Zhang, X., Wei, W., Liu, W., Tian, Q., Wang, X.: 4d gaussian splatting for real-time dynamic scene rendering. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR). pp. 20310–20320 (2024). https://doi.org/10.1109/CVPR52733.2024.01920 ,
+
+https://openaccess.thecvf.com/content/CVPR2024/papers/Wu_4D_Gaussian_ Splatting_for_Real-Time_Dynamic_Scene_Rendering_CVPR_2024_paper.pdf 
+
+38. Xiong, T., Wu, J., He, B., Fermüller, C., Aloimonos, Y., Huang, H., Metzler, C.A.: Event3dgs: Event-based 3d gaussian splatting for high-speed robot egomotion. In: Conference on Robot Learning, 6-9 November 2024, Munich, Germany. Proceedings of Machine Learning Research, vol. 270, pp. 4100–4118. PMLR (2024), https: //proceedings.mlr.press/v270/xiong25b.html 18 F. Author et al. 39. Yura, T., Mirzaei, A., Gilitschenski, I.: Eventsplat: 3d gaussian splatting from moving event cameras for real-time rendering. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR). pp. 26876– 26886 (Jun 2025) 40. Zahid, S., Rudnev, V., Ilg, E., Golyanik, V.: E-3dgs: Event-based novel view render-ing of large-scale scenes using 3d gaussian splatting. In: International Conference on 3D Vision (3DV). pp. 926–934 (2025). https://doi.org/10.1109/3DV66043. 2025.00090 
+
+41. Zhang, Z., Cui, S., Chai, K., Yu, H., Dasgupta, S., Mahbub, U., Rahman, T.: V2CE: Video to continuous events simulator. In: IEEE International Conference on Robotics and Automation (ICRA 2024), Yokohama, Japan, May 13–17, 2024. pp. 12455–12461. IEEE (2024). https://doi.org/10.1109/ICRA57147.2024. 10609864 , https://doi.org/10.1109/ICRA57147.2024.10609864 
+
+42. Zhu, J., Pan, T., Cao, Z., Liu, Y., Kwok, J.T., Xiong, H.: Depth any event stream: Enhancing event-based monocular depth estimation via dense-to-sparse distilla-tion. In: Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV). pp. 5146–5155 (October 2025)

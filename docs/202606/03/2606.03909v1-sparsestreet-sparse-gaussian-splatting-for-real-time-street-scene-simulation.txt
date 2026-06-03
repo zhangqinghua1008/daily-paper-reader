@@ -1,0 +1,490 @@
+Title: SparseStreet: Sparse Gaussian Splatting for Real-Time Street Scene Simulation
+
+URL Source: https://arxiv.org/pdf/2606.03909v1
+
+Published Time: Wed, 03 Jun 2026 01:30:03 GMT
+
+Number of Pages: 9
+
+Markdown Content:
+# SparseStreet: Sparse Gaussian Splatting for Real-Time Street Scene Simulation 
+
+# Qingpo Wuwu 
+
+Peking University China 2401112105@stu.pku.edu.cn 
+
+# Xiaobao Wei 
+
+Chinese Academy of Sciences China weixiaobao0210@gmail.com 
+
+# Peng Chen 
+
+Chinese Academy of Sciences China chenpeng23@mails.ucas.ac.cn 
+
+# Nan Huang 
+
+University of Illinois Urbana-Champaign United States nanh3@illinois.edu 
+
+# Zhongyu Zhao 
+
+Peking University China zhaozhongyu2000@pku.edu.cn 
+
+# Hao Wang 
+
+Peking University China haowang@stu.pku.edu.cn 
+
+# Ming Lu 
+
+Peking University China lu199192@gmail.com 
+
+# Ningning Ma 
+
+Autonomous Driving Development, NIO China mnn.thu@gmail.com 
+
+# Shanghang Zhang 
+
+Peking University China shanghang@pku.edu.cn Before Pruning After Pruning        
+
+> RGBs Projections
+> 1.2M!"# ,34 .05 (!#%& )0.4M!"# ,34 .06 (!#%& )
+
+Figure 1: Visualization of Gaussian projections before and after pruning across three camera views. The first row displays the RGB images, while the second row shows the projected Gaussian points. 
+
+## Abstract 
+
+While 3D Gaussian Splatting has shown promising results in street scene reconstruction, existing methods require massive numbers of Gaussian primitives to capture fine details, leading to prohibitive storage costs and slow rendering speeds. We observe that dynamic objects (e.g., vehicles and pedestrians) demand high-fidelity rep-resentations to maintain temporal consistency, while static back-ground regions often contain substantial redundancy. Motivated by this, we propose SparseStreet , a general compression frame-work specifically designed for street scenes. First, we introduce a node-based learnable pruning strategy that systematically removes low-contributing Gaussian primitives while preserving visually critical regions. Second, after the scene representation stabilizes,  
+
+> This work is licensed under a Creative Commons Attribution 4.0 International License.
+> ICMR ’26, Amsterdam, Netherlands
+> ©2026 Copyright held by the owner/author(s). ACM ISBN 979-8-4007-2617-0/2026/06 https://doi.org/10.1145/3805622.3810887
+
+we apply background compression, further reducing redundancy in static regions. Our method effectively preserves the geometry and appearance of dynamic objects while significantly reducing the total number of Gaussian primitives. Extensive experiments on the Waymo and nuScenes demonstrate that SparseStreet achieves up to 80% compression ratio with minimal quality degradation, enabling resource-efficient, high-fidelity dynamic scene reconstruc-tion. Project website: https://sparsestreet.github.io/. 
+
+## CCS Concepts 
+
+• Computing methodologies → Reconstruction ; Rendering ;
+
+Supervised learning .
+
+## Keywords 
+
+Gaussian Splatting, Real-time rendering, Computer graphics 
+
+ACM Reference Format: 
+
+Qingpo Wuwu, Xiaobao Wei, Peng Chen, Nan Huang, Zhongyu Zhao, Hao Wang, Ming Lu, Ningning Ma, and Shanghang Zhang. 2026. Spars-eStreet: Sparse Gaussian Splatting for Real-Time Street Scene Simulation.    
+
+> arXiv:2606.03909v1 [cs.CV] 2 Jun 2026 ICMR ’26, June 16–19, 2026, Amsterdam, Netherlands Wuwu et al.
+> In International Conference on Multimedia Retrieval (ICMR ’26), June 16– 19, 2026, Amsterdam, Netherlands. ACM, New York, NY, USA, 9 pages. https://doi.org/10.1145/3805622.3810887
+
+## 1 Introduction 
+
+Photorealistic reconstruction of dynamic scenes is fundamental to autonomous driving applications, including simulation [ 46 , 49 ], testing [ 3, 4 ], and perception system validation [ 47 , 66 ]. While tradi-tional simulators such as NVIDIA DRIVE Sim [ 29 ] and CarSim [ 26 ]offer controlled environments, they often lack realism and require extensive manual effort, as artist-generated assets have limited scale and diversity. The emergence of neural rendering techniques, particularly 3D Gaussian Splatting (3DGS) [ 5 , 6 , 17 , 51 , 52 ] and Neural Radiance Fields (NeRF) [ 27 , 55 ], has transformed scene re-construction with their ability to capture complex geometries and appearances. Extensions of these methods to dynamic scenes incor-porate time dimensions and deformation networks to model rigid and non-rigid motions [ 9, 21 , 22 , 33 , 34 , 36 , 43 , 48 , 53 , 54 , 58 , 60 ]. However, applying these techniques to autonomous driving scenar-ios remains challenges due to the complexity and scale of urban environments, which involve both static backgrounds and highly dynamic objects such as vehicles and pedestrians. To address these challenges, researchers have developed special-ized adaptations of 4D-GS and dynamic NeRF frameworks to handle both static and dynamic elements in driving scenes. These meth-ods generally fall into two categories: supervised approaches and self-supervised approaches. Supervised methods rely on auxiliary signals, such as segmentation masks from SAM [18, 50, 59], depth estimations from DepthAnything [ 63 ], combined depth and optical flow from Dynamo [ 40 ], or 3D bounding boxes from annotated datasets. Building upon these supervised signals, [ 30 ] introduces the concept of scene graphs which decompose scenes into hier-archical structures with dynamic actors and static backgrounds as distinct nodes, connected with edges encoding transformation parameters that represent motion over time. Recent works in this category include StreetGaussian [ 61 , 67 ], which employs bounding box annotations for precise object localization and motion model-ing, and OmniRe [ 8], which further advances this paradigm through detailed representation of human actors and non-rigid objects. Con-versely, self-supervised methods [ 7 , 15 , 20 , 35 , 45 , 56 , 62 , 68 ] elim-inate the need for annotations by exploiting temporal dynamics within scenes. Despite their impressive visual quality, existing methods face sig-nificant limitations in storage and rendering efficiency. 3DGS -based approaches often require millions of Gaussian primitives to recon-struct a single scene, resulting in substantial computational and stor-age burdens that hinder their deployment in real-world applications. To address the compression challenges in dynamic street scenes, we propose SparseStreet , a general compression framework that can be easily integrated into existing scene graph-based reconstruction methods (Fig. 2). Our approach improves compression efficiency by incorporating node-aware pruning and background compression. Specifically, we enhance each Gaussian primitive with learnable masking scores to capture its contribution to the scene and design a node-aware regularization strategy that applies different pruning strengths based on scene graph nodes. Additionally, we further compress background regions by computing global importance metrics that combine blending weights with projected areas. This design allows for more efficient representation of complex street scenes with varying compression requirements. We validate our approach through extensive experiments on the Waymo [ 39 ] and nuScenes [ 2] datasets, by integrating Spars-eStreet with representative methods: StreetGS and OmniRe. Our main contributions include: 
+
+• We propose SparseStreet, a plug-and-play compression frame-work that efficiently reduces redundancy in existing street scene reconstruction methods. 
+
+• We demonstrate the broad applicability of SparseStreet by successfully integrating it with state-of-the-art neural scene graph methods, showing consistent improvements across different reconstruction approaches. 
+
+• Comprehensive evaluations on the Waymo and nuScenes datasets demonstrate that our approach achieves up to 80% reduction in Gaussian primitives while maintaining visual fidelity of dynamic objects and improving rendering speed by 2 × FPS. 
+
+## 2 Related Work 
+
+Autonomous Driving Simulation. High-fidelity simulation of street scenes is a cornerstone for developing and validating au-tonomous driving systems. Traditional simulators such as CARLA [ 10 ]and AirSim [ 38 ] rely heavily on handcrafted assets and rule-based environments, which limit realism and scalability. To address these limitations, neural scene representation has emerged as a promising alternative. Neural Radiance Fields (NeRF) [ 27 ] pioneered this direc-tion, with follow-up works [ 16 , 31 , 37 , 44 ] extending its capabilities to large-scale urban scenes. Building upon these foundations, sub-sequent research [ 23 , 25 , 41 , 45 ] improve rendering efficiency and scalability. To better model dynamic environments, several meth-ods incorporate scene graphs to decompose static backgrounds and dynamic agents [ 13 , 31 , 42 , 57 ]. With the advent of 3D Gauss-ian Splatting (3DGS) [ 17 ], NeRF-based techniques have also been adapted to the 3DGS framework. DrivingGaussian [ 69 ], StreetGaus-sian [ 61 ], and OmniRe [ 8] adopt scene graph structures for super-vised dynamic scene reconstruction. To eliminate the need for costly annotations, self-supervised approaches such as S3Gaussian [ 15 ], DeSiRe-GS [ 35 ], and PVG [ 7] leverage temporal cues for unsuper-vised static-dynamic separation. Despite their effectiveness, previous street Gaussian splatting methods overlook the significant storage demands, limiting their practical applicability. To address this issue, we introduce Spars-eStreet, a compression framework specifically designed to reduce redundancy in street Gaussian splatting. 
+
+Compression Techniques for 3D Gaussian Splatting. As 3D-GS has revealed critical challenges in storage efficiency, with scenes often requiring hundreds of millions of Gaussians to capture fine de-tails, researchers have developed various compression approaches to address these scalability issues. One prominent line of work focuses on reducing the number of Gaussian primitives while pre-serving scene fidelity. For instance, LightGaussian [ 11 ] introduced a dual-focus compression strategy that reduces both Gaussian count and feature dimensionality, achieving substantial compression with SparseStreet: Sparse Gaussian Splatting for Real-Time Street Scene Simulation ICMR ’26, June 16–19, 2026, Amsterdam, Netherlands 
+
+minimal quality loss. Building on this foundation, C3DGS [ 28 ] ad-vanced the field with sensitivity-aware clustering and fine-tuning, demonstrating significant storage reduction through targeted pa-rameter compression. In parallel, complementary methods have tackled other aspects of Gaussian representation. EAGLES [ 14 ]prioritized compression of memory-intensive attributes, such as color and rotation, while Compact-3DGS [ 19 ] exploited scene re-dundancy by organizing parameters into locally homogeneous 2D grids combined with learnable masking and residual vector quanti-zation. Other approaches have reconceptualized the problem en-tirely: Mini-Splatting [ 12 ] reorganized the spatial distribution of Gaussians to enhance storage efficiency, and Ye et al. [ 65 ] innovated at the fragment level, selectively pruning fragments to accelerate rendering. While these methods have demonstrated significant success in compressing general static scenes, they have not been extended to dynamic driving scenes, which present unique challenges due to the coexistence of redundant static backgrounds and dynamic objects requiring higher fidelity representation. 
+
+## 3 Preliminaries 3.1 3D Gaussian Splatting 
+
+The 3D-GS framework [ 17 ] represents scenes using a set of Gaussian primitives denoted as G = {( 𝜇 𝑘 , Σ𝑘 , 𝛼 𝑘 , c𝑘 )} 𝐾 𝑘 =1, where 𝐾 indicates the total primitive count. Each Gaussian is characterized by its center position 𝜇 𝑘 ∈ R3, covariance matrix Σ𝑘 ∈ R3×3 defining its spatial extent and orientation, opacity value 𝛼 𝑘 ∈ [ 0, 1], and color information c𝑘 . The density distribution of each Gaussian follows: 
+
+𝐺 𝑘 (𝑥 ) = 𝑒 − 12 (𝑥 −𝜇 𝑘 )𝑇 Σ−1    
+
+> 𝑘 (𝑥 −𝜇 𝑘 )
+
+, (1) where 𝑥 represents any 3D world coordinate. 
+
+Rendering Methodology. To generate an image, the rendering pipeline projects each 3D Gaussian onto the image plane. This projection transforms the 3D center 𝜇 𝑘 to a 2D position 𝜇 2𝐷 𝑘 and converts the world-space covariance Σ𝑘 to screen space via Σ′ 
+
+> 𝑘
+
+=
+
+𝐽𝑊 Σ𝑘 𝑊 𝑇 𝐽 𝑇 , where 𝑊 represents the viewing transformation and 
+
+𝐽 denotes the projective transformation Jacobian. The color at any screen position 𝑥 is computed through alpha blending: 
+
+𝐶 (𝑥 ) =∑︁  
+
+> 𝑘 ∈ N ( x)
+
+c𝑘 𝛼 𝑘 (𝑥 ) 
+
+> 𝑘 −1
+
+Ö
+
+> 𝑗 =1
+
+ 1 − 𝛼 𝑗 (𝑥 ) , (2) with 𝛼 𝑘 (𝑥 ) = 𝛼 𝑘 exp 
+
+
+
+− 12
+
+
+
+𝑥 − 𝜇 2𝐷 𝑘 
+
+𝑇 
+
+Σ′ 
+
+> 𝑘
+> −1
+
+
+
+𝑥 − 𝜇 2𝐷 𝑘 
+
+
+
+representing each Gaussian’s contribution to pixel 𝑥 , and N ( x) indicating the set of Gaussians affecting this pixel. 
+
+## 3.2 Scene Graph Representation 
+
+A Scene Graph [ 30 ] is a hierarchical representation that organizes scene components into nodes, enabling structured modeling of static and dynamic elements. It comprises a Background Node for static elements (roads, buildings), Rigid Nodes for vehicles, De-formable Nodes for non-rigid objects, and SMPL Nodes [ 24 ] for humans. Each node type is associated with specific Gaussian primi-tives. For dynamic scenes, Rigid nodes maintain consistent Gaussian attributes while their positions evolve through 𝑆𝐸 (3) transforma-tions. Deformable and SMPL nodes handle local deformations using networks that predict temporal changes in Gaussian attributes. 
+
+## 4 Methodology 
+
+We propose SparseStreet, as illustrated in Fig. 2, a compression framework tailored for dynamic autonomous driving scenes. 
+
+## 4.1 Problem Formulation 
+
+Given a set of Gaussian primitives G = {( 𝜇 𝑘 , Σ𝑘 , 𝛼 𝑘 , c𝑘 )} 𝐾 𝑘 =1, where 
+
+𝐾 represents the total number of primitives, our goal is to reduce the number of primitives while maintaining high rendering quality and preserving perceptual fidelity. Specifically, we aim to learn a binary mask 𝑀 𝑘 ∈ { 0, 1} for each Gaussian primitive, which determines whether 𝐺 𝑘 is preserved ( 𝑀 𝑘 = 1) or removed ( 𝑀 𝑘 = 0). The pruning process can be formulated as: 
+
+ˆG = {𝐺 𝑘 | 𝑀 𝑘 = 1, ∀𝑘 ∈ { 1, . . . , 𝐾 }} , (3) where ˆG denotes the pruned set of Gaussian primitives. 
+
+## 4.2 Node-aware Pruning 
+
+To reduce the number of Gaussian primitives while maintaining reconstruction quality, we enhance each Gaussian primitive with an additional learnable mask attribute 𝑚 𝑘 ∈ R, where 𝑘 indexes the 𝐾 total primitives in the scene. Based on 𝑚 𝑘 , a binary mask 
+
+𝑀 𝑘 ∈ { 0, 1} is generated using the straight-through estimator [ 1], which allows gradient flow during optimization. This binary mask is formulated as: 
+
+𝑀 𝑘 = sg (1[𝜎 (𝑚 𝑘 ) > 𝜖 ] − 𝜎 (𝑚 𝑘 )) + 𝜎 (𝑚 𝑘 ), (4) where 𝜖 is the masking threshold, sg (·) is the stop-gradient operator, 
+
+1[·] is the indicator function, and 𝜎 (·) is the sigmoid function. The binary mask 𝑀 𝑘 is applied to both the scale and opacity at-tributes of each Gaussian to determine its contribution to the scene. The covariance matrix Σ𝑘 and the opacity 𝛼 𝑘 (𝑥 ) are reformulated as: 
+
+ˆΣ𝑘 = 𝑅 (q𝑘 )𝑆 (𝑀 𝑘 s𝑘 )𝑆 (𝑀 𝑘 s𝑘 )𝑇 𝑅 (q𝑘 )𝑇 , (5) 
+
+ˆ𝛼 𝑘 (𝑥 ) = 𝑀 𝑘 𝛼 𝑘 exp 
+
+
+
+− 12 (𝑥 − 𝜇 2𝐷 𝑘 )𝑇 ˆΣ′− 1 
+
+> 𝑘
+
+(𝑥 − 𝜇 2𝐷 𝑘 )
+
+
+
+, (6) where ˆΣ′ 
+
+> 𝑘
+
+denotes the 2D projected covariance matrix after masking, and 𝑀 𝑘 directly modulates the Gaussian’s contribution to both its spatial extent and transparency. 
+
+Node-aware Regularization. In dynamic scenes, applying a uni-form pruning strength across all nodes often leads to severe degra-dation, especially for nodes representing dynamic objects such as vehicles or pedestrians. To address this, we adjust pruning strength based on the scene graph node associated with each Gaussian by assigning different regularization coefficients 𝜆 𝑛 to each node 𝑛 .The masking loss Lmask is defined as: 
+
+Lmask = 1
+
+𝐾 ∑︁ 𝑛 ∈ N 
+
+𝜆 𝑛 ∑︁  
+
+> 𝑘 ∈ G 𝑛
+
+𝜎 (𝑚 𝑘 ), (7) ICMR ’26, June 16–19, 2026, Amsterdam, Netherlands Wuwu et al. Opacity 
+
+> Color
+> Mask Score
+
+## t
+
+(a) Node Aware Pruning    
+
+> Dynami cMask
+> Static Mask
+> Rigid Nodes SMPL Nodes Deformable Nodes
+> Background Nodes
+
+Scene Graph Representation 
+
+(b) Background Pruning 
+
+> Volume
+> Splatting
+
+Stati c
+
+Dynamic 
+
+Figure 2: Overview of SparseStreet. Given the street video as input, our method first constructs a hierarchical scene graph representation. Then we introduce a two-stage compression technique to prune redundant Gaussian primitives: (a) Node-aware Pruning, which applies dynamic masks for temporally varying objects and static masks for persistent elements based on different node types; and (b) Background Compression, which focuses on pruning redundant Gaussians in static background based on their global importance. Table 1: Comparative performance of our framework and baseline approaches on the Waymo-NOTR dataset. M denotes million Gaussian primitives. 
+
+Scene Reconstruction Novel View Synthesis Methods Full Image Human Vehicle Full Image Human Vehicle # Gauss ↓ # FPS ↑
+
+PSNR ↑ SSIM ↑ PSNR ↑ SSIM ↑ PSNR ↑ SSIM ↑ PSNR ↑ SSIM ↑ PSNR ↑ SSIM ↑ PSNR ↑ SSIM ↑
+
+EmerNeRF [62] 31.93 0.902 22.88 0.578 24.65 0.723 29.67 0.883 20.32 0.454 22.07 0.609 - -3DGS [17] 26.00 0.912 16.88 0.414 16.18 0.425 25.57 0.906 16.62 0.387 16.00 0.407 - -HUGS [68] 28.26 0.923 16.23 0.404 24.31 0.794 27.65 0.914 15.99 0.378 23.27 0.748 - -DeformGS [64] 27.97 0.923 17.23 0.429 19.14 0.544 26.47 0.884 16.84 0.391 18.21 0.487 0.64M 37.08 PVG [7] 32.68 0.941 24.96 0.726 24.36 0.763 28.73 0.881 21.95 0.565 21.43 0.617 1.51M 9.13 StreetGS [61] 28.73 0.932 16.54 0.401 26.46 0.848 27.02 0.887 16.27 0.368 23.99 0.761 0.87M 21.60 OmniRe [8] 34.26 0.956 26.99 0.825 27.79 0.886 29.86 0.900 23.16 0.674 24.52 0.786 1.55M 46.15 StreetGS+Ours 28.42 0.924 16.51 0.392 26.33 0.847 27.04 0.889 16.18 0.362 23.72 0.753 0.29M 57.66 OmniRe+Ours 34.05 0.952 26.88 0.818 27.48 0.878 29.75 0.897 23.15 0.667 24.49 0.782 0.46M 80.22 
+
+where N denotes the set of all nodes in the scene graph, G𝑛 rep-resents the set of Gaussians associated with node 𝑛 , and 𝜎 (𝑚 𝑘 )
+
+represents the likelihood of retaining Gaussian 𝐺 𝑘 during the prun-ing process. Dynamic nodes are assigned smaller 𝜆 𝑛 values to pre-serve their Gaussians, while static nodes receive larger 𝜆 𝑛 values for aggressive pruning. 
+
+Time-Dependent Mask Modeling. In dynamic scenes, certain Gaussians only contribute to rendering during specific time inter-vals. Yet static mask scoring treats all Gaussians uniformly across time. To address this, we introduce time-dependent mask scores that adapt to temporal visibility patterns. For Gaussians that exhibit temporal variations, we replace the static mask parameter 𝑚 𝑘 with a time-dependent function: 
+
+𝑚 𝑘 (𝑡, p𝑘 ) = MLP (𝑡, f𝑡 𝑘 , p𝑘 ), (8) where 𝑡 ∈ [ 0, 1] represents normalized time, f𝑡 𝑘 ∈ R𝑑 denotes learnable time-specific features for Gaussian 𝑘 , p𝑘 is the normalized 3D position, and MLP is a multilayer perceptron followed by a sigmoid activation. SparseStreet: Sparse Gaussian Splatting for Real-Time Street Scene Simulation ICMR ’26, June 16–19, 2026, Amsterdam, Netherlands 
+
+The time-dependent masking loss is reformulated as: 
+
+L𝑡  
+
+> mask
+
+= 1
+
+𝐾 ∑︁ 𝑛 ∈ N 
+
+𝜆 𝑛 ∑︁  
+
+> 𝑘 ∈ G 𝑛
+
+1
+
+𝑇 
+
+> 𝑇
+
+∑︁ 
+
+> 𝑡 =1
+
+𝜎 (𝑚 𝑘 (𝑡, p𝑘 )) , (9) where 𝑇 represents the number of sampled time steps during training. This formulation ensures that Gaussians are only penal-ized during their active time periods, preventing over-pruning of temporally sparse dynamic objects while maintaining compression effectiveness for persistent elements. 
+
+Training. We train the Gaussian parameters to represent the scene for each time frame. Following scene graph-based reconstruction methods, the overall optimization objective is defined as: 
+
+Ltotal = Lrecon + 𝜆 m Lmask , (10) where Lrecon is the reconstruction loss tailored to the scene graph-based reconstruction method, and Lmask is the masking loss defined in Eq. 7. This formulation ensures that our method can be seamlessly integrated as a plug-and-play module. 
+
+## 4.3 Background Pruning 
+
+Static background regions often contain significant redundancy and can be effectively reconstructed using a relatively small number of Gaussian primitives, as shown in Fig. 3. Based on this observa-tion, we further compress static background regions by removing redundant Gaussian primitives using importance-based metrics. We adopt importance-based pruning that utilizes blending weights to evaluate the contribution of each Gaussian. For each rendered im-age 𝑚 , the importance is computed by combining blending weights with the projected area of Gaussians: 
+
+𝐼 (𝑚 ) 
+
+> 𝑖
+
+=
+
+> 𝐾 𝑚
+
+∑︁ 
+
+> 𝑗 =1
+
+𝑤 (𝑚 )
+
+> 𝑖 𝑗
+
+𝑆 (𝑚 )
+
+> 𝑖
+
+, 𝐼 𝑖 =
+
+> 𝑀
+
+∑︁ 
+
+> 𝑚 =1
+
+𝐼 (𝑚 ) 
+
+> 𝑖
+
+· 𝛿 (𝑖 ∈ 𝐼 (𝑚 ) 
+
+> max
+
+), (11) where 𝑆 (𝑚 ) 
+
+> 𝑖
+
+is the 2D projected area of 𝐺 𝑖 on image 𝑚 , 𝐾 𝑚 is the total number of rays intersecting with 𝐺 𝑖 in image 𝑚 , 𝛿 (·) is an indicator function, and 𝐼 (𝑚 ) 
+
+> max
+
+represents the set of indices for Gaussians contributing the most to the rendered image 𝑚 .
+
+Challenges in Dynamic Scene Pruning. Applying global importance-based pruning directly to autonomous driving scenarios presents limitations. Dynamic objects may only appear in certain cameras for limited time. As shown in Figure 4, a car may initially appear in the left camera as it approaches, only to disappear from view as it moves past. This leads to incomplete reconstructions when their Gaussians are mistakenly pruned due to limited visibility across camera views. To mitigate this issue, we apply pruning only to back-ground Gaussians . For a Gaussian 𝐺 𝑖 belonging to a background node 𝑛 , the importance metric is defined as: 
+
+𝐼 bg  
+
+> 𝑖
+
+= 1
+
+𝑀 
+
+> 𝑀
+
+∑︁ 
+
+> 𝑚 =1
+> 𝐾 𝑚
+
+∑︁ 
+
+> 𝑗 =1
+
+𝑤 (𝑚 )
+
+> 𝑖 𝑗
+
+𝑆 (𝑚 )
+
+> 𝑖
+
+, (12) where 𝑀 is the total number of training images, and 𝐼 bg  
+
+> 𝑖
+
+represents the normalized importance of 𝐺 𝑖 across all images. 
+
+## 4.4 Implementation Details 
+
+We apply node-specific regularization coefficients and minimum thresholds to control pruning strength across different scene compo-nents. For static background nodes, we employ aggressive pruning with a regularization coefficient of 𝜆 bg = 2.50 × 10 −3 and maintain a minimum threshold of 𝐾 min,bg = 40 ,000 Gaussians. Dynamic rigid nodes (vehicles) use 𝜆 rigid = 1.00 ×10 −4 and 𝐾 min,rigid = 10 ,000 , while deformable nodes adopt 𝜆 deform = 1.00 ×10 −5 and 𝐾 min,deform = 5,000 
+
+to preserve local deformation details. For SMPL nodes represent-ing human actors, we employ 𝜆 SMPL = 1.00 × 10 −5 with a higher threshold of 𝐾 min,SMPL = 50 ,000 to maintain articulated motion fidelity. 
+
+## 5 Experiments 
+
+In this section, we comprehensively evaluate our SparseStreet framework on autonomous driving datasets. 
+
+## 5.1 Datasets and Metrics 
+
+Dataset and Baselines. To thoroughly assess the effectiveness of our proposed compression framework, we conduct experiments on two large-scale autonomous driving datasets. For the Waymo Open Dataset [ 39 ], following the experimental setup in OmniRe [ 8], we select 8 highly dynamic scenes characterized by diverse foreground objects, including pedestrians and cyclists, as well as complex static backgrounds. Similarly, for the nuScenes dataset [ 2], following the experimental protocol of NeuRAD [ 32 ], we evaluate on 8 repre-sentative scenes (scene IDs: 39, 54, 61, 66, 104, 108, 122, 176) that encompass diverse urban driving scenarios with varying levels of dynamic content. 
+
+Hardware and Training Configuration. All experiments were conducted using a single NVIDIA A800 GPU. Our two-stage train-ing process begins with node-aware pruning from the start until step 24,000, applying different regularization strengths using the masking loss L𝑚 . At step 28,000, we apply background pruning, removing all background Gaussian primitives with zero importance scores while retaining all others. 
+
+Evaluation Metrics. To evaluate reconstruction quality and novel view synthesis (NVS) performance, we report PSNR and SSIM as metrics for both overall scene quality and vehicle-specific fidelity. Additionally, LPIPS is computed as a perceptual quality metric. Novel view synthesis is evaluated on every 10th frame. In addition, for novel trajectory synthesis evaluation, we employ the FID metric to assess the perceptual quality of generated views along unseen camera trajectories. We further report the number of Gaussian primitives (# Gauss) to assess compression efficiency and frames-per-second (FPS) to evaluate rendering speed. 
+
+## 5.2 Comparative Results 
+
+To validate the effectiveness of our proposed SparseStreet frame-work, we conduct experiments on two state-of-the-art baselines: 
+
+OmniRe [ 8] and StreetGS [61 ]. Since prior works did not report the number of Gaussian primitives (# Gauss) and frames-per-second (FPS), we reimplemented DeformGS, PVG, StreetGS, and OmniRe ICMR ’26, June 16–19, 2026, Amsterdam, Netherlands Wuwu et al. 
+
+Table 2: Comparative performance of our framework and baseline approaches on the NuScenes dataset. M denotes million Gaussian primitives. 
+
+Scene Reconstruction Novel View Synthesis Methods Full Image Human Vehicle Full Image Human Vehicle # Gauss ↓ # FPS ↑
+
+PSNR ↑ SSIM ↑ PSNR ↑ SSIM ↑ PSNR ↑ SSIM ↑ PSNR ↑ SSIM ↑ PSNR ↑ SSIM ↑ PSNR ↑ SSIM ↑
+
+DeformGS 32.31 0.924 31.76 0.900 28.18 0.864 25.01 0.728 24.02 0.570 20.96 0.574 0.43M 278.80 StreetGS 32.06 0.928 31.42 0.901 29.68 0.915 24.29 0.698 23.42 0.546 21.05 0.557 0.72M 117.80 OmniRe 32.14 0.929 32.14 0.917 29.72 0.916 24.24 0.696 23.38 0.551 21.01 0.555 0.73M 132.56 StreetGS+Ours 31.08 0.913 30.08 0.868 28.56 0.897 24.06 0.698 23.21 0.544 20.90 0.558 0.26M 461.17 
+
+OmniRe+Ours 31.37 0.918 31.16 0.900 28.80 0.902 24.05 0.696 23.28 0.549 20.96 0.551 0.38M 435.85 RGBs Projections
+
+OmniRe + OursOmniReGT
+
+Figure 3: Qualitative comparisons of ground truth (GT), OmniRe, and OmniRe + Ours. The fourth column shows Gaussian projections of our method. Red boxes highlight that static elements (ground plane, buildings) can be effectively represented with fewer Gaussians, while dynamic objects (person) maintain dense representation for better quality. 
+
+methods to obtain these results using the official DriveStudio repos-itory 1.
+
+Table 3: Comparison of different pruning strategies on the Waymo Open dataset. M denotes million Gaussian primitives.                   
+
+> Method Full Image Human Vehicle # Gauss PSNR SSIM LPIPS PSNR PSNR
+> Global Pruning 32.18 0.940 0.077 26.07 23.89 0.33M Background Pruning 33.32 0.945 0.073 26.54 26.66 0.39M
+
+Tab. 1 compares the performance of SparseStreet with several baselines on the Waymo dataset [ 39 ]. Our method achieves a signif-icant reduction in Gaussian primitives (# Gauss) and a substantial increase in FPS, making it more efficient for real-time rendering 
+
+> 1https://github.com/ziyc/drivestudio
+
+in autonomous driving applications. When integrated with Om-niRe, our approach reduces the number of Gaussian primitives by approximately 3 × with only minimal quality degradation. Simi-larly, when applied to StreetGS, our method significantly decreases the Gaussian count while simultaneously increasing the render-ing frame rate. While there is a minimal impact on visual quality metrics, our approach maintains competitive novel view synthe-sis (NVS) performance in certain metrics. These results highlight SparseStreet’s ability to effectively balance compression efficiency, rendering speed, and visual quality. Most notably, our approach enables real-time rendering performance, achieving up to 80.22 FPS when combined with OmniRe. Fig. 1 shows Gaussian projections before and after pruning across three camera views. Our approach effectively removes redundant primitives in background regions while preserving details in dynamic objects, demonstrating effective prioritization under aggressive pruning conditions. SparseStreet: Sparse Gaussian Splatting for Real-Time Street Scene Simulation ICMR ’26, June 16–19, 2026, Amsterdam, Netherlands Ground 
+
+> Truth
+> Global
+> Pruning
+> Background
+> - only Pruning OmniRe  Grounded
+> Truth
+> Global
+> Pruning
+> Background
+> Pruning
+> OmniRe
+
+Figure 4: Comparison of different pruning strategies on dynamic objects across three camera views. First row: Ground truth images. Second row: Results using global pruning, showing missing parts of moving vehicles due to their limited temporal presence in specific views. Third row: Our background pruning approach, which preserves the integrity of dynamic objects while effectively compressing static scene elements. Fourth row: OmniRe results. 
+
+Tab. 2 presents results on the NuScenes dataset. Our frame-work demonstrates consistent performance improvements across both datasets. When applied to StreetGS on NuScenes, our method achieves a remarkable 2.8 × reduction in Gaussian primitives while increasing FPS by 3.9 ×. Similarly, OmniRe+Ours maintains com-petitive reconstruction quality while reducing Gaussian count by approximately 1.9 × and achieving 3.3 × faster rendering compared to the baseline. 
+
+## 5.3 Novel Trajectory Synthesis 
+
+We also evaluate our framework’s ability to render novel trajectories for autonomous driving applications on the Waymo dataset. As shown in Tab. 4, our method achieves comparable FID scores to the baseline across different lateral offsets while using significantly fewer Gaussian primitives, demonstrating preserved generalization capability. 
+
+Table 4: Novel trajectory synthesis on Waymo dataset, show-ing FID scores for different lateral offsets from the original trajectory.          
+
+> Method FID ↓(Avg. of Left/Right) 1m 2m 3m
+> OmniRe 43.62 61.56 75.14 OmniRe + Ours 46.54 66.28 80.36
+
+## 5.4 Ablation Studies 
+
+We conduct comprehensive ablation studies to assess the contri-bution of individual components in our framework, as shown in Tab. 5. We evaluate the impact of applying Node-aware Pruning 
+
+and Background Pruning individually and in combination. 
+
+5.4.1 Component Analysis. As shown in Tab. 5, node-aware prun-ing alone achieves high reconstruction quality but maintains a relatively large number of Gaussians. Background pruning signifi-cantly reduces the Gaussian count while preserving competitive quality. The combination of both approaches achieves the optimal balance between compression efficiency and reconstruction fidelity. 
+
+Table 5: Ablation study on the Waymo Open dataset showing the impact of different components in our framework. M denotes million Gaussian primitives.                         
+
+> Method Full Image Human Vehicle # Gauss PSNR SSIM LPIPS PSNR PSNR
+> Full Model 33.35 0.945 0.072 26.50 26.88 0.32M w/o Node Pruning 33.32 0.945 0.073 26.54 26.66 0.39M w/o Background Pruning 33.71 0.951 0.063 26.61 27.03 0.65M
+
+5.4.2 Background Pruning Analysis. We compare our background-only pruning strategy with global importance-based pruning ap-plied to all Gaussians. As shown in Tab. 3, our approach achieves superior reconstruction quality, with PSNR improving by +1.13 com-pared to global pruning while maintaining comparable compression efficiency. Overall, our comprehensive evaluations confirm that SparseStreet’s component-wise design effectively balances com-pression efficiency and visual quality across diverse autonomous driving scenarios. ICMR ’26, June 16–19, 2026, Amsterdam, Netherlands Wuwu et al. 
+
+## 6 Conclusion 
+
+In this paper, we present SparseStreet, a compression framework dedicated to street Gaussian splatting representations. By intro-ducing node-aware pruning and background compression, our ap-proach addresses the storage challenges in dynamic street scene reconstruction. Comprehensive experiments on the Waymo and nuScenes datasets demonstrate that SparseStreet significantly re-duces Gaussian primitives while maintaining high visual fidelity, enabling real-time rendering performance for practical autonomous driving applications. While SparseStreet is currently developed under a supervised set-ting using scene graphs with semantic annotations, recent advances in self-supervised dynamic scene modeling have exhibited promis-ing capabilities in decomposing static and dynamic components. We believe that integrating SparseStreet with self-supervised street Gaussian frameworks is a promising direction for future work, en-abling efficient compression without relying on costly annotations. 
+
+## Acknowledgments 
+
+This work was supported by the National Natural Science Founda-tion of China (NSFC) under Grant No. W2542034. 
+
+## References 
+
+[1] Yoshua Bengio, Nicholas Léonard, and Aaron Courville. 2013. Estimating or propagating gradients through stochastic neurons for conditional computation. 
+
+arXiv preprint arXiv:1308.3432 (2013). [2] Holger Caesar, Varun Bankiti, Alex H Lang, Sourabh Vora, Venice Erin Liong, Qiang Xu, Anush Krishnan, Yu Pan, Giancarlo Baldan, and Oscar Beijbom. 2020. nuscenes: A multimodal dataset for autonomous driving. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition . 11621–11631. [3] Jiajun Cao, Qizhe Zhang, Peidong Jia, Xuhui Zhao, Bo Lan, Xiaoan Zhang, Xiaobao Wei, Sixiang Chen, Liyun Li, Xianming Liu, et al . 2026. Fastdrivevla: Efficient end-to-end driving via plug-and-play reconstruction-based token pruning. In 
+
+Proceedings of the AAAI Conference on Artificial Intelligence , Vol. 40. 2571–2579. [4] Jiajun Cao, Xiaoan Zhang, Xiaobao Wei, Liyuqiu Huang, Wang Zijian, Hanzhen Zhang, Zhengyu Jia, Wei Mao, Hao Wang, Xianming Liu, et al . 2026. Evo-DriveVLA: Evolving Autonomous Driving Vision-Language-Action Model via Collaborative Perception-Planning Distillation. arXiv preprint arXiv:2603.09465 
+
+(2026). [5] Peng Chen, Xiaobao Wei, Qingpo Wuwu, Xinyi Wang, Xingyu Xiao, and Ming Lu. 2025. Mixedgaussianavatar: Realistically and geometrically accurate head avatar via mixed 2d-3d gaussians. In Proceedings of the 33rd ACM International Conference on Multimedia . 945–954. [6] Peng Chen, Xiaobao Wei, Yi Yang, Naiming Yao, Hui Chen, and Feng Tian. 2026. RSATalker: Realistic Socially-Aware Talking Head Generation for Multi-Turn Conversation. arXiv preprint arXiv:2601.10606 (2026). [7] Yurui Chen, Chun Gu, Junzhe Jiang, Xiatian Zhu, and Li Zhang. 2023. Peri-odic Vibration Gaussian: Dynamic Urban Scene Reconstruction and Real-time Rendering. arXiv:2311.18561 (2023). [8] Ziyu Chen, Jiawei Yang, Jiahui Huang, Riccardo de Lutio, Janick Martinez Esturo, Boris Ivanovic, Or Litany, Zan Gojcic, Sanja Fidler, Marco Pavone, et al . 2024. Omnire: Omni urban scene reconstruction. arXiv preprint arXiv:2408.16760 (2024). [9] Simon Le Cleac’h, Hong Yu, Michelle Guo, Taylor A. Howell, Ruohan Gao, Jiajun Wu, Zachary Manchester, and Mac Schwager. 2022. Differentiable Physics Simu-lation of Dynamics-Augmented Neural Objects. IEEE Robotics and Automation Letters 8 (2022), 2780–2787. https://api.semanticscholar.org/CorpusID:252967901 [10] Alexey Dosovitskiy, German Ros, Felipe Codevilla, Antonio Lopez, and Vladlen Koltun. 2017. CARLA: An open urban driving simulator. In Conference on robot learning . PMLR, 1–16. [11] Zhiwen Fan, Kevin Wang, Kairun Wen, Zehao Zhu, Dejia Xu, Zhangyang Wang, et al . 2025. Lightgaussian: Unbounded 3d gaussian compression with 15x reduc-tion and 200+ fps. Advances in neural information processing systems 37 (2025), 140138–140158. [12] Guangchi Fang and Bing Wang. 2024. Mini-splatting: Representing scenes with a constrained number of gaussians. In European Conference on Computer Vision .Springer, 165–181. [13] Tobias Fischer, Lorenzo Porzi, Samuel Rota Bulo, Marc Pollefeys, and Peter Kontschieder. 2024. Multi-level neural scene graphs for dynamic urban en-vironments. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition . 21125–21135. [14] Sharath Girish, Kamal Gupta, and Abhinav Shrivastava. 2024. Eagles: Efficient accelerated 3d gaussians with lightweight encodings. In European Conference on Computer Vision . Springer, 54–71. [15] Nan Huang, Xiaobao Wei, Wenzhao Zheng, Pengju An, Ming Lu, Wei Zhan, Masayoshi Tomizuka, Kurt Keutzer, and Shanghang Zhang. 2026. S3Gaussian: Self-Supervised Street Gaussians for Autonomous Driving. (2026). [16] Sheng Yu Huang, Zan Gojcic, Zian Wang, Francis Williams, Yoni Kasten, Sanja Fidler, Konrad Schindler, and Or Litany. 2023. Neural LiDAR Fields for Novel View Synthesis. 2023 IEEE/CVF International Conference on Computer Vision (ICCV) 
+
+(2023), 18190–18200. https://api.semanticscholar.org/CorpusID:258437311 [17] Bernhard Kerbl, Georgios Kopanas, Thomas Leimkühler, and George Dret-takis. 2023. 3D Gaussian Splatting for Real-Time Radiance Field Rendering. arXiv:2308.04079 [cs.GR] https://arxiv.org/abs/2308.04079 [18] Alexander Kirillov, Eric Mintun, Nikhila Ravi, Hanzi Mao, Chloe Rolland, Laura Gustafson, Tete Xiao, Spencer Whitehead, Alexander C. Berg, Wan-Yen Lo, Piotr Dollár, and Ross Girshick. 2023. Segment Anything. arXiv:2304.02643 (2023). [19] Joo Chan Lee, Daniel Rho, Xiangyu Sun, Jong Hwan Ko, and Eunbyung Park. 2024. Compact 3d gaussian representation for radiance field. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition . 21719–21728. [20] Hao Li, Jingfeng Li, Dingwen Zhang, Chenming Wu, Jieqi Shi, Chen Zhao, Haocheng Feng, Errui Ding, Jingdong Wang, and Junwei Han. 2024. VDG: Vision-Only Dynamic Gaussian for Driving Simulation. arXiv preprint arXiv:2406.18198 
+
+(2024). [21] Ying Li, Xiaobao Wei, Xiaowei Chi, Yuming Li, Zhongyu Zhao, Hao Wang, Ningn-ing Ma, Ming Lu, and Sirui Han. 2026. Manipdreamer3d: Synthesizing plausible robotic manipulation video with occupancy-aware 3d trajectory. In Proceedings of the AAAI Conference on Artificial Intelligence , Vol. 40. 6644–6652. [22] Zhengqi Li, Simon Niklaus, Noah Snavely, and Oliver Wang. 2021. Neural Scene Flow Fields for Space-Time View Synthesis of Dynamic Scenes. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) .[23] Jeffrey Yunfan Liu, Yun Chen, Ze Yang, Jingkang Wang, Sivabalan Manivasagam, and Raquel Urtasun. 2023. Real-Time Neural Rasterization for Large Scenes. 2023 IEEE/CVF International Conference on Computer Vision (ICCV) (2023), 8382–8393. https://api.semanticscholar.org/CorpusID:264870747 [24] Matthew Loper, Naureen Mahmood, Javier Romero, Gerard Pons-Moll, and Michael J. Black. 2015. SMPL: a skinned multi-person linear model. ACM Trans. Graph. 34, 6, Article 248 (Oct. 2015), 16 pages. doi:10.1145/2816795.2818013 [25] Fan Lu, Yan Xu, Guang-Sheng Chen, Hongsheng Li, Kwan-Yee Lin, and Changjun Jiang. 2023. Urban Radiance Field Representation with Deformable Neural Mesh Primitives. 2023 IEEE/CVF International Conference on Computer Vision (ICCV) 
+
+(2023), 465–476. https://api.semanticscholar.org/CorpusID:259991347 [26] Mechanical Simulation. 2024. CarSim. Available online: https://www.carsim. com/products/carsim/. Accessed on 16 July 2024. [27] Ben Mildenhall, Pratul P. Srinivasan, Matthew Tancik, Jonathan T. Barron, Ravi Ramamoorthi, and Ren Ng. 2020. NeRF: Representing Scenes as Neural Radiance Fields for View Synthesis. arXiv:2003.08934 [cs.CV] https://arxiv.org/abs/2003. 08934 [28] Simon Niedermayr, Josef Stumpfegger, and Rüdiger Westermann. 2024. Com-pressed 3d gaussian splatting for accelerated novel view synthesis. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition . 10349– 10358. [29] NVIDIA. 2023. NVIDIA DRIVE Sim. Available online: https://developer.nvidia. com/drive/drive-sim. Accessed on 18 April 2024. [30] Julian Ost, Fahim Mannan, Nils Thuerey, Julian Knodt, and Felix Heide. 2021. Neural scene graphs for dynamic scenes. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition . 2856–2865. [31] Julian Ost, Fahim Mannan, Nils Thuerey, Julian Knodt, and Felix Heide. 2021. Neu-ral Scene Graphs for Dynamic Scenes. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) . 2856–2865. [32] Julian Ost, Fahim Mannan, Nils Thuerey, Julian Knodt, and Felix Heide. 2021. Neural scene graphs for dynamic scenes. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition . 2856–2865. [33] Keunhong Park, Utkarsh Sinha, Jonathan T Barron, Sofien Bouaziz, Dan B Gold-man, Steven M Seitz, and Ricardo Martin-Brualla. 2021. Nerfies: Deformable neural radiance fields. In Proceedings of the IEEE/CVF International Conference on Computer Vision . 5865–5874. [34] Keunhong Park, Utkarsh Sinha, Peter Hedman, Jonathan T. Barron, Sofien Bouaziz, Dan B Goldman, Ricardo Martin-Brualla, and Steven M. Seitz. 2021. HyperNeRF: A Higher-Dimensional Representation for Topologically Varying Neural Radiance Fields. ACM Trans. Graph. 40, 6, Article 238 (dec 2021). [35] Chensheng Peng, Chengwei Zhang, Yixiao Wang, Chenfeng Xu, Yichen Xie, Wen-zhao Zheng, Kurt Keutzer, Masayoshi Tomizuka, and Wei Zhan. 2024. Desire-gs: 4d street gaussians for static-dynamic decomposition and surface reconstruction for urban driving scenes. arXiv preprint arXiv:2411.11921 (2024). SparseStreet: Sparse Gaussian Splatting for Real-Time Street Scene Simulation ICMR ’26, June 16–19, 2026, Amsterdam, Netherlands 
+
+[36] Albert Pumarola, Enric Corona, Gerard Pons-Moll, and Francesc Moreno-Noguer. 2020. D-NeRF: Neural Radiance Fields for Dynamic Scenes. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition .[37] Konstantinos Rematas, Andrew Liu, Pratul P. Srinivasan, Jonathan T. Barron, Andrea Tagliasacchi, Tom Funkhouser, and Vittorio Ferrari. 2022. Urban Radiance Fields. CVPR (2022). [38] Shital Shah, Debadeepta Dey, Chris Lovett, and Ashish Kapoor. 2018. Airsim: High-fidelity visual and physical simulation for autonomous vehicles. In Field and Service Robotics: Results of the 11th International Conference . Springer, 621–635. [39] Pei Sun, Henrik Kretzschmar, Xerxes Dotiwalla, Aurelien Chouard, Vijaysai Patnaik, Paul Tsui, James Guo, Yin Zhou, Yuning Chai, Benjamin Caine, et al .2020. Scalability in perception for autonomous driving: Waymo open dataset. In 
+
+Proceedings of the IEEE/CVF conference on computer vision and pattern recognition .2446–2454. [40] Yihong Sun and Bharath Hariharan. 2023. Dynamo-Depth: Fixing Unsupervised Depth Estimation for Dynamical Scenes. In Thirty-seventh Conference on Neural Information Processing Systems .[41] Matthew Tancik, Vincent Casser, Xinchen Yan, Sabeek Pradhan, Ben Mildenhall, Pratul P. Srinivasan, Jonathan T. Barron, and Henrik Kretzschmar. 2022. Block-NeRF: Scalable Large Scene Neural View Synthesis. 2022 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) (2022), 8238–8248. https: //api.semanticscholar.org/CorpusID:246706356 [42] Adam Tonderski, Carl Lindström, Georg Hess, William Ljungbergh, Lennart Svensson, and Christoffer Petersson. 2023. NeuRAD: Neural Rendering for Autonomous Driving. arXiv preprint arXiv:2311.15260 (2023). [43] Edgar Tretschk, Ayush Tewari, Vladislav Golyanik, Michael Zollhöfer, Christoph Lassner, and Christian Theobalt. 2020. Non-Rigid Neural Radiance Fields: Recon-struction and Novel View Synthesis of a Dynamic Scene From Monocular Video. arXiv:2012.12247 [cs.CV] [44] Haithem Turki, Deva Ramanan, and Mahadev Satyanarayanan. 2021. Mega-NeRF: Scalable Construction of Large-Scale NeRFs for Virtual Fly- Throughs. 
+
+2022 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) 
+
+(2021), 12912–12921. https://api.semanticscholar.org/CorpusID:245334780 [45] Haithem Turki, Jason Y Zhang, Francesco Ferroni, and Deva Ramanan. 2023. SUDS: Scalable Urban Dynamic Scenes. In Computer Vision and Pattern Recogni-tion (CVPR) .[46] Hao Wang, Xiaobao Wei, Ying Li, Qingpo Wuwu, Dongli Wu, Jiajun Cao, Ming Lu, Wenzhao Zheng, and Shanghang Zhang. 2025. RoboArmGS: High-Quality Robotic Arm Splatting via B \’ezier Curve Refinement. arXiv preprint arXiv:2511.17961 
+
+(2025). [47] Hao Wang, Xiaobao Wei, Xiaoan Zhang, Jianing Li, Chengyu Bai, Ying Li, Ming Lu, Wenzhao Zheng, and Shanghang Zhang. 2025. Embodiedocc++: Boosting embodied 3d occupancy prediction with plane regularization and uncertainty sampler. In Proceedings of the 33rd ACM International Conference on Multimedia .925–934. [48] Liao Wang, Jiakai Zhang, Xinhang Liu, Fuqiang Zhao, Yanshun Zhang, Yingliang Zhang, Minye Wu, Jingyi Yu, and Lan Xu. 2022. Fourier PlenOctrees for Dynamic Radiance Field Rendering in Real-Time. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) . 13524–13534. [49] Yu Wang, Xiaobao Wei, Ming Lu, and Guoliang Kang. 2025. Plgs: Robust panoptic lifting with 3d gaussian splatting. IEEE Transactions on Image Processing (2025). [50] Xiaobao Wei, Jiajun Cao, Yizhu Jin, Ming Lu, Guangyu Wang, and Shanghang Zhang. 2024. I-medsam: Implicit medical image segmentation with segment anything. In European Conference on Computer Vision . Springer, 90–107. [51] Xiaobao Wei, Peng Chen, Guangyu Li, Ming Lu, Hui Chen, and Feng Tian. 2025. Gazegaussian: High-fidelity gaze redirection with 3d gaussian splatting. In Pro-ceedings of the IEEE/CVF International Conference on Computer Vision . 13293– 13303. [52] Xiaobao Wei, Peng Chen, Ming Lu, Hui Chen, and Feng Tian. 2025. Graphavatar: Compact head avatars with gnn-generated 3d gaussians. In Proceedings of the AAAI Conference on Artificial Intelligence , Vol. 39. 8295–8303. [53] Xiaobao Wei, Qingpo Wuwu, Zhongyu Zhao, Zhuangzhe Wu, Nan Huang, Ming Lu, Ningning Ma, and Shanghang Zhang. 2025. Emd: Explicit motion modeling for high-quality street gaussian splatting. In Proceedings of the IEEE/CVF international conference on computer vision . 28462–28472. [54] Xiaobao Wei, Zhangjie Ye, Yuxiang Gu, Zunjie Zhu, Yunfei Guo, Yingying Shen, Shan Zhao, Ming Lu, Haiyang Sun, Bing Wang, et al . 2026. ParkGaussian: Surround-view 3D Gaussian Splatting for Autonomous Parking. arXiv preprint arXiv:2601.01386 (2026). [55] Xiaobao Wei, Renrui Zhang, Jiarui Wu, Jiaming Liu, Ming Lu, Yandong Guo, and Shanghang Zhang. 2024. Nto3d: Neural target object 3d reconstruction with segment anything. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition . 20352–20362. [56] Tianhao Wu, Fangcheng Zhong, Andrea Tagliasacchi, Forrester Cole, and Cengiz Öztireli. 2022. D2NeRF: Self-Supervised Decoupling of Dynamic and Static Objects from a Monocular Video. ArXiv abs/2205.15838 (2022). https://api. semanticscholar.org/CorpusID:249210189 [57] Zirui Wu, Tianyu Liu, Liyi Luo, Zhide Zhong, Jianteng Chen, Hongmin Xiao, Chao Hou, Haozhe Lou, Yuantao Chen, Runyi Yang, Yuxin Huang, Xiaoyu Ye, Zike Yan, Yongliang Shi, Yiyi Liao, and Hao Zhao. 2023. MARS: An Instance-aware, Modular and Realistic Simulator for Autonomous Driving. CICAI (2023). [58] Wenqi Xian, Jia-Bin Huang, Johannes Kopf, and Changil Kim. 2020. Space-time Neural Irradiance Fields for Free-Viewpoint Video. 2021 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) (2020), 9416–9426. https: //api.semanticscholar.org/CorpusID:227162620 [59] Enze Xie, Wenhai Wang, Zhiding Yu, Anima Anandkumar, Jose M Alvarez, and Ping Luo. 2021. SegFormer: Simple and efficient design for semantic segmentation with transformers. Advances in neural information processing systems 34 (2021), 12077–12090. [60] Hongyi Xu, Thiemo Alldieck, and Cristian Sminchisescu. 2021. H-NeRF: Neural Radiance Fields for Rendering and Temporal Reconstruction of Humans in Mo-tion. In Neural Information Processing Systems . https://api.semanticscholar.org/ CorpusID:239885257 [61] Yunzhi Yan, Haotong Lin, Chenxu Zhou, Weijie Wang, Haiyang Sun, Kun Zhan, Xianpeng Lang, Xiaowei Zhou, and Sida Peng. 2024. Street Gaussians: Modeling Dynamic Urban Scenes with Gaussian Splatting. In ECCV .[62] Jiawei Yang, Boris Ivanovic, Or Litany, Xinshuo Weng, Seung Wook Kim, Boyi Li, Tong Che, Danfei Xu, Sanja Fidler, Marco Pavone, and Yue Wang. 2023. EmerNeRF: Emergent Spatial-Temporal Scene Decomposition via Self-Supervision. arXiv preprint arXiv:2311.02077 (2023). [63] Lihe Yang, Bingyi Kang, Zilong Huang, Xiaogang Xu, Jiashi Feng, and Heng-shuang Zhao. 2024. Depth Anything: Unleashing the Power of Large-Scale Unlabeled Data. In CVPR .[64] Ziyi Yang, Xinyu Gao, Wen Zhou, Shaohui Jiao, Yuqing Zhang, and Xiaogang Jin. 2023. Deformable 3D Gaussians for High-Fidelity Monocular Dynamic Scene Reconstruction. arXiv:2309.13101 [cs.CV] https://arxiv.org/abs/2309.13101 [65] Zhifan Ye, Chenxi Wan, Chaojian Li, Jihoon Hong, Sixu Li, Leshu Li, Yongan Zhang, and Yingyan Celine Lin. 2024. 3D Gaussian Rendering Can Be Sparser: Ef-ficient Rendering via Learned Fragment Pruning. Advances in Neural Information Processing Systems 37 (2024), 5850–5869. [66] Kai Zeng, Zhanqian Wu, Kaixin Xiong, Xiaobao Wei, Xiangyu Guo, Zhenxin Zhu, Kalok Ho, Lijun Zhou, Bohan Zeng, Ming Lu, et al . 2025. Rethinking Driving World Model as Synthetic Data Generator for Perception Tasks. arXiv preprint arXiv:2510.19195 (2025). [67] Hongyu Zhou, Jiahao Shao, Lu Xu, Dongfeng Bai, Weichao Qiu, Bingbing Liu, Yue Wang, Andreas Geiger, and Yiyi Liao. 2024. Hugs: Holistic urban 3d scene understanding via gaussian splatting. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition . 21336–21345. [68] Hongyu Zhou, Jiahao Shao, Lu Xu, Dongfeng Bai, Weichao Qiu, Bingbing Liu, Yue Wang, Andreas Geiger, and Yiyi Liao. 2024. HUGS: Holistic Urban 3D Scene Understanding via Gaussian Splatting. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) . 21336–21345. [69] Xiaoyu Zhou, Zhiwei Lin, Xiaojun Shan, Yongtao Wang, Deqing Sun, and Ming-Hsuan Yang. 2024. Drivinggaussian: Composite gaussian splatting for surround-ing dynamic autonomous driving scenes. In Proceedings of the IEEE/CVF Confer-ence on Computer Vision and Pattern Recognition . 21634–21643.

@@ -1,0 +1,269 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-03T22:58:02.914290+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 2,
+    "deep_cap": 7,
+    "deep_selected": 2,
+    "quick_candidates": 4,
+    "quick_skim_target": 12,
+    "quick_selected": 4
+  },
+  "deep_dive": [
+    {
+      "id": "2606.03989v1",
+      "source": "arxiv",
+      "title": "PixVOD: Pixel-Distributed Direct Visual Odometry and Depth Estimation",
+      "abstract": "Images composed of 2D pixel arrays are the standard input to computer vision algorithms, yet many underlying computations can be distributed across pixels. Transmitting raw, redundant, and noisy pixel data off the sensor remains inefficient, motivating a shift toward focal-plane sensor-processors that perform a significant part of the computation directly within each pixel. We envision pixels synthesizing higher-level signals locally, reducing downstream load, and providing richer inputs for higher-level vision tasks.   We propose a fully parallelizable form of visual odometry and depth estimation across pixels, where sensor-processors exchange information through Gaussian Belief Propagation (GBP) to achieve consensus about camera motion and infer depth from per-pixel photometric observations and a surface normal prior. To maintain geometric stability during optimization, we introduce a keyframe-like anchoring mechanism that regulates the effective baseline between frames, enabling consistent motion and depth updates. Our method is evaluated on realistic datasets, demonstrating the feasibility of GBP-based pixel-level distributed odometry and depth estimation with keyframe anchoring on-sensor. Project Page: https://www.shinjeongkim.com/pixvod/",
+      "authors": [
+        "Shinjeong Kim",
+        "Ignacio Alzugaray",
+        "Callum Rhodes",
+        "Paul H. J. Kelly",
+        "Andrew J. Davison"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-02T17:59:22+00:00",
+      "link": "https://arxiv.org/pdf/2606.03989v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Gaussian Belief Propagation for visual odometry and depth estimation",
+      "llm_evidence_cn": "利用高斯置信传播进行视觉里程计与深度估计",
+      "llm_evidence": "利用高斯置信传播进行视觉里程计与深度估计",
+      "canonical_evidence": "利用高斯置信传播进行视觉里程计与深度估计",
+      "llm_tldr_en": "PixVOD proposes a fully parallelizable visual odometry and depth estimation method using Gaussian Belief Propagation across sensor-processors for camera motion and depth consensus, enabling onboard real-time tracking and mapping.",
+      "llm_tldr_cn": "现有多数的计算机视觉算法基于2D像素阵列,但传输原始冗余的像素数据效率低下。本文提出PixVOD,一种像素分布式直接视觉里程计与深度估计方法,将计算分散到焦平面传感器处理器上,像素通过高斯置信传播交换信息以达成相机运动与深度共识。该方法实现了视觉里程与深度的完全并行估计,可减少下游处理负载,未来可直接在传感器内完成实时运动跟踪与三维重建。",
+      "llm_tldr": "现有多数的计算机视觉算法基于2D像素阵列,但传输原始冗余的像素数据效率低下。本文提出PixVOD,一种像素分布式直接视觉里程计与深度估计方法,将计算分散到焦平面传感器处理器上,像素通过高斯置信传播交换信息以达成相机运动与深度共识。该方法实现了视觉里程与深度的完全并行估计,可减少下游处理负载,未来可直接在传感器内完成实时运动跟踪与三维重建。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Visual SLAM methods for camera tracking and mapping",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.00576v1",
+      "source": "arxiv",
+      "title": "Dynamic Resilient Spatio-Semantic Memory with Hybrid Localization for Mobile Manipulation",
+      "abstract": "Reliable mobile manipulation in dynamic indoor environments requires a scene representation that remains geometrically consistent, semantically queryable, and computationally bounded as the environment changes. Existing systems often rely on pre-built maps, static-scene assumptions, or highly accurate camera poses, which can lead to stale or misaligned scene information when target objects are relocated or pose estimates are corrected. This paper presents DREAM, a real-robot mobile manipulation framework that integrates perception, memory, localization, navigation, and manipulation in previously unseen indoor environments without a pre-built map. DREAM constructs an online spatio-semantic voxel memory from RGB-D observations registered by a LiDAR-inertial-visual SLAM backend. It further introduces pose-graph-aware Redundancy-Aware Memory Pruning (RMP) to update historical observations after pose corrections while keeping long-horizon observation history bounded. For target localization and reacquisition, DREAM combines language-conditioned 3D retrieval, open-vocabulary image detection, and multimodal large language model based semantic verification. Real-robot experiments in four dynamic indoor laboratory scenes show that DREAM improves long-horizon task success rates from 40%-60% with DynaMem to 55%-70%, while maintaining a memory footprint of 0.37-0.63 GB and an online memory-update time of 0.43-0.53 s across scenes.",
+      "authors": [
+        "Zhijie Yan",
+        "Shufei Li",
+        "Ze Zhang",
+        "Xin Liu",
+        "Yuhang Zheng",
+        "Zuoxu Wang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-05-30T06:58:03+00:00",
+      "link": "https://arxiv.org/pdf/2606.00576v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "visual SLAM-like system for mobile manipulation with online mapping and localization from RGB-D",
+      "llm_evidence_cn": "类似视觉SLAM的系统，用于移动操作，通过RGB-D进行在线建图与定位",
+      "llm_evidence": "类似视觉SLAM的系统，用于移动操作，通过RGB-D进行在线建图与定位",
+      "canonical_evidence": "类似视觉SLAM的系统，用于移动操作，通过RGB-D进行在线建图与定位",
+      "llm_tldr_en": "Presents DREAM, a mobile manipulation framework that builds online spatio-semantic voxel maps and uses hybrid localization, essentially a visual SLAM system for dynamic environments.",
+      "llm_tldr_cn": "提出DREAM框架，集成感知、记忆、定位、导航和操作，通过RGB-D在线构建时空语义体素地图并采用混合定位，是一个面向动态环境的视觉SLAM系统。",
+      "llm_tldr": "提出DREAM框架，集成感知、记忆、定位、导航和操作，通过RGB-D在线构建时空语义体素地图并采用混合定位，是一个面向动态环境的视觉SLAM系统。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Visual SLAM methods for camera tracking and mapping",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2606.02937v1",
+      "source": "arxiv",
+      "title": "BEAST3D: Animal behavioral analysis and neural encoding from multi-view video via Gaussian splatting",
+      "abstract": "Multi-view video recordings are increasingly used to capture the 3D movements of animals in experimental settings, yet extracting rich 3D representations from these recordings remains challenging. Supervised pose estimation requires extensive manual annotation, while general-purpose 3D reconstruction models trained on generic scene datasets fail on the specialized imagery and sparse-view setting of laboratory experiments. We address these limitations with BEAST3D, a self-supervised pretraining framework that learns 3D visual representations from unlabeled, calibrated multi-view video. BEAST3D uses a vision transformer to predict 3D Gaussian splats that reconstruct held-out views through differentiable rendering, while simultaneously segmenting the animal from the background. BEAST3D reconstructs 3D structure with as few as four views by conditioning directly on known camera parameters--unlike general-purpose models, which must estimate camera geometry from dense overlapping viewpoints that are seldom available in lab settings. Through comprehensive evaluation across four species, we demonstrate that BEAST3D produces rich, viewpoint-invariant features that transfer effectively to three downstream tasks: novel view synthesis, which validates the quality of the learned 3D representations; multi-view pose estimation, which provides the sparse keypoint trajectories widely used in behavioral analysis; and neural encoding, which relates 3D behavioral features to simultaneously recorded neural activity. BEAST3D thus establishes a versatile framework for behavioral analysis that leverages 3D structure in modern multi-view laboratory recordings.",
+      "authors": [
+        "Yanchen Wang",
+        "Lenny Aharon",
+        "Wangshu Zhu",
+        "Kyle Daruwalla",
+        "Linghua Zhang",
+        "Jiaru Zou",
+        "Selmaan Chettih",
+        "Helen Hou",
+        "Liam Paninski",
+        "Matthew R Whiteway"
+      ],
+      "primary_category": "q-bio.NC",
+      "categories": [
+        "q-bio.NC",
+        "cs.CV"
+      ],
+      "published": "2026-06-01T22:34:14+00:00",
+      "link": "https://arxiv.org/pdf/2606.02937v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "uses 3D Gaussian splatting for scene representation and view synthesis",
+      "llm_evidence_cn": "采用3D高斯泼溅进行场景表示和视图合成",
+      "llm_evidence": "采用3D高斯泼溅进行场景表示和视图合成",
+      "canonical_evidence": "采用3D高斯泼溅进行场景表示和视图合成",
+      "llm_tldr_en": "Presents a self-supervised framework that uses a vision transformer to predict 3D Gaussian splats, which reconstruct held-out views via differentiable rendering for animal pose estimation from unlabeled multi-view video.",
+      "llm_tldr_cn": "该工作提出BEAST3D，一种自监督预训练框架，利用视觉Transformer预测3D高斯泼溅并通过可微分渲染重建缺失视图，从无标注多视角视频中学习动物3D行为表示。该方法在专用实验场景中克服了标注困难和通用模型失效问题，展示了3D高斯泼溅在受限视图下的重建能力。其技术可拓展到其他需要从多视角视频重建3D场景的任务。",
+      "llm_tldr": "该工作提出BEAST3D，一种自监督预训练框架，利用视觉Transformer预测3D高斯泼溅并通过可微分渲染重建缺失视图，从无标注多视角视频中学习动物3D行为表示。该方法在专用实验场景中克服了标注困难和通用模型失效问题，展示了3D高斯泼溅在受限视图下的重建能力。其技术可拓展到其他需要从多视角视频重建3D场景的任务。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.00817v1",
+      "source": "arxiv",
+      "title": "Directed Distance Fields for Constant-Time Ray Queries on Gaussian Splatting",
+      "abstract": "3D Gaussian Splatting (3DGS) renders new views of a scene in real time. Like every rasterizer, it answers only primary rays, the rays from the camera through the image. It cannot trace the secondary rays that shadows, ambient occlusion, and global illumination need. We turn a trained 3DGS scene into a ray oracle by distilling a Directed Distance Function (DDF). The DDF is a small neural field. It takes a ray, given by an origin and a direction, and returns the distance to the first surface and whether the ray hits anything. Each query is one forward pass. The field is 52~MB, and its size does not depend on the number of Gaussians, so its cost and memory stay flat as the scene grows. We make three points. First, we study what supervision a DDF needs. Depth rendered from the Gaussians is too blurry to teach thin parts, while clean distance supervision recovers them. Second, we measure speed. The DDF is 26 to 72 times faster than sphere tracing an equivalent signed distance field, and unlike a bounding volume hierarchy built over the Gaussians, even on dedicated RT-core hardware, its query time and memory do not grow with the scene. Third, we show a pipeline that needs no mesh: images give a 3DGS scene, a neural surface gives clean distances, and the DDF learns from them. We use the DDF as a secondary-ray oracle for global illumination. It reproduces reference ray-traced shadows at 30.3~dB and ambient occlusion at 21.3~dB across 142 objects, and on real captured scenes. Our codes are available at https://github.com/smlab-niser/ddf-gs.",
+      "authors": [
+        "Subhankar MIshra"
+      ],
+      "primary_category": "cs.GR",
+      "categories": [
+        "cs.GR",
+        "cs.CV"
+      ],
+      "published": "2026-05-30T17:29:32+00:00",
+      "link": "https://arxiv.org/pdf/2606.00817v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "distills directed distance field from 3DGS for ray queries enabling shadows and global illumination",
+      "llm_evidence_cn": "从3DGS蒸馏有向距离场以进行光线查询，支持阴影和全局光照",
+      "llm_evidence": "从3DGS蒸馏有向距离场以进行光线查询，支持阴影和全局光照",
+      "canonical_evidence": "从3DGS蒸馏有向距离场以进行光线查询，支持阴影和全局光照",
+      "llm_tldr_en": "Turns a trained 3DGS scene into a ray oracle by distilling a small neural Directed Distance Function that answers distance-to-surface and hit queries in constant time, enabling secondary rays for shadows, ambient occlusion, and global illumination.",
+      "llm_tldr_cn": "该工作将训练好的3DGS场景转化为光线查询器，通过蒸馏一个有向距离函数（DDF），在常量时间内回答射线到表面距离和命中查询。DDF是一个小型神经场，大小固定52MB，不随高斯数量增长，从而在保持实时性的同时为3DGS增加阴影、环境光遮蔽和全局光照等二次光线效果。这为3DGS场景的真实感渲染提供了关键扩展。",
+      "llm_tldr": "该工作将训练好的3DGS场景转化为光线查询器，通过蒸馏一个有向距离函数（DDF），在常量时间内回答射线到表面距离和命中查询。DDF是一个小型神经场，大小固定52MB，不随高斯数量增长，从而在保持实时性的同时为3DGS增加阴影、环境光遮蔽和全局光照等二次光线效果。这为3DGS场景的真实感渲染提供了关键扩展。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.03909v1",
+      "source": "arxiv",
+      "title": "SparseStreet: Sparse Gaussian Splatting for Real-Time Street Scene Simulation",
+      "abstract": "While 3D Gaussian Splatting has shown promising results in street scene reconstruction, existing methods require massive numbers of Gaussian primitives to capture fine details, leading to prohibitive storage costs and slow rendering speeds. We observe that dynamic objects (e.g., vehicles and pedestrians) demand high-fidelity representations to maintain temporal consistency, while static background regions often contain substantial redundancy. Motivated by this, we propose SparseStreet, a general compression framework specifically designed for street scenes. First, we introduce a node-based learnable pruning strategy that systematically removes low-contributing Gaussian primitives while preserving visually critical regions. Second, after the scene representation stabilizes, we apply background compression, further reducing redundancy in static regions. Our method effectively preserves the geometry and appearance of dynamic objects while significantly reducing the total number of Gaussian primitives. Extensive experiments on the Waymo and nuScenes demonstrate that SparseStreet achieves up to 80% compression ratio with minimal quality degradation, enabling resource-efficient, high-fidelity dynamic scene reconstruction. Project website: https://sparsestreet.github.io/.",
+      "authors": [
+        "Qingpo Wuwu",
+        "Xiaobao Wei",
+        "Peng Chen",
+        "Nan Huang",
+        "Zhongyu Zhao",
+        "Hao Wang",
+        "Ming Lu",
+        "Ningning Ma",
+        "Shanghang Zhang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-02T17:06:14+00:00",
+      "link": "https://arxiv.org/pdf/2606.03909v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Sparse Gaussian Splatting for efficient real-time street scene rendering, leveraging anisotropic Gaussian primitives.",
+      "llm_evidence_cn": "利用稀疏高斯抛雪球实现高效实时街景渲染，基于各向异性高斯原语",
+      "llm_evidence": "利用稀疏高斯抛雪球实现高效实时街景渲染，基于各向异性高斯原语",
+      "canonical_evidence": "利用稀疏高斯抛雪球实现高效实时街景渲染，基于各向异性高斯原语",
+      "llm_tldr_en": "SparseStreet compresses 3DGS for street scenes via learnable pruning and scene-aware simplification, reducing primitives while maintaining visual quality for real-time rendering.",
+      "llm_tldr_cn": "针对街景重建中3DGS原语数量巨大导致存储和速度瓶颈的问题，SparseStreet提出通用压缩框架：引入基于节点的可学习剪枝策略动态去除低贡献原语，并在场景优化后进行简化，在保持视觉质量的同时大幅减少原语数量，实现实时渲染。该方法有效平衡了动态对象的高保真需求和静态背景的冗余。",
+      "llm_tldr": "针对街景重建中3DGS原语数量巨大导致存储和速度瓶颈的问题，SparseStreet提出通用压缩框架：引入基于节点的可学习剪枝策略动态去除低贡献原语，并在场景优化后进行简化，在保持视觉质量的同时大幅减少原语数量，实现实时渲染。该方法有效平衡了动态对象的高保真需求和静态背景的冗余。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.02058v1",
+      "source": "arxiv",
+      "title": "TIDES: Time-Derivative Event Simulation via Deformable Reconstruction",
+      "abstract": "Event cameras emit asynchronous events in response to environmental appearance changes. The scarcity of real-world event datasets makes simulation essential. However, most simulators infer event timestamps from frame sequences, forcing many threshold crossings to share a small set of discrete times; a failure mode we term timestamp batching that worsens under fast motion and occlusion.   We present TIDES, a continuous-time event simulator built on dynamic Gaussian splatting. Because TIDES operates on an explicit 3D scene representation with learnt geometry and motion, it can derive per-pixel intensity dynamics directly from the scene, rather than by differencing rendered frames. This enables accurate threshold-crossing prediction, including multiple crossings per rendering step, without temporal upsampling or frame interpolation. The same 3D scene model reveals where objects partially occlude one another; TIDES uses this to guide adaptive time stepping, concentrating computation only in regions where occlusion dynamics make simple models of brightness change unreliable.   Finally, we model finite sensor bandwidth using a tile-level arbiter whose throughput, jitter, and event drops reproduce realistic sensor artifacts. Across paired RGB-event benchmarks, TIDES attains state-of-the-art event-stream fidelity. We also show that events simulated by TIDES transfer more effectively to real downstream tasks than competitors'.",
+      "authors": [
+        "Christopher Thirgood",
+        "Dipon Kumar Ghosh",
+        "Simon Hadfield"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.RO"
+      ],
+      "published": "2026-06-01T10:49:13+00:00",
+      "link": "https://arxiv.org/pdf/2606.02058v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Uses dynamic Gaussian splatting for explicit 3D scene representation and rendering, relevant to real-time rendering with anisotropic Gaussians.",
+      "llm_evidence_cn": "采用动态高斯泼溅实现显式3D场景表示与渲染，与各向异性高斯的实时渲染相关。",
+      "llm_evidence": "采用动态高斯泼溅实现显式3D场景表示与渲染，与各向异性高斯的实时渲染相关。",
+      "canonical_evidence": "采用动态高斯泼溅实现显式3D场景表示与渲染，与各向异性高斯的实时渲染相关。",
+      "llm_tldr_en": "TIDES is a continuous-time event simulator using dynamic Gaussian splatting for scene representation. It avoids timestamp batching by deriving intensity dynamics directly from the 3D scene, enabling accurate event generation. This approach demonstrates effective volumetric scene representation with anisotropic Gaussians, applicable to real-time rendering tasks.",
+      "llm_tldr_cn": "现有事件相机模拟器从帧序列推断时间戳，导致快速运动下时间戳批量堆积。TIDES提出基于动态高斯泼溅的连续时间事件模拟器，通过显式3D场景表示直接计算像素亮度变化，实现精确的阈值穿越预测。该方法展示了各向异性高斯在场景表示中的有效性，可用于实时渲染相关应用。其显式几何与运动学习能力为动态场景重建提供了新思路。",
+      "llm_tldr": "现有事件相机模拟器从帧序列推断时间戳，导致快速运动下时间戳批量堆积。TIDES提出基于动态高斯泼溅的连续时间事件模拟器，通过显式3D场景表示直接计算像素亮度变化，实现精确的阈值穿越预测。该方法展示了各向异性高斯在场景表示中的有效性，可用于实时渲染相关应用。其显式几何与运动学习能力为动态场景重建提供了新思路。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
