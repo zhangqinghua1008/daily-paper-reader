@@ -1,0 +1,391 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-04T21:33:39.810797+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 7,
+    "deep_cap": 7,
+    "deep_selected": 7,
+    "quick_candidates": 2,
+    "quick_skim_target": 12,
+    "quick_selected": 2
+  },
+  "deep_dive": [
+    {
+      "id": "2606.00352v1",
+      "source": "arxiv",
+      "title": "HiGS: A Hierarchical Rendering Architecture for Real-Time 3D Gaussian Splatting",
+      "abstract": "3D Gaussian Splatting (3DGS) has become the standard for real-time novel view synthesis on commodity GPUs. Its pipeline ties spatial partitioning and rasterization to one tile size, yet the two pull in opposite directions: partitioning, which bins and depth-sorts gaussians, grows cheaper with larger tiles, while rasterization gets cheaper with smaller ones. Prior acceleration work reduces the cost of individual stages but keeps both locked to that single scale, where a few dense tiles dominate frame time. We present Hierarchically Tiled Gaussian Splatting (HiGS), which gives each its own scale: partitioning runs over coarse macro-tiles, while rasterization runs over the fine render tiles within them. Rasterization work is then issued in proportion to the gaussians in each macro-tile rather than per tile, so dense regions spread across many parallel units instead of serializing through one. Across tested scenes, HiGS renders up to 15.8x faster than the original 3DGS and outperforms every other rasterizer we evaluate, while preserving exact front-to-back alpha compositing.",
+      "authors": [
+        "Dawid Pająk",
+        "Martin Bisson",
+        "Rodolfo Lima"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.GR"
+      ],
+      "published": "2026-05-29T20:46:38+00:00",
+      "link": "https://arxiv.org/pdf/2606.00352v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "hierarchical tiling for efficient real-time 3D Gaussian Splatting rendering",
+      "llm_evidence_cn": "分层瓦片架构用于高效实时3D高斯泼溅渲染",
+      "llm_evidence": "分层瓦片架构用于高效实时3D高斯泼溅渲染",
+      "canonical_evidence": "分层瓦片架构用于高效实时3D高斯泼溅渲染",
+      "llm_tldr_en": "HiGS improves real-time 3D Gaussian Splatting by introducing hierarchical tiling: partitioning on coarse macro-tiles and rasterization on fine render tiles, dynamically balancing workload to reduce frame-time variance.",
+      "llm_tldr_cn": "针对3D高斯泼溅（3DGS）渲染中空间分块与光栅化因共用单一瓦片尺寸导致的效率瓶颈，HiGS提出分层瓦片架构，将分块计算放在粗粒度宏瓦片，而光栅化在细粒度渲染瓦片内执行，并根据密度动态分配工作负载。实验表明，该解耦设计显著减少了密集瓦片造成的帧时间波动，提升了实时渲染性能，为3DGS在实时应用中的广泛部署提供了关键加速方案。",
+      "llm_tldr": "针对3D高斯泼溅（3DGS）渲染中空间分块与光栅化因共用单一瓦片尺寸导致的效率瓶颈，HiGS提出分层瓦片架构，将分块计算放在粗粒度宏瓦片，而光栅化在细粒度渲染瓦片内执行，并根据密度动态分配工作负载。实验表明，该解耦设计显著减少了密集瓦片造成的帧时间波动，提升了实时渲染性能，为3DGS在实时应用中的广泛部署提供了关键加速方案。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.05124v1",
+      "source": "arxiv",
+      "title": "Geometry Gaussians: Decoupling Appearance and Geometry in Gaussian Splatting",
+      "abstract": "After the success of 3D Gaussian Splatting (3DGS) for novel view synthesis, many works have explored how to also use it for geometric surface representation. However, extracting accurate geometric information directly from 3DGS remains challenging and can often reduce the appearance rendering quality. In this work, we show that 3DGS in its default form is inheritedly unsuited to represent texture and geometry at the same time, by training with complete ground-truth texture and geometry information. We also propose a simple solution by applying a single additional geometry opacity parameter to each splat, together with an optional transparency-curated optimization pipeline. Our experiments, both with ground-truth and vision foundation model geometric input, show that this change leads to improved rendering and geometry performance on a wide variety of dataset, and especially complex scenes with transparent objects benefit significantly from our method.",
+      "authors": [
+        "Hongyu Zhou",
+        "Zorah Lähner"
+      ],
+      "primary_category": "cs.GR",
+      "categories": [
+        "cs.GR",
+        "cs.CV",
+        "cs.LG"
+      ],
+      "published": "2026-06-03T17:29:36+00:00",
+      "link": "https://arxiv.org/pdf/2606.05124v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "improves geometric surface representation from 3DGS by adding a geometry opacity parameter to each anisotropic Gaussian splat",
+      "llm_evidence_cn": "通过为各向异性高斯泼溅添加几何不透明度参数，改进三维高斯泼溅的几何表面表示",
+      "llm_evidence": "通过为各向异性高斯泼溅添加几何不透明度参数，改进三维高斯泼溅的几何表面表示",
+      "canonical_evidence": "通过为各向异性高斯泼溅添加几何不透明度参数，改进三维高斯泼溅的几何表面表示",
+      "llm_tldr_en": "Shows default 3DGS is unsuited for joint texture and geometry representation; proposes a geometry opacity parameter to decouple them, enabling accurate geometric surface extraction without sacrificing rendering quality.",
+      "llm_tldr_cn": "本文揭示了三维高斯泼溅在默认形式下难以同时表示纹理与几何的内在缺陷，提出为每个高斯泼溅增加一个额外的几何不透明度参数，实现外观与几何的解耦。通过可选的透明度优化训练流程，在保持渲染质量的同时显著提升了几何表面重建的精度。实验验证了该方法在地面真值与视觉基础模型几何监督下均有效。",
+      "llm_tldr": "本文揭示了三维高斯泼溅在默认形式下难以同时表示纹理与几何的内在缺陷，提出为每个高斯泼溅增加一个额外的几何不透明度参数，实现外观与几何的解耦。通过可选的透明度优化训练流程，在保持渲染质量的同时显著提升了几何表面重建的精度。实验验证了该方法在地面真值与视觉基础模型几何监督下均有效。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.04618v1",
+      "source": "arxiv",
+      "title": "BPDA-GMM: Bayesian Probabilistic Data Association via Gaussian Mixture Models for Semantic SLAM",
+      "abstract": "Probabilistic data association (PDA) improves semantic SLAM in perceptually aliased scenes, but existing methods often assume a fixed landmark set, recompute association weights as the map grows, or rely on hand-tuned null-hypothesis weights. To address these limitations, we propose \\textbf{BPDA-GMM}, an online Bayesian PDA framework for semantic SLAM with a growing object-level map. BPDA-GMM uses a Dirichlet-process prior to induce a Chinese Restaurant Process (CRP) association model, where accumulated evidence favors existing landmarks, and the concentration parameter assigns probability mass to new landmarks. For each semantic detection, plausible candidates are selected by a joint semantic-geometric gate, CRP-weighted association probabilities are computed, and object landmarks are updated as semantic Gaussians in closed form. The resulting landmark set forms a Gaussian mixture model, and its dominant component is passed to the back-end as a max-mixture semantic factor. When association weights are inconclusive, an ambiguity-triggered $α$-divergence tempering step improves discrimination. Finally, a decoupled back-end zeroes the pose Jacobian of semantic factors, allowing noisy detections to refine landmarks without directly perturbing the trajectory. Experiments in simulation and on a real indoor dataset demonstrate improved trajectory accuracy, semantic mapping quality, and robustness to perceptual aliasing and classifier errors over state-of-the-art baselines. Code and video are publicly available at https://github.com/thanhnguyencanh/BPDA-SLAM.",
+      "authors": [
+        "Thanh Nguyen Canh",
+        "Haolan Zhang",
+        "Xiem HoangVan",
+        "Antonio Sgorbissa",
+        "Nak Young Chong"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-06-03T08:53:39+00:00",
+      "link": "https://arxiv.org/pdf/2606.04618v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "proposes a Bayesian probabilistic data association method for semantic SLAM to improve camera tracking and mapping in ambiguous environments",
+      "llm_evidence_cn": "提出贝叶斯概率数据关联方法用于语义SLAM，改善歧义环境下的相机跟踪与建图",
+      "llm_evidence": "提出贝叶斯概率数据关联方法用于语义SLAM，改善歧义环境下的相机跟踪与建图",
+      "canonical_evidence": "提出贝叶斯概率数据关联方法用于语义SLAM，改善歧义环境下的相机跟踪与建图",
+      "llm_tldr_en": "BPDA-GMM introduces a Dirichlet-process-based association model for online semantic SLAM, enabling robust data association with growing object maps, enhancing camera pose accuracy and map consistency.",
+      "llm_tldr_cn": "BPDA-GMM针对语义SLAM中感知歧义问题，提出基于狄利克雷过程先验的在线贝叶斯概率数据关联框架，利用CRP模型动态分配新地标，在提高相机姿态精度的同时构建更一致的对象级地图。",
+      "llm_tldr": "BPDA-GMM针对语义SLAM中感知歧义问题，提出基于狄利克雷过程先验的在线贝叶斯概率数据关联框架，利用CRP模型动态分配新地标，在提高相机姿态精度的同时构建更一致的对象级地图。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Visual SLAM methods for camera tracking and mapping",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.05035v1",
+      "source": "arxiv",
+      "title": "Anchor3R: Streaming 3D Reconstruction with Transient Anchors for Long-Horizon Visual Mapping",
+      "abstract": "Long-horizon online visual mapping is a core capability for robot perception, requiring continuous camera-motion and scene-geometry estimation from visual streams under bounded memory and computation. Recent feed-forward 3D reconstruction models provide strong geometric priors, but their streaming variants often predict poses in a fixed coordinate system tied to the first frame or a persistent scene memory. This fixed-gauge design leads to train--test mismatch, attention bias toward early anchors, and accumulated drift on sequences much longer than those seen during training. We propose \\emph{Anchor3R}, a streaming 3D reconstruction framework that treats feed-forward reconstruction as current-centric local measurement prediction rather than persistent global-gauge regression. At each time step, Anchor3R predicts window-relative poses and a local pointmap in the current-frame coordinate system, turning streaming reconstruction into relative-pose measurement generation. These measurements support online pose updates, while loop-closure reinsertion and motion averaging align the trajectory and transform local pointmaps into a coherent global reconstruction. Experiments on indoor, outdoor, driving, and RGB-D benchmarks show that Anchor3R improves long-horizon pose accuracy and dense reconstruction quality over existing streaming baselines, while supporting bounded-memory online inference.",
+      "authors": [
+        "Peilin Tao",
+        "Chong Cheng",
+        "Yuansen Du",
+        "Caiwei Song",
+        "Zhengqing Chen",
+        "Xiaoyang Guo",
+        "Wei Yin",
+        "Weiqiang Ren",
+        "Qian Zhang",
+        "Hainan Cui",
+        "Shuhan Shen"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-03T16:00:13+00:00",
+      "link": "https://arxiv.org/pdf/2606.05035v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "streaming 3D reconstruction and camera pose estimation from a monocular visual stream",
+      "llm_evidence_cn": "从单目视觉流进行流式三维重建和相机位姿估计",
+      "llm_evidence": "从单目视觉流进行流式三维重建和相机位姿估计",
+      "canonical_evidence": "从单目视觉流进行流式三维重建和相机位姿估计",
+      "llm_tldr_en": "Anchor3R is a streaming 3D reconstruction framework that uses transient anchors to reduce drift in long-horizon visual mapping, jointly estimating camera motion and scene geometry from a single moving camera.",
+      "llm_tldr_cn": "针对长时程视觉建图中固定参考系导致训练-测试不匹配和漂移累积的问题，提出Anchor3R流式三维重建框架。该方法将前馈重建视为以当前帧为中心的局部测量预测，通过瞬态锚点动态更新参考系，从而在长视频流上实现一致的无漂移建图和位姿估计。实验表明，Anchor3R在多个长序列数据集上显著降低了累积误差，提升了视觉SLAM系统的可扩展性。",
+      "llm_tldr": "针对长时程视觉建图中固定参考系导致训练-测试不匹配和漂移累积的问题，提出Anchor3R流式三维重建框架。该方法将前馈重建视为以当前帧为中心的局部测量预测，通过瞬态锚点动态更新参考系，从而在长视频流上实现一致的无漂移建图和位姿估计。实验表明，Anchor3R在多个长序列数据集上显著降低了累积误差，提升了视觉SLAM系统的可扩展性。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "simultaneous localization and mapping using a single camera",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.01939v1",
+      "source": "arxiv",
+      "title": "SAVMap: Structure-Aided Visual Mapping of Large-Scale 2.5D Manhattan Wireframes from Panoramic Video",
+      "abstract": "Precise 3D representations of industrial environments enable tasks such as robot localization and digital twin generation. We propose SAVMap, a method for generating a semantic wireframe map of warehouse shelf and light structures using only a panoramic video camera as the sensor input. Sequences of rectified images with shelf and ceiling-facing views are extracted from a panoramic video captured along the warehouse aisles. Using a semantic segmentation network front end, a set of sparse, semantic structure feature points (e.g., corners of shelf structures, centers of lights) are extracted from each image and tracked across the sequences. By accounting for real-world geometric relationships among the points such as Manhattan grids, a constrained structure-from-motion algorithm yields the 3D points that form a wireframe map. We demonstrate the scalability and accuracy of our proposal in a warehouse with 46 shelving rows, each with faces spanning 55\\,m by 7\\,m. From an hour of panoramic video content, we create wireframe maps for over 5000 shelf elements across the rows, achieving an aggregate mean absolute error of 4.8\\,cm with respect to ground-truth.",
+      "authors": [
+        "Howard Huang",
+        "Bharath Surianarayanan",
+        "Keifer Lee",
+        "Chenyu Wang",
+        "Chen Feng"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-01T09:04:29+00:00",
+      "link": "https://arxiv.org/pdf/2606.01939v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "proposes a visual mapping system from panoramic video that tracks semantic features and builds wireframe maps, enabling robot localization",
+      "llm_evidence_cn": "提出从全景视频中跟踪语义特征并构建线框地图的视觉建图系统，用于机器人定位",
+      "llm_evidence": "提出从全景视频中跟踪语义特征并构建线框地图的视觉建图系统，用于机器人定位",
+      "canonical_evidence": "提出从全景视频中跟踪语义特征并构建线框地图的视觉建图系统，用于机器人定位",
+      "llm_tldr_en": "SAVMap uses a single panoramic camera to build large-scale 2.5D wireframe maps of industrial environments by tracking semantic structure points, facilitating robot localization.",
+      "llm_tldr_cn": "SAVMap仅用一个全景相机，通过提取并跟踪语义结构特征点，结合曼哈顿几何约束，生成仓库等工业环境的大规模2.5D线框地图，为机器人定位和数字孪生提供精确表示。",
+      "llm_tldr": "SAVMap仅用一个全景相机，通过提取并跟踪语义结构特征点，结合曼哈顿几何约束，生成仓库等工业环境的大规模2.5D线框地图，为机器人定位和数字孪生提供精确表示。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Visual SLAM methods for camera tracking and mapping",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.03254v1",
+      "source": "arxiv",
+      "title": "FreeStreamGS: Online Feed-forward 3D Gaussian Splatting from Unposed Streaming Inputs",
+      "abstract": "Feed-forward 3D Gaussian Splatting (3DGS) allows efficient and high-fidelity novel view synthesis (NVS) from an offline recorded image sequence. However, achieving online NVS from streaming and unposed image inputs remains challenging. Although online feed-forward geometric estimation methods have been proposed for streaming depth and point cloud recovery, they cannot be adapted to NVS due to severe rendering artifacts. This is because NVS demands stricter multi-view consistency in Gaussian scales and pose-geometry alignment; even minor deviations would accumulate over time and visibly degrade rendering quality. To this end, we propose FreeStreamGS, a robust online feed-forward framework for efficient and high-quality NVS. We introduce two key mechanisms: a Decoupled Intrinsic Recovery Head that removes cumulative camera intrinsic bias and prevents scene scale jitter during long-term streaming, and a Dynamic Point Refinement Offset strategy that relaxes rigid unprojection to correct coupled pose-depth drift. Extensive experiments show that FreeStreamGS achieves rendering quality competitive with state-of-the-art offline feed-forward 3DGS methods, despite operating without access to future frames.",
+      "authors": [
+        "Ruiyang Chen",
+        "Feiran Li",
+        "Chu Zhou",
+        "Zonglin Li",
+        "Zhanyu Ma",
+        "Heng Guo"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-02T07:16:09+00:00",
+      "link": "https://arxiv.org/pdf/2606.03254v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Online feed-forward 3D Gaussian Splatting from unposed streaming inputs enables novel view synthesis with implicit camera tracking, fitting monocular SLAM with 3DGS.",
+      "llm_evidence_cn": "从未标定流式输入在线前馈3D高斯泼溅实现新视角合成，隐含相机跟踪，符合单目3DGS-SLAM系统。",
+      "llm_evidence": "从未标定流式输入在线前馈3D高斯泼溅实现新视角合成，隐含相机跟踪，符合单目3DGS-SLAM系统。",
+      "canonical_evidence": "从未标定流式输入在线前馈3D高斯泼溅实现新视角合成，隐含相机跟踪，符合单目3DGS-SLAM系统。",
+      "llm_tldr_en": "FreeStreamGS addresses online novel view synthesis from unposed streaming images by introducing a robust feed-forward 3DGS framework that maintains multi-view consistency for high-quality rendering, effectively acting as a monocular SLAM system.",
+      "llm_tldr_cn": "FreeStreamGS解决从未标定流式输入进行在线新视角合成的难题，突破离线前馈3DGS的局限。它提出鲁棒的前馈框架，通过引入几何-姿态对齐和尺度一致性机制，稳定生成3D高斯并确保多视图一致性，从而实现高质量渲染。该系统实质上实现了单目情形下的实时定位与密集映射，可作为单目3DGS-SLAM的有效方案，为实时密集建图和渲染开辟新路径。",
+      "llm_tldr": "FreeStreamGS解决从未标定流式输入进行在线新视角合成的难题，突破离线前馈3DGS的局限。它提出鲁棒的前馈框架，通过引入几何-姿态对齐和尺度一致性机制，稳定生成3D高斯并确保多视图一致性，从而实现高质量渲染。该系统实质上实现了单目情形下的实时定位与密集映射，可作为单目3DGS-SLAM的有效方案，为实时密集建图和渲染开辟新路径。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Monocular SLAM system that leverages 3D Gaussian Splatting for scene representation and camera tracking",
+      "matched_requirement_id": "req-9",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.05102v1",
+      "source": "arxiv",
+      "title": "ZipSplat: Fewer Gaussians, Better Splats",
+      "abstract": "Feed-forward 3D Gaussian Splatting methods reconstruct a scene from posed or pose-free images in a single forward pass, yet current approaches predict one Gaussian per input pixel, tying the representation budget to camera resolution rather than scene complexity. A flat wall and a richly textured object thus produce equally many Gaussians despite very different geometric needs. We propose ZipSplat, a token-based feed-forward model that decouples Gaussian placement from the pixel grid. A multi-view backbone extracts dense visual tokens, and k-means clustering compresses them into a compact set of scene tokens. Cross- and self-attention refine these tokens, and a lightweight MLP decodes each into a group of Gaussians with unconstrained 3D positions. Because clustering is applied at inference, a single trained model spans the quality-efficiency curve without retraining. ZipSplat operates without ground-truth poses or intrinsics, yet sets a new state of the art on DL3DV and RealEstate10K with ${\\sim}6{\\times}$ fewer Gaussians than pixel-aligned methods, surpassing the best pose-free baseline by 2.1dB and 1.2dB PSNR, respectively. It further generalizes zero-shot to Mip-NeRF360 and ScanNet++, outperforming all comparable baselines. Our project page is at ${\\href{https://veichta.com/zipsplat}{https://veichta.com/zipsplat}}$.",
+      "authors": [
+        "Alexander Veicht",
+        "Sunghwan Hong",
+        "Dániel Baráth",
+        "Marc Pollefeys"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-03T17:04:30+00:00",
+      "link": "https://arxiv.org/pdf/2606.05102v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "decouples Gaussian placement from pixel grid to achieve compact and efficient 3DGS scene representation for real-time rendering",
+      "llm_evidence_cn": "将高斯位置与像素网格解耦，实现紧凑高效的3DGS场景表征用于实时渲染",
+      "llm_evidence": "将高斯位置与像素网格解耦，实现紧凑高效的3DGS场景表征用于实时渲染",
+      "canonical_evidence": "将高斯位置与像素网格解耦，实现紧凑高效的3DGS场景表征用于实时渲染",
+      "llm_tldr_en": "ZipSplat proposes a token-based feed-forward model that compresses dense visual tokens into fewer scene tokens to reduce Gaussian count, maintaining or improving rendering quality with fewer Gaussians.",
+      "llm_tldr_cn": "ZipSplat针对前馈3DGS方法中高斯数量受像素数限制的问题，提出基于token和聚类的框架，将密集视觉token压缩为场景token再解码成高斯，使用更少的高斯达到更好的渲染效果，提升实时渲染效率。",
+      "llm_tldr": "ZipSplat针对前馈3DGS方法中高斯数量受像素数限制的问题，提出基于token和聚类的框架，将密集视觉token压缩为场景token再解码成高斯，使用更少的高斯达到更好的渲染效果，提升实时渲染效率。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2606.00936v1",
+      "source": "arxiv",
+      "title": "One Channel to Rule Them All: Rethinking Input Representation for Visual Place Recognition",
+      "abstract": "Visual Place Recognition (VPR) is fundamental to long-term robot localization and SLAM, yet current systems overwhelmingly rely on RGB input, implicitly assuming color is necessary for global place recognition. We challenge this assumption, investigating the role of chromatic information across training regimes, model architectures and standard benchmarks under real-world appearance variation. We find that grayscale matches RGB performance generally and outperforms it under severe appearance shifts where color invariance is insufficiently learned, while color provides meaningful gains only where persistent and discriminative chromatic cues are present. Across selected benchmarks, a fully gray-trained MixVPR model achieves an average 82.4% Recall@1 compared to 81.2% for its RGB counterpart. In some cases, lightweight grayscale variants with 60% fewer parameters can outperform heavier RGB models. Grayscale further offers practical advantages in storage, bandwidth and alignment with resource-constrained systems. We conclude that for global VPR where scenes vary across illumination, weather, season and setting, color contributes minimally, and grayscale alone is sufficient for reliable place recognition.",
+      "authors": [
+        "Timur Ismagilov",
+        "Shakaiba Majeed",
+        "Michael Milford",
+        "Tan Viet Tuyen Nguyen",
+        "Sarvapali D. Ramchurn",
+        "Shoaib Ehsan"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-05-31T00:30:05+00:00",
+      "link": "https://arxiv.org/pdf/2606.00936v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "VPR is fundamental to SLAM; shows grayscale can be sufficient.",
+      "llm_evidence_cn": "视觉地点识别是SLAM的基础，证明灰度输入足够。",
+      "llm_evidence": "视觉地点识别是SLAM的基础，证明灰度输入足够。",
+      "canonical_evidence": "视觉地点识别是SLAM的基础，证明灰度输入足够。",
+      "llm_tldr_en": "Challenges color necessity for VPR in SLAM, finding grayscale matches or outperforms RGB under severe appearance shifts.",
+      "llm_tldr_cn": "针对视觉地点识别（VPR）中普遍依赖RGB输入的假设开展研究，通过多配置评估发现灰度在多种条件下与RGB性能持平，在剧烈外观变化下甚至更优。该工作表明，对于长期机器人定位与SLAM，可考虑单通道输入以简化系统并增强鲁棒性，为SLAM前端提供输入表示选择。",
+      "llm_tldr": "针对视觉地点识别（VPR）中普遍依赖RGB输入的假设开展研究，通过多配置评估发现灰度在多种条件下与RGB性能持平，在剧烈外观变化下甚至更优。该工作表明，对于长期机器人定位与SLAM，可考虑单通道输入以简化系统并增强鲁棒性，为SLAM前端提供输入表示选择。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Visual SLAM methods for camera tracking and mapping",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2605.30060v2",
+      "source": "arxiv",
+      "title": "Towards Consistent Video Geometry Estimation",
+      "abstract": "This work presents ViGeo, a feed-forward foundation model for recovering spatially dense and temporally consistent geometry from video sequences. Built upon a plain transformer architecture without task-specific architectural modifications, ViGeo supports streaming, full-sequence, and long-video inference within a unified model. The key design is dynamic chunking attention, which exposes the model to both bidirectional and causal temporal contexts during training and allows it to adapt its attention pattern at test time without retraining. To improve supervision quality, we further introduce a completion-based data refinement framework. This framework trains a video depth completion teacher that conditions on sparse and noisy annotations and exploits video/multi-view context to produce dense, temporally coherent, and geometrically reliable training targets. Beyond depth and point maps, ViGeo also predicts surface normals within the same framework. Trained solely on public datasets, ViGeo achieves state-of-the-art performance across online, offline, and long-video depth estimation, surface normal estimation, and video point map estimation.",
+      "authors": [
+        "Zhu Yu",
+        "Jingnan Gao",
+        "Runmin Zhang",
+        "Lingteng Qiu",
+        "Zhengyi Zhao",
+        "Rui Peng",
+        "Yichao Yan",
+        "Kejie Qiu",
+        "Siyu Zhu",
+        "Zilong Dong",
+        "Si-Yuan Cao",
+        "Hui-Liang Shen"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-05-28T15:11:17+00:00",
+      "link": "https://arxiv.org/pdf/2605.30060v2",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Learned video geometry estimation provides consistent depth, useful for learned SLAM representations.",
+      "llm_evidence_cn": "学习的视频几何估计提供一致深度，可用于基于学习的SLAM表示。",
+      "llm_evidence": "学习的视频几何估计提供一致深度，可用于基于学习的SLAM表示。",
+      "canonical_evidence": "学习的视频几何估计提供一致深度，可用于基于学习的SLAM表示。",
+      "llm_tldr_en": "Presents a transformer foundation model for dense, temporally consistent depth from video, useful as a learned prior for visual SLAM.",
+      "llm_tldr_cn": "提出基于Transformer的基础模型ViGeo，从视频中恢复稠密且时域一致的几何（深度）信息，通过动态分块注意力统一支持多种推理模式，并引入补全式数据精炼提升监督。该模型可作为通用几何先验，为视觉SLAM提供稳定深度估计，尤其适用于基于学习的SLAM系统。",
+      "llm_tldr": "提出基于Transformer的基础模型ViGeo，从视频中恢复稠密且时域一致的几何（深度）信息，通过动态分块注意力统一支持多种推理模式，并引入补全式数据精炼提升监督。该模型可作为通用几何先验，为视觉SLAM提供稳定深度估计，尤其适用于基于学习的SLAM系统。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "visual SLAM with learned representations",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

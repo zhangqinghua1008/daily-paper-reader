@@ -1,0 +1,762 @@
+Title: BPDA-GMM: Bayesian Probabilistic Data Association via Gaussian Mixture Models for Semantic SLAM
+
+URL Source: https://arxiv.org/pdf/2606.04618v1
+
+Published Time: Thu, 04 Jun 2026 01:01:26 GMT
+
+Number of Pages: 9
+
+Markdown Content:
+> 1
+
+# BPDA-GMM: Bayesian Probabilistic Data Association via Gaussian Mixture Models for Semantic SLAM 
+
+Thanh Nguyen Canh , Graduate Student Member, IEEE , Haolan Zhang , Graduate Student Member, IEEE ,Xiem HoangVan , Antonio Sgorbissa and Nak Young Chong , Senior Member, IEEE 
+
+Abstract —Probabilistic data association (PDA) improves se-mantic SLAM in perceptually aliased scenes, but existing methods often assume a fixed landmark set, recompute association weights as the map grows, or rely on hand-tuned null-hypothesis weights. To address these limitations, we propose BPDA-GMM, an online Bayesian PDA framework for semantic SLAM with a growing object-level map. BPDA-GMM uses a Dirichlet-process prior to induce a Chinese Restaurant Process (CRP) association model, where accumulated evidence favors existing landmarks, and the concentration parameter assigns probability mass to new landmarks. For each semantic detection, plausible candidates are selected by a joint semantic-geometric gate, CRP-weighted association probabilities are computed, and object landmarks are updated as semantic Gaussians in closed form. The resulting landmark set forms a Gaussian mixture model, and its dom-inant component is passed to the back-end as a max-mixture semantic factor. When association weights are inconclusive, an ambiguity-triggered α-divergence tempering step improves discrimination. Finally, a decoupled back-end zeroes the pose Jacobian of semantic factors, allowing noisy detections to refine landmarks without directly perturbing the trajectory. Experi-ments in simulation and on a real indoor dataset demonstrate improved trajectory accuracy, semantic mapping quality, and robustness to perceptual aliasing and classifier errors over state-of-the-art baselines. Code and video are publicly available at https://anonymous.4open.science/r/BPDA-SLAM-8449/. 
+
+Index Terms —Semantic SLAM, probabilistic data association, Gaussian mixture model, object-level mapping. 
+
+I. I NTRODUCTION 
+
+# SEMANTIC simultaneous localization and mapping (SLAM) augments metric SLAM by associating geometric landmarks with semantic labels. By representing the environ-ment in terms of object-level entities, semantic SLAM enables robots to build human-interpretable maps, reason about scene structure, and use semantic landmarks for navigation, manip-ulation, and loop closure [1]. However, these benefits depend strongly on reliable data association. When multiple landmarks share the same semantic class, the robot must decide which 
+
+This work was supported by JST SPRING, Japan Grant Number JPMJSP2102. (Corresponding authors: nakyoung@jaist.ac.jp, xiemhoang@vnu.edu.vn) Thanh Nguyen Canh, Haolan Zhang, and Nak Yong Chong are School of Information Science, Japan Advanced Institute of Science and Technology, Ishikawa, 923-1211, Japan. {thanhnc, haolan.z, nakyoung }@jaist.ac.jp 
+
+Thanh Nguyen Canh and Xiem HoangVan are with the University of Engineering and Technology, Vietnam National University, Hanoi, 10000, Vietnam. {xiemhoang }@vnu.edu.vn 
+
+object generated each observation. Maximum-likelihood asso-ciation is efficient, but it makes a hard assignment for each observation. If this assignment is incorrect, it is inserted into the back-end as a biased constraint that can be difficult to correct later [2], [3]. Existing PDA formulations for SLAM either iterate expectation-maximization (EM) over the full keyframe his-tory [3], freeze association weights at observation time via max-marginalization [4], [5], approximate the matrix per-manent through ranked assignment [6], or maintain explicit hypothesis trees over discrete association sequences [7], [8]. However, these formulations share a common parametric as-sumption that assumes a fixed or effectively fixed landmark set. This assumption is poorly suited to online semantic SLAM, where the map grows as new objects are observed. As a result, prior PDA formulations often require recomputation or approximation of past association weights, manually tuned null-hypothesis probabilities, or expensive hypothesis manage-ment. To address these limitations, we propose BPDA-GMM, an online Bayesian PDA framework for semantic SLAM. BPDA-GMM models association using a Dirichlet-process prior to induce a Chinese Restaurant Process (CRP) [9] association model, where accumulated evidence favors existing landmarks and the concentration parameter assigns probability mass to new ones. For each semantic detection, plausible candidates are selected by a joint semantic-geometric gate, and their likelihoods are combined with the CRP prior to compute association probabilities. Object landmarks are then updated as semantic Gaussians, forming a Gaussian mixture model whose dominant component is converted into a max-mixture semantic factor. To prevent noisy detections from directly perturbing the trajectory, the back-end zeroes the pose Jacobian of seman-tic factors, while semantic loop closure is handled through CRP-based landmark re-identification and merging. The main contributions of this paper are summarized as follows: 1) An online Bayesian probabilistic data-association model based on a Dirichlet-process prior, whose CRP representation supports a growing landmark set, incre-mentally accumulates association evidence, and assigns principled probability mass to new landmarks. 2) A semantic Gaussian mixture mapping framework in which CRP-weighted observations update object land-marks as semantic Gaussians in closed form, forming a Gaussian mixture model. 
+
+> arXiv:2606.04618v1 [cs.RO] 3 Jun 2026 2
+
+3) A robust semantic SLAM optimization pipeline 
+
+that combines semantic-geometric gating, ambiguity-triggered posterior tempering, CRP-based landmark re-identification, and a decoupled back-end with zero pose Jacobians to improve robustness against perceptual alias-ing and classifier errors. II. R ELATED WORK 
+
+A. Probabilistic Data Association in SLAM 
+
+Probabilistic data association originated in target track-ing [10], [11] and was adapted to SLAM by Cox and Leonard [12]. In semantic SLAM, Bowman et al. [3] formu-lated PDA as EM jointly over poses, landmark position, and association weights, but this formulation requires iterating over all previous measurements at each new keyframe. Doherty et al. reduced this cost through multimodal semantic SLAM with nonparametric belief propagation [13], but the resulting Gibbs sampling remains computationally expensive. Their later max-marginal formulation [5] converts association uncertainty into a max-mixture factor [4], making it compatible with standard nonlinear least-squares SLAM, but the association weights are frozen at observation time. Michael et al. [6] approximated the #P-complete matrix permanent underlying EM via Murty’s ranked-assignment algorithm [14], achieving fast performance on small candidate sets while still inheriting the fixed-M as-sumption. Multi-hypothesis methods [7], [8] maintain explicit discrete association tracks. MHJCBB [7] extends JCBB [15] with K pruned parallel hypotheses, while MH-iSAM2 [8] incrementalizes multi-hypothesis inference through a Hypo-tree extension of the Bayes tree. However, prior PDA formulations either fix M or maintain explicit discrete hypothesis sets requiring O(K) or expo-nential storage. BPDA-GMM marginalizes over associations implicitly through a Dirichlet-process prior whose CRP counts update in O(1) per observation, requiring a single back-end pass per keyframe and treating new-landmark birth as a calibrated probability rather than a binary decision. 
+
+B. Semantic Landmark Representation 
+
+In parallel to PDA-based association methods, semantic SLAM also studies how semantic landmarks should be rep-resented geometrically. CubeSLAM [16] models objects as 3D cuboids inferred from 2D bounding boxes, while Quadric-SLAM [17] represents objects using constrained dual quadrics with compact size, position, and orientation parameters. Qian 
+
+et al. [18] extended quadric-based SLAM with bag-of-words bipartite matching for object-level association, and DSP-SLAM [19] replaced algebraic shape models with category-specific deep shape embeddings for dense reconstruction. EAO-SLAM [20] combines parametric and nonparametric statistical tests for ensemble object association, and its later extension [21] adds topological mapping for higher-level tasks. These methods provide structured object representations, but they typically commit to a single shape prior and resolve association through hard matching or fixed ensemble rules. Gaussian mixture representations offer a more flexible alter-native. SGBA [22] models LiDAR environments as semantic Gaussian mixture models without predefined feature types and uses a semantic-indicator constraint to restrict associations to landmarks of matching class. BPDA-GMM adopts this se-mantic consistency principle but extends it to online semantic SLAM with Bayesian probabilistic association and a growing landmark set. SlideSLAM [23] also uses object-level semantic landmarks and introduces a zero-pose-Jacobian factor design, but it relies on hard data association and lacks a probabilistic null hypothesis. BPDA-GMM combines these complementary ideas: semantic landmarks are maintained as Gaussian compo-nents in a mixture map, associations are inferred through CRP-weighted probabilities, and the dominant mixture component is passed to a decoupled max-mixture back-end. III. P ROBLEM FORMULATION 
+
+Consider a robot moving through an unknown environment populated by static semantic landmarks. The robot state at time t is xt ∈ SE (3) , with trajectory X = {xt}Tt=1 . The map consists of M landmarks L = {ℓj }Mj=1 , each with a positional component ℓpj ∈ R3 and a semantic class ℓsj ∈C = {1, . . . , C }. The landmark count M is itself unknown and grows online as new objects are observed. At each keyframe t,the robot receives odometry ut ∈ SE (3) with covariance Σt,together with a set of semantic measurements Zt = {ztk }Kt
+
+> k=1
+
+,where ztk = ( zptk , z stk ) comprises a geometric centroid in the camera frame and a semantic score vector from an object detector. The complete SLAM problem is to estimate: 
+
+ˆX , ˆL = arg max  
+
+> X,L
+
+p(X , L | Z , U). (1) The posterior marginalizes over the unknown discrete data associations D = {dtk }, with dtk = j means that ztk was generated by ℓj and dtk = 0 denotes the null hypothesis, corresponding to either a false positive or a previously unseen landmark:             
+
+> p(X,L | Z ,U)∝X
+> D
+> p(Z | X ,L,D)p(D)p(X | U )p(L).(2)
+
+Assumption 1. Each measurement ztk is generated by at most one landmark, or is a false positive (null hypothesis). 
+
+Assumption 2. Measurements within a keyframe are condi-tionally independent given the robot pose and landmark states. 
+
+Exact evaluation of (2) is intractable. Marginalizing over D
+
+yields a Gaussian mixture whose summation is exponential in the number of measurements ( #P-complete in general via the matrix permanent). BPDA-GMM addresses this via an incremental EM scheme (Sec. IV) in which the E-step approximates p(D | · ) with Bayesian soft weights derived from the Dirichlet-process prior, and the M-step updates (X , L)
+
+through a decoupled landmark Kalman filter and a trajectory-only iSAM2 back-end. IV. BPDA-GMM: M ETHOD 
+
+BPDA-GMM addresses the semantic SLAM problem by maintaining a Bayesian association posterior over a growing landmarks set and producing a single max-mixture factor per measurement. Fig. 1 shows the full pipeline, which includes 3
+
+Fig. 1: BPDA-GMM system overview. Each semantic detection is first filtered by a semantic-geometric gate, then assigned CRP-weighted wtkj association probabilities. These weights update semantic Gaussian landmarks ( ˆ μj , ˆΣj , ˆℓsj ) in the front-end, while the dominant mixture component is converted into a max-mixture semantic factor for the decoupled back-end. six components, organized to mirror the posterior factorization in (2). At the front-end, a Dirichlet process prior provides CRP counts as sufficient statistics that are updated in O(1) 
+
+(Sec. IV-A); a semantic-and-geometric gate restricts each measurement to in-class, in-covariance candidates (Sec. IV-B); and a Bayesian E-step computes association weights with α-divergence tempering for noise robustness (Sec. IV-C). The landmark layer updates per-landmark semantic Gaussians in closed form, with a merge rule that doubles as the loop-closure primitive (Sec. IV-D). At the back-end, a decoupled pose-landmark M-step isolates semantic measurement noise from trajectory estimation (Sec. IV-E). Semantic loop closure (Sec. IV-F) then follows from retaining dormant CRP counts and reusing the merge rule across place-matched keyframe pairs. Algorithm 1 summarizes the per-keyframe pipeline. 
+
+A. Dirichlet Process Prior and Incremental Count 
+
+To accommodate the unbounded landmark set, we place a 
+
+Dirichlet process prior on the association distribution: 
+
+G ∼ DP( α0, G 0), dtk | G ∼ G, (3) where α0 > 0 is the concentration parameter and G0 de-fines the new-landmark base distribution. Marginalizing out 
+
+G yields the CRP prior conditioned on all other assignments 
+
+d−tk :
+
+p(dtk = j | d−tk ) ∝
+
+(
+
+n−tk j j ∈ { 1, . . . , M t},α0 j = 0 , (4) where n−tk j is the accumulated association count assigned to landmark ℓj excluding ztk . The CRP exposes two properties that the BPDA-GMM exploits. The per-landmark counts nj
+
+serve as sufficient statistics, and are updated incrementally in 
+
+O(1) per observation once the E-step weights are available (Sec. IV-C). The “new-landmark” branch also yields a scene-calibrated null hypothesis through α0 with a data-driven probability that adapts to scene density. To reduce excessive landmark birth in dense maps, we apply an exponential decay to recover the standard CRP at λ = 0 :
+
+α0(t) = α0 exp  −λ |M t|. (5) 
+
+B. Semantic-Constrained Likelihood 
+
+We factorize the per-measurement likelihood under dtk = j
+
+into a geometric term and a semantic term:                  
+
+> p(ztk |xt, ℓ j, d tk =j) = N zptk ;h(xt, ℓ pj),Γ|{z }
+> geometric
+> p(zstk |ℓsj)
+> |{z }
+> semantic
+> ,(6)
+
+where h(·) predicts landmark centroid in the camera frame, 
+
+Γ = σ2 
+
+> g
+
+I3 is the geometric noise covariance, and p(zstk | ℓsj ) is the row of a class-conditional confusion matrix learned offline. Within Eq. (6), the confusion matrix acts as a soft score that down-weights landmarks whose accumulated class evidence diverges from the current detection. To reduce computation, we restrict the candidate set of each measurement to landmarks of matching MAP class that also pass a Mahalanobis test on the marginal innovation covariance: 
+
+Htk =
+
+n
+
+j ˆℓjs
+
+= c∗
+
+> tk
+
+, ν⊤
+
+> j
+
+  ˆΣj + Γ−1νj ≤ χ23,0.99 
+
+o
+
+, (7) where c∗ 
+
+> tk
+
+= arg max c zstk (c) is the detection’s MAP class, and 
+
+νj = zptk −h( ˆ xt, ˆℓjp
+
+) is the innovation. Using the marginalized covariance, ˆΣj + Γ, keeps high-uncertainty, newly initialized landmarks inside the gate during early observations and re-duces the candidate set from M to Mc = |H tk | ≪ M in scenes with multiple classes. 
+
+C. Bayesian Association Weight (E-step) 
+
+Given current estimates ˆX (i), ˆL(i), the posterior association weight combines the CRP prior (4) with the likelihood (6):            
+
+> w(i)
+> tkj =n−tk jp(ztk |ˆxt(i), ℓ (i)
+> j)
+> Z(i)
+> tk
+> , w (i)
+> tk, 0=α0(t)p0(ztk )
+> Z(i)
+> tk
+> ,(8)
+
+where Z(i) 
+
+> tk
+
+= P 
+
+> j′∈H tk
+
+n−tk j′ p(ztk | ˆxt(i), ℓ ′(i) 
+
+> j
+
+) +
+
+α0(t) p0(ztk ) is the partition function, and p0(ztk ) =4ztk                                  
+
+> ¹`1¹`2
+> p(zj`1)p(zj`2)
+> (a) Nominal noise ( ¾g= 0 :5 m )
+> ztk
+> ¹`1¹`2
+> p(zj`1)p(zj`2)
+> (b) High noise ( ¾g= 1 :8 m )
+> Ãoverlap !
+> `1`2`1`2
+> 0
+> 0.5
+> 10.91
+> 0.09
+> 0.91
+> 0.09
+> KL projection ®-divergence
+> Both methods agree
+> (low noise regime)
+> `1`2`1`2
+> 0
+> 0.5
+> 1
+> 0.55 0.45
+> 0.82
+> 0.18
+> KL projection ®-divergence
+> KL diffuse → drift
+> ®-div sharpens posterior
+> landmark `1(correct) detection ztk landmark `2(candidate)
+
+Fig. 2: Effect of ambiguity-triggered posterior tempering. Under nominal noise, the untempered and tempered associa-tion weights agree. Under high geometric noise, the untem-pered posterior becomes diffuse, while tempering sharpens the dominant association and reduces drift toward competing candidates. 
+
+N (zptk ; 0, σ 20 I) is a broad null-hypothesis prior with σ0 ≫ σg .The null-hypothesis weight is w(i) 
+
+> tk, new
+
+= 1 − P 
+
+> j
+
+w(i) 
+
+> tkj
+
+. Numer-ator and denominator span many orders of magnitude in dense maps, so we evaluate Z(i) 
+
+> tk
+
+via the log-sum-exp identity: 
+
+log X
+
+> j
+
+eaj = a⋆ + log X
+
+> j
+
+eaj −a⋆
+
+, a⋆ = max  
+
+> j
+
+aj , (9) with aj = log n−tk j + log p(ztk | ˆxt(i), ℓ (i) 
+
+> j
+
+) for j ∈ H tk and 
+
+a0 = log α0(t) + log p0(ztk ). Under elevated geometric noise 
+
+σg , likelihood ratios among competing in-gate candidates may shrink, producing a diffuse posterior. The resulting soft weights can pull the landmark update toward a weighted av-erage of competing candidates, which may degrade trajectory estimates (Fig. 2). Therefore, we apply posterior tempering only when untempered weights are ambiguous: 
+
+max  
+
+> j
+
+wtkj < τ amb 
+
+| {z }
+
+> no dominant candidate
+
+∧ w(2)  
+
+> tk
+
+/w (1)  
+
+> tk
+
+≥ ρ
+
+| {z }
+
+> strong runner-up
+
+, (10) where w(1)  
+
+> tk
+
+, w (2)  
+
+> tk
+
+are the largest and second-largest weights. If (10) holds, we implement this robustness step as atemperature-scaled posterior, motivated by α-divergence pro-jection [24]. The weights are replaced by: 
+
+ew(i) 
+
+> tkj
+
+∝  n−tk j p(ztk | ˆxt(i), ℓ (i) 
+
+> j
+
+)1/α , α ∈ (0 , 1] . (11) followed by normalization over Htk ∪ { 0}. Thus, α = 1
+
+recovers the original posterior in (8), while smaller α increases the inverse temperature and sharpens ambiguous posteriors. 
+
+D. Semantic Gaussian Landmark Update 
+
+Each landmark ℓj is represented as a semantic Gaussian 
+
+( ˆ μj , ˆΣj , ˆℓsj ). Let ¯zj =  P  
+
+> k
+
+w(i) 
+
+> tkj
+
+zwtk 
+
+/ P 
+
+> k
+
+w(i) 
+
+> tkj
+
+denote the weighted mean of back-projected measurements in the world frame ( zwtk ), and wΣ 
+
+> j
+
+= P 
+
+> k
+
+w(i) 
+
+> tkj
+
+the total weight on landmark 
+
+j. The innovation covariance and gain are then computed as: 
+
+Sj = ˆΣj + Γ/w Σ 
+
+> j
+
+, Kj = ˆΣj S−1 
+
+> j
+
+, (12) and the landmark is updated in closed form as: 
+
+ˆμj ← ˆμj + Kj (¯ zj − ˆμj ), (13) 
+
+ˆΣj ← (I − Kj ) ˆΣj (I − Kj )⊤ + Kj Γ
+
+> wΣ
+> j
+
+K⊤ 
+
+> j
+
+. (14) The CRP count is a sufficient statistic and is updated by 
+
+O(1) increments per nonzero association weight after the E-step weights are computed. For a keyframe, the accumulated update is 
+
+nj ← nj + X
+
+> k
+
+w(i) 
+
+> tkj
+
+, (15) A new landmark is initialized whenever the null-hypothesis weights w(i) 
+
+> tk, 0
+
+exceeds a threshold θnew , with ˆμ(0)  
+
+> j
+
+set to the back-projected measurement and ˆΣ(0)  
+
+> j
+
+= s20I for s0 =max(6 σg , 2.0) m. Object-level centroid extractions carry irre-ducible noise from viewpoint-dependent mask shape, so we floor the per-axis covariance at ˆΣj (d, d ) ≥ σ2 
+
+> g
+
+to prevent the gate from closing prematurely on re-observation. Landmarks with nj < ε are pruned every P keyframes; their counts are retained for an additional Kstale keyframes to preserve loop-closure identity (Sec. IV-F). Landmark class labels are not fixed at initialization but refined as evidence accumulates. Each landmark maintains a per-class vote accumulator vj (c), updated at every keyframe: 
+
+vj (c) ← vj (c) + X
+
+> k
+
+w(i) 
+
+> tkj
+
+p(zstk | ℓsj = c), (16) where the MAP class estimate ˆℓsj = arg max c vj (c) allows early misclassifications to self-correct. When two same-class landmarks are initialized for one physical object, we merge pairs within Euclidean distance dmerge :
+
+ˆμa ← na ˆμa + nb ˆμb
+
+na + nb
+
+, na ← na + nb. (17) with the surviving identity inheriting the higher CRP count and the weighted-average position. 
+
+E. Decoupled Pose–Landmark Optimization (M-step) 
+
+The M-step decouples trajectory estimation from semantic landmark optimization. Object-level centroid extractors carry noise, an order of magnitude larger than per-keyframe Visual-Inertial Odometry (VIO) drift. We constrain the trajectory and landmarks through two disjoint factor groups. 
+
+a) Trajectory factors: The trajectory ˆX is determined entirely by odometry through two factors per keyframe. 1) A between-factor encodes the relative transform ut
+
+with covariance Σt from the VIO source: 
+
+fo(xt[t − 1] , xt) = (xt ⊖ xt[t − 1]) ⊖ ut
+
+> 2
+> Σ−1
+> t
+
+. (18) 2) A unary prior anchors xt to its odometry-predicted value ˆxodom  
+
+> t
+
+= ˆ xt−1 ⊕ ut with tight noise Σanchor ,
+
+fa(xt) = xt ⊖ ˆxodom 
+
+> t
+> 2
+> Σ−1
+> anchor
+
+. (19) 
+
+b) Landmark factor: Under Assumption 1, the per-measurement marginal likelihood under unknown association is a Gaussian mixture over candidate landmark: 
+
+p(ztk | xt, LHtk ) = X 
+
+> j∈H tk ∪{ 0}
+
+p(dtk = j | d−tk ) p(ztk | xt, ℓ j ),
+
+(20) where each component is a per-landmark Gaussian (6) weighted by its CRP prior (4). Committing the full sum as 5
+
+Algorithm 1: BPDA-GMM: per-keyframe update 
+
+Input: ut, Σt, Zt, ˆX , ˆL, {nj }, {vj }
+
+Output: Updated ˆX , ˆL, {nj }, {vj } 
+
+> 1
+
+Predict ˆxodom  
+
+> t
+
+← ˆxt−1 ⊕ ut 
+
+> 2
+
+Add between-factor (18) and anchor prior (19) to graph  
+
+> 3
+
+for i = 1 to I do  
+
+> 4
+
+for each ztk ∈ Z t do  
+
+> 5
+
+Build Htk via (7)  
+
+> 6
+
+Compute w(i) 
+
+> tkj
+
+via (8) in log domain (9)  
+
+> 7
+
+if ambiguity gate (10) fires then  
+
+> 8
+
+Replace w(i) 
+
+> tkj
+
+with tempered weights (11)  
+
+> 9
+
+end  
+
+> 10
+
+end  
+
+> 11
+
+if i = 1 then  
+
+> 12
+
+Init landmarks with wtk, new ≥ θnew  
+
+> 13
+
+Update counts (15) and class votes (16)  
+
+> 14
+
+Merge same-class pairs within dmerge via (17)  
+
+> 15
+
+Loop closure: match dt against history; for each hit, apply (17) on pairs and add (23)  
+
+> 16
+
+end  
+
+> 17
+
+Update ( ˆ μj , ˆΣj ) via (13)–(14)  
+
+> 18
+
+end  
+
+> 19
+
+foreach ztk with w(I) 
+
+> tk, 0
+
+< θ factor and 
+
+H′ = {j ∈ H tk : nj ≥ 2}̸ = ∅ do  
+
+> 20
+
+Add max-mixture factor (21) with ∂f /∂ xt = 0 
+
+> 21
+
+end  
+
+> 22
+
+ˆX , ˆL ← iSAM2. update()  
+
+> 23
+
+Sync ˆμj from iSAM2 back to landmark map  
+
+> 24
+
+if t mod P = 0 then  
+
+> 25
+
+Prune landmarks with nj < ε  
+
+> 26
+
+Discard retained counts older than Kstale  
+
+> 27
+
+end 
+
+a factor is incompatible with iSAM2’s least-squares lineariza-tion. We replace the sum with a max to obtain the max-mixture 
+
+factor that retains the dominant component: 
+
+ftk (xt, LH′ 
+
+> tk
+
+) = max 
+
+> j∈H ′
+> tk
+
+p(ztk | xt, ℓ j ) p(dtk = j | d−tk ), (21) 
+
+restricted to mature landmarks H′ 
+
+> tk
+
+= {j ∈ H tk : nj ≥ 2}.The max-mixture is exact when one component dominates, introducing a Gaussian residual after linearization and preserv-ing compatibility with the nonlinear least-squares back-end. Inspired by SLIDE-SLAM [23], we override the pose Jaco-bian ∂f tk /∂x t to zero, so that during iSAM2 linearization, the factor produces no gradient with respect to the robot pose. Only the landmark Jacobian active mixture component, evaluated at the max-attaining ∂f tk /∂ℓ pj = −L−1Rcw (where 
+
+L is the Cholesky factor of Γ and Rcw the camera-to-world rotation) contributes to the update. The maturity gate nj ≥ 2
+
+ensures that high-uncertainty newly initialized landmarks are refined solely through the Kalman layer (13)–(14) before they begin influencing the factor graph. 
+
+F. Semantic Loop Closure via CRP Re-identification 
+
+When the robot revisits a region, the same-class gate Htk 
+
+already returns the dormant landmark as a candidate, and its CRP count nj , retained through staleness pruning for up to 
+
+Kstale keyframes, biases the weight (8) toward the old identity instead of a fresh null hypothesis. Each keyframe stores a compact semantic place descriptor: 
+
+dt =  ht, {(ˆℓ sj , ˆμj − ˆxt)}j∈V t
+
+, (22) where Vt is the set of in-range landmarks and ht a class-histogram hash. Keyframes with matching hashes are verified using a per-class Wasserstein distance between radial relative-position sets. If the distance is below τw, the resulting land-mark pairs Ptt ′ ⊂ V t × V t′ are merged using map-side closure via (17), and a pose-side loop-closure factor is added: 
+
+flc (xt, xt′ ) = xt′ ⊖ (xt ⊕ ˆutt ′ ) 2
+
+> Σ−1
+> lc
+
+, (23) where ˆutt ′ ∈ se (3) is the rigid transform that least-squares aligns the matched pairs in Ptt ′ , and Σlc is scaled by alignment residual. In addition, if a closure incorrectly matches distinct landmark sets, the CRP weights of the reused identities collapse on the next keyframe, and iSAM2 retracts the closure factor through standard relinearization and outlier rejection. V. E XPERIMENTAL EVALUATION 
+
+A. Implementation and Baselines 
+
+BPDA-GMM is implemented in C++ with ROS Noetic, GTSAM 4.2 [25], and OpenCV 4.2. Object centroids are triangulated from stereo detections, and TensorRT FP16 is used for detector inference on a Jetson Xavier AGX. All baselines share the same odometry, measurement model, land-mark update pipeline, and iSAM2 back-end [26]; only the association policy is changed. We evaluate pose accuracy using absolute trajectory error (ATE ↓) and relative pose error (RPE ↓), map quality using landmark Chamfer distance ↓
+
+and geometric uncertainty ↓, and semantic quality using class-belief entropy ↓ and semantic accuracy ↑.TABLE I: Simulation scenarios used in our benchmark.                                      
+
+> Scenario Landmark model Extent (m) #classes Obs. range Figure Eight 30 random point 8×666 m Outdoor Loop 9 sparse semantic ≈80 ×80 315 m Complex Urban repeated urban ≈190 ×155 622 m Victoria Park 151 Ground truth ≈280 ×265 525 m City10000 route-conditioned ≈105 ×105 614 m
+
+B. Simulation Benchmark 
+
+We evaluate data-association robustness in five simulated scenarios, summarized in Table I. The benchmark includes dense indoor trajectories, sparse outdoor loops, perceptually aliased urban layouts, and two dataset-driven routes from the MH-iSAM2 [8] benchmark. Detections are corrupted by Gaussian geometric noise and a class-confusion model, while odometry is perturbed by translational and rotational noise. Table II reports the quantitative results, and Fig. 3 shows representative trajectory overlays. BPDA-GMM achieves the 6
+
+TABLE II: Simulation results across all benchmark scenarios. 
+
+Best values are shown in bold and second-best values are underlined. 
+
+Scenario Method ATE ↓ RPE ↓ lm cham ↓geo unc ↓ sem ent ↓ sem acc ↑
+
+MHJCBB [7] 0.1737 0.0685 0.2861 0.0016 0.8439 0.9385 
+
+MH-iSAM2 [8] 0.1740 0.0686 0.2852 0.0015 0.8443 0.9385 
+
+Gauss PDA [3] 0.1731 0.0680 0.2750 0.0015 0.8459 0.9385 
+
+Figure MMSS [13] 0.1683 0.0684 0.2740 0.0016 0.8350 0.9242 Eight SGBA [22] 0.1611 0.0691 0.2806 0.0018 0.8287 0.9048 k-best [6] 0.1666 0.0686 0.2742 0.0017 0.8369 0.9077 
+
+BPDA-GMM 0.1438 0.0672 0.2154 0.0028 0.8040 0.9020 MHJCBB [7] 44.1541 0.8220 61.9860 0.6615 0.4572 0.0000 MH-iSAM2 [8] 54.1171 0.8482 69.9649 0.6615 0.4572 0.0000 Outdoor Gauss PDA [3] 31.1061 0.9011 53.9796 0.6554 0.4572 0.3333 Loop MMSS [13] 51.7176 0.8253 68.6181 0.7466 0.4581 0.1111 SGBA [22] 33.0799 0.7836 54.8024 0.7478 0.4519 0.3333 k-best [6] 54.6456 0.8335 68.5899 0.7466 0.4570 0.3333 
+
+BPDA-GMM 14.2324 0.6590 32.5817 0.7678 0.4597 0.8889 
+
+MHJCBB [7] 4.6379 0.3498 12.4009 0.0785 0.9408 0.6738 MH-iSAM2 [8] 4.6380 0.3498 12.4009 0.0785 0.9408 0.6738 Complex Gauss PDA [3] 4.5801 0.3496 12.3700 0.0781 0.9415 0.6968 Urban MMSS [13] 4.7962 0.3493 12.3977 0.0781 0.9390 0.6862 SGBA [22] 4.8357 0.3497 12.3525 0.0781 0.9384 0.6935 k-best [6] 4.8147 0.3496 12.3834 0.0781 0.9390 0.6738 
+
+BPDA-GMM 4.5237 0.3492 12.2059 0.0836 0.9343 0.7112 
+
+MHJCBB [7] 3.9287 1.0778 3.7652 0.0762 0.7696 0.4628 MH-iSAM2 [8] 3.4051 1.0832 2.9906 0.0767 0.7714 0.4357 City Gauss PDA [3] 7.9954 1.1225 5.1991 0.0776 0.7704 0.2532 10000 MMSS [13] 7.0389 1.2684 5.2275 0.0802 0.7721 0.2815 SGBA [22] 3.0256 0.9636 2.3267 0.0761 0.7690 0.6234 
+
+k-best [6] 2.9864 0.9687 2.3348 0.0759 0.7659 0.6174 
+
+BPDA-GMM 3.0326 0.9637 2.3304 0.0761 0.7690 0.6234 
+
+MHJCBB [7] 14.8020 0.7169 18.4779 52.0789 1.4204 0.6286 MH-iSAM2 [8] 10.9810 0.6997 19.0820 199.4214 1.5386 0.7429 Victoria Gauss PDA [3] 10.5024 0.6869 18.8324 52.1332 1.4205 0.7429 Park MMSS [13] 11.0187 0.7010 19.0962 199.4035 1.5387 0.7429 SGBA [22] 10.6185 0.6910 18.8944 222.1721 1.5461 0.7429 k-best [6] 15.0317 0.7241 18.5680 222.1337 1.5464 0.6571 
+
+BPDA-GMM 2.6967 0.4000 13.5608 33.2951 1.4774 0.8286 Figure Eight Outdoor Loop Complex Urban City10000 Victoria Park        
+
+> Ground truth MHJCBB(K=5) MH-iSAM2 Gauss PDA MMSS SGBA k-best-200 BPDA-GMM
+
+Fig. 3: Estimated trajectories on all benchmark scenarios. BPDA-GMM remains close to the ground truth across dense, sparse, and perceptually aliased environments, while several baselines accumulate large drift in high-ambiguity cases. best ATE in four of five scenarios and the best or tied-best RPE in four of five. The largest gains appear in high-ambiguity cases. On Outdoor Loop, BPDA-GMM reduces ATE from 31.11 m for the next-best PDA baseline to 14.23 m, while improving semantic accuracy to 0.889. On Victoria Park, ATE decreases from 10.50 m to 2.70 m, and landmark Chamfer distance is also reduced. In Complex Urban, BPDA-GMM obtains the best ATE, RPE, lm cham , sem ent , and sem acc ,TABLE III: Quantitative results of object-level representation. 
+
+Method Semantic G.T. Estimation Precision ↑ Recall ↑ F1 ↑
+
+Gauss PDA [3] chair 36 38 0.737 0.778 0.757 table 21 1 1.000 0.048 0.091 monitor 18 13 0.615 0.444 0.516 fridge 5 16 0.312 1.000 0.476 plant 4 2 1.000 0.500 0.667 overall 84 70 0.629 0.524 0.571 MMSS [13] chair 36 31 0.806 0.694 0.746 table 21 1 1.000 0.048 0.091 monitor 18 10 0.700 0.389 0.500 fridge 5 7 0.429 0.600 0.500 plant 4 1 1.000 0.250 0.400 overall 84 50 0.740 0.440 0.552 MMNH [5] chair 36 29 0.793 0.639 0.708 table 21 2 1.000 0.095 0.174 monitor 18 10 0.700 0.389 0.500 fridge 5 9 0.333 0.600 0.429 plant 4 1 1.000 0.250 0.400 overall 84 51 0.706 0.429 0.533 MHJCBB [7] chair 36 56 0.554 0.861 0.674 table 21 5 1.000 0.238 0.385 monitor 18 13 0.615 0.444 0.516 fridge 5 9 0.333 0.600 0.429 plant 4 3 1.000 0.750 0.857 overall 84 86 0.581 0.595 0.588 MH-iSAM2 [8] chair 36 59 0.576 0.944 0.716 table 21 9 0.778 0.333 0.467 monitor 18 20 0.700 0.778 0.737 fridge 5 7 0.571 0.800 0.667 plant 4 4 1.000 1.000 1.000 overall 84 101 0.636 0.750 0.689 k-best [6] chair 36 53 0.604 0.889 0.719 table 21 9 0.889 0.381 0.533 monitor 18 22 0.591 0.722 0.650 fridge 5 17 0.235 0.800 0.364 plant 4 3 1.000 0.750 0.857 overall 84 104 0.577 0.714 0.638 SGBA [22] chair 36 35 0.714 0.694 0.704 table 21 14 0.929 0.619 0.743 monitor 18 19 0.632 0.667 0.649 fridge 5 18 0.278 1.000 0.435 plant 4 4 0.750 0.750 0.750 overall 84 86 0.644 0.690 0.667 SlideSLAM [23] chair 36 38 0.684 0.722 0.703 table 21 6 0.667 0.190 0.296 monitor 18 3 0.667 0.111 0.190 fridge 5 0 0.000 0.000 0.000 plant 4 0 0.000 0.000 0.000 overall 84 47 0.681 0.381 0.489 
+
+BPDA-GMM 
+
+chair 36 35 0.771 0.750 0.761 table 21 14 0.929 0.619 0.743 monitor 18 20 0.700 0.778 0.737 fridge 5 7 0.571 0.800 0.667 plant 4 3 1.000 0.750 0.857 overall 84 77 0.772 0.726 0.748 
+
+indicating robustness to same-class perceptual aliasing. Fig. 4 further shows that BPDA-GMM degrades more slowly as odometry noise and detector misclassification increase. 
+
+C. Real Indoor Dataset 
+
+We also evaluate on an indoor sequence collected with a Falcon 250 quadrotor equipped with a RealSense D455 stereo camera. The scene contains 84 ground-truth objects from five classes: chair, table, monitor, fridge, and plant. Table III reports object-level precision, recall, and F1 score. BPDA-GMM achieves the highest overall F1 score, 0.748, with the best precision, 0.772, and the second-best recall, 0.726. Multi-hypothesis baselines achieve high recall but over-71 2 3 4 5           
+
+> 0.4
+> 0.8
+> 1.2
+> Noise ¾
+> ATE (m)
+> (a) Noise
+> 010 20 30 40
+> 0.5
+> 1.0
+> 1.5
+> 2.0
+> Misclass. (%)
+> ATE (m)
+> (b) Misclassification
+> GPDA MMSS MHJCBB MH-iSAM2 k-best SGBA BPDA-GMM
+
+Fig. 4: Robustness to odometry noise and semantic misclas-sification. BPDA-GMM shows slower ATE growth as noise and classifier errors increase, indicating improved resistance to ambiguous or incorrect associations. TABLE IV: Per-keyframe processing time (mean/max, ms)                                      
+
+> Method E-step lm-update M-step Total Gauss PDA [3] 0.0274/0.2212 0.0121/0.0848 1.1974/10.1492 1.2369/10.4552 MMSS [13] 0.0216/0.2170 0.0097/0.0540 1.1204/10.7125 1.1517/10.9835 MMNH [5] 0.0222/0.2835 0.0119/0.4134 1.1763/9.5270 1.2104/10.2239 MHJCBB [7] 0.0458/0.4714 0.0179/0.1810 1.2625/7.0591 1.3262/7.7115 MH-iSAM2 [8] 0.6668/2.8993 111.95/455.52 111.36/453.96 223.98/912.37 k-best [6] 0.0459/0.4588 0.0158/0.0935 1.1194/7.9667 1.1811/8.5190 SGBA [22] 0.0522/0.4136 0.0139/0.5610 1.1198/16.3624 1.1859/17.337 SlideSLAM [23] 0.0463/0.4315 0.0015/0.0126 1.0906/6.0363 1.1384/6.4804
+> BPDA-GMM 0.0290/0.1474 0.0087/0.0462 0.7681/3.7738 0.8058/3.9674
+
+instantiate landmarks; for example, MH-iSAM2 estimates 101 landmarks for 84 objects, reducing precision to 0.636. In contrast, BPDA-GMM estimates 77 landmarks, showing that the CRP prior suppresses duplicate landmark creation while preserving most true objects. BPDA-GMM is also the only method with nonzero F1 across all five classes, including small or weakly detected objects such as plants. Fig. 5 compares estimated object maps across four rep-resentative methods. Landmarks are rendered as translucent spheres scaled by uncertainty. Gauss PDA produces large overlapping spheres and scatters multiple landmarks for the same physical object, reflecting an inability of soft PDA to commit when association is ambiguous. MHJCBB misclassi-fies fridges and strings duplicates along revisited corridors, since its hard top-K assignment cannot recover from a wrong initial class. SlideSLAM, whose hard-new policy fixes class at landmark birth, fails to instantiate rare or weakly-detected classes (fridge, plant), leaving large regions of the map empty. BPDA-GMM produces a clean map with one compact, low-uncertainty landmark per physical object, demonstrating that the CRP prior and the soft semantic posterior together suppress both spurious duplicates and missing-class failures. 
+
+D. Computational, Ablation, and Sensitivity Analysis 
+
+Table IV reports per-keyframe runtime on the Jetson Xavier AGX, and a desktop machine with an Intel Core i7 is used only for RViz visualization. BPDA-GMM achieves the lowest mean and maximum runtime, 0.806 ms and 3.97 ms, respectively. Compared with soft-association baselines, it reduces mean runtime by about 30 –50% , while MH-iSAM2 is over two orders of magnitude slower due to explicit multi-hypothesis TABLE V: Ablation study when removing DP prior, semantic likelihood, soft Bayesian association, and decoupled back-end.                         
+
+> Method ATE ↓RPE ↓lm cham ↓sem acc ↑
+> Full BPDA-GMM 3.0326 0.9637 2.3304 0.6234 w/o DP prior (3)(4)(5) 7.9954 1.1225 5.1991 0.2532 w/o Semantic likelihood (6) 4.0925 1.1148 2.9201 0.5276 w/o soft Bayesian association (8) 3.6070 1.1262 3.2970 0.5141 w/o decoupling (21) 14.1801 2.6226 6.8444 0.1960
+
+TABLE VI: Sample of sensitivity analysis. Each setting is averaged over 42 random seeds while varying one hyperparameter at a time.                                                                                                                                   
+
+> Parameter ATE ↓RPE ↓lm cham ↓sem acc ↑
+> α0= 0 .10 6.8849 1.1447 4.5275 0.3082
+> α0= 0 .25 6.5501 1.1324 4.3025 0.3207
+> α0= 0 .50 6.1767 1.1130 4.2393 0.3301
+> α0= 0 .75 6.9687 1.1345 4.5081 0.3013
+> α0= 1 .00 6.9771 1.1328 4.5748 0.3075
+> λ= 0 .000 6.5819 1.1345 4.3437 0.3228
+> λ= 0 .001 6.2834 1.1235 4.1783 0.3318
+> λ= 0 .002 6.4067 1.1397 4.2787 0.3263
+> λ= 0 .004 6.9694 1.1328 4.4953 0.3156
+> λ= 0 .008 7.0796 1.1406 4.5329 0.3100 no tempering 6.9960 1.1387 4.5025 0.3036
+> α= 0 .15 6.7640 1.1481 4.4374 0.3023
+> α= 0 .30 6.2834 1.1235 4.1783 0.3318
+> α= 0 .60 6.5184 1.1201 4.2986 0.3266
+> α= 0 .80 6.8014 1.1362 4.4017 0.3126
+> τamb = 0 .50 6.9960 1.1387 4.5025 0.3036
+> τamb = 0 .65 6.7979 1.1409 4.4446 0.3078
+> τamb = 0 .80 6.2834 1.1235 4.1783 0.3318
+> τamb = 0 .90 6.3998 1.1256 4.2154 0.3224
+> τamb = 1 .00 6.3998 1.1256 4.2154 0.3224
+> dmerge = 0 .56.5202 1.1239 4.3070 0.3115
+> dmerge = 1 .06.7262 1.1049 4.4322 0.3080
+> dmerge = 1 .55.8257 1.0760 4.1973 0.3175
+> dmerge = 2 .05.8648 1.1132 4.1006 0.3140
+> dmerge = 2 .56.0023 1.0839 4.2726 0.2961
+
+optimization. BPDA-GMM therefore supports real-time em-bedded semantic SLAM and sustains > 10 Hz end-to-end. Table V evaluates the contribution of the main BPDA-GMM components. Removing the DP prior causes the largest se-mantic degradation, reducing semantic accuracy from 0.6234 
+
+to 0.2532 , because the model loses its CRP-based new-landmark mechanism and reverts to a fixed-cardinality asso-ciation behavior. Removing the semantic likelihood weakens class-consistent association and increases both trajectory and map errors. Replacing soft Bayesian association with a non-probabilistic alternative also degrades all metrics, showing the importance of maintaining association uncertainty. Removing the decoupled back-end causes the largest pose degradation, increasing ATE to 14 .18 m. This confirms that zero-pose-Jacobian semantic factors are essential for preventing noisy object detections from corrupting the trajectory. Table VI studies the sensitivity of BPDA-GMM to its main hyperparameters: the DP concentration parameter α0, count-decay rate λ, tempering coefficient α, ambiguity threshold 
+
+τamb , and merge distance dmerge . Overall, performance is stable around the default configuration. The best trade-off occurs near α0 = 0 .5, λ = 0 .001 , α = 0 .3, τamb = 0 .8,and dmerge = 1 .5–2.0. Too small α0 suppresses new-landmark creation, while too large α0 increases map fragmentation. Sim-ilarly, moderate count decay prevents excessive landmark birth as the map grows, and ambiguity-triggered tempering performs 8
+
+Fig. 5: Qualitative object-map comparison on the real indoor sequence. BPDA-GMM produces a compact semantic map with fewer duplicate landmarks and lower uncertainty, while hard-association or fixed-hypothesis baselines suffer from missed objects or over-instantiation. best when activated only for sufficiently diffuse posteriors. The merge distance shows a trajectory–map trade-off: larger values improve pose accuracy by merging duplicate landmarks, but overly aggressive merging may reduce semantic map quality. VI. C ONCLUSION 
+
+We presented BPDA-GMM , an online Bayesian proba-bilistic data association framework for semantic SLAM with a growing object-level map. By using a Dirichlet-process prior, BPDA-GMM induces a CRP association model that incrementally accumulates association evidence and assigns principled probability mass to new landmarks. CRP-weighted detections update semantic Gaussian landmarks in closed form, forming a Gaussian mixture map whose dominant com-ponent is converted into a max-mixture semantic factor. A joint semantic-geometric gate reduces candidate associations, while ambiguity-triggered posterior tempering improves robustness under noisy or inconclusive observations. In the back-end, zero-pose-Jacobian semantic factors decouple landmark refine-ment from trajectory estimation, preventing noisy semantic de-tections from directly perturbing the robot pose. Experiments in simulation and on a real indoor dataset show that BPDA-GMM improves trajectory accuracy, semantic mapping quality, and robustness to perceptual aliasing and classifier errors com-pared with state-of-the-art data association baselines, while maintaining real-time performance on embedded hardware. Three limitations point to future work. First, the single-Gaussian landmark model assumes unimodal position un-certainty; elongated objects such as tables or walls would benefit from a mixture of Gaussians per landmark. Second, the semantic indicator gate assumes a fixed discrete class set, and extending to open-vocabulary detectors requires a continuous class embedding. Third, BPDA-GMM does not currently support active data-association planning, in which the robot selects actions to disambiguate hypotheses; incorpo-rating such planning within the CRP framework is a natural open problem. Future work will address these limitations by extending BPDA-GMM to multi-modal object representations, open-vocabulary semantics, active data-association planning, and integrating BPDA-GMM into a multi-robot system. REFERENCES [1] T. N. Canh, H. Zhang, X. HoangVan, and N. Y. Chong, “Semantic visual simultaneous localization and mapping: A survey on state of the art, challenges, and future directions,” arXiv preprint arXiv:2510.00783 ,2025. [2] T. Brox, “Maximum likelihood estimation,” in Computer Vision: A Reference Guide . Springer, 2021, pp. 799–801. [3] S. L. Bowman, N. Atanasov, K. Daniilidis, and G. J. Pappas, “Probabilis-tic data association for semantic slam,” in IEEE international conference on robotics and automation (ICRA) . IEEE, 2017, pp. 1722–1729. [4] E. Olson and P. Agarwal, “Inference on networks of mixtures for robust robot mapping,” The International Journal of Robotics Research , vol. 32, no. 7, pp. 826–840, 2013. [5] K. J. Doherty, D. P. Baxter, E. Schneeweiss, and J. J. Leonard, “Proba-bilistic data association via mixture models for robust semantic SLAM,” in IEEE International Conference on Robotics and Automation (ICRA) ,2020, pp. 1098–1104. [6] E. Michael, T. Summers, T. A. Wood, C. Manzie, and I. Shames, “Prob-abilistic data association for semantic SLAM at scale,” in IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) ,2022, pp. 4359–4364. [7] J. Wang and B. Englot, “Robust exploration with multiple hypothesis data association,” in IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) , Madrid, Spain, 2018, pp. 3537–3544. [8] M. Hsiao and M. Kaess, “Mh-isam2: Multi-hypothesis isam using bayes tree and hypo-tree,” in 2019 International Conference on Robotics and Automation (ICRA) . IEEE, 2019, pp. 1274–1280. [9] J. H. Kim, D. Kim, S. Kim, and A. Oh, “Modeling topic hierarchies with the recursive chinese restaurant process,” in Proceedings of the 21st ACM international conference on Information and knowledge management ,2012, pp. 783–792. [10] Y. Bar-Shalom and E. Tse, “Tracking in a cluttered environment with probabilistic data association,” Automatica , vol. 11, no. 5, pp. 451–460, 1975. [11] D. Reid, “An algorithm for tracking multiple targets,” IEEE transactions on Automatic Control , vol. 24, no. 6, pp. 843–854, 2003. [12] I. J. Cox and J. J. Leonard, “Modeling a dynamic environment using a bayesian multiple hypothesis approach,” Artificial intelligence , vol. 66, no. 2, pp. 311–344, 1994. [13] K. Doherty, D. Fourie, and J. Leonard, “Multimodal semantic SLAM with probabilistic data association,” in IEEE International Conference on Robotics and Automation (ICRA) , 2019, pp. 2419–2425. [14] K. G. Murty, “An algorithm for ranking all the assignments in order of increasing cost,” Operations research , vol. 16, no. 3, pp. 682–687, 1968. [15] J. Neira and J. D. Tard´ os, “Data association in stochastic mapping using the joint compatibility test,” IEEE Transactions on robotics and automation , vol. 17, no. 6, pp. 890–897, 2002. [16] S. Yang and S. Scherer, “CubeSLAM: Monocular 3D object SLAM,” 
+
+IEEE Transactions on Robotics , vol. 35, no. 4, pp. 925–938, 2019. [17] L. Nicholson, M. Milford, and N. S¨ underhauf, “QuadricSLAM: Dual quadrics from object detections as landmarks in object-oriented SLAM,” 
+
+IEEE Robotics and Automation Letters , vol. 4, no. 1, pp. 1–8, 2019. [18] Z. Qian, K. Patath, J. Fu, and J. Xiao, “Semantic SLAM with au-tonomous object-level data association,” in IEEE International Confer-ence on Robotics and Automation (ICRA) , 2021, pp. 11 203–11 209. [19] J. Wang, M. R¨ unz, and L. Agapito, “DSP-SLAM: Object oriented SLAM with deep shape priors,” in International Conference on 3D Vision (3DV) , 2021, pp. 1362–1371. [20] Y. Wu, Y. Zhang, D. Zhu, Y. Feng, S. Coleman, and D. Kerr, “EAO-SLAM: Monocular semi-dense object SLAM based on ensemble data association,” in IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) , 2020, pp. 4966–4973. [21] Y. Wu, Y. Zhang, D. Zhu, Z. Deng, W. Sun, X. Chen, and J. Zhang, “An object slam framework for association, mapping, and high-level tasks,” 
+
+IEEE Transactions on Robotics , vol. 39, no. 4, pp. 2912–2932, 2023. 9
+
+[22] X. Ji, S. Yuan, J. Li, P. Yin, H. Cao, and L. Xie, “Sgba: Semantic gaussian mixture model-based lidar bundle adjustment,” IEEE Robotics and Automation Letters , vol. 9, no. 12, pp. 10 922–10 929, 2024. [23] X. Liu, J. Lei, A. Prabhu, Y. Tao, I. Spasojevic, P. Chaudhari, N. Atanasov, and V. Kumar, “Slideslam: Sparse, lightweight, decentral-ized metric-semantic slam for multirobot navigation,” IEEE Transactions on Robotics , vol. 41, pp. 6529–6548, 2025. [24] K. Ghalamkari, J. L. Hinrich, and M. Mørup, “E 2M: Double bounded 
+
+α-divergence optimization for tensor-based discrete density estimation,” 
+
+Transactions on Machine Learning Research , 2026. [25] F. Dellaert, “Factor graphs and GTSAM: A hands-on introduction,” Georgia Institute of Technology, Tech. Rep. GT-RIM-CP&R-2012-002, 2012. [26] M. Kaess, H. Johannsson, R. Roberts, V. Ila, J. J. Leonard, and F. Dellaert, “isam2: Incremental smoothing and mapping using the bayes tree,” The International Journal of Robotics Research , vol. 31, no. 2, pp. 216–235, 2012.
