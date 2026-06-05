@@ -1,0 +1,54 @@
+{
+  "label": "2026-06-05",
+  "date": "2026-06-05",
+  "generated_at": "2026-06-05T22:02:47",
+  "count": 3,
+  "papers": [
+    {
+      "paper_id": "202606/05/2606.01315v1-deblurnvs-geometric-latent-diffusion-for-novel-view-synthesis-from-sparse-motion-blurred-images",
+      "section": "quick",
+      "title_en": "DeblurNVS: Geometric Latent Diffusion for Novel View Synthesis from Sparse Motion-Blurred Images",
+      "authors": "Changyue Shi, Wangbo Yu, Chaoran Feng, Li Yuan",
+      "date": "2026-05-31",
+      "pdf": "https://arxiv.org/pdf/2606.01315v1",
+      "score": "7.0",
+      "evidence": "在模糊图像新视角合成框架中融入3D高斯泼溅，扩展了体素场景表示的能力",
+      "tldr": "运动模糊破坏了多视图几何对应，导致稀疏视角新视图合成困难，现有模糊感知方法依赖耗时的逐场景优化。DeblurNVS框架无需逐场景优化，通过恢复中间几何表示并结合目标相机信息，直接从模糊图像合成清晰新视图。在合成与真实场景实验中，方法优于基线，生成更锐利且结构稳定的视图。该工作为高效处理运动模糊输入的新视图合成提供了新途径。",
+      "tags": "query:gs-slam",
+      "abstract_en": "Novel view synthesis (NVS) is a fundamental problem in computer vision and graphics. Recent advances in neural radiance fields (NeRF), 3D Gaussian Splatting (3DGS), and generative view synthesis have substantially improved its quality. Yet most methods still rely on clean observations, where image structures and cross-view geometric cues are well preserved. Motion blur breaks this assumption by corrupting local details and weakening multi-view correspondences. Such blur commonly arises from camera shake, scene motion, or finite exposure in practical capture. Blur-aware NVS methods address this degradation by modeling image formation, but their reliance on costly per-scene optimization limits efficient and generalizable sparse-view synthesis. To address this, we propose DeblurNVS, a novel framework for synthesizing high-fidelity novel views directly from sparse motion-blurred images, without requiring per-scene optimization. DeblurNVS restores the intermediate geometric representations needed for multi-view reasoning, enabling blurred inputs to recover reliable structure and correspondence cues. The restored representations are then combined with target camera information to synthesize the target-view representation and reconstruct a sharp RGB novel view. To enable the large-scale training, we construct a motion-blurred NVS dataset from DL3DV-10K using interpolation-based finite-exposure blur synthesis. Extensive experiments demonstrate that DeblurNVS outperforms existing baselines on synthetic motion-blur benchmarks and generalizes to real motion-blurred scenes, producing perceptually sharper and structurally more stable novel views while avoiding costly per-scene optimization. Project page: https://github.com/PKU-YuanGroup/DeblurNVS.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202606/05/2606.06250v1-breaking-time-a-fully-gaussian-framework-for-distributed-and-continuous-time-slam",
+      "section": "quick",
+      "title_en": "Breaking Time: A Fully Gaussian Framework for Distributed and Continuous-Time SLAM",
+      "authors": "Davide Ceriola, Simone Ferrari, Luca Di Giammarino, Leonardo Brizi, Giorgio Grisetti",
+      "date": "2026-06-04",
+      "pdf": "https://arxiv.org/pdf/2606.06250v1",
+      "score": "7.0",
+      "evidence": "提出基于高斯置信传播和高斯过程的连续时间SLAM框架，实现精确的相机位姿跟踪",
+      "tldr": "连续时间SLAM能在原理上融合异构异步传感器并估计平滑轨迹，但传统方法多为集中式且缺乏概率插值表示。本文提出G-solver，将高斯过程运动先验与高斯信念传播相结合，构建全高斯分布式框架，支持连续时间轨迹估计，自然扩展到多相机场景无需特殊同步。在合成和真实数据（包括卷帘快门和分布式多相机）上，方法实现了准确稳定的估计，运行时间与现有连续时间方法相当。开源代码为去中心化多传感器SLAM提供了可扩展的解决方案。",
+      "tags": "query:gs-slam",
+      "abstract_en": "Continuous-time SLAM provides a principled framework for fusing heterogeneous sensors while estimating smooth trajectories, and is particularly well-suited for handling heterogeneous, asynchronous sensor streams with non-uniform readout patterns, such as rolling shutter cameras, LiDAR scanners, radar sweeps, or event-based sensors. In this work, we introduce G-solver, a fully Gaussian and distributed framework that combines Gaussian Belief Propagation (GBP) with Gaussian Process (GP) motion priors for continuous-time trajectory estimation. Our GP model provides a probabilistic representation of the trajectory, enabling consistent interpolation and the use of data-driven hyperparameters, while GBP offers a scalable message-passing formulation well-suited for decentralized settings. The resulting solver naturally extends to multi-camera scenarios without specialized synchronization or engineering effort. We evaluate the approach on synthetic and real data, including rolling shutter and distributed multi-camera optimization, demonstrating accurate and stable estimation with runtimes comparable to existing continuous-time methods. An open-source implementation is released.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202606/05/2606.05491v1-unpaired-rgb-thermal-gaussian-splatting-using-visual-geometric-transformers",
+      "section": "quick",
+      "title_en": "Unpaired RGB-Thermal Gaussian-Splatting Using Visual Geometric Transformers",
+      "authors": "Jean Cordonnier, Chenghao Xu, Olga Fink, Malcolm Mielle",
+      "date": "2026-06-03",
+      "pdf": "https://arxiv.org/pdf/2606.05491v1",
+      "score": "6.0",
+      "evidence": "使用各向异性高斯进行新视角合成，涉及多模态对齐与实时渲染",
+      "tldr": "多模态新视角合成依赖精确配对的RGB-热红外图像，限制了实际部署。本文提出基于视觉几何变换器VGGT的非配对框架，独立估计各模态相机位姿，通过Procrustes对齐和跨模态匹配实现联合注册，并引入多模态3D高斯溅射方法。实验表明热红外视角合成性能具竞争力，同时保持RGB保真度，并建立了跨模态一致性基准框架。该方法消除了配对标定需求，推动了多模态场景重建的实用化与评估标准化。",
+      "tags": "query:gs-slam",
+      "abstract_en": "Multi-modal novel view synthesis (NVS) combining RGB and thermal imagery enables precise 3D scene reconstruction with visual and thermal information. However, existing methods typically rely on precisely calibrated RGB-thermal image pairs or stereo setups, limiting scalability and practical deployment. To address this, we introduce a framework for unpaired RGB-thermal NVS that leverages VGGT, a 3D feed-forward transformer architecture, to independently estimate camera poses for each modality. The pose sets are then aligned using the Procrustes algorithm with a cross-modal feature matcher, enabling joint registration without paired calibration. Building on this alignment, we further propose a multi-modal 3D Gaussian Splatting approach that learns directly from unpaired RGB and thermal images. Experiments on diverse scenes demonstrate that our method achieves competitive performance in thermal view synthesis while maintaining RGB fidelity. Moreover, we show that existing reconstruction approaches can produce modality-specific reconstructions that lack cross-modal consistency. We thus introduce a benchmarking framework to rigorously evaluate both per-modality image synthesis and the multi-modal coherence of reconstructed scenes.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

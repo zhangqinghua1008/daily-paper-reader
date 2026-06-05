@@ -1,0 +1,1024 @@
+Title: Breaking Time: A Fully Gaussian Framework for Distributed and Continuous-Time SLAM
+
+URL Source: https://arxiv.org/pdf/2606.06250v1
+
+Published Time: Fri, 05 Jun 2026 01:33:21 GMT
+
+Number of Pages: 14
+
+Markdown Content:
+> 1
+
+# Breaking Time: A Fully Gaussian Framework for Distributed and Continuous-Time SLAM 
+
+Davide Ceriola 1,∗, Simone Ferrari 1,∗, Luca Di Giammarino 1, Leonardo Brizi 1,2, Giorgio Grisetti 1
+
+Abstract —Continuous-time SLAM provides a principled framework for fusing heterogeneous sensors while estimating smooth trajectories, and is particularly well-suited for handling heterogeneous, asynchronous sensor streams with non-uniform readout patterns, such as rolling shutter cameras, LiDAR scan-ners, radar sweeps, or event-based sensors. In this work, we intro-duce G-solver, a fully Gaussian and distributed framework that combines Gaussian Belief Propagation (GBP) with Gaussian Pro-cess (GP) motion priors for continuous-time trajectory estima-tion. Our GP model provides a probabilistic representation of the trajectory, enabling consistent interpolation and the use of data-driven hyperparameters, while GBP offers a scalable message-passing formulation well-suited for decentralized settings. The resulting solver naturally extends to multi-camera scenarios with-out specialized synchronization or engineering effort. We evaluate the approach on synthetic and real data, including rolling shutter and distributed multi-camera optimization, demonstrating accu-rate and stable estimation with runtimes comparable to existing continuous-time methods. An open-source implementation is released at https://github.com/rvp-group/gsolver. 
+
+I. I NTRODUCTION 
+
+# ACCURATE ego-motion estimation is central to many vision-based applications, from mobile AR to au-tonomous navigation. Modern systems fuse heterogeneous sensor modalities: cameras, IMUs, GNSS, LiDAR, and event cameras, to remain robust under motion blur, low texture, or extreme dynamics. Most existing Simultaneous Localization and Mapping (SLAM) pipelines [1], [2], [3] adopt a discrete-time formulation. While effective, discrete-time models require explicit handling of temporal offsets and high-rate asyn-chronous sensors. Continuous Time Simultaneous Localization and Mapping (CT-SLAM) addresses these issues by represent-ing trajectories as smooth functions of time, enabling natural fusion of heterogeneous measurements [4]. Trajectory representations in CT-SLAM often rely on spline models, where motion is parameterized by knots and associ-ated basis functions. Splines provide smooth trajectories and efficient evaluation, but their behavior is governed by design choices, such as knot spacing, order, and basis structure, that must be fixed a priori. These choices implicitly determine the temporal resolution and motion assumptions of the model, and adjusting them to different motions or sensing condi-tions typically requires manual tuning. A second limitation                    
+
+> ∗These authors contributed equally to this work. This work has been partially supported by PNRR MUR project PE0000013-FAIR.
+> 1D. Ceriola, S. Ferrari, L. Di Giammarino, L. Brizi, and G. Grisetti are with the Department of Computer, Control, and Management Engineering “Antonio Ruberti”, Sapienza University of Rome, Italy. Email: {ceriola, s.ferrari, digiammarino, brizi, grisetti }@diag.uniroma1.it.
+> 2L. Brizi is also with the University of Stuttgart, Germany.
+
+Fig. 1: Querying continuous-time mean and covariance. 
+
+G-solver GP-based trajectory estimate on a torus motion sequence. Shaded regions depict the posterior covariance, which naturally expands in segments with fewer observations and contracts where measurements are available. The model supports querying both trajectory mean and uncertainty at arbitrary timestamps. is uncertainty handling: although spline uncertainty can be computed, propagating it through the full inference pipeline is less straightforward, making principled probabilistic fusion more challenging. Gaussian Processes (GPs) address these limitations by treating trajectories as distributions over func-tions rather than fixed basis expansions. GPs priors directly encode motion uncertainty, allow querying the trajectory at arbitrary timestamps, and expose hyperparameters that can often be tuned or learned from data. These properties make GPs a flexible and probabilistically consistent alternative for continuous-time estimation and multi-sensor fusion, particu-larly in scenarios with asynchronous measurements or varying sensor readouts. CT-SLAM is typically solved using centralized Non Linear Least Squares (NLLS) optimization, either in batch or fixed-lag form [5]. Although successful, repeated relinearization and centralized computation become limiting when processing high-frequency asynchronous sensors, multi-camera systems, or rolling shutter cameras with row-wise timestamps. SLAM problems can be represented as factor graphs, where variables are linked by probabilistic constraints. Gaussian Belief Propa-gation (GBP) performs distributed inference on such graphs via local Gaussian message passing, providing an alterna-tive to centralized optimization. GBP supports incremental updates without requiring a global solve, making it well-suited for continuous-time estimation with heterogeneous or asynchronous sensor streams. Building on continuous-time estimation [4] and distributed Gaussian message passing [6], we introduce G-solver, afully Gaussian framework that combines GPs and GBP for 
+
+> arXiv:2606.06250v1 [cs.RO] 4 Jun 2026 2
+
+distributed continuous-time SLAM. The approach handles asynchronous sensing, nonuniform readout, and multi-camera setups without additional synchronization mechanisms, pro-viding a clean and general probabilistic formulation. II. R ELATED WORK 
+
+State estimation is a fundamental problem in robotics and computer vision, spanning SLAM [7], mapping [8], tracking [9], and navigation [10]. Classical pipelines typically formulate inference as Maximum A Posteriori (MAP) estimation solved via NLLS optimization [11], [12]. Discrete-time representa-tions remain widely used, but they require explicit handling of temporal offsets, high-rate sensors, and multi-sensor synchro-nization, which motivates the consideration of continuous-time alternatives. 
+
+a) Continuous-Time Trajectory Models: B-Spline trajec-tory representations [13] provide locality and smoothness, while Z-Spline [14] provides a moment-conserving interpo-lation. However, both require temporal resolution and basis structure to be fixed a priori; while uncertainty can be re-covered, propagation within a probabilistic pipeline is less direct. Gaussian-process trajectory models [4], [15] embed un-certainty intrinsically and support data-driven hyperparameter learning. Prior GP motion models, including constant-velocity, Singer [16], and ESGVI [17] formulations, demonstrate the flexibility of continuous-time priors. Recent comparisons [18] show that GP-based inference is competitive in both accuracy and efficiency. 
+
+b) Optimization and Scalability: Continuous-time SLAM is often solved through centralized NLLS, either in batch or fixed-lag form [5]. Although effective, centralized solvers struggle to scale when faced with asynchronous high-rate sensing, nonuniform readout mechanisms such as rolling shutters or scanning LiDARs, and multi-camera systems operating at mismatched frame rates. Large-scale problems Bundle Adjustment (BA) [19] further expose memory and runtime constraints. 
+
+c) Distributed Inference and GBP: Distributed inference has gained attention for multi-robot SLAM [20] and with the emergence of graph-parallel hardware such as Intelligent Processing Units (IPUs). GBP performs local Gaussian mes-sage passing on factor graphs [21], offering exact inference on trees and strong empirical performance on loopy graphs [22]. Recent work [23], [24], [25], [6] highlights its scala-bility. Hyperion [26] applies GBP to continuous-time SLAM via B- and Z-Splines. Our approach instead employs GP priors within GBP, providing uncertainty-aware continuous trajectories while enabling distributed inference. This is par-ticularly advantageous for asynchronous multi-camera setups and rolling shutter data where row-level timestamps must be handled consistently. 
+
+d) Contributions: Our main contributions are: (i) A fully Gaussian continuous-time SLAM framework that integrates GP motion priors within a GBP inference scheme, enabling distributed optimization and naturally accommodating asyn-chronous multi-camera inputs and nonuniform sensor readout observations. (ii) A probabilistic trajectory representation in which the same GP hyperparameters govern both the optimiza-tion of discrete states and the interpolation of continuous-time queries, ensuring internal consistency. (iii) An experimental evaluation on synthetic and real data showing accurate and stable estimation, effective uncertainty handling, and favorable scalability properties, together with an open-source implemen-tation. III. G-SOLVER 
+
+We propose a GBP solver built around GP priors for continuous-time trajectory estimation in SLAM. G-solver es-timates the most likely trajectory by combining sensor mea-surements with continuous-time motion constraints (Fig. 2). Combining GP priors and GBP requires several non-trivial design choices for numerical stability, manifold consistency, and reliable message-passing convergence. Instead of relying on spline interpolation as in [26], we adopt a constant-velocity GP prior between consecutive poses. This prior is implemented as a binary GP factor that con-strains both pose and body-centric velocity, enabling smooth and uncertainty-aware continuous-time trajectory estimation. Two practical advantages follow from this formulation. First, the GP prior exposes a small set of physically interpretable hyperparameters (the entries of QC ), which can be tuned or learned from data, whereas spline-based approaches depend on fixed design choices such as knot spacing and spline order. Second, the GP prior yields an explicit quadratic cost, allowing it to integrate cleanly into the GBP machinery and directly influence the estimated trajectory through iterative message passing. An additional and important advantage of our GP formula-tion lies in the resulting factor graph structure. Spline-based continuous-time models, such as those used in Hyperion [26], couple each pose to multiple control points (e.g., four for a cubic B-Spline), which causes even simple measurement factors to introduce dense loops in the graph. These cyclic dependencies are known to challenge the convergence and stability of iterative GBP [23]. In contrast, our GP prior links only successive poses, producing a chain-like motion model that dramatically reduces the number of loops. Our experiments demonstrate that this topology is inherently more compatible with distributed message passing and leads to more predictable convergence behavior, especially in large-scale or multi-camera settings. 
+
+a) Preliminaries: In our work, the estimated quantities include poses in SE (3) , hence the formulation needs to support manifold-valued states. We denote the manifold as M and the associated tangent space at μ ∈ M as TμM. We rely on the 
+
+⊞-notation as in [27], defining the operators ⊞ : M× TμM 7 → M and ⊟ : M×M 7 → TμM, which allows to move between the manifold and its tangent space. The rest of the notation follows [21]. In the remainder of this section, the inference problem is formulated as a factor graph. Each variable node 
+
+xi is associated with a Gaussian belief 
+
+xi ∼ N (μxi , Σxi ) = N −1(ηxi , Λxi ), (1) and each factor fj with an information-form Gaussian 
+
+fj ∼ N −1(ηfj , Λfj ). (2) 3Variable Factor GP Prior Variable to Factor Factor to Variable 
+
+Fig. 2: G-solver: Continuous-time inference via message passing. A factor graph view of our method: Gaussian Belief Propagation messages (arrows) propagate local information across the graph, while Gaussian Process priors model the tra-jectory continuously in time. The light-blue region illustrates the GP uncertainty envelope. +1 +1 
+
+Fig. 3: Locally linear approximation between each pair of measurement times, ti and ti+1 , where a constant velocity model is applied. This figure illustrates the relationships be-tween the local pose variable ξi(t), and the global trajectory state {T(t), ϖ(t)}.The mean μ ∈ M lies on the manifold, while the covari-ance Σ = Λ−1 ∈ Rdim(T μM)×dim(T μM) is defined in the corresponding tangent space. The information vector η and precision matrix Λ satisfy η = Λμ.
+
+A. Continuous time estimation using GP 
+
+For continuous-time estimation, we introduce GP-based prior factors with their own quadratic cost. The cost de-pends on both pose and velocity, so the latent state must include both components. We model the trajectory as x(t) ∼GP (μ(t), KKK(t, t ′)) , where μ(t) and KKK(t, t ′) are the mean and covariance of the GP, respectively. The Markov state is defined as: 
+
+x(t) .
+
+= {T(t), ϖ(t)}, (3) where T(t) ∈ SE (3) represents the pose and ϖ(t) ∈ R6 is the body-centric velocity, consisting of both linear ν(t) and angular ω(t) components. We define binary factors between consecutive poses to incorporate this GP into the factor graph, encoding the constant velocity prior as a GP factor, as shown in Fig. 3. In contrast to [15], which linearizes the pose increment entirely in the tangent space using right Jacobians, we evaluate the pose com-ponent of the error directly on the SE (3) manifold. This yields a slightly different discretization of the GP prior, chosen for improved numerical stability within our GBP implementation. The corresponding error term for the binary GP factor between poses Ti and Ti+1 is: 
+
+ei =
+
+ (T−1 
+
+> i
+
+Ti+1 ) ⊟ Exp(∆ tiϖi)iRi+1 00 iRi+1 
+
+
+
+ϖi+1 − ϖi
+
+ , (4) where Ti, Ti+1 , ϖi, ϖi+1 are the global state variables, while 
+
+∆ti = ti+1 −ti and iRi+1 are respectively time and rotational difference between consecutive poses. We found this formula-tion to be more numerically stable than a purely tangent-space linearization for larger inter-frame motions. The error term 
+
+ei penalizes deviations from a body-centric constant-velocity trajectory and serves as the GP motion prior. The local Markov state is defined by 
+
+γi(t) .
+
+=
+
+ξi(t)˙ξi(t)
+
+
+
+, (5) where ξi(t) = Log( T−1 
+
+> i
+
+T(t)) is the local pose variable, defined in the tangent space of the manifold SE (3) , and ˙ξi(t)
+
+represents the velocity. Differently from other approaches [15], [28], we map the body-centric twist ϖ(t) into the local frame of Ti using only the relative rotation, 
+
+˙ξi(t) = 
+
+iRt 00 iRt
+
+
+
+ϖ(t), ti ≤ t ≤ ti+1 , (6) where iRt = R⊤ 
+
+> i
+
+Rt. This replaces the right-Jacobian map-ping with a simpler rotation-based approximation, empirically stable for the considered motions. As in [15], the transition between states is governed by the constant-velocity model: 
+
+γi(ti+1 ) = Φ(ti+1 , t i)γi(ti), (7) where Φ(ti+1 , t i) is the transition matrix given by: 
+
+Φ(ti+1 , t i) = 
+
+I6×6 (ti+1 − ti)I6×6
+
+0 I6×6
+
+
+
+. (8) 
+
+˙ϖ(t) is modeled as a zero-mean white-noise GP: 
+
+˙ϖ(t) ∼ GP (0, QC δ(t − t′)) (9) where QC is the power spectral density matrix of the process noise [4]. In practice, QC (or a small set of scalar parameters defining it) can be tuned or learned from data [15], [29]. By integrating this process twice, we obtain the prior covariance matrix: 
+
+Qi =
+
+ 13 ∆t3 
+
+> i
+
+QC 12 ∆t2 
+
+> i
+
+QC 
+
+> 12
+
+∆t2 
+
+> i
+
+QC ∆tiQC
+
+
+
+, ∆ti = ti+1 − ti. (10) Finally, each GP binary prior factor has cost: 
+
+Ei = 12 e⊤ 
+
+> i
+
+Q−1 
+
+> i
+
+ei. (11) 
+
+B. Gaussian Belief Propagation with GP 
+
+This section provides a detailed description of our solver, emphasizing its key differences from existing methods. GBP is a decentralized iterative algorithm based on message passing [30]. Each received message is internally remapped to the Euclidean tangent space to operate on the underlying Gaussian 4
+
+distribution. Let min ∼ N (μin , Λ−1 
+
+> in
+
+) be a generic incoming message, we need to obtain the corresponding parameters on the tangent space mτ 
+
+> in
+
+∼ N (τ in , (Λτ
+
+> in
+
+)−1). Using the ⊞
+
+notation, this can be written as: 
+
+τ in = μin ⊟ μ0, (12) 
+
+Λτ 
+
+> in
+
+≈ Λin . (13) We approximate the projected precision Λτ 
+
+> in
+
+≈ Λin , instead of explicitly computing the Jacobian-based first-order map-ping [26], [6]. This well-established simplification provided a good efficiency/stability trade-off in all our experiments [31], [32]. We recall that within the nodes, the internal computation is conducted on the Euclidean tangent space as 
+
+τ in = ( ξi(t)⊤, ˙ξi(t)⊤)⊤ ∈ R12 . This mechanism naturally generalizes to Euclidean entities such as point landmarks in 
+
+R3, whose tangent space coincides with the domain. With this formulation, we can directly address a broader class of problems such as BA. GBP consists of four main steps: the variable update, the factor update, the variable-to-factor message generation, and the factor-to-variable message generation. The first three steps are similar to the one proposed by [6]. We now discuss the factor-to-variable message since it differs from previous formulations [26]. 
+
+a) Factor-to-Variable Message: A factor-to-variable message encodes the probability distribution of the recipient variable that minimizes the factor cost function. To produce such a message, we first condition the factor to obtain the joint probability distribution over all the connected variables and then marginalize out the recipient variable. Hence, denoting by α the information related to the receiving variable and by 
+
+β the information about all other variables, the first step is encoded as: 
+
+ηCf =
+
+ηα
+
+ηβ
+
+
+
+=
+
+ ηfα
+
+ηfβ + ηxβ →fj
+
+
+
+, (14) 
+
+ΛCf =
+
+Λαα Λαβ 
+
+Λβα Λββ 
+
+
+
+=
+
+Λfαα Λfαβ 
+
+Λfβα Λfββ + Λxβ →fj
+
+
+
+, (15) where N −1(ηf , Λf ) is the factor distribution and 
+
+N −1(ηCf , ΛCf ) is the resulting conditioned joint distribution. As shown in Fig. 4, unlike Hyperion [26], our approach retains the original formulation by omitting the recipient variable from the conditioning set. Following [6], we compute the marginalization by using the Schur complement: 
+
+ηM α = ηα − Λαβ Λ−1 
+
+> ββ
+
+ηβ , (16) 
+
+ΛM α = Λ αα − Λαβ Λ−1 
+
+> ββ
+
+Λβα . (17) The outward message mfj →xr ∼ N (μfj →xr , Λ−1  
+
+> fj→xr
+
+) to the receiving variable xr can be retrieved by projecting the marginal distribution N −1(ηM α , ΛM α ) back to the manifold. Whereas each factor minimizes only its own energy, the GBP machinery focuses on minimizing the total cost function: 
+
+Etot = X
+
+> j∈J
+
+12 ∥ej ∥2 
+
+> Λj
+
++ X
+
+> i∈P
+
+12 ∥ei∥2
+
+> Q−1
+> i
+
+. (18) 
+
+Fig. 4: Factor-to-Variable Message conditioning. The il-lustration highlights the nodes (purple region) involved in computing the factor-to-variable message (light blue arrow). In Hyperion (right), the receiving variable is included in the conditioning set, whereas in our approach (left) it is excluded to avoid introducing bias into the computation. 0 5 10 15 20 25 # iteration 
+
+> 0
+> 100
+> 200
+> 300
+> 400
+> 500
+> Etot
+> Ours GN+GP
+
+Fig. 5: Total energy over iterations. G-solver and Gauss-Newton (GN)+GP total energy (Eq. (18)) while solving PGO in the Helix sequence, with initial perturbation and noise levels 
+
+σ = 0 .1, ηig = 1 (both [m] and [rad] ). A G-solver iteration ends when every node has been updated and exchanged messages with all its neighbors. Here, the first sum encodes the energy of a generic set J
+
+of different measurement factors (priors, odometry, projective camera measurement, etc.), and the second captures the GP prior costs P defined in Eq. (11). IV. E XPERIMENTS 
+
+We evaluate G-solver on a range of problems requiring continuous-time trajectory estimation, including ChArUco-based BA, rolling shutter cameras, and decentralized multi-camera setups. We validate three properties: (i) accurate continuous-time state estimation, (ii) computational efficiency comparable to state-of-the-art continuous-time optimizers, and (iii) the ability to handle asynchronous, distributed, and hetero-geneous sensing without engineering overhead. A key advan-tage of our GP-based formulation is that the prior covariance is governed by a small and interpretable set of hyperparameters (encoded in QC ), which can be inferred from data. This 5−10 0 10 −10 010 0510       
+
+> Initial Guess
+> −10 010 −10 010 0510
+> GBP-only
+> −10 010 −10 010 0510
+> Ours (GBP+GP)
+
+Fig. 6: Ablation on GP. Starting from a highly perturbed initial configuration (left), the trajectory optimized using only GBP (middle) remains highly inaccurate, whereas (right) G-solver successfully recovers the helix shape thanks to GP priors. Prior-based example with σ = 1 , ηig = 1 (both [m] 
+
+and [rad] ). contrasts with spline-based approaches that rely on fixed basis functions, knot spacing, and spline order. Moreover, our use of GP regression allows us to continuously query the posterior trajectory and its uncertainty after optimization (Fig. 1), fol-lowing the smoothing framework described in [31]. Across the experiments, we evaluate accuracy using Absolute Trajectory Error (ATE) and Absolute Rotation Error (ARE) RMSE, and, where possible, reprojection error to assess robustness to asynchronous measurements. We also report computational metrics, such as runtimes and memory usage. All evaluations were performed on a machine with an Intel(R) Core(TM) i9-14900KF processor (16 physical cores). We compare our method against the Hyperion solver [26], which represents trajectories using cubic Z-Splines and B-Splines and performs inference via distributed Gaussian message passing. In every experiment, both G-solver and Hyperion are configured to use a synchronous schedule for message exchanges between factors and variables. 
+
+A. Synthetic Experiments 
+
+We benchmark G-solver on two synthetic trajectories: helix 
+
+and sphere that excite all six degrees of freedom and provide different translational and rotational motion profiles. Initial guess of the state estimate and measurements are perturbed respectively with anisotropic noise ( m and rad ) ηig ranging from 10 −4 to 10 −1 and σ ranging from 10 −4 to 1.5. We evaluate two tasks: prior-based localization using only absolute pose measurements in Fig. 8, and Pose Graph Optimization (PGO) in Fig. 9. To fairly compare continuous-time repre-sentations, all methods query the trajectory and covariance at a resolution 100 × finer than the control-point spacing. State initialization for G-solver uses finite-differencing of the initial pose sequence to generate twist estimates; Hyperion [26] initializes their spline trajectories directly from the same noisy input. GP hyperparameters are initialized from a nominal reference value. As shown in the subsequent ablation, G-solver remains robust even when these hyperparameters are perturbed by orders of magnitude. Finally, in Fig. 5 we compare the energy over iterations of our solver and GN. 
+
+a) Prior-Based Localization and Pose Graph Optimiza-tion: Results for the helix and sphere trajectories (Fig. 8 and Fig. 9) reveal a consistent pattern. For low noise levels, −10 010 −10 010       
+
+> −10
+> −50510
+> Ours
+> −10 010 −10 010
+> −10 010
+> B-Spline
+> −10 010 −10 010
+> −10 010
+> Z-Spline
+
+Fig. 7: Prior-based qualitative interpolation results. Pos-terior continuous-time trajectory estimates for G-solver and Hyperion (B and Z spline) for the sphere sequence, under significant perturbation and noise levels with σ = 1 , ηig = 1 
+
+(both [m] and [rad] ). all approaches achieve comparable ATE and ARE RMSE values. In the lowest-noise regime, Z-Splines are slightly more accurate than G-solver, as their spline representations do not enforce a constant-velocity assumption. B-Splines, however, perform worse due to their approximating nature, which does not guarantee that the trajectory passes through the control points. As a result, the GP prior in Eq. (4) introduces a small residual cost even when measurements are nearly perfect. As noise increases, however, G-solver yields significantly lower error, often by an order of magnitude. In this regime, the GP prior provides beneficial local smoothing that mitigates the impact of high measurement noise. Fig. 7 illustrates this behavior: G-solver remains stable and accurate under strong perturbations, while spline-based estimations become less robust. We also report runtime comparisons in Fig. 12. The results show that GP-based continuous-time representation enables efficient interpolation. Combined with the locality of GBP message passing, this yields an online-capable solver with efficiency competitive with Hyperion. 
+
+b) G-Solver vs. Gauss–Newton with GP Priors: Fig. 5 compares G-solver with a GN baseline equipped with the same GP prior. Both methods converge to similar energy levels, but GN converges faster because it performs a centralized batch update that solves the full linear system at each iteration. In contrast, G-solver relies on distributed message passing, where information propagates locally through the factor graph, resulting in slower global agreement, even though each factor update internally uses second-order information. On loopy graphs, such as those in PGO, redundant cycles can induce oscillations, slowing convergence. This effect is reduced in prior-only problems, where the factor graph is closer to a chain and message propagation is more stable. Still, GBP suits large, distributed, or multi-agent systems where centralized GN updates are impractical. We further show in Fig. 6 that the inclusion of the GP prior is critical under strong noise: without it, GBP alone cannot recover the underlying trajectory, while G-solver reconstructs the shape robustly. 
+
+c) Consistency Analysis via NEES: We assess the sta-tistical consistency of the estimator through the Normalized Estimation Error Squared (NEES), computed on the same Prior-Based Localization problem and averaged over the helix 
+
+and sphere trajectories at increasing noise σ (Tab. I). For our 6-DOF state, 6.0 denotes an ideally calibrated covariance, with lower and higher values indicating pessimistic and overconfi-60123                         
+
+> Helix ATE [m]  ηig = 1 e−4ηig = 1 e−3ηig = 1 e−2ηig = 1 e−1
+> 10 −410 −310 −210 −110 0
+> σ
+> 0123
+> Sphere ATE [m]
+> 10 −410 −310 −210 −110 0
+> σ
+> 10 −410 −310 −210 −110 0
+> σ
+> 10 −410 −310 −210 −110 0
+> σ
+> Ours B-Spline Z-Spline
+
+Fig. 8: Prior-based experiments. Comparison of helix and 
+
+sphere trajectories under varying noise levels with G-solver and Hyperion. 0123                         
+
+> Helix ATE [m]  ηig = 1 e−4ηig = 1 e−3ηig = 1 e−2ηig = 1 e−1
+> 10 −410 −310 −210 −110 0
+> σ
+> 0123
+> Sphere ATE [m]
+> 10 −410 −310 −210 −110 0
+> σ
+> 10 −410 −310 −210 −110 0
+> σ
+> 10 −410 −310 −210 −110 0
+> σ
+> Ours B-Spline Z-Spline
+
+Fig. 9: PGO experiments. Comparison of helix and sphere 
+
+trajectories under varying noise levels with G-solver and Hyperion. dent estimates. At realistic noise ( σ ≥ 10 −2), the mean NEES stays close to ideal and slightly pessimistic, a desirable trait for robust estimation, with only the sphere at σ = 1 marginally exceeding it. As noise vanishes ( σ = 10 −4), the estimation error nearly disappears while the GP prior retains a baseline uncertainty, exhibiting a low NEES and indicating an overly conservative estimate.                
+
+> Trajectory σ
+> 1e-04 1e-03 1e-02 1e-01 1e-00 Helix 0.030 1.533 3.925 4.510 4.694 Sphere 0.030 1.542 4.187 4.589 6.515
+
+TABLE I: NEES evaluation. Mean NEES for the Helix and Sphere trajectories across increasing noise levels σ.
+
+d) Ablation on Hyperparameters: The GP prior models body-centric accelerations as zero-mean white noise with covariance QC , whose diagonal entries represent acceleration variances [15], [29]. A single QC does not generalize across all motion profiles (e.g., wheeled versus legged locomotion), but tends to transfer effectively among platforms with similar dynamics. To assess sensitivity, we compute optimal hyperpa-rameters Q∗ 
+
+> C
+
+for a torus trajectory and scale them by a factor 
+
+s, i.e., QC = sQ∗ 
+
+> C
+
+. Fig. 10 shows ATE and ARE as scale 10 0 10 1 10 2
+
+hyperparameters scale s
+
+1.00 
+
+1.25 ATE [m]  ATE ARE 0.04 0.05 ARE [rad] 
+
+Fig. 10: Ablation on hyperparameters. ATE and ARE as a function of a scale factor s applied to the learned Q∗ 
+
+> C
+
+.The metrics are minimized between s = 1 and s = 10 , but performance remains stable over a wide range. 0 5 10 15 20 25 
+
+> Iteration
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+> 120
+> 140
+> Mean Reprojection Error [px]  Ours B-Spline Z-Spline
+
+Fig. 11: ChArUco reprojection error. Comparison of G-solver and Hyperion for real-world BA using the mean of the reprojection error. 
+
+s varies over several orders of magnitude. Performance peaks between s = 1 and s = 10 . As expected, the optimal errors do not occur exactly at s = 1 , since the accelerations along the 
+
+torus trajectory are not constant. Nevertheless, performance degrades only moderately when scale s varies by an order of magnitude, demonstrating robustness to hyperparameter perturbations and indicating that an information-conservative approach to manual tuning can still make the method practical. 
+
+B. Real-World Use Cases 
+
+To evaluate the robustness and flexibility of our approach, we consider three real-world use cases: ChArUco BA, rolling shutter BA, and multi-camera BA. The Charuco sequence was captured with a smartphone camera moving in a room contain-ing multiple ChArUco targets, with UcoSLAM [33] providing pose-landmark measurements as the front-end. For the rolling shutter and multi-camera scenarios, we use sequences from the KITTI dataset [34], with ORB-SLAM3 [1] serving as the front-end. These external systems are employed because our contribution focuses on the solver itself rather than a complete SLAM pipeline. In the experiments, B-Spline parametrization introduces instabilities that lead to diverging optimization. Such behavior is consistent with observations in [26], where the destabilizing effect of B-Splines is attributed to the fact that they approximate the control points rather than interpolating them. 7var-to-fac fac-to-var interpolation 12345runtime [ μs] Ours Hyperion 
+
+Fig. 12: Runtimes. Runtime comparison between G-solver and Hyperion for message updates and continuous-time in-terpolation. 
+
+a) ChArUco BA: In this setting, the factor graph includes pose variables as defined in Eq. (3), while scene landmark variables are represented as SE (3) rigid bodies. Pose-landmark measurements from UcoSLAM [33] are used to jointly opti-mize the trajectory and map. The factor graph is initialized by adding Gaussian noise ( σ = 0 .1) to the state estimates from the SLAM pipeline. The same camera calibration employed in UcoSLAM is used to compute the mean reprojection error over iterations, shown in Fig. 11. We find similar results to [26] as splines tend to be unstable in such visual scenarios. In fact, with B-Splines, which show a more volatile behavior, Hyperion diverges, while with Z-Splines, although it converges faster than G-solver, it exhibits oscillations after reaching the minimum reprojection error. G-solver, in contrast, converges smoothly and stabilizes after the 10th iteration. 
+
+b) Rolling shutter BA: We evaluate our method on the KITTI benchmark [34], using sequence 06 as the validation sequence. To emulate rolling-shutter effects with controlled readout times, we reproject the ground truth trajectory to warp the stereo measurements produced by ORB-SLAM3 [1]. GP hyperparameters for G-solver are initialized from a reference sequence (KITTI 05 ). Both G-solver and Hyperion [26] optimize a set of per-image pose variables, where each pose corresponds to a block of image rows. All poses asso-ciated with a given image are initialized to the corresponding estimate provided by ORB-SLAM3, meaning that larger sim-ulated readout times result in a noisier and less consistent initialization. As reported in Tab. II, our method consistently achieves lower ATE, ARE, and reprojection error than Hyperion (Z-Splines) [26]. Under ideal conditions without distortion (global shutter), both methods perform comparably. However, when introducing a realistic rolling shutter readout of 1 ms, Hyperion frequently diverges for many pose blocks due to insufficient constraints and reduced scene overlap. The mean reprojection error can appear deceptively low in these cases, since repro-jected scene landmarks falling outside the image plane are not counted by the metric. In contrast, the GP motion prior regularizes the solution even under extreme distortions, ensuring a well-conditioned optimization problem. G-solver produces smooth, temporally consistent trajectories and keeps the mean reprojection er-ror below two pixels even at a readout time of 0.1 s. A 
+
+Fig. 13: Rolling shutter reprojection. Reprojection of opti-mized 3D scene landmarks on KITTI 06 [34] under a 1 ms simulated readout time. Hyperion [26] results are shown in green and G-solver in blue. Nominal global shutter projections are shown in red. Our continuous-time GP model explicitly accounts for row-wise exposure, producing sharper and more temporally consistent reprojections than the spline-based Hy-perion approach. qualitative comparison is shown in Fig. 13, where the row-wise continuous-time modeling enables noticeably sharper and more accurate reprojections.                                    
+
+> KITTI Readout time [s] 0e+00 1e-04 1e-03 1e-02 1e-01 Ours ATE [m] 0.671 0.676 0.676 0.684 0.726
+> ARE [rad] 0.007 0.007 0.008 0.007 0.008
+> Mean Repr. Err. [pixel] 1.704 1.708 1.709 1.715 1.844
+> Z-Spline ATE [m] 0.692 94.510 1963.040 200.168 733.028 ARE [rad] 0.007 0.194 0.508 0.350 1.577 Mean Repr. Err. [pixel] 1.717 2.099 1.884 2.301 8.142
+
+TABLE II: Rolling shutter readout performance. Each row reports ATE, ARE, and mean reprojection error for a given method, and each column corresponds to a different simulated readout time. ATE and ARE are computed by matching each ground truth pose with the method’s continuous-time pose interpolated at the same timestamp. Mean reprojection error is evaluated only for scene landmarks whose projections fall within the image plane. 
+
+c) Multi-Camera BA: For the multi-camera experiment, ORB-SLAM3 [1] is used as the front-end to extract stereo measurements. The KITTI 06 [34] sequence is partitioned into multiple temporal segments, each treated as an independent camera stream with its own local factor graph. To enable joint optimization across cameras, we introduce equality fac-tors that link corresponding scene landmarks observed from different viewpoints. These constraints are established during a lightweight handshake before optimization, enabling fully distributed inference. Consistent with the previous experiment, GP hyperparameters are initialized from KITTI 05 . As shown in Fig. 14, distributing the optimization significantly reduces average runtime and memory per camera. Importantly, the final reconstructed trajectories in both distributed and centralized configurations exhibit similar ATE and ARE, indicating that parallelism can be leveraged without compromising accuracy. V. C ONCLUSION 
+
+We presented G-solver, a fully Gaussian and distributed framework for continuous-time SLAM that combines Gaussian Process motion priors with Gaussian Belief Propagation. Our 81 2 4 8   
+
+> #cameras
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+> avg time [s]
+> avg time [s] avg mem [MB]
+> 1248
+> #cameras
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> ATE [m]
+> ATE [m] ARE [rad]
+> 0200 400 600 800 1000
+> avg mem [MB]
+> 0.000 0.002 0.004 0.006 0.008 0.010
+> ARE [rad]
+
+Fig. 14: Multi-camera optimization scalability. (Left) The average computation time and memory per camera graph decrease as the number of camera segments increases, as the optimization load is distributed across multiple independent subgraphs. (Right) Estimation accuracy remains stable (ATE and ARE stay nearly constant), showing that distributing the optimization lowers computational cost without degrading accuracy. formulation enables uncertainty-aware trajectory estimation, scalable message-passing inference, and consistent handling of asynchronous measurements within a unified continuous-time model. Through extensive experiments, including rolling shutter and multi-camera distributed optimization, we showed that G-solver consistently improves accuracy and robustness while matching the cost of state-of-the-art spline-based and centralized methods, without engineering overhead. Looking forward, we plan to develop more compact message-passing schedules to reduce communication and runtime, and to in-corporate richer GP priors, such as constant-acceleration or jerk-driven models, for higher-fidelity motion representation in challenging dynamic scenarios. REFERENCES [1] C. Campos, R. Elvira, J. J. G. Rodr´ ıguez, J. M. Montiel, and J. D. Tard´ os, “Orb-slam3: An accurate open-source library for visual, visual– inertial, and multimap slam,” IEEE Trans. on Robotics , vol. 37, no. 6, pp. 1874–1890, 2021. [2] R. Murai, E. Dexheimer, and A. J. Davison, “Mast3r-slam: Real-time dense slam with 3d reconstruction priors,” in CVPR , pp. 16695–16705, 2025. [3] L. Lipson, Z. Teed, and J. Deng, “Deep patch visual slam,” in ECCV ,pp. 424–440, Springer, 2024. [4] T. D. Barfoot, C. H. Tong, and S. S¨ arkk¨ a, “Batch continuous-time trajectory estimation as exactly sparse gaussian process regression,” in 
+
+Proc. of Robotics: Science and Systems (RSS) , 2014. [5] W. Talbot, J. Nubert, T. Tuna, C. Cadena, F. D¨ umbgen, J. Tordesillas, T. D. Barfoot, and M. Hutter, “Continuous-time state estimation methods in robotics: A survey,” IEEE Trans. on Robotics , 2025. [6] J. Ortiz, Gaussian Belief Propagation for Real-time Decentralised In-ference . Imperial College London, 2023. [7] E. Brachmann, F. Michel, A. Krull, M. Y. Yang, S. Gumhold, and C. Rother, “Uncertainty-driven 6d pose estimation of objects and scenes from a single rgb image,” in CVPR , pp. 3364–3372, 06 2016. [8] B. Triggs, P. F. McLauchlan, R. I. Hartley, and A. W. Fitzgibbon, “Bundle adjustment - a modern synthesis,” in ICCV , ICCV ’99, pp. 298– 372, Springer-Verlag, 2000. [9] J. Engel, T. Sch¨ ops, and D. Cremers, “Lsd-slam: Large-scale direct monocular slam,” in ECCV , pp. 834–849, 2014. [10] H. J. S. Feder, J. J. Leonard, and C. M. Smith, “Adaptive mobile robot navigation and mapping,” Int. J. Robotic Res. , vol. 18, no. 7, pp. 650– 668, 1999. [11] S. Agarwal, K. Mierle, and T. C. S. Team, “Ceres Solver,” 10 2023. [12] R. K¨ ummerle, G. Grisetti, H. Strasdat, K. Konolige, and W. Burgard, “G2o: A general framework for graph optimization.,” in Proc. of the IEEE Intl. Conf. on Robotics Automation (ICRA) , pp. 3607–3613, IEEE, 2011. [13] C. Sommer, V. Usenko, D. Schubert, N. Demmel, and D. Cremers, “Efficient derivative computation for cumulative b-splines on lie groups,” in CVPR , pp. 11145–11153, 06 2020. [14] J. B. Sagredo and J. Tercero, “Z-splines: moment conserving cardinal spline interpolation of compact support for arbitrarily spaced data,” 
+
+Seminar for Applied Mathematics (ETH Zurich) (SAM) , 2003. [15] S. Anderson and T. D. Barfoot, “Full steam ahead: Exactly sparse gaus-sian process regression for batch continuous-time trajectory estimation on se(3),” in Proc. of the IEEE/RSJ Intl. Conf. on Intelligent Robots and Systems (IROS) , p. 157–164, IEEE Press, 2015. [16] J. N. Wong, D. J. Yoon, A. P. Schoellig, and T. D. Barfoot, “A data-driven motion prior for continuous-time trajectory estimation on se (3),” 
+
+IEEE Robotics and Automation Letters (RA-L) , vol. 5, no. 2, pp. 1429– 1436, 2020. [17] J. N. Wong, D. J. Yoon, A. P. Schoellig, and T. D. Barfoot, “Vari-ational inference with parameter learning applied to vehicle trajectory estimation,” IEEE Robotics and Automation Letters (RA-L) , vol. 5, no. 4, pp. 5291–5298, 2020. [18] J. Johnson, J. Mangelson, T. Barfoot, and R. Beard, “Continuous-time trajectory estimation: A comparative study between gaussian process and spline-based approaches,” 2024. [19] B. P. Duisterhof, L. Zust, P. Weinzaepfel, V. Leroy, Y. Cabon, and J. Revaud, “Mast3r-sfm: a fully-integrated solution for unconstrained structure-from-motion,” in Proc. of the International Conference on 3D Vision (3DV) , pp. 1–10, IEEE, 2025. [20] V. Polizzi, R. Hewitt, J. Hidalgo-Carri´ o, J. Delaune, and D. Scaramuzza, “Data-efficient collaborative decentralized thermal-inertial odometry,” 
+
+IEEE Robotics and Automation Letters (RA-L) , vol. 7, no. 4, pp. 10681– 10688, 2022. [21] C. M. Bishop, Pattern Recognition and Machine Learning (Information Science and Statistics) . Berlin, Heidelberg: Springer-Verlag, 2006. [22] D. Bickson, “Gaussian belief propagation: Theory and aplication,” 
+
+CoRR , vol. abs/0811.2518, 2008. [23] J. Du, S. Ma, Y.-C. Wu, S. Kar, and J. M. F. Moura, “Convergence analysis of distributed inference with vector-valued gaussian belief propagation,” Journal of Machine Learning Research , vol. 18, no. 172, pp. 1–38, 2018. [24] A. Davison, “Futuremapping: The computational structure of spatial ai systems,” CoRR , 03 2018. [25] A. Davison and J. Ortiz, “Futuremapping 2: Gaussian belief propagation for spatial ai,” 10 2019. [26] D. Hug, I. Alzugaray, and M. Chli, “Hyperion – a fast, versatile symbolic gaussian belief propagation framework for continuous-time slam,” in 
+
+ECCV , (Berlin, Heidelberg), p. 215–231, Springer-Verlag, 2024. [27] C. Hertzberg, R. Wagner, U. Frese, and L. Schr¨ oder, “Integrating generic sensor fusion algorithms with sound state representations through encap-sulation of manifolds,” Information Fusion , vol. 14, no. 1, pp. 57–77, 2013. [28] J. Dong, M. Mukadam, B. Boots, and F. Dellaert, “Sparse gaussian processes on matrix lie groups: A unified framework for optimizing continuous-time trajectories,” in Proc. of the IEEE Intl. Conf. on Robotics Automation (ICRA) , pp. 6497–6504, 2018. [29] S. Anderson, T. D. Barfoot, C. H. Tong, and S. S¨ arkk¨ a, “Batch nonlinear continuous-time trajectory estimation as exactly sparse gaussian process regression,” Autonomous Robots , vol. 39, pp. 221–238, 2015. [30] J. Jiang, P. Rai, and H. Daume, “Message-passing for approximate map inference with latent variables,” in NeurIPS (J. Shawe-Taylor, R. Zemel, P. Bartlett, F. Pereira, and K. Weinberger, eds.), vol. 24, Curran Associates, Inc., 2011. [31] T. D. Barfoot, State estimation for robotics . Cambridge University Press, 2024. [32] J. Sola, J. Deray, and D. Atchuthan, “A micro lie theory for state estimation in robotics,” arXiv preprint arXiv:1812.01537 , 2018. [33] R. Munoz-Salinas and R. Medina-Carnicer, “Ucoslam: Simultaneous localization and mapping by fusion of keypoints and squared planar markers,” PR , vol. 101, p. 107193, 2020. [34] A. Geiger, P. Lenz, C. Stiller, and R. Urtasun, “Vision meets robotics: The kitti dataset,” Int. J. Robotic Res. , vol. 32, no. 11, pp. 1231–1237, 2013. 9
+
+VI. S UPPLEMENTARY MATERIAL 
+
+This section provides additional details to complement the main paper. We include a complete description of the inference components used in our framework, extended qualitative re-sults, and additional visualizations such as continuous-time tra-jectory plots and rolling-shutter reprojection examples. These materials are intended to make the work fully reproducible and to offer further insight beyond the quantitative results presented in the main text. 
+
+A. Gaussian Belief Propagation on Manifold 
+
+GBP is an iterative optimization algorithm that operates in a fully distributed manner via message passing. It is a special case of Belief Propagation (BP) in which the variables are normally distributed. The notation from [21], [25] is followed throughout. In the remainder of this section, the inference problem is assumed to be expressed as a factor graph. Each node in a factor graph can either be a variable xi:
+
+xi ∼ N (μxi , Σxi ) = N −1(ηxi , Λxi ), (19) or a factor fj :
+
+fj ∼ N −1(ηfj , Λfj ), (20) where the precision matrix is the inverse of the covariance matrix ( Λ = Σ−1) and the information vector satisfies the relation η = Λμ. The goal of GBP is to find the configuration of variables that minimizes the residual induced by each factor, as follows: 
+
+argmin  
+
+> k∈n(fj)
+
+∥fj (xk)∥2 
+
+> Λk
+
+. (21) 
+
+xk ⊂ n(fj ) is the subset of variables from which the measurement encoded in fj depends. GBP is a decentralized iterative algorithm consisting of four main steps: variable update, variable-to-factor message generation, factor update, and factor-to-variable message generation. Both factor and variable nodes perform computations locally and communicate with their neighbors through messages that encode Gaussian distributions. Two types of messages are distinguished: the variable-to-factor message, mxi→fj , and the factor-to-variable message, mfj →xi . In the following, the canonical or moment parameterization of a Gaussian is used when convenient, while the footers indicate the direction of the message. To include manifolds each variable or message distribution is parametrized with a mean μ ∈ M on the manifold and a covariance matrix Λ−1 ∈ Rdim(T μM)×dim(T μM) in the tangent space at the mean. Each time a message parametrized in this manner is received, it must be internally remapped to the Euclidean tangent. This step is necessary to perform operations on the underlying Gaussian distribution. Let min ∼ N (μin , Λ−1 
+
+> in
+
+) denote a generic incoming message. The corresponding parameters in the tangent space are given by mτ 
+
+> in
+
+∼ N (τ in , (Λτ
+
+> in
+
+)−1).Using the ⊞ notation, this can be expressed as: 
+
+τ in = μin ⊟ μ0, (22) 
+
+Λτ 
+
+> in
+
+≈ Λin . (23) Here μ0 is the most recent estimate of the mean, at the origin of the tangent space. Similarly, whenever an outward message must be sent, its parameters are remapped from the tangent space back to the manifold, as follows: 
+
+μout = μ0 ⊞ τ out , (24) 
+
+Λout ≈ Λτ
+
+> out
+
+. (25) In the equation, mτ 
+
+> out
+
+∼ N (τ out , (Λτ
+
+> out
+
+)−1) represents the outward message in the tangent space, while mout ∼N (μout , Λ−1
+
+> out
+
+) denotes its manifold counterpart. Eq. (13) and Eq. (25) hold for the small perturbations computed by the iterative GBP scheme. Using these procedures to map estimates forward and backward between the tangent and manifold spaces provides a straightforward extension of GBP to non-Euclidean domains. 
+
+a) Variable Update: The variable update step recomputes the new estimate of a variable given all incoming messages from the connected factors. Each message encodes the prob-ability distribution of the receiving variable as suggested by the sending factor. With all messages expressed in the same tangent space, mτ  
+
+> fk→xi
+
+∼ N (τ fk →xi , (Λτ  
+
+> fk→xi
+
+)−1), the updated distribution can be determined as: 
+
+Λτ 
+
+> new
+
+= X
+
+> k∈n(xi)
+
+Λτ  
+
+> fk→xi
+
+, (26) 
+
+τ new = ( Λτ
+
+> new
+
+)−1 X
+
+> k∈n(xi)
+
+Λτ  
+
+> fk→xi
+
+τ fk →xi , (27) where fk ⊂ n(xi) is the subset of factors in which the variable is involved. Finally, by projecting the new estimate back to the manifold, the updated estimate of the variable is obtained as 
+
+xi ∼ N (μnew , Λ−1
+
+> new
+
+).
+
+b) Variable-to-Factor Message: A variable-to-factor message encodes the distribution of the sending variable that the receiving factor will use to compute the cost function, and thus to perform optimization. The generation of such a message is identical to the variable update, except that all incoming messages are considered except for the one arriving from the recipient factor fr . Defining the incoming messages as mτ  
+
+> fk→xi
+
+∼ N (τ fk →xi , (Λτ  
+
+> fk→xi
+
+)−1), already expressed in the tangent space, the updated distribution can be determined as: 
+
+Λτ 
+
+> new
+
+= X
+
+> k∈n(xi)\fr
+
+Λτ  
+
+> fk→xi
+
+, (28) 
+
+τ new = ( Λτ
+
+> new
+
+)−1 X
+
+> k∈n(xi)\fr
+
+Λτ  
+
+> fk→xi
+
+τ fk →xi . (29) Finally, by projecting the perturbation back to the man-ifold, the outgoing message is obtained as mxi→fr ∼N (μxi→fr , Λ−1 
+
+> xi→fr
+
+).
+
+c) Factor Update: This step is crucial to keep the factor updated with respect to the estimates of the connected vari-ables. As new variable-to-factor messages arrive at the factor 10 
+
+node, the cost function must be recomputed. Given an error function e(xk), a factor function is defined as: 
+
+fj (xk) = Ke −Ej (xk ), (30) 
+
+Ej (xk) = 12 ∥ej (xk)) ∥2 
+
+> Λj
+
+. (31) Here, xk ⊂ n(fj ) is the set of variables that appear in the factor. The factor used in the GBP algorithm must be computed in the Euclidean tangent space and expressed in canonical form. A common choice is to center the tangent space at the most recent mean μ0 of the variables x0. Defining the error Jacobian as J = ∂ej (μk ) 
+
+> ∂μ
+
+|μ=μ0 , the following formulas are obtained: 
+
+ηnew = J⊤Λj (−ej (x0)) , (32) 
+
+Λnew = J⊤Λj J. (33) This provides the updated estimate of the factor, expressed as 
+
+fj ∼ N −1(ηnew , Λnew ).
+
+d) Factor-to-Variable Message: Finally, the factor-to-variable message encodes the distribution of the receiving variable as estimated by the sending factor through the min-imization of the cost function. The computation process is described in detail in the main paper. 
+
+B. Qualitative Results 
+
+Qualitative results are reported for the same synthetic exper-iments presented in the paper. Prior-based localization using only absolute pose measurements is shown in Fig. 15 and Fig. 16, while PGO results are shown in Fig. 17 and Fig. 18. After optimization, all the continuous-time methods evaluate the trajectory at a resolution 100 × finer than the control-point spacing. From visual inspection of the trajectories, for noise levels up to a standard deviation of σ = 10 −2 (both in [m] 
+
+and [rad] ), it is difficult to distinguish differences between the estimated solutions. At σ = 10 −1, G-solver still provides smooth trajectories, whereas noise clearly starts to degrade Hyperion (both B and Z-spline variants). Finally, for σ = 10 −1
+
+and above, G-solver is the only method able to robustly recover the underlying shape despite the strong perturbations. Additional frames from the same rolling shutter experiment presented in the paper are shown in Fig. 19 and Fig. 20. These figures show reprojections of optimized 3D scene landmarks on KITTI 06 [34], with a readout time of 1 ms . The results demonstrate that our continuous-time modeling produces no-ticeably sharper and more accurate reprojections compared to Hyperion [26] with Z-Splines. 11 −10 010 −10 010 0.02.55.07.510 .0
+
+Ours  
+
+> −10 010 −10 010 0.02.55.07.510 .0
+
+B-Spline  
+
+> −10 010 −10 010 0.02.55.07.510 .0
+
+Z-Spline 
+
+(a) ηig = 1 , σ = 10 −4 (both [m] and [rad] ). −10 010 −10 010 0.02.55.07.510 .0
+
+Ours  
+
+> −10 010 −10 010 0.02.55.07.510 .0
+
+B-Spline  
+
+> −10 010 −10 010 0.02.55.07.510 .0
+
+Z-Spline 
+
+(b) ηig = 1 , σ = 10 −3 (both [m] and [rad] ). −10 010 −10 010 0.02.55.07.510 .0
+
+Ours  
+
+> −10 010 −10 010 0.02.55.07.510 .0
+
+B-Spline  
+
+> −10 010 −10 010 0.02.55.07.510 .0
+
+Z-Spline 
+
+(c) ηig = 1 , σ = 10 −2 (both [m] and [rad] ). −10 010 −10 010 0510 
+
+Ours  
+
+> −10 010 −10 010 0510
+
+B-Spline  
+
+> −10 010 −10 010 0510
+
+Z-Spline 
+
+(d) ηig = 1 , σ = 10 −1 (both [m] and [rad] ). −10 010 −10 010 0510 
+
+Ours    
+
+> −10 010 −10 010 0510
+
+B-Spline    
+
+> −10 010 −10 010 0510
+
+Z-Spline 
+
+(e) ηig = 1 , σ = 1 (both [m] and [rad] ). −10 010 −10 010 0510 
+
+Ours    
+
+> −10 010 −10 010 010
+
+B-Spline    
+
+> −10 010 −10 010 0510
+
+Z-Spline 
+
+(f) ηig = 1 , σ = 1 .5 (both [m] and [rad] ). 
+
+Fig. 15: Prior-based experiments. Comparison between G-solver and Hyperion using the helix trajectory under varying measurement Gaussian noise standard deviations σ. The initial guess is perturbed with a standard deviation of ηig = 1
+
+(applied to both positions [m] and orientations [rad] ). All methods query the trajectory at a resolution 100 × finer than the control-point spacing. −10 010 −10 010 
+
+> −505
+
+Ours  
+
+> −10 010 −10 010
+> −505
+
+B-Spline  
+
+> −10 010 −10 010
+> −505
+
+Z-Spline 
+
+(a) ηig = 1 , σ = 10 −4 (both [m] and [rad] ). −10 010 −10 010 
+
+> −505
+
+Ours  
+
+> −10 010 −10 010
+> −505
+
+B-Spline  
+
+> −10 010 −10 010
+> −505
+
+Z-Spline 
+
+(b) ηig = 1 , σ = 10 −3 (both [m] and [rad] ). −10 010 −10 010 
+
+> −505
+
+Ours  
+
+> −10 010 −10 010
+> −505
+
+B-Spline  
+
+> −10 010 −10 010
+> −505
+
+Z-Spline 
+
+(c) ηig = 1 , σ = 10 −2 (both [m] and [rad] ). −10 010 −10 010 
+
+> −505
+
+Ours  
+
+> −10 010 −10 010
+> −505
+
+B-Spline  
+
+> −10 010 −10 010
+> −505
+
+Z-Spline 
+
+(d) ηig = 1 , σ = 10 −1 (both [m] and [rad] ). −10 010 −10 010 
+
+> −10
+> −50510
+
+Ours    
+
+> −10 010 −10 010
+> −10 010
+
+B-Spline    
+
+> −10 010 −10 010
+> −10 010
+
+Z-Spline 
+
+(e) ηig = 1 , σ = 1 (both [m] and [rad] ). −10 010 −10 010 
+
+> −10 010
+
+Ours    
+
+> −10 010 −10 010
+> −10 010
+
+B-Spline    
+
+> −10 010 −10 010
+> −10 010
+
+Z-Spline 
+
+(f) ηig = 1 , σ = 1 .5 (both [m] and [rad] ). 
+
+Fig. 16: Prior-based experiments. Comparison between G-solver and Hyperion using the sphere trajectory under varying measurement Gaussian noise standard deviations σ. The initial guess is perturbed with a standard deviation of ηig = 1
+
+(applied to both positions [m] and orientations [rad] ). All methods query the trajectory at a resolution 100 × finer than the control-point spacing. 12 −10 010 −10 010 0510 
+
+Ours  
+
+> −10 010 −10 010 0510
+
+B-Spline  
+
+> −10 010 −10 010 0510
+
+Z-Spline 
+
+(a) ηig = 1 , σ = 10 −4 (both [m] and [rad] ). −10 010 −10 010 0510 
+
+Ours  
+
+> −10 010 −10 010 0510
+
+B-Spline  
+
+> −10 010 −10 010 0510
+
+Z-Spline 
+
+(b) ηig = 1 , σ = 10 −3 (both [m] and [rad] ). −10 010 −10 010 0510 
+
+Ours  
+
+> −10 010 −10 010 0510
+
+B-Spline  
+
+> −10 010 −10 010 0510
+
+Z-Spline 
+
+(c) ηig = 1 , σ = 10 −2 (both [m] and [rad] ). −10 010 −10 010 0510 
+
+Ours  
+
+> −10 010 −10 010 0510
+
+B-Spline  
+
+> −10 010 −10 010 0510
+
+Z-Spline 
+
+(d) ηig = 1 , σ = 10 −1 (both [m] and [rad] ). −10 010 −10 010 0510 
+
+Ours   
+
+> −10 010 −10 010 0510
+
+B-Spline   
+
+> −10 010 −10 010 0510
+
+Z-Spline 
+
+(e) ηig = 1 , σ = 1 (both [m] and [rad] ). −10 010 −10 010 0510 
+
+Ours   
+
+> −10 010 −10 010 0510
+
+B-Spline   
+
+> −10 010 −10 010 0510
+
+Z-Spline 
+
+(f) ηig = 1 , σ = 1 .5 (both [m] and [rad] ). 
+
+Fig. 17: PGO experiments. Comparison between G-solver and Hyperion using the helix trajectory under varying mea-surement Gaussian noise standard deviations σ. The initial guess is perturbed with a standard deviation of ηig = 1
+
+(applied to both positions [m] and orientations [rad] ). All methods query the trajectory at a resolution 100 × finer than the control-point spacing. −10 010 −10 010 
+
+> −10 010
+
+Ours  
+
+> −10 010 −10 010
+> −10 010
+
+B-Spline  
+
+> −10 010 −10 010
+> −10 010
+
+Z-Spline 
+
+(a) ηig = 1 , σ = 10 −4 (both [m] and [rad] ). −10 010 −10 010 
+
+> −10 010
+
+Ours  
+
+> −10 010 −10 010
+> −10 010
+
+B-Spline  
+
+> −10 010 −10 010
+> −10 010
+
+Z-Spline 
+
+(b) ηig = 1 , σ = 10 −3 (both [m] and [rad] ). −10 010 −10 010 
+
+> −10 010
+
+Ours  
+
+> −10 010 −10 010
+> −10 010
+
+B-Spline  
+
+> −10 010 −10 010
+> −10 010
+
+Z-Spline 
+
+(c) ηig = 1 , σ = 10 −2 (both [m] and [rad] ). −10 010 −10 010 
+
+> −10 010
+
+Ours  
+
+> −10 010 −10 010
+> −10 010
+
+B-Spline  
+
+> −10 010 −10 010
+> −10 010
+
+Z-Spline 
+
+(d) ηig = 1 , σ = 10 −1 (both [m] and [rad] ). −10 010 −10 010 
+
+> −10 010
+
+Ours  
+
+> −10 010 −10 010
+> −10 010
+
+B-Spline  
+
+> −10 010 −10 010
+> −10 010
+
+Z-Spline 
+
+(e) ηig = 1 , σ = 1 (both [m] and [rad] ). −10 010 −10 010 
+
+> −10 010
+
+Ours  
+
+> −10 010 −10 010
+> −10 010
+
+B-Spline  
+
+> −10 010 −10 010
+> −10 010
+
+Z-Spline 
+
+(f) ηig = 1 , σ = 1 .5 (both [m] and [rad] ). 
+
+Fig. 18: PGO experiments. Comparison between G-solver and Hyperion using the sphere trajectory under varying mea-surement Gaussian noise standard deviations σ. The initial guess is perturbed with a standard deviation of ηig = 1
+
+(applied to both positions [m] and orientations [rad] ). All methods query the trajectory at a resolution 100 × finer than the control-point spacing. 13 
+
+> (a) Frame 79.
+> (b) Frame 320.
+> (c) Frame 354.
+> (d) Frame 429.
+> (e) Frame 433.
+
+Fig. 19: Rolling shutter reprojection. Reprojection of optimized 3D scene landmarks on KITTI 06 [34] under a 1 ms simulated readout time. Hyperion [26] results are shown in green and G-solver in blue. Nominal global shutter projections are shown in red. 14 
+
+> (a) Frame 668.
+> (b) Frame 670.
+> (c) Frame 674.
+> (d) Frame 715.
+> (e) Frame 719.
+
+Fig. 20: Rolling shutter reprojection. Reprojection of optimized 3D scene landmarks on KITTI 06 [34] under a 1 ms simulated readout time. Hyperion [26] results are shown in green and G-solver in blue. Nominal global shutter projections are shown in red.
