@@ -1,0 +1,39 @@
+{
+  "label": "2026-06-06",
+  "date": "2026-06-06",
+  "generated_at": "2026-06-06T20:24:28",
+  "count": 2,
+  "papers": [
+    {
+      "paper_id": "202606/06/2606.01573v2-textvg2gt-voxel-gaussian-splatting-visual-geometry-grounded-transformer",
+      "section": "deep",
+      "title_en": "$\\text{VG}^2$GT: Voxel-Gaussian Splatting Visual Geometry Grounded Transformer",
+      "authors": "Yibin Zhao, Yihan Pan, Jun Nan, Wenli Yang, Liwei Chen, Jianjun Yi",
+      "date": "2026-06-01",
+      "pdf": "https://arxiv.org/pdf/2606.01573v2",
+      "score": "9.0",
+      "evidence": "使用高斯泼溅进行体积场景表示和实时新视角合成",
+      "tldr": "针对前馈高斯泼溅方法依赖精确相机参数且易产生伪影的问题，VG²GT提出利用冻结视觉基础模型与多尺度可微体素模块，从体素特征直接回归高斯原语参数，并通过随机实体体积渲染监督深度图，实现几何精确的场景重建。该方法在DTU等数据集上取得SOTA性能，并大幅降低训练成本，为即插即用式3D重建提供高效新方案。",
+      "tags": "query:gs-slam",
+      "abstract_en": "Gaussian splatting has shown strong potential for 3D reconstruction and novel view synthesis. However, most existing methods require accurate camera parameters and per-scene optimization, while feed-forward methods with pixel-aligned Gaussian primitives often suffer from artifacts and non-uniform primitives. In this paper, we propose $\\text{VG}^2$GT, a Voxel-Gaussian Splatting Visual Geometry-Grounded Transformer. $\\text{VG}^2$GT leverages a frozen pretrained visual foundation model (VFM), incorporates a multi-scale differentiable voxel module to enhance geometric understanding, and directly splits and regresses Gaussian primitive parameters from voxel features. During training, depth maps are supervised through stochastic solid volume rendering, enabling geometrically accurate Gaussian scene reconstruction while keeping the visual foundation model fully frozen. This design enables $\\text{VG}^2$GT to be seamlessly plugged into any patch-feature-based VFM, while substantially reducing the required training cost. $\\text{VG}^2$GT outperforms current state-of-the-art methods on widely used DTU, Replica, TAT, and ScanNet datasets.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202606/06/2606.03479v1-persistgs-differentiable-physics-for-object-permanence-in-4d-gaussian-splatting",
+      "section": "quick",
+      "title_en": "PersistGS: Differentiable Physics for Object Permanence in 4D Gaussian Splatting",
+      "authors": "Adrian Ramlal, John S. Zelek",
+      "date": "2026-06-02",
+      "pdf": "https://arxiv.org/pdf/2606.03479v1",
+      "score": "6.0",
+      "evidence": "使用3D高斯泼溅并添加可微刚体模拟用于动态场景重建",
+      "tldr": "动态3D高斯泼溅（3DGS）重建时变场景时，移动物体一旦被所有训练相机完全遮挡，代表该物体的高斯因缺少光度监督而退化，现有方法依赖生成先验，侧重视觉逼真而非物理正确。PersistGS通过引入可微刚体仿真恢复物体永久性，将场景分解为每个物体的高斯和碰撞网格，从遮挡前轨迹估计摩擦与速度，仿真得到符合刚体动力学的SE(3)轨迹，并在整个遮挡期间用其放置物体高斯。此外，提出质心轮廓损失以隔离梯度，将轨迹误差降低40%。合成场景实验中，PersistGS比匀速外推基线PSNR高2.46dB，仅差真值轨迹0.19dB，显著提升了动态重建的物理合理性。",
+      "tags": "query:gs-slam",
+      "abstract_en": "Dynamic 3D Gaussian Splatting (3DGS) methods reconstruct time-varying scenes from synchronized multi-camera video using photometric supervision. When a moving object becomes fully occluded from all training cameras, this supervision vanishes: the Gaussians representing it receive no gradient signal and degrade. Existing approaches to incomplete observations in neural reconstruction rely on learned generative priors that prioritize visual plausibility over physical correctness.   We propose $\\textbf{PersistGS}$, a method that restores object permanence during occlusion by coupling differentiable rigid body simulation with 3D Gaussian Splatting. Our approach decomposes the scene into per-object Gaussians and collision meshes, estimates friction and velocity from the observed pre-occlusion trajectory via differentiable simulation, and uses the resulting SE(3) trajectory to position object Gaussians throughout the occlusion period. Because the predicted trajectory satisfies the governing equations of rigid body dynamics, it faithfully captures contact events (bounces, friction-based deceleration, direction changes) that kinematic extrapolation cannot model. We introduce a centroid silhouette loss that isolates positional gradients from appearance noise, yielding 40% lower trajectory error than photometric supervision. We evaluate using cameras withheld from training that observe the object during its occlusion. Experiments on synthetic scenes show that PersistGS outperforms constant velocity extrapolation by +2.46dB PSNR and comes within 0.19dB of a ground-truth trajectory upper bound.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

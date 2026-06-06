@@ -1,0 +1,98 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-06T20:20:39.733676+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 1,
+    "deep_cap": 7,
+    "deep_selected": 1,
+    "quick_candidates": 1,
+    "quick_skim_target": 12,
+    "quick_selected": 1
+  },
+  "deep_dive": [
+    {
+      "id": "2606.01573v2",
+      "source": "arxiv",
+      "title": "$\\text{VG}^2$GT: Voxel-Gaussian Splatting Visual Geometry Grounded Transformer",
+      "abstract": "Gaussian splatting has shown strong potential for 3D reconstruction and novel view synthesis. However, most existing methods require accurate camera parameters and per-scene optimization, while feed-forward methods with pixel-aligned Gaussian primitives often suffer from artifacts and non-uniform primitives. In this paper, we propose $\\text{VG}^2$GT, a Voxel-Gaussian Splatting Visual Geometry-Grounded Transformer. $\\text{VG}^2$GT leverages a frozen pretrained visual foundation model (VFM), incorporates a multi-scale differentiable voxel module to enhance geometric understanding, and directly splits and regresses Gaussian primitive parameters from voxel features. During training, depth maps are supervised through stochastic solid volume rendering, enabling geometrically accurate Gaussian scene reconstruction while keeping the visual foundation model fully frozen. This design enables $\\text{VG}^2$GT to be seamlessly plugged into any patch-feature-based VFM, while substantially reducing the required training cost. $\\text{VG}^2$GT outperforms current state-of-the-art methods on widely used DTU, Replica, TAT, and ScanNet datasets.",
+      "authors": [
+        "Yibin Zhao",
+        "Yihan Pan",
+        "Jun Nan",
+        "Wenli Yang",
+        "Liwei Chen",
+        "Jianjun Yi"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-01T02:21:28+00:00",
+      "link": "https://arxiv.org/pdf/2606.01573v2",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Uses Gaussian splatting for volumetric scene representation and real-time novel view synthesis",
+      "llm_evidence_cn": "使用高斯泼溅进行体积场景表示和实时新视角合成",
+      "llm_evidence": "使用高斯泼溅进行体积场景表示和实时新视角合成",
+      "canonical_evidence": "使用高斯泼溅进行体积场景表示和实时新视角合成",
+      "llm_tldr_en": "Proposes VG^2GT, a feed-forward method leveraging a frozen visual foundation model and multi-scale voxel module to regress Gaussian primitive parameters directly, avoiding per-scene optimization and achieving real-time rendering.",
+      "llm_tldr_cn": "现有高斯泼溅方法需精确相机参数和逐场景优化，前馈式方法则存在伪影。本文提出VG^2GT，利用冻结的预训练视觉基础模型和多尺度可微体素模块增强几何理解，直接从体素特征分裂并回归高斯原语参数，实现快速重建和渲染。在多个数据集上验证了重建质量提升，为实时体积场景表示提供了高效方案。",
+      "llm_tldr": "现有高斯泼溅方法需精确相机参数和逐场景优化，前馈式方法则存在伪影。本文提出VG^2GT，利用冻结的预训练视觉基础模型和多尺度可微体素模块增强几何理解，直接从体素特征分裂并回归高斯原语参数，实现快速重建和渲染。在多个数据集上验证了重建质量提升，为实时体积场景表示提供了高效方案。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2606.03479v1",
+      "source": "arxiv",
+      "title": "PersistGS: Differentiable Physics for Object Permanence in 4D Gaussian Splatting",
+      "abstract": "Dynamic 3D Gaussian Splatting (3DGS) methods reconstruct time-varying scenes from synchronized multi-camera video using photometric supervision. When a moving object becomes fully occluded from all training cameras, this supervision vanishes: the Gaussians representing it receive no gradient signal and degrade. Existing approaches to incomplete observations in neural reconstruction rely on learned generative priors that prioritize visual plausibility over physical correctness.   We propose $\\textbf{PersistGS}$, a method that restores object permanence during occlusion by coupling differentiable rigid body simulation with 3D Gaussian Splatting. Our approach decomposes the scene into per-object Gaussians and collision meshes, estimates friction and velocity from the observed pre-occlusion trajectory via differentiable simulation, and uses the resulting SE(3) trajectory to position object Gaussians throughout the occlusion period. Because the predicted trajectory satisfies the governing equations of rigid body dynamics, it faithfully captures contact events (bounces, friction-based deceleration, direction changes) that kinematic extrapolation cannot model. We introduce a centroid silhouette loss that isolates positional gradients from appearance noise, yielding 40% lower trajectory error than photometric supervision. We evaluate using cameras withheld from training that observe the object during its occlusion. Experiments on synthetic scenes show that PersistGS outperforms constant velocity extrapolation by +2.46dB PSNR and comes within 0.19dB of a ground-truth trajectory upper bound.",
+      "authors": [
+        "Adrian Ramlal",
+        "John S. Zelek"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.GR"
+      ],
+      "published": "2026-06-02T10:57:15+00:00",
+      "link": "https://arxiv.org/pdf/2606.03479v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Uses 3D Gaussian Splatting and adds differentiable rigid body simulation for dynamic scene reconstruction",
+      "llm_evidence_cn": "使用3D高斯泼溅并添加可微刚体模拟用于动态场景重建",
+      "llm_evidence": "使用3D高斯泼溅并添加可微刚体模拟用于动态场景重建",
+      "canonical_evidence": "使用3D高斯泼溅并添加可微刚体模拟用于动态场景重建",
+      "llm_tldr_en": "PersistGS restores object permanence during occlusions in dynamic 3D Gaussian Splatting by coupling differentiable rigid body simulation, decomposing scene into per-object Gaussians and collision meshes, and estimating friction to recover plausible motion for occluded objects.",
+      "llm_tldr_cn": "动态3D高斯泼溅方法在物体被完全遮挡时因缺少梯度信号而退化，该问题限制了其物理正确性。PersistGS提出通过耦合可微分刚体模拟与3D高斯泼溅来恢复遮挡期间的物体持久性，将场景分解为对象级高斯与碰撞网格，并估计摩擦系数以推理被遮挡物体的运动。实验表明该方法能生成物理合理的动态重建，提升了动态场景表示的鲁棒性，为需要物理交互的虚拟现实和仿真应用提供支撑。",
+      "llm_tldr": "动态3D高斯泼溅方法在物体被完全遮挡时因缺少梯度信号而退化，该问题限制了其物理正确性。PersistGS提出通过耦合可微分刚体模拟与3D高斯泼溅来恢复遮挡期间的物体持久性，将场景分解为对象级高斯与碰撞网格，并估计摩擦系数以推理被遮挡物体的运动。实验表明该方法能生成物理合理的动态重建，提升了动态场景表示的鲁棒性，为需要物理交互的虚拟现实和仿真应用提供支撑。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
