@@ -1,0 +1,99 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-08T21:56:34.200132+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 2,
+    "deep_cap": 7,
+    "deep_selected": 2,
+    "quick_candidates": 0,
+    "quick_skim_target": 12,
+    "quick_selected": 0
+  },
+  "deep_dive": [
+    {
+      "id": "2606.01573v1",
+      "source": "arxiv",
+      "title": "$\\text{VG}^2$GT: Voxel-Gaussian Splatting Visual Geometry Grounded Transformer",
+      "abstract": "Gaussian splatting has shown strong potential for 3D reconstruction and novel view synthesis. However, most existing methods require accurate camera parameters and per-scene optimization, while feed-forward methods with pixel-aligned Gaussian primitives often suffer from artifacts and non-uniform primitives. In this paper, we propose $\\text{VG}^2$GT, a Voxel-Gaussian Splatting Visual Geometry-Grounded Transformer. $\\text{VG}^2$GT leverages a frozen pretrained visual foundation model (VFM), incorporates a multi-scale differentiable voxel module to enhance geometric understanding, and directly splits and regresses Gaussian primitive parameters from voxel features. During training, depth maps are supervised through stochastic solid volume rendering, enabling geometrically accurate Gaussian scene reconstruction while keeping the visual foundation model fully frozen. This design enables $\\text{VG}^2$GT to be seamlessly plugged into any patch-feature-based VFM, while substantially reducing the required training cost. $\\text{VG}^2$GT outperforms current state-of-the-art methods on widely used DTU, Replica, TAT, and ScanNet datasets.",
+      "authors": [
+        "Yibin Zhao",
+        "Yihan Pan",
+        "Jun Nan",
+        "Wenli Yang",
+        "Liwei Chen",
+        "Jianjun Yi"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-01T02:21:28+00:00",
+      "link": "https://arxiv.org/pdf/2606.01573v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Uses voxel-gaussian splatting for volumetric scene representation and novel view synthesis",
+      "llm_evidence_cn": "采用体素-高斯溅射进行体积场景表示和新视角合成",
+      "llm_evidence": "采用体素-高斯溅射进行体积场景表示和新视角合成",
+      "canonical_evidence": "采用体素-高斯溅射进行体积场景表示和新视角合成",
+      "llm_tldr_en": "Introduces VG^2GT, a feed-forward method that leverages frozen visual foundation model and differentiable voxel module to regress Gaussian primitive parameters for 3D reconstruction, achieving state-of-the-art novel view synthesis without requiring accurate camera parameters or per-scene optimization.",
+      "llm_tldr_cn": "针对现有高斯溅射方法需精确相机参数和逐场景优化的局限，VG^2GT提出一种前馈式体素-高斯溅射Transformer，利用冻结视觉基础模型和多尺度可微体素模块，从体素特征直接分裂回归高斯基元参数，通过随机实体体渲染监督深度图。在多个数据集上实现了无需精确相机参数的高质量新视角合成，几何准确性和渲染质量显著提升，为实时三维重建和下游视觉任务提供了高效鲁棒的前馈场景表示方案。",
+      "llm_tldr": "针对现有高斯溅射方法需精确相机参数和逐场景优化的局限，VG^2GT提出一种前馈式体素-高斯溅射Transformer，利用冻结视觉基础模型和多尺度可微体素模块，从体素特征直接分裂回归高斯基元参数，通过随机实体体渲染监督深度图。在多个数据集上实现了无需精确相机参数的高质量新视角合成，几何准确性和渲染质量显著提升，为实时三维重建和下游视觉任务提供了高效鲁棒的前馈场景表示方案。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.07179v1",
+      "source": "arxiv",
+      "title": "EvoGS: Constructing Continuous-Layered Gaussian Splatting with Evolution Tree for Scalable 3D Streaming",
+      "abstract": "Streaming 3D Gaussian Splatting requires highly scalable, progressive representations. Existing progressive methods rely on \\textit{discrete layering}, accumulating separate splat sets for each level of detail. This structural independence between layers inherently leads to error accumulation, severe splat redundancy, and uncontrolled quality transitions. We propose EvoGS, the first \\textit{continuous-layering} representation. Organized as an Evolution Tree, EvoGS generates finer details via an explicit, wavelet-inspired parent-child refinement. This empowers child nodes to structurally correct ancestral errors, yield inherently sparse and highly compressible inter-layer signals. Extensive experiments show EvoGS eliminates splat redundancy from over 65\\% to under 25\\%. Compared to state-of-the-art baselines, it reduces transmission payload and GPU VRAM footprint by up to 2.4$\\times$ and 5.5$\\times$, respectively, and achieves smooth quality transitions optimal for real-time adaptive streaming. Project page: https://yuang-ian.github.io/evogs/",
+      "authors": [
+        "Yuang Shi",
+        "Simone Gasparini",
+        "Géraldine Morin",
+        "Wei Tsang Ooi"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.MM",
+        "eess.IV"
+      ],
+      "published": "2026-06-05T11:44:15+00:00",
+      "link": "https://arxiv.org/pdf/2606.07179v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Continuous-layered Gaussian splatting for scalable 3D streaming; directly improves volumetric scene representation for real-time rendering",
+      "llm_evidence_cn": "连续分层高斯泼溅用于可扩展3D流式传输；直接改进了面向实时渲染的体积场景表示",
+      "llm_evidence": "连续分层高斯泼溅用于可扩展3D流式传输；直接改进了面向实时渲染的体积场景表示",
+      "canonical_evidence": "连续分层高斯泼溅用于可扩展3D流式传输；直接改进了面向实时渲染的体积场景表示",
+      "llm_tldr_en": "Proposes EvoGS, a continuous-layering Gaussian splatting representation using an evolution tree for scalable 3D streaming, reducing error accumulation and redundancy.",
+      "llm_tldr_cn": "针对现有渐进式高斯泼溅方法因离散分层导致误差累积和冗余的问题，提出连续分层表示EvoGS，通过进化树和小波启发的父子细化生成细节，实验表明其消除冗余、压缩率更高且过渡自然。",
+      "llm_tldr": "针对现有渐进式高斯泼溅方法因离散分层导致误差累积和冗余的问题，提出连续分层表示EvoGS，通过进化树和小波启发的父子细化生成细节，实验表明其消除冗余、压缩率更高且过渡自然。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": []
+}

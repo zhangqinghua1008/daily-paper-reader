@@ -1,0 +1,39 @@
+{
+  "label": "2026-06-08",
+  "date": "2026-06-08",
+  "generated_at": "2026-06-08T21:59:12",
+  "count": 2,
+  "papers": [
+    {
+      "paper_id": "202606/08/2606.01573v1-textvg2gt-voxel-gaussian-splatting-visual-geometry-grounded-transformer",
+      "section": "deep",
+      "title_en": "$\\text{VG}^2$GT: Voxel-Gaussian Splatting Visual Geometry Grounded Transformer",
+      "authors": "Yibin Zhao, Yihan Pan, Jun Nan, Wenli Yang, Liwei Chen, Jianjun Yi",
+      "date": "2026-06-01",
+      "pdf": "https://arxiv.org/pdf/2606.01573v1",
+      "score": "9.0",
+      "evidence": "采用体素-高斯溅射进行体积场景表示和新视角合成",
+      "tldr": "现有高斯泼溅方法依赖精确相机参数与逐场景优化，前馈方法则存在伪影和非均匀原语问题。VG^2GT 提出结合冻结视觉基础模型与多尺度可微体素模块，从体素特征直接回归高斯原语参数，并通过随机立体体积渲染监督深度，实现几何精确的场景重建。在 DTU、Replica、TAT、ScanNet 数据集上超越当前最优方法，且训练成本大幅降低。该框架可无缝插入任意基于 patch 特征的视觉基础模型。",
+      "tags": "query:gs-slam",
+      "abstract_en": "Gaussian splatting has shown strong potential for 3D reconstruction and novel view synthesis. However, most existing methods require accurate camera parameters and per-scene optimization, while feed-forward methods with pixel-aligned Gaussian primitives often suffer from artifacts and non-uniform primitives. In this paper, we propose $\\text{VG}^2$GT, a Voxel-Gaussian Splatting Visual Geometry-Grounded Transformer. $\\text{VG}^2$GT leverages a frozen pretrained visual foundation model (VFM), incorporates a multi-scale differentiable voxel module to enhance geometric understanding, and directly splits and regresses Gaussian primitive parameters from voxel features. During training, depth maps are supervised through stochastic solid volume rendering, enabling geometrically accurate Gaussian scene reconstruction while keeping the visual foundation model fully frozen. This design enables $\\text{VG}^2$GT to be seamlessly plugged into any patch-feature-based VFM, while substantially reducing the required training cost. $\\text{VG}^2$GT outperforms current state-of-the-art methods on widely used DTU, Replica, TAT, and ScanNet datasets.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202606/08/2606.07179v1-evogs-constructing-continuous-layered-gaussian-splatting-with-evolution-tree-for-scalable-3d-streaming",
+      "section": "deep",
+      "title_en": "EvoGS: Constructing Continuous-Layered Gaussian Splatting with Evolution Tree for Scalable 3D Streaming",
+      "authors": "Yuang Shi, Simone Gasparini, Géraldine Morin, Wei Tsang Ooi",
+      "date": "2026-06-05",
+      "pdf": "https://arxiv.org/pdf/2606.07179v1",
+      "score": "9.0",
+      "evidence": "连续分层高斯泼溅用于可扩展3D流式传输；直接改进了面向实时渲染的体积场景表示",
+      "tldr": "3D高斯泼溅流式传输需可扩展渐进表示，现有离散分层方法导致误差累积、冗余严重、过渡不平滑。EvoGS首次提出连续分层框架，通过进化树和小波启发式父子细化，子节点可纠正祖先误差，生成稀疏可压缩层间信号。实验表明，splat冗余从65%以上降至25%以下，传输载荷和GPU显存占用分别降低2.4倍和5.5倍，实现平滑质量过渡。该工作为实时自适应3D流媒体提供高效紧凑的表示方案。",
+      "tags": "query:gs-slam",
+      "abstract_en": "Streaming 3D Gaussian Splatting requires highly scalable, progressive representations. Existing progressive methods rely on \\textit{discrete layering}, accumulating separate splat sets for each level of detail. This structural independence between layers inherently leads to error accumulation, severe splat redundancy, and uncontrolled quality transitions. We propose EvoGS, the first \\textit{continuous-layering} representation. Organized as an Evolution Tree, EvoGS generates finer details via an explicit, wavelet-inspired parent-child refinement. This empowers child nodes to structurally correct ancestral errors, yield inherently sparse and highly compressible inter-layer signals. Extensive experiments show EvoGS eliminates splat redundancy from over 65\\% to under 25\\%. Compared to state-of-the-art baselines, it reduces transmission payload and GPU VRAM footprint by up to 2.4$\\times$ and 5.5$\\times$, respectively, and achieves smooth quality transitions optimal for real-time adaptive streaming. Project page: https://yuang-ian.github.io/evogs/",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
