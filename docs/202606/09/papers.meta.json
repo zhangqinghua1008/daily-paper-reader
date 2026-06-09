@@ -1,0 +1,69 @@
+{
+  "label": "2026-06-09",
+  "date": "2026-06-09",
+  "generated_at": "2026-06-09T22:08:02",
+  "count": 4,
+  "papers": [
+    {
+      "paper_id": "202606/09/2606.07891v1-c3vd-defcol-a-deformable-colonoscopy-dataset-with-time-resolved-3d-ground-truth-and-realistic-appearance",
+      "section": "deep",
+      "title_en": "C3VD-DEFCOL: A Deformable Colonoscopy Dataset with Time-Resolved 3D Ground Truth and Realistic Appearance",
+      "authors": "Ethan Luk, Mayank V. Golhar, Anthony Song, Raúl Iranzo, Víctor M. Batlle, Lalithkumar Seenivasan, José M. M. Montiel, Nicholas J. Durr",
+      "date": "2026-06-05",
+      "pdf": "https://arxiv.org/pdf/2606.07891v1",
+      "score": "8.0",
+      "evidence": "用于内窥镜重建的带时间分辨三维真实值的可变形结肠镜数据集",
+      "tldr": "结肠镜重建缺乏兼具真实体内外观与密集时序3D真值的数据集，尤其在非刚性形变下。本文提出C3VD-DEFCOL，通过生成可控形变并借助LTX-2.3模型将渲染几何转为逼真视频，构建了11个结肠几何、110个视频的数据集，涵盖多种蠕动严重程度。实验评估了外观、几何与时间一致性，并以姿态估计为下游任务揭示了误差随形变加剧递增的规律，为可变形三维重建提供了可控评估平台，缩窄合成-实测域间隙。",
+      "tags": "query:endo-dgs",
+      "abstract_en": "3D reconstruction could improve colonoscopy by estimating mucosal coverage and alerting clinicians to missed regions during screening. However, algorithm development is limited as no current datasets provide both a realistic in vivo appearance and dense, time-resolved 3D ground truth, especially under non-rigid deformation. We present C3VD-DEFCOL, a framework and dataset for evaluating deformable colonoscopy reconstruction with paired geometry and realistic texture. Starting from C3VD/C3VDv2 colon meshes and camera trajectories, we generate controlled deformations of the colon surface, including peristaltic waves and centerline motion, and render per-frame depth, surface normals, optical flow, camera poses, and time-stamped 3D meshes. We then use the rendered geometry, primarily depth, to condition an LTX-2.3-based sim-to-real translation model that produces RGB clips with in vivo-like mucosal color, texture, vasculature, and specular appearance while preserving the underlying 3D scene structure. The resulting dataset contains 110 videos from 11 unique colon mesh geometries, with varying camera trajectories, appearances, and parameterized deformation regimes, including three peristaltic severity levels that serve as controlled evaluation axes. We evaluate the generated videos using appearance realism, geometric consistency, and temporal consistency metrics, and use the paired ground truth to benchmark the downstream task of pose estimation in deformable 3D reconstruction. Our experiments show how pose estimation error increases with increasing deformation severity, providing a controlled stress test that is not possible with existing in vivo datasets. Overall, C3VD-DEFCOL is designed as a reproducible, quantitative evaluation platform for testing deformable 3D reconstruction algorithms, with the goal of reducing the domain gap between synthetic datasets and in vivo colonoscopy.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202606/09/2606.09074v1-refine-super-efficient-3d-gaussian-splatting-pruning-via-rendering-free-primitive-importance",
+      "section": "quick",
+      "title_en": "REFINE: Super-efficient 3D Gaussian Splatting Pruning via Rendering-Free Primitive Importance",
+      "authors": "Zhang Chen, Shuai Wan, Mengting Yu, Fuzheng Yang, Junhui Hou",
+      "date": "2026-06-08",
+      "pdf": "https://arxiv.org/pdf/2606.09074v1",
+      "score": "7.0",
+      "evidence": "提出无渲染的3DGS剪枝策略，实现超高效，为SLAM提供轻量场景表示",
+      "tldr": "3D高斯溅射（3DGS）剪枝方法现有方法如量化或剔除常导致渲染质量严重退化或计算开销巨大，难以实际应用。本文提出REFINE框架，创新性地设计了渲染无关的基元重要性度量，通过解析的渲染感知Hessian场，量化移除基元造成的预期感知误差。该方法利用可见性、投影几何与内容自适应参数联合建模，生成各向异性感知权重场，完全免除耗时正向渲染。实验表明，REFINE在保持超高渲染质量的同时，将剪枝计算复杂度史无前例地削减3000倍。这为3DGS的高效压缩与移动端部署开辟了新途径。",
+      "tags": "query:gs-slam",
+      "abstract_en": "Existing pruning methods for 3D Gaussian splatting (3DGS) suffer from either severe quality degradation or prohibitive computational overhead. In this paper, we propose REFINE, a highly accelerated 3DGS pruning framework centered on a novel rendering-free primitive importance metric. Our approach leverages an analytically approximated, rendering-aware Hessian field to quantify the expected perceptual error induced by the removal of individual primitives. By modeling the joint modulation of visibility, projection geometry and the content adaptive hyperparameter, we entirely bypass costly forward rendering passes and derive an anisotropic perceptual weight field that serves as a high-fidelity proxy for primitive importance. Extensive experiments across multiple benchmark datasets demonstrate that REFINE maintains highly competitive rendering quality while achieving an unprecedented $3,000\\times$ reduction in pruning-related computational complexity compared to state-of-the-art pruning methods.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202606/09/2606.09268v1-vgp-nav-metric-aware-visual-geometric-perception-for-robot-navigation",
+      "section": "quick",
+      "title_en": "VGP-Nav: Metric-Aware Visual Geometric Perception for Robot Navigation",
+      "authors": "Hewei Pan, Weiye Zhu, Zekai Zhang, Zitong Huang, Rongtao Xu, Jinbao Wang, Feng Zheng",
+      "date": "2026-06-08",
+      "pdf": "https://arxiv.org/pdf/2606.09268v1",
+      "score": "7.0",
+      "evidence": "用于度量感知导航的单目视觉SLAM，实现全局定位与稠密感知。",
+      "tldr": "视觉导航中，单目视觉常因尺度模糊而难以同时实现全局一致定位与稠密、度量一致的障碍感知。为此，我们提出VGP-Nav，一个仅依赖单目RGB的统一框架，它利用地面平面几何导出物理尺度约束，将定位关联的视觉几何锚定于可靠度量参考，在线消除尺度歧义并生成可直接用于规划的度量障碍地图。大量实验表明，该方法在多个环境中展现出强泛化能力，并已成功在真实移动机器人上安全导航。VGP-Nav为低成本的纯视觉自主导航提供了一条可扩展且安全的解决途径。",
+      "tags": "query:gs-slam",
+      "abstract_en": "Reliable robotic navigation necessitates the seamless integration of accurate global localization and dense, metric-consistent obstacle perception. A common strategy to achieve these capabilities involves integrating diverse sensing modalities: cameras offer rich visual features for localization, while active sensors like LiDAR provide direct metric measurements. However, such multi-sensor configurations necessitate complex spatial-temporal calibration and increase deployment overhead. Although vision-only approaches offer a low-cost and scalable alternative, existing monocular visual systems typically struggle to simultaneously achieve efficient, globally consistent localization and dense, metric-consistent geometric perception. To bridge this gap, we propose \\textbf{VGP-Nav}, a unified framework for \\textit{Metric-Aware Visual Geometric Perception} that relies solely on monocular RGB input to jointly support metric localization and obstacle perception. Our key insight is to anchor localization-grounded visual geometry to physically meaningful scale constraints derived from ground-plane geometry, thereby providing a reliable metric reference for monocular perception. VGP-Nav resolves monocular scale ambiguity online and produces localization-grounded, metric obstacle representations that are directly applicable to downstream planning. Extensive experiments demonstrate strong generalization across diverse environments and successful deployment on real mobile robots, highlighting the practicality of our approach for scalable, low-cost, and safe autonomous navigation.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202606/09/2606.07932v1-legs-laplacian-enhanced-gaussian-splatting-with-a-nonlinear-weighted-loss",
+      "section": "quick",
+      "title_en": "LEGS: Laplacian-Enhanced Gaussian Splatting with a Nonlinear Weighted Loss",
+      "authors": "Yongfei Guo, Qizhou Huo, Xuan Sun, Yuanhao Gong",
+      "date": "2026-06-06",
+      "pdf": "https://arxiv.org/pdf/2606.07932v1",
+      "score": "6.0",
+      "evidence": "通过拉普拉斯引导改进3DGS场景表示，锐化细节，利于实时渲染",
+      "tldr": "三维高斯泼溅（3DGS）在辐射场重建中同等对待平坦与结构丰富区域，限制细节恢复；边缘引导高斯泼溅（EGGS）仅用一阶梯度线性加权，结构感知不足。本文提出拉普拉斯增强高斯泼溅（LEGS），用二阶拉普拉斯引导与非线性响应权重映射替代线性加权，提升结构优化。实验表明，LEGS在Tanks&Temples和Mip-NeRF360数据集上PSNR比3DGS最高提升1.68dB，比EGGS提升0.52dB；集成至FastGS和FasterGS后进一步提升1.69dB，验证了其作为通用损失级扩展的有效性。",
+      "tags": "query:gs-slam",
+      "abstract_en": "3D Gaussian Splatting (3DGS) has become an efficient explicit representation for radiance field reconstruction and real-time novel view synthesis. However, its standard photometric loss treats flat and structure-rich regions similarly, which may limit the recovery of sharp contours and fine details. Edge-Guided Gaussian Splatting (EGGS) improves structure awareness through edge-guided weighting, but mainly relies on first-order gradient responses and linear weighting. In this paper, we propose LEGS, a Laplacian-Enhanced Gaussian Splatting method with a nonlinearly weighted loss. LEGS replaces first-order gradient guidance with second-order Laplacian structural guidance and maps the normalized Laplacian response into pixel-wise weights through nonlinear response-to-weight functions. The proposed loss improves structure-aware Gaussian optimization while keeping the original 3DGS rendering pipeline unchanged. Experiments on the full Tanks\\&Temples and Mip-NeRF360 datasets show that LEGS improves peak signal-to-noise ratio (PSNR) by up to 1.68 dB over 3DGS and up to 0.52 dB over EGGS. Incorporating the proposed second-order nonlinear weighting strategy into FastGS and FasterGS further improves PSNR by up to 1.69 dB, demonstrating its effectiveness as a general loss-level extension for Gaussian Splatting pipelines with potential applications in AR/VR, immersive visualization, and real-time 3D content generation.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
