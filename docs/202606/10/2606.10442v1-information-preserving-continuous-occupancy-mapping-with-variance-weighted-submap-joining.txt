@@ -1,0 +1,1034 @@
+Title: Information-Preserving Continuous Occupancy Mapping with Variance-Weighted Submap Joining
+
+URL Source: https://arxiv.org/pdf/2606.10442v1
+
+Published Time: Wed, 10 Jun 2026 00:34:02 GMT
+
+Number of Pages: 12
+
+Markdown Content:
+# Information-Preserving Continuous Occupancy Mapping with Variance-Weighted Submap Joining 
+
+Zhuhua Bai ∗, Yingyu Wang †, Liang Zhao †, and Shoudong Huang ∗
+
+Abstract —Large-scale SLAM is a fundamental capability for autonomous navigation, where accumulated trajectory drift and computational scaling make globally consistent estimation in-creasingly difficult as the explored environment grows. Submap joining has emerged as a key strategy to address this. By first constructing a collection of locally consistent submaps and subsequently fusing them into a common global representation, it bounds local computational complexity while improving ro-bustness to drift and accumulated estimation errors. However, existing occupancy-based submap joining frameworks operate on discrete grids and rely on bilinear interpolation, producing non-smooth gradients at submap boundaries and lacking principled uncertainty weighting. A continuous probabilistic representation could in principle resolve both issues, but existing approaches either preclude closed-form posterior inference, scale cubically with observation count, or rely on a non-conjugate classification likelihood requiring approximate inference, all of which degrade the predictive uncertainty on which principled submap joining depends. We propose the first continuous probabilistic submap joining framework that jointly optimizes local submap frames and a global occupancy field in the latent log-odds space. The framework rests on an information-preserving sparse Bayesian formulation: raw observations are compressed into sufficient-statistic log-odds tuples, and we prove the compression yields a weight posterior equivalent to that of the raw observations. This restores Gaussian conjugacy and yields closed-form posterior mean and covariance, with the noise precision and relevance set updated jointly within a single marginal-likelihood maximization. Built on the resulting reliable predictions, the variance-weighted submap joining formulation admits analytical Jacobians and yields a closed-form optimal global map upon pose convergence. Experiments on 2D simulated and large-scale practical datasets show that the proposed method achieves superior pose accuracy and global consistency compared with state-of-the-art grid-based submap joining methods, while producing more compact representations with substantially better calibrated uncertainty than existing continuous occupancy baselines. 
+
+I. I NTRODUCTION 
+
+Large-scale SLAM is a long-standing challenge in au-tonomous navigation: as the explored environment grows, accumulated trajectory drift and increasing computational cost make globally consistent estimation progressively difficult. Submap joining has emerged as a foundational strategy for addressing these challenges [11, 32, 28, 29]. State-of-the-art occupancy-based submap joining methods [28, 29] jointly optimize submap poses and a global occupancy map within 
+
+> ∗
+
+Zhuhua Bai and Shoudong Huang are with the Robotics Institute, Univer-sity of Technology Sydney, Australia (e-mail: Zhuhua.Bai@student.uts.edu.au; Shoudong.Huang@uts.edu.au). 
+
+> †
+
+Yingyu Wang and Liang Zhao are with the School of Infor-matics, University of Edinburgh, UK(e-mail: Yingyu.Wang@uts.edu.au; liang.zhao@ed.ac.uk). 
+
+a nonlinear least-squares (NLLS) formulation, but operate entirely on discrete occupancy grids and rely on bilinear interpolation during pose-map optimization. This introduces two structural limitations: (i) the interpolated gradient field is piecewise-defined and non-smooth at cell boundaries, which can adversely affect optimization convergence and accuracy; and (ii) the NLLS formulation fails to account for occupancy uncertainty, which compromises the reliability of residual weighting during optimization. 
+
+Fig. 1: Overview of the proposed framework. Each local submap compresses raw observations into sufficient-statistic log-odds tuples Dl = {(xi, Z i, n i)}Ml
+
+> i=1
+
+, where xi, Zi, and 
+
+ni denote the spatial location, average log-odds value, and accumulated observation count, respectively. A heteroscedastic RVM regression then yields closed-form predictive mean and variance, which drive a variance-weighted joining formulation that jointly optimizes local submap frames and the global occupancy field via analytical Jacobians and a closed-form globally optimal map. A natural question is whether a continuous probabilistic occupancy representation, which offers smooth gradients and predictive uncertainty by construction, could be combined with submap joining to address both limitations above. Existing continuous methods, however, are not designed for large-scale operation. Full Gaussian Process maps [16, 12] scale cubically and must retain all training data. Hilbert Maps [17, 19] and sparse Relevance Vector Machine methods [23, 4] mitigate this through random Fourier features or relevance-vector sparsifi-cation, but their feature configurations are anchored to a single global frame and cannot absorb trajectory drift once the map has been built. More critically, virtually all existing continuous mapping methods take robot poses as given inputs and cannot refine them [17, 19, 4, 14]; long-trajectory odometry error therefore propagates directly into the map, producing structural 
+
+> arXiv:2606.10442v1 [cs.RO] 9 Jun 2026
+
+inconsistency at loop closures that no local feature flexibility can correct. Continuous mapping at large scale thus depends on submap joining as much as grid-based mapping does, yet no submap joining formulation has been developed for continuous occupancy maps. Among continuous representations, the RVM framework is uniquely suited for this role: relevance-vector sparsification yields a compact per-submap kernel set, and the kernel-based predictor admits analytical spatial derivatives required for pose Jacobians. Existing RVM-based occupancy methods [4, 25], however, formulate occupancy as binary classification with a non-conjugate probit or logistic likelihood, forcing reliance on Laplace or variational approximation [21, 22]. The resulting predictive variance is unreliable, especially near occupancy boundaries, which is where submap joining critically requires trustworthy uncertainty to weight residuals during pose opti-mization. We address this by reformulating sparse Bayesian oc-cupancy mapping as a heteroscedastic Gaussian regression problem in the latent log-odds space, with raw observations compressed into sufficient-statistic log-odds tuples. We prove that this compression is lossless for the weight posterior, restoring Gaussian conjugacy and yielding exact closed-form posterior mean and covariance. The heteroscedastic noise precision is additionally updated jointly with the relevance set within a single marginal-likelihood maximization, rather than in a separate stage. Built on the resulting reliable predictions, our variance-weighted submap joining formulation admits analytical Jacobians throughout the optimization and yields a closed-form optimal global map upon pose convergence via variance-weighted fusion. The overall pipeline is illustrated in Fig. 1. The main contributions of this paper are as follows: 1) The first variance-weighted continuous submap joining framework that jointly optimizes local submap frames and a global occupancy field directly in a continuous probabilistic latent space, with analytical Jacobians and a closed-form optimal global map upon pose convergence. 2) An information-preserving heteroscedastic RVM occu-pancy formulation based on sufficient-statistic log-odds compression, theoretically proven to yield a weight posterior equivalent to that of the raw observations. This restores Gaussian conjugacy, removes the Laplace ap-proximation of classification-based RVM, and supports joint update of the noise precision and the relevance set. 3) Extensive evaluation on 2D simulated and large-scale practical datasets, demonstrating superior pose accuracy, global consistency, model compactness, and uncertainty calibration compared with state-of-the-art grid-based and RVM-based baselines. II. R ELATED WORKS 
+
+Occupancy Mapping. Traditional occupancy grid map-ping [5, 15, 10] discretizes space into independent cells and updates each cell’s log-odds value from range measure-ments [20]. Cartographer [8] introduces local submaps for scalable real-time mapping, while OctoMap [10] and adaptive-resolution variants [13, 6] reduce memory consumption. More recently, Occupancy-SLAM [29] jointly optimizes robot poses and the occupancy grid within a unified least-squares frame-work. 
+
+Continuous Occupancy Mapping. To capture spatial cor-relations missed by independent grids, GP-based methods [16, 12] infer continuous occupancy fields with predictive uncer-tainty but suffer from cubic complexity. Hilbert Maps [17] and their Bayesian extension [19, 34] reformulate occupancy estimation via random Fourier features with logistic regres-sion, achieving faster training at the cost of a non-conjugate likelihood and fixed feature configuration. RVM-based meth-ods [23, 24, 25] construct sparse representations through Au-tomatic Relevance Determination; FSBM and SBKM [25, 4] extend them with incremental training. GMMap [14] achieves real-time mapping through Gaussian mixture representations. The recent work [7] explicitly advocates operating on the latent occupancy field, motivating our work. 
+
+Submap Joining and Continuous Map Fusion. Submap joining decomposes large-scale mapping into locally consistent submaps that are subsequently aligned [11, 32, 27]. Dense alignment approaches include TSDF-based pose graph opti-mization [26], SDF-based fusion [2], and ICP on occupancy-derived point clouds [9, 1]. Multi-robot continuous map fusion has also been studied: Doherty [3] merge Hilbert map predic-tions through variance averaging on a discretized grid, and Zhi [34] fuse Bayesian Hilbert Maps via weight-space con-flation; both assume known and accurate poses. The state-of-the-art occupancy-based submap joining methods (GBSJ) [28] and Occupancy-SLAM [29] jointly optimize submap poses and a global occupancy grid through nonlinear least squares. Our work is the first to formulate joint pose-map optimization directly on a continuous probabilistic occupancy field. III. INFORMATION-PRESERVING CONTINUOUS OCCUPANCY MAPPING 
+
+A. Sparse Bayesian Occupancy Mapping Preliminaries 
+
+Existing sparse Bayesian occupancy mapping methods [4, 25] formulate occupancy as a binary classification problem with labels yl ∈ {− 1, 1} and a probit or logistic likelihood. The resulting non-conjugacy with the Gaussian prior makes exact posterior inference intractable and forces reliance on Laplace [21] or variational approximation [22], which intro-duce inner-loop iterations and degrade uncertainty estimation near occupancy boundaries. Moreover, the standard training-data construction, i.e., binary downsampled labels, discards the observation-confidence information accumulated by repeated measurements, treating densely and sparsely observed regions identically. We address both limitations by reformulating occu-pancy estimation as a Gaussian-conjugate Bayesian regression problem in the latent log-odds space using sufficient-statistic compression, presented next. Fig. 2: Illustration of hit and free observations under Gaussian observation modeling. A laser ray is emitted from the sensor origin. The endpoint, visualized with Gaussian uncertainty, is treated as a hit observation, whereas all traversed grid cells are treated as free observations. Finer grid resolution is selectively applied near obstacle boundaries to preserve structural details. 
+
+B. Bayesian Continuous Occupancy Mapping 1) Construction of the Training Data: We build a multi-resolution grid map. Grid resolution is refined by a factor 
+
+h > 1 (e.g., h = 2 ) near obstacle boundaries and coarsened (e.g., 0.5 m) in free space to preserve fine details while controlling the number of training samples. For each laser ray, the endpoint is treated as an occupied (hit) observation, and all traversed cells as free observations (see Fig. 2). For the i-th grid cell located at xi, the j-th observation of its occupancy value is represented in log-odds form as 
+
+zij = ln p(xi ∈ occ )1 − p(xi ∈ occ ) (1) Following [10, 20], occupied and free observations are assigned fixed log-odds values, zhit = ln(0 .7/0.3) and zfree =ln(0 .4/0.6) , respectively. Given ni observations of grid cell 
+
+xi, the corresponding average log-odds value is computed as 
+
+Zi = 1
+
+> ni
+
+Pni 
+
+> j=1
+
+zij .The resulting training dataset is constructed as D =
+
+{(xi, Z i, n i)}Mi=1 , where M denotes the total number of ob-served grid cells. 
+
+2) Heteroscedastic Continuous Occupancy Construction: 
+
+Each relevance vector defines a basis function via a kernel 
+
+k(x, xm), mapping a grid cell x to a feature vector Φx =[k(x, x1), . . . , k (x, xM )] ⊤ ∈ RM . We adopt the radial basis function kernel k(x, xm) = η exp( −γ∥x − xm∥2) and model the latent occupancy field directly in the log-odds space as 
+
+F (x) := Φ ⊤ 
+
+> x
+
+w + b (2) with weights w ∈ RM and bias b ∈ R.Observations falling into the same grid cell are assumed to share the latent value F (x) and to be conditionally indepen-dent. A raw log-odds measurement is modeled as 
+
+zij = F (xi) + ε, ε ∼ N (0 , β −1) (3) with the noise precision β.By the Gaussian closure property, the per-cell average Zi
+
+satisfies 
+
+p(Zi | xi, w, β, n i) = N
+
+
+
+Zi Φ⊤ 
+
+> xi
+
+w + b, 1
+
+βn i
+
+
+
+(4) Therefore, the effective measurement precision accumulates linearly as βn i. Stacking all M cells yields the heteroscedastic data likelihood 
+
+p(Z | X, w, β, N) = N
+
+
+
+Z Φ⊤w + b1, 1
+
+βN
+
+
+
+(5) where X = [ x1, . . . , xM ]⊤ ∈ RM ×2, Z = [ Z1, . . . , Z M ]⊤ ∈
+
+RM ×1, N = diag( n1, . . . , n M ) ∈ RM ×M is a diago-nal information-weighting matrix containing the observation counts associated with each sample, and Φ ∈ RM ×M is the kernel matrix evaluated between all pairs of training inputs. An RVM model imposes a Gaussian prior on each weight 
+
+wm with zero mean and precision αm (i.e., variance 1 
+
+> αm
+
+). 
+
+p(w | α) = 
+
+> M
+
+Y
+
+> m=1
+
+N (wm | 0, α −1 
+
+> m
+
+) = N (w | 0, A−1) (6) where α = [α1, . . . , α M ]⊤ ∈ RM ×1 denotes the preci-sion vector associated with the weight vector w, and A =diag( α1, . . . , α M ) ∈ RM ×M is the corresponding diagonal precision matrix. With the heteroscedastic likelihood (5) and the Gaus-sian prior (6) both defined, we can now state the lossless-compression property that underpins the entire formulation. 
+
+Proposition 1. The set of raw per-observation log-odds measurements {zij } M, n i 
+
+> i=1 , j =1
+
+is compressed into the sufficient statistics D = {(xi, Z i, n i)}Mi=1 . Under this model, for any hyperparameters (α, β ) the weight posteriors induced by the two representations coincide: 
+
+p
+
+
+
+w {zij } M, n i
+
+> i=1 , j =1
+
+, α, β 
+
+
+
+= p w D, α, β  (7) 
+
+Proof: Let μw,i := Φ ⊤ 
+
+> xi
+
+w+b denote the model prediction at cell xi. Applying the identity zij − μw,i = ( zij − Zi) + (Zi − μw,i ) and using Pni
+
+> j=1
+
+(zij − Zi) = 0 ,
+
+> ni
+
+X
+
+> j=1
+
+(zij − μw,i )2 = ni(Zi − μw,i )2 + Si, (8) where Si := Pni
+
+> j=1
+
+(zij − Zi)2 depends only on the raw data, not on w or α.The raw log-likelihood is therefore 
+
+ℓraw (w) = − β
+
+> 2
+
+X
+
+> i
+
+ni(Zi − μw,i )2 − β
+
+> 2
+
+X
+
+> i
+
+Si + C1, (9) with C1 collecting normalization constants in β and ni. The compressed log-likelihood induced by (5) is 
+
+ℓcomp (w) = − β
+
+> 2
+
+X
+
+> i
+
+ni(Zi − μw,i )2 + C2. (10) The difference ℓraw (w) − ℓcomp (w) is independent of w, so multiplying by the Gaussian prior p(w | α) and normalizing yields identical posteriors on w.For the marginal likelihood, integrating over w leaves the difference C1 − C2 − β
+
+> 2
+
+P 
+
+> i
+
+Si, which depends only on β and the data, not on α.Operationally, Proposition 1 guarantees that replacing the PMi ni raw measurements by the M tuples (xi, Z i, n i) incurs no information loss for either posterior inference or hyper-parameter learning; training-set size is reduced dramatically while exact Bayesian inference is preserved. The weight posterior is obtained via Bayes’ rule 
+
+p(w | Z, X, α, β, N) = p(Z | X, w, β, N)p(w | α)
+
+p(Z | X, α, β, N) (11) Due to Gaussian conjugacy, the posterior distribution also remains Gaussian: 
+
+p(w | Z, X, α, β, N) = N (w | μ, Σ) (12) The μ ∈ RM ×1 and the Σ ∈ RM ×M are the posterior mean and posterior covariance, respectively. Therefore, the exact closed-form expressions for the posterior mean and covariance can be obtained directly, eliminating approximation errors and enhancing training efficiency. 
+
+Σ = ( Σ−1)−1 = ( βΦ⊤NΦ + A)−1
+
+μ = βΣΦ⊤N(Z − b1) (13) The posterior precision naturally decomposes into a prior 
+
+A and a data term βΦ⊤NΦ. The posterior mean aggregates data via Φ⊤N(Z − b1), which accumulates kernel-weighted log-odds signals before covariance distribution. Because N is diagonal, each cell contributes proportionally to its accumu-lated precision βn i. Consequently, densely observed regions exert stronger influence on both precision and posterior mean, yielding lower predictive uncertainty and directly linking ob-servation frequency to Bayesian information accumulation. 
+
+3) Joint Sequential Optimization of (α, β ): The hyperpa-rameters (α, β ) are determined by type-II maximum likeli-hood, i.e., by maximizing the log marginal likelihood 
+
+L(α, β ) = − 12
+
+M log(2 π) + log |C| + r⊤C−1r (14) with C = ( βN)−1 + Φ A−1Φ⊤ and r = Z − b1.Unlike prior RVM methods [25] that alternate between updating α (with β fixed) and refitting β after α converges, we update α and β jointly in every iteration. The updates are coupled via βΦ⊤NΦ: α controls which kernel columns are active, and β aggregates per-cell residuals weighted by the observation counts ni. Joint updating exploits this coupling, leading to fewer outer iterations and lower marginal likeli-hoods. The sparsity update for each candidate xm follows the standard Tipping–Faul criterion [25] θm = q2 
+
+> m
+
+− sm with auxiliary quantities sm, q m defined as in (15) below. 
+
+sm := 
+
+
+
+αmSm
+
+αm − Sm
+
+, if αm < ∞
+
+Sm, otherwise 
+
+qm := 
+
+
+
+αmQm
+
+αm − Sm
+
+, if αm < ∞
+
+Qm, otherwise (15) Here, Sm = Φ ⊤
+
+> m
+
+C−1Φm, Qm = Φ ⊤
+
+> m
+
+C−1(Z − b1), and 
+
+Φm ∈ RM ×1 denotes the m-th column of the training feature matrix Φ ∈ RM ×M .The value of θm determines the status of the sample:  
+
+> •
+
+If θm > 0, then xm is either updated (when αm < ∞)or added (when αm = ∞) as a relevance vector, with its precision set to αm = s2 
+
+> m
+> q2
+> m−sm
+
+. 
+
+> •
+
+If θm ≤ 0 and αm < ∞, the sample xm is removed from the RVM model. 
+
+Updating of β. Taking the partial derivative of (14) with respect to β yields: 
+
+∂L
+
+∂β = − 12
+
+ ∂ log |C|
+
+∂β + ∂∂β (r⊤C−1r)
+
+
+
+(16) The first term can be computed as: 
+
+∂ log |C|
+
+∂β = 1
+
+β
+
+> NRV
+
+X
+
+> m=1
+
+γm − M
+
+!
+
+, γm ≡ 1−αmΣmm (17) The second term can be computed as: 
+
+∂  r⊤C−1r
+
+∂β = v⊤Nv =
+
+> M
+
+X
+
+> i=1
+
+nir2 
+
+> i
+
+(18) where v = Z − b1 − Φμ.By setting the ∂L/∂β = 0 , we can obtain the update rule for β:
+
+βnew = M − PNRV  
+
+> m=1
+
+γm
+
+PMi=1 nir2
+
+> i
+
+(19) where the relevant terms are defined as follows:  
+
+> •
+
+NRV is the number of currently active relevance vectors.  
+
+> •
+
+γm ≡ 1 − αmΣmm acts as a measure of well-determinedness for the corresponding parameter. Here, 
+
+Σmm is the m-th diagonal element of the posterior covariance matrix Σ, representing the posterior variance of the weight wm. 
+
+> •
+
+ri is the i-th element of the residual error, calculated from 
+
+v = Z − b1 − Φμ.The residual is weighted by ni as each averaged observa-tion Zi represents ni independent measurements, contributing proportionally to the accumulated precision. The procedure is detailed in Algorithm 1. Algorithm 1 Sequential Average Log-Odds RVM Training 
+
+Require: Training set D = {(xi, Z i, n i)}Mi=1 , kernel parame-ter η and γ, bias b, convergence threshold τα and τβ
+
+Ensure: Relevance vectors S, posterior μ, Σ, hyperparame-ters α, β  
+
+> 1:
+
+Initialize αm ← ∞ for all m, β ← 1/Var( Z) 
+
+> 2:
+
+Compute Sm, Q m for all candidates m = 1 , . . . , M  
+
+> 3:
+
+Select m∗ = arg max m q2
+
+> m
+
+/s m, activate m∗ into S 
+
+> 4:
+
+repeat  
+
+> 5:
+
+(Posterior) Compute ΣS = (βΦ⊤S NΦ S + AS )−1,
+
+μS = βΣS Φ⊤S N(Z − b1) 
+
+> 6:
+
+(Sparsity) Compute Sm, Q m and leave-one-out sm, q m
+
+for all m = 1 , . . . , M  
+
+> 7:
+
+Set θm ← q2 
+
+> m
+
+− sm for each candidate m 
+
+> 8:
+
+for each candidate m do  
+
+> 9:
+
+if θm > 0 and αm = ∞ then  
+
+> 10:
+
+Add : αm ← s2
+
+> m
+
+/(q2 
+
+> m
+
+− sm), S ← S ∪ { m} 
+
+> 11:
+
+else if θm > 0 and αm < ∞ then  
+
+> 12:
+
+Re-estimate : αm ← s2
+
+> m
+
+/(q2 
+
+> m
+
+− sm) 
+
+> 13:
+
+else if θm ≤ 0 and αm < ∞ then  
+
+> 14:
+
+Delete : αm ← ∞ , S ← S \ { m} 
+
+> 15:
+
+end if  
+
+> 16:
+
+end for  
+
+> 17:
+
+(Noise) β ← (M − P 
+
+> m∈S
+
+γm) / PMi=1 nir2 
+
+> i
+
+, where 
+
+ri = Zi − b − ϕ⊤ 
+
+> i, S
+
+μS 
+
+> 18:
+
+until ∥α(t) − α(t−1) ∥ < τ α and |β(t) − β(t−1) | < τ β 
+
+> 19:
+
+return S, μS , ΣS , αS , β 
+
+C. Continuous Occupancy Prediction 
+
+After the model has been trained, for a query location x∗,the predictive distribution is 
+
+p(Z∗ | x∗) = N (Z∗ | μ∗, σ 2 
+
+> ∗
+
+)
+
+μ∗ = Φ ⊤ 
+
+> x∗
+
+w + b, σ2 
+
+> ∗
+
+= Φ ⊤ 
+
+> x∗
+
+Σ Φx∗
+
+(20) The latent prediction for x∗ can be converted to an occu-pancy probability via the probit approximation [18], which incorporates both predictive mean and variance: 
+
+P occ (x∗) ≈ 11 + exp( −κμ ∗) , κ = 1
+
+p1 + πσ 2 
+
+> ∗
+
+/8 (21) With thresholds 0 < e free < e occ < 1, a query is classified as occupied if P occ > e occ , free if P occ < e free , and unknown otherwise. 
+
+D. Variance-Weighted Continuous Submap Joining 
+
+The continuous occupancy field defined by (20) is differen-tiable in x, so both the predictive mean and variance can be queried analytically at arbitrary locations. This enables direct continuous joint optimization of submap frames and the global occupancy field, without the bilinear interpolation required by discrete grid-based approaches [28, 29]. Fig. 3 illustrates the joining problem. 
+
+Fig. 3: Continuous submap joining. (a) and (b) show the two continuous submaps. (c) shows the inconsistent global map from pose-only fusion. (d) shows the consistent result from our proposed method. 
+
+1) Variance-Weighted Global Map Construction: Assum-ing conditional independence between local submap predic-tions, global fusion is formulated as a minimum-variance Gaussian fusion problem. For N overlapping submaps, the global occupancy estimate at location xf is constructed via variance-weighted fusion of the local predictive means μi(xf )
+
+and variances σ2 
+
+> i
+
+(xf ).
+
+μG(xf ) = 
+
+PNi=1 μi(xf )/(σ2 
+
+> i
+
+(xf ) + ϵ)
+
+PNi=1 1/(σ2 
+
+> i
+
+(xf ) + ϵ)
+
+σ2
+
+> G
+
+(xf ) = 1
+
+PNi=1 1/(σ2 
+
+> i
+
+(xf ) + ϵ)
+
+(22) where ϵ is a small constant (e.g., 10 −6) to prevent division by zero or numerical instability. Under the assumption of independent Gaussian submap predictions, variance-weighted fusion naturally assigns higher weights to submaps with lower predictive uncertainty, which may arise from either denser observations or higher posterior precision. 
+
+2) NLLS Formulation: To formulate the submap joining problem as a NLLS problem, we first discretize the global map. Let the global map be represented by a grid of cells 
+
+{M(m1), . . . , M(mG)}, where G = lw × lh and mj is the coordinate of the j-th cell. Denote the latent global log-odds value of j-th cell as M(mj ). Then the global map is fully described by the vector M = [ M(m1), . . . , M(mG)] ⊤.The state vector of the NLLS problem consists of the poses of the local submap coordinate (except the first, which serves as the global reference) and the global log-odds map values: 
+
+V = [( Tr )⊤, M⊤]⊤ (23) where Tr = [( Tr
+
+> 2
+
+)⊤, . . . , (Trg )⊤]⊤ contains the poses of all non-reference submaps. Each Trj = [ t⊤ 
+
+> j
+
+, θ j ]⊤ ∈ SE (2) 
+
+represents the j-th pose of local submap coordinate , with 
+
+tj = [xj , y j ]⊤ and θj being the position and orientation, respectively; the corresponding rotation matrix is Rj .The objective function minimizes the variance-weighted residuals between the global map and each local submap: f (V) = 
+
+> N
+
+X
+
+> i=1
+
+X
+
+> j∈{ obs i}
+
+1
+
+σ2 
+
+> i
+
+(pim j ) + ϵ
+
+ M(mj ) − μi(pim j )2
+
+(24) where pim j = R⊤ 
+
+> i
+
+(mj − ti) is the projection of global cell 
+
+mj into the i-th submap coordinate frame, and μi(·) and σ2 
+
+> i
+
+(·)
+
+are the predictive mean and variance of the i-th local RVM at the projected location. 
+
+3) Gauss-Newton Iteration: To solve the NLLS problem (24) using the Gauss-Newton method, we define the residual for global cell mj observed by the i-th submap as: 
+
+rim j = M(mj ) − μi(pim j )
+
+q
+
+σ2 
+
+> i
+
+(pim j ) + ϵ
+
+(25) so that f (V) = PNi=1 
+
+P 
+
+> j∈{ obs i}
+
+r2 
+
+> im j
+
+.The Gauss-Newton update ∆V = [∆ T⊤, ∆M⊤]⊤ is ob-tained by solving: 
+
+J⊤J ∆V = −J⊤r (26) where r is the stacked residual vector and J = [ JT JM ] is the Jacobian of r with respect to Tr and M, respectively. 
+
+a) Jacobian with respect to the global map: Since 
+
+M(mj ) appears linearly in rim j , the derivative is: 
+
+∂r im j
+
+∂M(mj ) = 1
+
+q
+
+σ2 
+
+> i
+
+(pim j ) + ϵ
+
+(27) 
+
+b) Jacobian with respect to submap poses: Both μi and 
+
+σ2 
+
+> i
+
+depend on the projected coordinate pim j , which depends on Tri . By the chain rule: 
+
+∂r im j
+
+∂Tri
+
+= 1
+
+pσ2 
+
+> i
+
++ ϵ
+
+
+
+− ∂μ i
+
+∂pim j
+
+− rim j
+
+2( σ2 
+
+> i
+
++ ϵ)
+
+∂σ 2
+
+> i
+
+∂pim j
+
+ ∂pim j
+
+∂Tri
+
+(28) Since the RVM prediction is differentiable with respect to spatial coordinates, both the predictive mean and predictive variance admit analytical spatial gradients. Let ki(pim j ) ∈
+
+RSi denote the kernel vector between the projected point and the Si relevance vectors of the i-th submap, and let Jk ∈
+
+R2×Si denote the Jacobian of k⊤ 
+
+> i
+
+with respect to pim j .
+
+∂μ i(pim j )
+
+∂pim j
+
+= Jkμi, ∂σ 2 
+
+> i
+
+(pim j )
+
+∂pim j
+
+= 2 JkΣiki(pim j ) (29) where μi and Σi are the posterior mean and covariance of the 
+
+i-th local RVM. The coordinate projection derivative is: 
+
+∂pim j
+
+∂Tri
+
+=
+
+ ∂R⊤
+
+> i
+
+∂θ i
+
+(xmj − ti), −R⊤
+
+> i
+
+
+
+∈ R2×3 (30) 
+
+4) Efficient Solution via Schur Complement: The Eq. (26) has the block structure: 
+
+ HT T AT M 
+
+A⊤ 
+
+> T M
+
+HM M 
+
+  ∆T
+
+∆M
+
+
+
+= −
+
+ gT
+
+gM
+
+
+
+(31) Since HM M is diagonal and can be inverted in O(G) time. Applying the Schur complement [30] to eliminate ∆M:
+
+∆T =  HT T −AT M H−1
+
+> M M
+
+A⊤
+
+> T M
+
+−1 −gT +AT M H−1
+
+> M M
+
+gM
+
+
+
+(32) After solving for ∆T, the global map update is recovered via: 
+
+∆M = H−1
+
+> M M
+
+ −gM − A⊤ 
+
+> T M
+
+∆T (33) The Schur-complement step above produces an incremental update ∆M at every outer iteration. Once the submap poses 
+
+ˆTr have converged, however, the residual objective with respect to the global map decouples across cells, and the optimal map admits a closed-form expression. This is our second proposition. 
+
+Proposition 2. Given converged submap poses ˆTr , the NLLS map objective (24) is strictly convex and separable in 
+
+{M(mj )}Gj=1 , and its unique global minimizer at cell mj is the variance-weighted fusion of the local submap predictions: 
+
+ˆM(mj ) = 
+
+PNi=1 μi(ˆ pim j )  σ2 
+
+> i
+
+(ˆ pim j ) + ϵPNi=1 1  σ2 
+
+> i
+
+(ˆ pim j ) + ϵ (34) 
+
+Proof: For a particular cell mj , the objective function is given by 
+
+fmj (M(mj )) = 
+
+> N
+
+X
+
+> i
+
+ M(mj ) − μi(ˆ pim j )2
+
+σ2 
+
+> i
+
+(ˆ pim j ) + ϵ . (35) Taking the derivative with respect to M (mj ) and setting it to zero yields. 
+
+∂f mj
+
+∂M(mj ) =
+
+> N
+
+X
+
+> i=1
+
+2  M(mj ) − μi(ˆ pim j )
+
+σ2 
+
+> i
+
+(ˆ pim j ) + ϵ = 0 . (36) Therefore, the closed-form solution can be obtained as Eq. (34). Furthermore, since fmj is a quadratic function with respect to M(mj ), its second derivative satisfies 
+
+∂2fmj
+
+∂M(mj )2 =
+
+> N
+
+X
+
+> i=1
+
+2
+
+σ2 
+
+> i
+
+(ˆ pim j ) + ϵ > 0, (37) which guarantees that the obtained solution corresponds to the global minimum rather than a local optimum. Two remarks are in order. First, Proposition 2 eliminates any iterative refinement of M once the poses have converged: the incremental Schur-complement updates (32) are needed only to drive the pose optimization, after which a single application of (34) recovers the optimal global map exactly. Second, the Algorithm 2 Variance-Weighted Submap Joining 
+
+Require: Given N overlapping local submaps, initial poses 
+
+Tr (0) , global grid resolution lw and lh, thresholds τk, τ∆
+
+Ensure: Optimized poses ˆTr , optimized global map ˆM 
+
+> 1:
+
+Construct initial global map M(0) via inverse-variance weighted fusion (22) using Tr (0)  
+
+> 2:
+
+for k = 0 to τk while ∥∆T(k)∥2 ≥ τ∆ do  
+
+> 3:
+
+Project global cells into each submap: pim j =
+
+R⊤ 
+
+> i
+
+(xmj − ti) 
+
+> 4:
+
+Query local RVMs to obtain μi(pim j ) and σ2 
+
+> i
+
+(pim j )
+
+via (20)  
+
+> 5:
+
+Compute residuals rim j via (25)  
+
+> 6:
+
+Evaluate Jacobians JT and JM via (26)  
+
+> 7:
+
+Solve for ∆T(k) and update Tr (k + 1) = Tr (k) + ∆T(k) 
+
+> 8:
+
+Recover map update: ∆M = H−1 
+
+> M M
+
+(−gM −A⊤ 
+
+> T M
+
+∆T)
+
+via (32)  
+
+> 9:
+
+Update M(k+1) = M(k) + ∆ M 
+
+> 10:
+
+end for  
+
+> 11:
+
+ˆTr = Tr (k + 1)  
+
+> 12:
+
+Compute optimized global map ˆM in closed form (34) :  
+
+> 13:
+
+return ˆTr , ˆM
+
+fusion formula (34) is functionally identical to the variance-weighted initialization (22), which is no coincidence: under independent Gaussian submap predictions, variance-weighted fusion is simultaneously the minimum-variance estimator and the global minimizer of the NLLS map objective. The com-plete procedure is summarized in Algorithm 2. IV. E XPERIMENT 
+
+We evaluate our framework, which jointly optimizes local submaps and the global map within a continuous probabilistic occupancy latent space. Lacking direct continuous submap joining baselines, we compare against GBSJ [28], a state-of-the-art discrete grid method that outperforms Cartographer [8]. For continuous mapping, we benchmark against SBKM [4] due to its similar sparse Bayesian formulation. Other contin-uous mapping methods are based on substantially different representations, making direct comparison under the same submap joining framework nontrivial. Since public practical 2D LiDAR datasets lack ground-truth sensor poses, we first evaluate the proposed method quantitatively and qualitatively in two simulated environments, followed by validation on two public practical datasets. Table I summarizes all datasets used. In all experiments, local submaps are constructed using the proposed continuous occupancy mapping framework, while Occupancy-SLAM [29] is used to optimize the internal poses within each submap. Depending on the dataset scale, the number of local submaps ranges from 3 to 10. 
+
+1) Simulation Experiments: Following the setup in [28], we employ two simulation environments with varying non-linearity, non-convex obstacles, and long corridors. Each scan TABLE I: The parameters of all datasets.                        
+
+> Dataset No. Scans Duration (s) Map Size (m) Simulation 1 3640 117 50 ×50
+> Simulation 2 2680 83 50 ×50
+> Museum b0 1G 5522 152 100 ×100
+> Museum b0 EG 22650 615 200 ×160
+
+comprises 1081 beams spanning from -135° to 135°, simu-lating a Hokuyo UTM-30LX laser scanner. To mimic real-world conditions, we add different zero-mean Gaussian noises respectively to each beam of the ground-truth-generated scans and to the odometry inputs derived from ground-truth poses, generating five datasets with distinct random noise sets per simulation environment. Table II presents the quantitative pose error comparison for GBSJ, SBKM, and our method over five simulation runs. Translation error (in meters) and rotation error (in radians) are evaluated using Mean Absolute Error (MAE) and Root Mean Square Error (RMSE). Our method consistently outperforms all discrete grid-based algorithms across every metric. This clearly validates that submap joining on a continuous map is advantageous. Furthermore, our method also achieves substan-tially better results than SBKM, demonstrating that our map-ping formulation is more effective, yielding higher predictive precision and more trustworthy uncertainty quantification. TABLE II: Pose estimation errors (translation in meters, rota-tion in radians).                                
+
+> Dataset Metric GBSJ SBKM Our Simulation 1
+> MAE (Trans/m) 0.0453 0.2837 0.0164
+> MAE (Rot/rad) 0.0012 0.0068 0.0009
+> RMSE (Trans/m) 0.0609 0.3823 0.0279
+> RMSE (Rot/rad) 0.0015 0.0174 0.0011 Simulation 2
+> MAE (Trans/m) 0.0151 0.2532 0.0051
+> MAE (Rot/rad) 0.0011 0.0106 0.0003
+> RMSE (Trans/m) 0.0205 0.2506 0.0105
+> RMSE (Rot/rad) 0.0018 0.0023 0.0013 Red and blue represent the best and second-best results, respectively.
+
+Fig. 4 shows the occupancy grid maps and continuous occupancy maps generated by submap joining in Simulation 1 and Simulation 2. It can be observed that, compared to traditional occupancy grid methods, the continuous occupancy maps provide a more reasonable representation of object boundaries, forming a smooth transition region between free space and occupied space. Meanwhile, the results of our pro-posed method are also superior to those of SBKM, particularly in the areas highlighted by red dots in the figure. As shown in the zoomed-in view of Fig. 4(e), our method classifies transitional areas at the free-occupied boundary as unknown (occupancy probability ≈ 0.5) rather than forcing a binary decision, which is actually a more reasonable representation. Based on the above experiments, we quantitatively com-pare the occupancy maps generated by submap joining in Simulation 1 and Simulation 2, adopting the Area Under the (a) Ground Truth (b) CBJS [28] (d) SBKM [4] (e) Ours 
+
+Fig. 4: Occupancy grid maps and continuous occupancy maps generated by submap joining. Initial poses come from Occupancy-SLAM. After optimization by CBSJ, SBKM, and our approach, the maps are presented for Simulation 1 (first row) and Simulation 2 (second row) on one dataset. Receiver Operating Characteristic Curve (AUC) and precision as evaluation metrics. Both the generation of ground truth labels and the handling of unknown cells follow the setup in [28]. The results are presented in Table III. On both metrics, our method achieves comparable performance to GBSJ and outperforms SBKM. The last two rows of each dataset report an ablation study on Eq. (21). We compare the proposed occupancy prediction model with a mean-only variant ( κ = 1 )that ignores predictive variance. Incorporating predictive vari-ance consistently improves both Precision and AUC across all datasets. This demonstrates that uncertainty information helps suppress overconfident predictions in ambiguous regions, leading to more reliable occupancy classification and improved map accuracy. TABLE III: Accuracy of the occupancy grid maps (reslution 10cm).                    
+
+> Dataset Method AUC Precision Simulation 1
+> GBSJ 0.9731 0.9806
+> SBKM 0.9341 0.9467 Ours w/o variance 0.9223 0.9297 Ours 0.9839 0.9812 Simulation 2
+> GBSJ 0.9846 0.9941
+> SBKM 0.9149 0.9419 Ours w/o variance 0.9227 0.9399 Ours 0.9802 0.9915
+
+2) Comparisons Using Practical Datasets: We evaluate our method against two baselines: CBSJ and SBKM. For evaluation, we use two large-scale practical datasets from [33]: Deutsches Museum b0 1G [8] and Museum b0 EG [31], with map sizes ranging from 100 m × 100 m to 200 m × 160 m.The results are presented in Fig. 5. Unlike the discrete grid maps, our continuous occupancy representation natu-rally yields smooth object boundaries without discretization artifacts. Compared with CBSJ, which also operates on a grid, our method achieves comparable accuracy while offering additional advantages, such as analytically computable gradi-ents and consistent uncertainty estimates at arbitrary query locations. Notably, the continuity of our map eliminates the need for post-processing or interpolation, leading to cleaner and geometrically more plausible reconstructions. The results on the two large-scale datasets demonstrate that our method performs on par with CBSJ in both detail capture and overall accuracy, while significantly outperforming SBKM, particularly in the areas highlighted by red dots in the figure. Meanwhile, SBKM performs better on small-scale simu-lation datasets than on large practical ones, especially the largest (b0 EG). This is because SBKM cannot optimize the increasing observation noise that comes with longer trajecto-ries, leading to degraded performance. 
+
+3) Efficiency and Convergence: On two simulation datasets, we compare the proposed method against SBKM, with a focus on map quality, model compactness, submap iteration count, and computational efficiency. 
+
+Map Quality. As shown in Fig. 6, the proposed method produces smoother occupancy maps with improved boundary continuity and more consistent free-to-occupied transitions. In contrast, the maps generated by SBKM exhibit noticeable local fluctuations and irregular occupancy boundaries, which are likely caused by approximate posterior inference under the (a) CBSJ (b) SBKM (c) Ours 
+
+Fig. 5: Experimental results on the practical datasets: Deutsches Museum b0 1G (first row) and b0 EG (second row). Our method achieves comparable performance to CBSJ and outperforms SBKM in both detail and overall quality. non-conjugate classification likelihood. In addition, we further evaluate the mapping quality in the latent space. As shown in Table IV, compared with our proposed method, the RVM-based method exhibits not only a significantly larger range of predictive mean but also a much higher predictive variance. This result indicates that the RVM-based method yields over-inflated and unreasonable variance estimates, whereas our method maintains the uncer-tainty within a reasonable range. This is another key factor leading to the suboptimal submap joining performance of the RVM-based method. Fig. 7 further compares the optimized RV distributions of SBKM and the proposed method. Positive RVs mainly correspond to occupied structures, while negative RVs describe free-space regions in the latent occupancy field. Compared with SBKM, the proposed method produces a more spa-tially organized sparse representation, where positive RVs are concentrated near occupancy boundaries and negative RVs are more uniformly distributed over free space, especially in the black-dotted region. This more structured RV distribution contributes to the improved map smoothness and boundary consistency observed in the proposed method. TABLE IV: Comparison of the Range of Predictive Mean and the Range of Predictive Variance in the Latent Space.              
+
+> Dataset Method Predictive Mean Variance Simulation 1 SBKM [-15.97,6.14] [0.0,7925.1] Ours [-1.62,1.37] [0.0,0.56]
+> Simulation 2 SBKM [-16.21,11.22] [0.0,8263.2] Ours [-1.08,2.62] [0.0,0.67]
+
+Model Compactness. Table V reports the average construc-tion time and average number of RVs per submap for each  
+
+> (a) SBKM (b) Ours
+
+Fig. 6: Visualization Comparison of Our Method and SBKM for Continuous Mapping across two datasets: Simulation 1 (first row) and Simulation 2 (second row). method. The proposed method is approximately 2.1× faster than SBKM while using nearly 1/3 the number of RVs per submap. The substantial speed improvement mainly results from the proposed Gaussian-conjugate formulation, which enables exact posterior inference without iterative Laplace approximation. Meanwhile, the reduced number of RVs indi-cates that the proposed framework learns a more compact and spatially efficient sparse representation with lower redundancy and memory consumption. 
+
+Convergence Speed. Table V further compares the conver-TABLE V: Computational Efficiency and Convergence Com-parison (Intel Core i9-14900HX).                   
+
+> Dataset Method Time/Sub RVs/Sub Iterations Simulation 1 SBKM 45 min 5488 12 Our 21 min 2082 4
+> Simulation 2 SBKM 35 min 4299 16 Our 17 min 1576 6
+
+gence behavior of different methods during submap joining. The proposed method consistently converges with substantially fewer optimization iterations while achieving lower final ob-jective errors (Table II). This improvement mainly benefits from the smoother and more spatially consistent continuous occupancy representation produced by the proposed frame-work, which provides more stable gradient information during submap joining optimization. In contrast, the approximate pos-terior inference used in SBKM introduces local fluctuations in the latent occupancy field, resulting in less stable optimization behavior and slower convergence. Overall, compared with SBKM, the proposed method achieves more compact sparse representations with fewer RVs, faster convergence, and improved mapping consistency, demonstrating superior computational efficiency and occu-pancy representation quality. 
+
+Assessment of Robustness to Initial Guess. We use Simulation 1 dataset to quantitatively evaluate the convergence percentage and the accuracy of optimized poses under different noise levels. We add zero-mean uniformly distributed noises with varying bounds to the ground truth poses of the non-reference local submap coordinate. Specifically, the noise bounds for translation and rotation were set to [ −1 m, 1 m] and [−0.15 rad, 0.15 rad] for Level 1, [ −2 m, 2 m] and [ −0.3 rad, 
+
+0.3 rad] for Level 2, and [ −3 m, 3 m] and [ −0.45 rad, 0.45 rad] for Level 3, respectively. As summarized in Table VI, our method achieves a 100% convergence rate under Level 1 and Level 2 noise, and maintains a high convergence percentage of 70% even under the most challenging Level 3 noise, demon-strating strong robustness to highly noisy initial guesses. Our algorithm using simulation 2 datasets has similar robustness performance. TABLE VI: Robustness to Initialization.           
+
+> Noise Level Convergence Percentage Average MAE of Trans (m) Average MAE of Rot (rad)
+> Level 1 (1 m, 0.15 rad) 100% 0.00379 0.0006 Level 2 (2 m, 0.3 rad) 100% 0.00402 0.0007 Level 3 (3 m, 0.45 rad) 70% 0.01142 0.0022
+
+V. C ONCLUSION 
+
+We presented the first continuous probabilistic submap joining framework that jointly optimizes local submap frames and a global occupancy field in the latent log-odds space.  
+
+> (a) SBKM (b) Ours
+
+Fig. 7: Comparison of optimized relevance vector (RV) dis-tributions between SBKM and the proposed method. Positive and negative RVs are shown in red and blue, respectively. The proposed method produces a more compact and spatially organized RV distribution with clearer separation between occupied and free-space structures. The framework is enabled by an information-preserving het-eroscedastic RVM formulation: raw observations are com-pressed into sufficient-statistic log-odds tuples, and we prove this compression preserves the weight posterior exactly. This restores Gaussian conjugacy, yields closed-form posterior mean and covariance, and supports joint update of the noise precision and the relevance set, removing the Laplace ap-proximation of classification-based RVM. On this basis, the variance-weighted joining formulation admits analytical Jaco-bians and a closed-form globally optimal map, structurally avoiding the interpolation artifacts of grid-based methods. Experiments on simulated and large-scale practical datasets confirm superior pose accuracy, global consistency, model compactness, and uncertainty calibration over state-of-the-art baselines. Future work will explore adaptive submap partition-ing based on information gain and extensions to 3D continuous occupancy mapping. REFERENCES 
+
+[1] Paul J Besl and Neil D McKay. Method for registration of 3-d shapes. In Sensor fusion IV: control paradigms and data structures , volume 1611, pages 586–606. Spie, 1992. [2] Brian Curless and Marc Levoy. A volumetric method for building complex models from range images. In Proceed-ings of the 23rd annual conference on Computer graphics and interactive techniques , pages 303–312, 1996. [3] Kevin Doherty, Jinkun Wang, and Brendan Englot. Prob-abilistic map fusion for fast, incremental occupancy map-ping with 3D Hilbert Maps. In 2016 IEEE International Conference on Robotics and Automation (ICRA) , pages 1011–1018. IEEE, 2016. [4] Thai Duong, Michael Yip, and Nikolay Atanasov. Au-tonomous navigation in unknown environments with sparse bayesian kernel-based occupancy mapping. IEEE Transactions on Robotics , 38(6):3694–3712, 2022. [5] Alberto Elfes. Using occupancy grids for mobile robot perception and navigation. Computer , 22(6):46–57, 1989. [6] Alex Fisher, Ricardo Cannizzaro, Madeleine Cochrane, Chatura Nagahawatte, and Jennifer L Palmer. Colmap: A memory-efficient occupancy grid mapping framework. 
+
+Robotics and Autonomous Systems , 142:103755, 2021. [7] Cedric Le Gentil, Cedric Pradalier, and Timothy DBarfoot. Towards efficient occupancy mapping via gaussian process latent field shaping. arXiv preprint arXiv:2506.13640 , 2025. [8] Wolfgang Hess, Damon Kohler, Holger Rapp, and Daniel Andor. Real-time loop closure in 2d lidar slam. In 
+
+2016 IEEE international conference on robotics and automation (ICRA) , pages 1271–1278. IEEE, 2016. [9] Bing-Jui Ho, Paloma Sodhi, Pedro Teixeira, Ming Hsiao, Tushar Kusnur, and Michael Kaess. Virtual occupancy grid map for submap-based pose graph slam and planning in 3d environments. In 2018 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) ,pages 2175–2182. IEEE, 2018. [10] Armin Hornung, Kai M Wurm, Maren Bennewitz, Cyrill Stachniss, and Wolfram Burgard. Octomap: An efficient probabilistic 3d mapping framework based on octrees. 
+
+Autonomous robots , 34(3):189–206, 2013. [11] Shoudong Huang, Zhan Wang, and Gamini Dissanayake. Sparse local submap joining filter for building large-scale maps. IEEE Transactions on Robotics , 24(5):1121–1130, 2008. [12] Maani Ghaffari Jadidi, Jaime Valls Miro, and Gamini Dissanayake. Warped gaussian processes occupancy mapping with uncertain inputs. IEEE Robotics and Automation Letters , 2(2):680–687, 2017. [13] Sheraz Khan, Athanasios Dometios, Chris Verginis, Costas Tzafestas, Dirk Wollherr, and Martin Buss. Rmap: a rectangular cuboid approximation framework for 3d environment mapping. Autonomous Robots , 37(3):261– 277, 2014. [14] Peter Zhi Xuan Li, Sertac Karaman, and Vivienne Sze. Gmmap: Memory-efficient continuous occupancy map using gaussian mixture model. IEEE Transactions on Robotics , 40:1339–1355, 2024. [15] Hans Moravec and Alberto Elfes. High resolution maps from wide angle sonar. In Proceedings. 1985 IEEE international conference on robotics and automation ,volume 2, pages 116–121. IEEE, 1985. [16] Simon T O’Callaghan and Fabio T Ramos. Gaussian process occupancy maps. The International Journal of Robotics Research , 31(1):42–62, 2012. [17] Fabio Ramos and Lionel Ott. Hilbert maps: Scalable continuous occupancy mapping with stochastic gradient descent. The International Journal of Robotics Research ,35(14):1717–1730, 2016. [18] Matthias Seeger. Gaussian processes for machine learn-ing. International journal of neural systems , 14(02):69– 106, 2004. [19] Ransalu Senanayake and Fabio Ramos. Bayesian hilbert maps for dynamic continuous occupancy mapping. In 
+
+Conference on Robot Learning , pages 458–471. PMLR, 2017. [20] Sebastian Thrun. Probabilistic robotics. Communications of the ACM , 45(3):52–57, 2002. [21] Luke Tierney and Joseph B Kadane. Accurate approx-imations for posterior moments and marginal densities. 
+
+Journal of the american statistical association , 81(393): 82–86, 1986. [22] Luke Tierney, Robert E Kass, and Joseph B Kadane. Fully exponential laplace approximations to expectations and variances of nonpositive functions. Journal of the american statistical association , 84(407):710–716, 1989. [23] Michael Tipping. The relevance vector machine. Ad-vances in neural information processing systems , 12, 1999. [24] Michael E Tipping. Sparse bayesian learning and the relevance vector machine. Journal of machine learning research , 1(Jun):211–244, 2001. [25] Michael E Tipping and Anita C Faul. Fast marginal likelihood maximisation for sparse bayesian models. In International workshop on artificial intelligence and statistics , pages 276–283. PMLR, 2003. [26] Ren´ e Wagner, Udo Frese, and Berthold B¨ auml. Graph slam with signed distance function maps on a humanoid robot. In 2014 IEEE/RSJ International Conference on Intelligent Robots and Systems , pages 2691–2698. IEEE, 2014. [27] Jun Wang, Jingwei Song, Liang Zhao, Shoudong Huang, and Rong Xiong. A submap joining algorithm for 3d reconstruction using an rgb-d camera based on point and plane features. Robotics and Autonomous Systems , 118: 93–111, 2019. [28] Yingyu Wang, Liang Zhao, and Shoudong Huang. Grid-based submap joining: An efficient algorithm for simul-taneously optimizing global occupancy map and local submap frames. In 2024 IEEE/RSJ International Con-ference on Intelligent Robots and Systems (IROS) , pages 10121–10128. IEEE, 2024. [29] Yingyu Wang, Liang Zhao, and Shoudong Huang. Occupancy-slam: An efficient and robust algorithm for simultaneously optimizing robot poses and occupancy map. IEEE Transactions on Robotics , 41:4057–4077, 2025. [30] Fuzhen Zhang, editor. The Schur Complement and Its Applications , volume 4 of Numerical Methods and Algorithms . Springer, New York, 2005. ISBN 978-0-387-24271-2. doi: 10.1007/b105056. [31] Jiaheng Zhao, Liang Zhao, Shoudong Huang, and Yue Wang. 2d laser slam with general features represented by implicit functions. IEEE Robotics and Automation Letters , 5(3):4329–4336, 2020. [32] Liang Zhao, Shoudong Huang, and Gamini Dissanayake. Linear slam: A linear solution to the feature-based and pose graph slam based on submap joining. In 2013 IEEE/RSJ International Conference on Intelligent Robots and Systems , pages 24–30. IEEE, 2013. [33] Liang Zhao, Yingyu Wang, and Shoudong Huang. Occupancy-slam: Simultaneously optimizing robot poses and continuous occupancy map. In Robotics: Science and Systems (RSS) , pages 1–13. MIT Press Journals, 2022. [34] Weiming Zhi, Lionel Ott, Ransalu Senanayake, and Fabio Ramos. Continuous occupancy map fusion with fast Bayesian Hilbert Maps. In 2019 International Confer-ence on Robotics and Automation (ICRA) , pages 4111– 4117. IEEE, 2019.

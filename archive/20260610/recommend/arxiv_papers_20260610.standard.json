@@ -1,0 +1,347 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-10T22:37:14.826061+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 5,
+    "deep_cap": 7,
+    "deep_selected": 5,
+    "quick_candidates": 3,
+    "quick_skim_target": 12,
+    "quick_selected": 3
+  },
+  "deep_dive": [
+    {
+      "id": "2606.06690v1",
+      "source": "arxiv",
+      "title": "RPC-GS: Gaussian Splatting with native RPC Rendering for Satellite Imagery",
+      "abstract": "We present RPC-GS, the first Gaussian Splatting framework for satellite imagery that operates natively with Rational Polynomial Camera (RPC) models. The RPC model is the de facto standard for representing the complex imaging geometry of modern pushbroom satellite sensors. To simplify rendering, prior satellite Gaussian Splatting methods replace the RPC model with perspective or affine camera approximations, leading to geometric errors during reconstruction. RPC-GS avoids these approximations by projecting Gaussian means and covariances directly through the RPC model during the splatting process. We embed the RPC model in a chain of carefully selected geo-coordinate transformations representing a mapping from splatting-suitable scene coordinates to image coordinates. To map the Gaussian covariance matrices, we derive a numerically robust Jacobian-based covariance projection for the (partially nonlinear) coordinate transformations. Since RPCs lack an explicit notion of camera depth, we integrate a metric ray-based depth formulation. We benchmark RPC, perspective, and affine camera models in a unified framework, with our native RPC renderer consistently achieving the lowest reconstruction error on leading satellite benchmark datasets, improving mean altitude error over perspective and affine approximations by 29.6% and 63.8% on DFC2019, and by 9.9% and 37.9% on IARPA2016. We release our code to support future research of Gaussian Splatting in the satellite imaging domain.",
+      "authors": [
+        "Valentin Wagner",
+        "Sebastian Bullinger",
+        "Christoph Bodensteiner",
+        "Michael Arens"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-04T20:12:31+00:00",
+      "link": "https://arxiv.org/pdf/2606.06690v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Gaussian Splatting with RPC model for satellite scene reconstruction and rendering",
+      "llm_evidence_cn": "使用RPC模型的高斯泼溅进行卫星场景重建与渲染",
+      "llm_evidence": "使用RPC模型的高斯泼溅进行卫星场景重建与渲染",
+      "canonical_evidence": "使用RPC模型的高斯泼溅进行卫星场景重建与渲染",
+      "llm_tldr_en": "RPC-GS is the first Gaussian Splatting framework that natively integrates Rational Polynomial Camera models for satellite imagery, avoiding geometric errors from camera approximations and enabling accurate 3D reconstruction.",
+      "llm_tldr_cn": "现有卫星高斯泼溅方法用透视或仿射相机近似替代RPC模型，导致重建几何误差。RPC-GS首次在泼溅过程中直接使用RPC模型投影高斯均值和协方差，通过精心设计的坐标变换链，在投影和射线消元阶段统一处理。实验表明该方法能忠实重建卫星影像的几何精细结构，为遥感三维重建提供了无需近似的高保真高斯泼溅方案。",
+      "llm_tldr": "现有卫星高斯泼溅方法用透视或仿射相机近似替代RPC模型，导致重建几何误差。RPC-GS首次在泼溅过程中直接使用RPC模型投影高斯均值和协方差，通过精心设计的坐标变换链，在投影和射线消元阶段统一处理。实验表明该方法能忠实重建卫星影像的几何精细结构，为遥感三维重建提供了无需近似的高保真高斯泼溅方案。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.07891v1",
+      "source": "arxiv",
+      "title": "C3VD-DEFCOL: A Deformable Colonoscopy Dataset with Time-Resolved 3D Ground Truth and Realistic Appearance",
+      "abstract": "3D reconstruction could improve colonoscopy by estimating mucosal coverage and alerting clinicians to missed regions during screening. However, algorithm development is limited as no current datasets provide both a realistic in vivo appearance and dense, time-resolved 3D ground truth, especially under non-rigid deformation. We present C3VD-DEFCOL, a framework and dataset for evaluating deformable colonoscopy reconstruction with paired geometry and realistic texture. Starting from C3VD/C3VDv2 colon meshes and camera trajectories, we generate controlled deformations of the colon surface, including peristaltic waves and centerline motion, and render per-frame depth, surface normals, optical flow, camera poses, and time-stamped 3D meshes. We then use the rendered geometry, primarily depth, to condition an LTX-2.3-based sim-to-real translation model that produces RGB clips with in vivo-like mucosal color, texture, vasculature, and specular appearance while preserving the underlying 3D scene structure. The resulting dataset contains 110 videos from 11 unique colon mesh geometries, with varying camera trajectories, appearances, and parameterized deformation regimes, including three peristaltic severity levels that serve as controlled evaluation axes. We evaluate the generated videos using appearance realism, geometric consistency, and temporal consistency metrics, and use the paired ground truth to benchmark the downstream task of pose estimation in deformable 3D reconstruction. Our experiments show how pose estimation error increases with increasing deformation severity, providing a controlled stress test that is not possible with existing in vivo datasets. Overall, C3VD-DEFCOL is designed as a reproducible, quantitative evaluation platform for testing deformable 3D reconstruction algorithms, with the goal of reducing the domain gap between synthetic datasets and in vivo colonoscopy.",
+      "authors": [
+        "Ethan Luk",
+        "Mayank V. Golhar",
+        "Anthony Song",
+        "Raúl Iranzo",
+        "Víctor M. Batlle",
+        "Lalithkumar Seenivasan",
+        "José M. M. Montiel",
+        "Nicholas J. Durr"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-05T22:59:32+00:00",
+      "link": "https://arxiv.org/pdf/2606.07891v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:endo-dgs"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "provides a colonoscopy dataset with dense time-resolved 3D ground truth (depth, surface normals) under deformation, directly enabling depth estimation and reconstruction evaluation.",
+      "llm_evidence_cn": "提供带有密集时序三维真值（深度、表面法线）的变形结肠镜数据集，直接支持深度估计和重建评估。",
+      "llm_evidence": "提供带有密集时序三维真值（深度、表面法线）的变形结肠镜数据集，直接支持深度估计和重建评估。",
+      "canonical_evidence": "提供带有密集时序三维真值（深度、表面法线）的变形结肠镜数据集，直接支持深度估计和重建评估。",
+      "llm_tldr_en": "C3VD-DEFCOL introduces a colonoscopy dataset with controlled deformations and per-frame depth, normals, flow, and poses, enabling evaluation of deformable endoscopic 3D reconstruction methods.",
+      "llm_tldr_cn": "C3VD-DEFCOL提出了一个变形结肠镜数据集，包含受控的蠕动变形和中心线运动，并提供逐帧深度、表面法线、光流和相机位姿。该数据集结合了逼真纹理和精确几何真值，弥补了现有内镜数据集缺乏时序变形真值的空白，为可变形内镜三维重建算法的开发和评估提供了重要基准。",
+      "llm_tldr": "C3VD-DEFCOL提出了一个变形结肠镜数据集，包含受控的蠕动变形和中心线运动，并提供逐帧深度、表面法线、光流和相机位姿。该数据集结合了逼真纹理和精确几何真值，弥补了现有内镜数据集缺乏时序变形真值的空白，为可变形内镜三维重建算法的开发和评估提供了重要基准。",
+      "llm_tags": [
+        "query:endo-dgs"
+      ],
+      "matched_query_tag": "query:endo-dgs",
+      "matched_query_text": "depth estimation for endoscopic scenes",
+      "matched_requirement_id": "req-12",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.08284v1",
+      "source": "arxiv",
+      "title": "G2G: Exploiting Intra-Group Geometry for Inter-Group Pose Estimation",
+      "abstract": "Recovering the relative 6-DoF pose between two image groups underlies cross-sequence relocalization and multi-camera rig odometry. Each group carries known intra-group geometry from visual odometry or rig calibration, and pretrained multi-view backbones already fuse such geometry into visual features. Yet current models treat all views as an unstructured set, leaving cross-group reasoning as the missing piece. We introduce \\ours{}, which keeps the foundation model entirely frozen and adds three lightweight trainable modules to bridge the two groups: a perceiver resampler, a cross-group bridge with merged self-attention, and a multi-frame pose head. The trainable footprint totals about 32M parameters, under 6\\% of the full model, and is supervised only by relative poses. Across four datasets that span indoor and outdoor simulation, real-world cross-season capture, and zero-shot sim-to-real transfer, \\ours{} attains state-of-the-art accuracy on both tasks, while every baseline is retrained with its full original supervision. Code is available at https://github.com/WeiYuFei0217/G2G.",
+      "authors": [
+        "Yufei Wei",
+        "Shuhao Ye",
+        "Chenxiao Hu",
+        "Yiyuan Pan",
+        "Dongyu Feng",
+        "Rong Xiong",
+        "Yue Wang",
+        "Yanmei Jiao"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.RO"
+      ],
+      "published": "2026-06-06T18:08:45+00:00",
+      "link": "https://arxiv.org/pdf/2606.08284v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "estimates relative 6-DoF pose between image groups for relocalization and odometry, leveraging intra-group geometry.",
+      "llm_evidence_cn": "利用组内几何估计图像组间的相对六自由度位姿，用于重定位和里程计。",
+      "llm_evidence": "利用组内几何估计图像组间的相对六自由度位姿，用于重定位和里程计。",
+      "canonical_evidence": "利用组内几何估计图像组间的相对六自由度位姿，用于重定位和里程计。",
+      "llm_tldr_en": "G2G estimates relative pose between two image groups by adding lightweight trainable modules to a frozen multi-view backbone, exploiting known intra-group geometry for accurate cross-group pose.",
+      "llm_tldr_cn": "G2G提出一种利用组内几何进行组间位姿估计的方法。在冻结的多视图骨干网络上添加轻量可训练模块，包括感知器重采样、组间桥接和多帧位姿头，从而从两个图像组中恢复精确的相对六自由度位姿，适用于跨序列重定位和多相机里程计。",
+      "llm_tldr": "G2G提出一种利用组内几何进行组间位姿估计的方法。在冻结的多视图骨干网络上添加轻量可训练模块，包括感知器重采样、组间桥接和多帧位姿头，从而从两个图像组中恢复精确的相对六自由度位姿，适用于跨序列重定位和多相机里程计。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "accurate camera pose tracking",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.09569v1",
+      "source": "arxiv",
+      "title": "Efficient Minimal Solvers for Relative Pose Estimation in Autonomous Driving Applications",
+      "abstract": "With the advancement of visual sensing systems, computer vision is playing an increasingly important role in autonomous driving and robot navigation. Relative pose estimation in multi-camera systems is essential for accurate vehicle localization and environment perception, demanding high real-time performance and robustness. Existing methods, however, often involve high computational costs and rely heavily on abundant feature matches, limiting their applicability in time-sensitive driving scenarios. To address these limitations, this paper introduces a unified framework for efficient relative pose estimation, built upon a novel translation parameterization and first-order rotation approximation. Within this framework, we propose three efficient minimal solvers specifically designed for autonomous vehicles. The first solver integrates the vertical direction prior from Inertial Measurement Units (IMUs), the second utilizes the rotation axis direction prior during steering maneuvers, and the third is designed for planar motion - a realistic assumption for ground vehicles operating on structured roads. By reducing both the minimal number of point correspondences and the algebraic complexity, our methods enable faster hypothesis generation within RANSAC-based pipelines, improving suitability for real-time systems. Extensive experiments on synthetic datasets and the KITTI autonomous driving benchmark demonstrate that the proposed solvers achieve a favorable balance between speed and accuracy compared to existing state-of-the-art algorithms.",
+      "authors": [
+        "Tao Li",
+        "Liang Liu",
+        "Jianli Han",
+        "Weimin Lv"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.CV"
+      ],
+      "published": "2026-06-08T14:43:53+00:00",
+      "link": "https://arxiv.org/pdf/2606.09569v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "efficient minimal solvers for relative pose estimation in multi-camera systems",
+      "llm_evidence_cn": "多相机系统的高效相对姿态最小求解器",
+      "llm_evidence": "多相机系统的高效相对姿态最小求解器",
+      "canonical_evidence": "多相机系统的高效相对姿态最小求解器",
+      "llm_tldr_en": "Introduces a unified framework with novel parameterization for fast, robust relative pose estimation using minimal solvers, crucial for real-time visual SLAM in autonomous driving.",
+      "llm_tldr_cn": "针对自动驾驶中多相机系统高效相对姿态估计的需求，提出一种基于新颖平移参数化和一阶旋转近似的统一框架。该框架包含三种最小求解器，显著降低了计算成本并减少对特征匹配的依赖，在保证速度的同时提供了鲁棒的姿态估计，对实时SLAM前端具有重要意义。",
+      "llm_tldr": "针对自动驾驶中多相机系统高效相对姿态估计的需求，提出一种基于新颖平移参数化和一阶旋转近似的统一框架。该框架包含三种最小求解器，显著降低了计算成本并减少对特征匹配的依赖，在保证速度的同时提供了鲁棒的姿态估计，对实时SLAM前端具有重要意义。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "accurate camera pose tracking",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.10019v1",
+      "source": "arxiv",
+      "title": "Generalized-CVO: Fast and Correspondence-Free Local Point Cloud Registration with Second Order Riemannian Optimization",
+      "abstract": "We propose a fast and correspondence-free local point cloud registration method that leverages geometric surface structure and reproducing kernel Hilbert space (RKHS) embeddings. The method represents point clouds as continuous functions with point-wise anisotropic kernels that encode local geometry. This formulation improves alignment along surface normals while relaxing alignment along tangential directions. To solve the resulting registration problem, we propose a second-order on-manifold optimization scheme with approximate Riemannian Hessians, achieving a speedup of up to 10x over the first-order solvers used in prior correspondence-free RKHS-based methods. We demonstrate improved frame-to-frame LiDAR and RGB-D tracking accuracy across diverse indoor and outdoor datasets. On a LiDAR tracking registration task in the driving domain, we achieve a reduction of $>55\\%$ in both translational and rotational drift in challenging feature-sparse environments. On object registration benchmarks, we show improved robustness over ICP-based methods and further gains when refining global initialization, particularly under moderate misalignment.",
+      "authors": [
+        "Ray Zhang",
+        "Marcus Greiff",
+        "Thomas Lew",
+        "John Subosits"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI",
+        "cs.RO"
+      ],
+      "published": "2026-06-08T18:07:11+00:00",
+      "link": "https://arxiv.org/pdf/2606.10019v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "correspondence-free registration using anisotropic kernels and second-order optimization",
+      "llm_evidence_cn": "使用各向异性核的无对应点云配准",
+      "llm_evidence": "使用各向异性核的无对应点云配准",
+      "canonical_evidence": "使用各向异性核的无对应点云配准",
+      "llm_tldr_en": "Proposes Generalized-CVO for fast, correspondence-free LiDAR registration using anisotropic kernels and Riemannian optimization, achieving up to 10x speedup for frame-to-frame odometry.",
+      "llm_tldr_cn": "Generalized-CVO提出了一种无对应局部点云配准方法，利用各向异性核捕获局部几何，并通过二阶黎曼优化加速求解。该方法在帧间LiDAR里程计任务上比一阶方法快10倍，提高了实时SLAM中前端配准的效率，适用于自动驾驶和机器人定位。",
+      "llm_tldr": "Generalized-CVO提出了一种无对应局部点云配准方法，利用各向异性核捕获局部几何，并通过二阶黎曼优化加速求解。该方法在帧间LiDAR里程计任务上比一阶方法快10倍，提高了实时SLAM中前端配准的效率，适用于自动驾驶和机器人定位。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "accurate camera pose tracking",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2606.06255v1",
+      "source": "arxiv",
+      "title": "RadiusFPS: Efficient Farthest Point Sampling on CPUs and GPUs via Spherical Voxel Pruning",
+      "abstract": "Point clouds are a primary sensory representation for robotic perception, underpinning LiDAR-based autonomous driving, simultaneous localization and mapping (SLAM), and navigation. Within these pipelines, Farthest Point Sampling (FPS) is the most well-known downsampling operator, as its uniform coverage preserves the geometric structure on which downstream perception relies. However, the large time complexity of classical FPS scales poorly with the million-point-per-second rates of modern 3D sensors, making it a dominant latency bottleneck that conflicts with the real-time and limited onboard compute budgets of robotic systems. Therefore, we propose RadiusFPS, an FPS acceleration framework based on spherical voxel pruning that preserves the standard FPS update rule under the same initialization and tie-breaking policy. By indexing the point cloud with spherical voxels, RadiusFPS derives a conservative geometric bound that prunes redundant distance computations in each iteration, complemented by a coordinate-wise point-skip test that removes residual updates. We further introduce RadiusFPS-G, a warp-level GPU implementation that fuses voxel selection, pruning, and distance update into memory-coalesced kernels, eliminating costly global-memory round-trips. On indoor (S3DIS, ScanNet) and outdoor LiDAR (SemanticKITTI) benchmarks, RadiusFPS-G attains up to 2.5x speedup over GPU-based FPS and matches or exceeds QuickFPS among the evaluated methods while using roughly half its GPU memory, with comparable segmentation accuracy. When coupled with the learning-based FastPoint sampler, the resulting pipeline achieves the fastest End-to-End inference among all evaluated configurations. These properties make high-quality FPS-style sampling practical for latency- and memory-constrained robotic vision.",
+      "authors": [
+        "Ziyang Yu",
+        "Xiang Li",
+        "Qiong Chang",
+        "Jun Miyazaki"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.CV",
+        "cs.DC"
+      ],
+      "published": "2026-06-04T14:57:05+00:00",
+      "link": "https://arxiv.org/pdf/2606.06255v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "efficient FPS acceleration using spherical voxel pruning for SLAM pipelines",
+      "llm_evidence_cn": "通过球形体素剪枝加速FPS支持实时SLAM",
+      "llm_evidence": "通过球形体素剪枝加速FPS支持实时SLAM",
+      "canonical_evidence": "通过球形体素剪枝加速FPS支持实时SLAM",
+      "llm_tldr_en": "RadiusFPS accelerates farthest point sampling via spherical voxel pruning, maintaining geometric structure while reducing latency, benefiting real-time SLAM and robotic perception.",
+      "llm_tldr_cn": "针对现有最远点采样（FPS）在百万点/秒传感速率下的计算瓶颈，RadiusFPS提出球形体素剪枝加速框架。该方法保留均匀采样覆盖的几何结构，同时在CPU和GPU上实现显著加速，为实时SLAM和机器人感知中的点云处理提供了高效的下采样方案。",
+      "llm_tldr": "针对现有最远点采样（FPS）在百万点/秒传感速率下的计算瓶颈，RadiusFPS提出球形体素剪枝加速框架。该方法保留均匀采样覆盖的几何结构，同时在CPU和GPU上实现显著加速，为实时SLAM和机器人感知中的点云处理提供了高效的下采样方案。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Visual SLAM methods for camera tracking and mapping",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.10442v1",
+      "source": "arxiv",
+      "title": "Information-Preserving Continuous Occupancy Mapping with Variance-Weighted Submap Joining",
+      "abstract": "Large-scale SLAM remains challenging due to accumulated trajectory drift and the increasing computational cost of maintaining global consistency. Submap joining alleviates these issues by constructing locally consistent submaps and subsequently fusing them into a global map. However, existing occupancy-based submap joining methods operate on discrete grids, resulting in non-smooth gradients during optimization and neglecting the uncertainty associated with occupancy estimates. We propose the first continuous probabilistic submap joining framework that jointly optimizes submap poses and a global occupancy field in the latent log-odds space. The framework employs an information-preserving sparse Bayesian formulation that compresses raw occupancy observations into sufficient-statistic log-odds tuples while retaining the posterior information of the original observations. This yields closed-form predictive mean and variance estimates for occupancy mapping, which directly enable a submap joining formulation with analytical Jacobians, leading to more accurate submap joining and yielding a closed-form optimal global map upon pose convergence. Experiments on both simulated and large-scale real-world datasets demonstrate that the proposed method achieves higher pose accuracy and improved global consistency than state-of-the-art grid-based submap joining approaches, while producing more compact map representations and better-calibrated uncertainty estimates than existing continuous occupancy mapping methods.",
+      "authors": [
+        "Zhuhua Bai",
+        "Yingyu Wang",
+        "Liang Zhao",
+        "Shoudong Huang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-06-09T05:38:11+00:00",
+      "link": "https://arxiv.org/pdf/2606.10442v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "proposes a continuous probabilistic submap joining method for SLAM occupancy mapping, improving global consistency and uncertainty handling.",
+      "llm_evidence_cn": "提出一种用于SLAM占据地图的连续概率子图融合方法，改善全局一致性和不确定性处理。",
+      "llm_evidence": "提出一种用于SLAM占据地图的连续概率子图融合方法，改善全局一致性和不确定性处理。",
+      "canonical_evidence": "提出一种用于SLAM占据地图的连续概率子图融合方法，改善全局一致性和不确定性处理。",
+      "llm_tldr_en": "The paper presents a continuous occupancy mapping framework for large-scale SLAM that jointly optimizes submap poses and a global occupancy field, preserving information and handling uncertainty.",
+      "llm_tldr_cn": "该论文针对大规模SLAM中的子图融合问题，提出首个连续概率子图融合框架。通过将子图位姿和全局占据场在隐式对数赔率空间联合优化，并采用方差加权融合策略，在保持信息不丢失的同时处理占据估计的不确定性。实验表明该方法在全局一致性和不确定性量化上优于离散网格方法。",
+      "llm_tldr": "该论文针对大规模SLAM中的子图融合问题，提出首个连续概率子图融合框架。通过将子图位姿和全局占据场在隐式对数赔率空间联合优化，并采用方差加权融合策略，在保持信息不丢失的同时处理占据估计的不确定性。实验表明该方法在全局一致性和不确定性量化上优于离散网格方法。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Visual SLAM methods for camera tracking and mapping",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.09477v1",
+      "source": "arxiv",
+      "title": "Efficient Minimal Solvers for Visual-Inertial Relative Pose Estimation in Multi-Camera Systems",
+      "abstract": "Estimating the relative poses of multi-camera systems is a fundamental problem in computer vision, with critical applications in autonomous vehicles, mobile devices, and unmanned aerial vehicles (UAVs). However, existing solutions often suffer from high computational complexity or rely on an excessive number of point correspondences, limiting their real-world applicability. To address these limitations, we propose two efficient minimal solvers for estimating the relative poses of multi-camera systems using a novel parameterization. The first solver leverages the vertical direction prior provided by Inertial Measurement Units (IMUs), while the second utilizes the rotation axis direction prior from IMUs. Our methods require only four point correspondences and reduce the problem of multi-camera relative pose estimation to solving a univariate 6th-degree polynomial, a significant improvement over existing approaches, which typically involve 8th-degree polynomials. This reduction in computational complexity and correspondence requirements makes our solvers particularly effective when integrated into RANSAC frameworks, demonstrating strong potential for visual odometry applications. Through rigorous evaluations on synthetic data and the KITTI benchmark, our methods achieved superior computational efficiency and competitive accuracy compared to state-of-the-art algorithms.",
+      "authors": [
+        "Tao Li",
+        "Zhenbao Yu",
+        "Banglei Guan",
+        "Jianli Han",
+        "Weimin Lv"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-08T13:36:27+00:00",
+      "link": "https://arxiv.org/pdf/2606.09477v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "proposes efficient minimal solvers for visual-inertial relative pose, essential for multi-camera SLAM",
+      "llm_evidence_cn": "提出视觉惯性相对位姿的高效最小求解器，适用于多相机SLAM",
+      "llm_evidence": "提出视觉惯性相对位姿的高效最小求解器，适用于多相机SLAM",
+      "canonical_evidence": "提出视觉惯性相对位姿的高效最小求解器，适用于多相机SLAM",
+      "llm_tldr_en": "Introduces two efficient minimal solvers for relative pose estimation of multi-camera systems using IMU priors, requiring only 2 or 3 point correspondences, significantly reducing computational cost.",
+      "llm_tldr_cn": "多相机系统相对位姿估计是视觉SLAM和自主导航的基础，但现有方法计算复杂度高或需要大量点对应。本文提出两种高效最小化求解器，分别利用IMU提供的垂直方向和旋转轴方向先验，仅需2或3个点对应即可求解。实验证明在保持高精度的同时极大降低了计算成本，对实时SLAM系统具有重要意义。",
+      "llm_tldr": "多相机系统相对位姿估计是视觉SLAM和自主导航的基础，但现有方法计算复杂度高或需要大量点对应。本文提出两种高效最小化求解器，分别利用IMU提供的垂直方向和旋转轴方向先验，仅需2或3个点对应即可求解。实验证明在保持高精度的同时极大降低了计算成本，对实时SLAM系统具有重要意义。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Visual SLAM methods for camera tracking and mapping",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}
