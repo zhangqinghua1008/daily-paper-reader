@@ -1,0 +1,69 @@
+{
+  "label": "2026-06-11",
+  "date": "2026-06-11",
+  "generated_at": "2026-06-11T22:35:28",
+  "count": 4,
+  "papers": [
+    {
+      "paper_id": "202606/11/2606.10645v1-manisplat-manipulation-trajectory-synthesis-from-monocular-video-via-decoupled-3d-gaussian-splatting",
+      "section": "deep",
+      "title_en": "ManiSplat: Manipulation Trajectory Synthesis from Monocular Video via Decoupled 3D Gaussian Splatting",
+      "authors": "Wenhao Hu, Haonan Zhou, Liu Liu, Yun Du, Xinjie Wang, Ziang Li, Zhizhong Su, Gaoang Wang",
+      "date": "2026-06-09",
+      "pdf": "https://arxiv.org/pdf/2606.10645v1",
+      "score": "9.0",
+      "evidence": "使用三维高斯泼溅从单目视频重建解耦的高斯数字孪生",
+      "tldr": "针对从真实世界单目机器人视频中重建动态交互三维场景的挑战，提出ManiSplat框架，利用三维高斯泼溅从单目自我中心视频重建可控且解耦的数字孪生。该方法引入图结构解耦表示，将机器人、物体和背景分离为独立的高斯表示，支持复杂交互和轨迹合成，体现了三维高斯溅射在场景表示和实时渲染中的潜力。",
+      "tags": "query:gs-slam",
+      "abstract_en": "Reconstructing dynamic and interactive 3D scenes from real-world observations remains a fundamental challenge in computer vision and robotics. While recent advances in 3D Gaussian Splatting have enabled high-fidelity static reconstruction, extending it to interactive environments with articulated robots and manipulable objects remains difficult due to complex contact interactions and abrupt pose changes. To address these challenges, we introduce ManiSplat, a unified framework that reconstructs controllable and decoupled Gaussian digital twins directly from monocular ego-view robotic videos. Our method introduces a Graph-Structured Disentangled Representation that separates the robot, objects, and background into independently optimizable Gaussian subfields organized within a scene graph. To ensure stability, we propose a Task-Oriented Spatio-Temporal Alignment module that leverages the inherent logic of manipulation tasks-alternating between Motion and Skill phases-to construct accurate pseudo-ground-truth trajectories. Finally, a joint photometric-geometric optimization ensures the reconstructed scenes are temporally coherent, physically consistent, and simulation-ready. Extensive experiments demonstrate that our approach reconstructs interaction-driven dynamic scenes with high fidelity and controllability, effectively supporting downstream robotic tasks and policy learning.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202606/11/2606.11894v1-wild3r-feed-forward-3d-gaussian-splatting-from-unconstrained-sparse-photo-collection",
+      "section": "deep",
+      "title_en": "Wild3R: Feed-Forward 3D Gaussian Splatting from Unconstrained Sparse Photo Collection",
+      "authors": "Yuto Furutani, Takashi Otonari, Kaede Shiohara, Toshihiko Yamasaki",
+      "date": "2026-06-10",
+      "pdf": "https://arxiv.org/pdf/2606.11894v1",
+      "score": "8.0",
+      "evidence": "提出前馈式3D高斯泼溅用于体积场景表示和实时渲染",
+      "tldr": "传统3D高斯泼溅(3DGS)因需逐场景优化而耗时，现有前馈方法虽提速，但在光照多变、含瞬态物体的无约束真实照片集合中表现不佳。Wild3R为此提出前馈3DGS方法，针对训练数据缺乏问题，构建了包含200场景、170种光照条件及瞬态物体的WildCity数据集（总计33.75万张图像），通过以参考视图为条件的跨视角外观一致性学习，能有效去除瞬态内容。实验表明，Wild3R在无约束稀疏照片集上显著超越此前的前馈方法，性能比肩逐场景优化的传统方案，为真实世界复杂照片的高效3D重建开辟了新路径。",
+      "tags": "query:gs-slam",
+      "abstract_en": "Feed-forward 3D Gaussian Splatting (3DGS) removes the need for time-consuming per-scene optimization required by traditional 3DGS. However, existing feed-forward approaches struggle with real-world photo collections that include diverse lighting conditions and transient objects. In this paper, we present Wild3R, a feed-forward approach for unconstrained sparse photo collections. The main bottleneck is the lack of training data that provides multiple viewpoints, a variety of illuminations, and transient variations necessary for learning robust scene representations. To address this, we introduce the WildCity dataset, which comprises 200 scenes, 170 lighting conditions, and transient objects, resulting in 337,500 images in total. By leveraging the dataset, our model learns appearance consistency across viewpoints conditioned on reference views, while removing transient content. Extensive experiments demonstrate that our method outperforms existing feed-forward approaches and achieves results competitive with prior per-scene optimization-based methods.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202606/11/2606.09606v1-path-traced-inverse-rendering-with-global-illumination-in-3d-gaussian-fields",
+      "section": "quick",
+      "title_en": "Path-Traced Inverse Rendering with Global Illumination in 3D Gaussian Fields",
+      "authors": "Junke Zhu, Hao Zhang, Yutian Zhu, Ang Li, Chenxiao Hu, Meng Gai, Fei Zhu, Zhangjin Huang, Sheng Li",
+      "date": "2026-06-08",
+      "pdf": "https://arxiv.org/pdf/2606.09606v1",
+      "score": "6.0",
+      "evidence": "使用3D高斯场的路径追踪逆渲染并考虑全局光照",
+      "tldr": "针对3D高斯场逆渲染中光栅化与路径追踪管线不匹配、忽略间接光照的问题，提出无光栅化的路径追踪逆渲染框架。通过定义路径空间等效交互模型，使蒙特卡洛路径追踪无偏，并实现一致的梯度传播。在完整渲染方程下联合优化材质与球面高斯环境，获得精确材质反演和高质量路径追踪渲染，显著改善阴影、反射和重光照效果。该框架统一了光线追踪流，为物理准确的逆渲染提供了新方案。",
+      "tags": "query:gs-slam",
+      "abstract_en": "Ray tracing enables 3D Gaussian fields to serve as a representation for physically based light transport. Faithful inverse rendering requires forward rendering and backward optimization to be defined within a consistent light-transport pipeline. Existing inverse rendering methods estimate G-buffers via splatting and optimize materials in screen space, tying the recovered properties to a rasterization-based pipeline. This pipeline mismatch, together with simplified rendering equations that neglect indirect illumination, often leads to inconsistent shading, visible artifacts, and inaccurate material-lighting estimation under path-traced rendering. Therefore, we propose a splatting-free path-traced inverse rendering framework for 3D Gaussian fields, where forward light transport and backward gradient propagation are defined within a unified ray-tracing pipeline. Our key idea is to define a path-space equivalent interaction model for overlapping Gaussian primitives, under which Monte-Carlo-based path tracing is unbiased for the induced light-transport integral, while pathwise gradients are replayed over the same ray-traced interactions rather than splatting-derived screen-space buffers. The framework optimizes materials and a compact Spherical-Gaussian environment under the full rendering equation with ray-traced visibility and multi-bounce light transport. Extensive experiments demonstrate competitive material inversion and improved path-traced rendering quality, producing more plausible shadows, reflections, and relighting results under global illumination.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202606/11/2606.12048v1-point-cloud-segmentation-for-autonomous-clip-positioning-in-laparoscopic-cholecystectomy-on-a-phantom",
+      "section": "quick",
+      "title_en": "Point Cloud Segmentation for Autonomous Clip Positioning in Laparoscopic Cholecystectomy on a Phantom",
+      "authors": "Balázs Gyenes, Nikolai Franke, Paul Maria Scheikl, Pit Henrich, Rayan Younis, Gerhard Neumann, Martin Wagner, Franziska Mathis-Ullrich",
+      "date": "2026-06-10",
+      "pdf": "https://arxiv.org/pdf/2606.12048v1",
+      "score": "6.0",
+      "evidence": "在腹腔镜手术中使用点云分割实现自主夹定位",
+      "tldr": "针对腹腔镜手术数据稀缺与高精度要求，提出首个基于点云分割的自主夹子定位系统。通过合成数据预训练与新颖增强，仅用60个真实样本实现精确分割，并可视化末端运动以保障可解释性。在物理模型上达到0.75mm定位精度（95%成功率）与100%夹子定位成功率。为手术自动化提供可验证方案，推广至其他高精度任务。",
+      "tags": "query:endo-dgs",
+      "abstract_en": "High-risk applications in robotics, such as robot-assisted surgery, present unique challenges. These systems must be both highly precise and interpretable in order to be deployed in environments with very low tolerance for error or unsafe exploration. We present the first robotic system to demonstrate autonomous clip positioning on a physical phantom in laparoscopic surgery, one of the most common interventions in general surgery. After segmentation of a colorless point cloud from a single camera, target positions for the clips are extracted using spline interpolation, and can then be adjusted by the human operator. The segmentation model is trained on only 60 hand-labeled real point clouds, reflecting data scarcity in the surgical domain. We overcome this with a combination of pre-training on 128,000 synthetic point clouds and two novel data augmentation techniques. The motion of the end-effector to each target is visualized for the operator, satisfying the unique motion constraints of minimally-invasive surgery while ensuring that the robot's actions are verifiable and interpretable. In real robot experiments, our system localizes targets with the required precision of 0.75mm at a 95% success rate and executes autonomous clip positioning with a 100% success rate. We provide insights that are applicable to many other surgical and non-surgical tasks that require identifying and navigating to a precise target. Source code and project page: https://github.com/balazsgyenes/kirurc",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
