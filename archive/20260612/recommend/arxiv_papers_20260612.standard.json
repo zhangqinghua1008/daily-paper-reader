@@ -1,0 +1,215 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-12T21:48:14.115894+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 4,
+    "deep_cap": 7,
+    "deep_selected": 4,
+    "quick_candidates": 1,
+    "quick_skim_target": 12,
+    "quick_selected": 1
+  },
+  "deep_dive": [
+    {
+      "id": "2606.11841v1",
+      "source": "arxiv",
+      "title": "Scene-Adaptive Nonlinear Tone Curves for Pseudo Ground-Truth Generation in Low-Light 3D Gaussian Splatting",
+      "abstract": "Low-light novel view synthesis is challenging because dark multi-view images contain noise, weak structural detail, and compressed dynamic range. Recent 3D Gaussian Splatting (3DGS) methods address these challenges by generating pseudo ground-truth (pseudo-GT) images as supervision targets when paired normal-light references are unavailable. Existing pseudo-GT methods apply a uniform linear gain to all pixels, which clips bright regions while providing insufficient enhancement in dark regions, limiting reconstruction quality. We observe that nonlinear tone mappings, long established in 2D low-light enhancement, have not been explored for pseudo-GT generation in 3D reconstruction. Accordingly, we propose a scene-adaptive nonlinear tone-curve framework that replaces linear pseudo-GT with nonlinear alternatives. The framework introduces percentile-based normalisation for scene-agnostic curve application, a scene-adaptive offset for automatic black-level adjustment, and two complementary curves: Adaptive SoftExp (ASE), a bounded exponential curve, and Adaptive Poly3 (AP3), a data-driven cubic polynomial. The module changes only the pseudo-GT computation and leaves the 3DGS backbone unchanged. Experiments on three benchmarks covering 21 scenes show that both curves consistently outperform the linear baseline with PSNR improvements up to +4.34 dB on LOM and +3.25 dB on RealX3D. Both curves achieve similar performance despite their different mathematical forms, suggesting the improvement is curve-agnostic. Code is available at https://github.com/lvmingzhe/adaptiveToneCurve",
+      "authors": [
+        "Mingzhe Lyu",
+        "Jinqiang Cui",
+        "Hong Zhang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-10T09:20:23+00:00",
+      "link": "https://arxiv.org/pdf/2606.11841v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "Scene-adaptive nonlinear tone curves improve low-light 3DGS rendering",
+      "llm_evidence_cn": "场景自适应非线性色调曲线改进低光3DGS渲染",
+      "llm_evidence": "场景自适应非线性色调曲线改进低光3DGS渲染",
+      "canonical_evidence": "场景自适应非线性色调曲线改进低光3DGS渲染",
+      "llm_tldr_en": "Improves low-light 3D Gaussian Splatting by generating pseudo ground-truth via adaptive nonlinear tone curves, avoiding clipping and insufficient enhancement.",
+      "llm_tldr_cn": "针对低光新视角合成中伪真值图像生成采用均匀线性增益导致的亮区削波和暗区增强不足问题，本文提出场景自适应非线性色调曲线方法，为3D高斯溅射提供更优监督目标，实验证明该方法显著提升了低光场景下的重建质量和渲染真实感。",
+      "llm_tldr": "针对低光新视角合成中伪真值图像生成采用均匀线性增益导致的亮区削波和暗区增强不足问题，本文提出场景自适应非线性色调曲线方法，为3D高斯溅射提供更优监督目标，实验证明该方法显著提升了低光场景下的重建质量和渲染真实感。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.09034v1",
+      "source": "arxiv",
+      "title": "Leveraging NeRF-Rendered Images for 3D Gaussian Splatting",
+      "abstract": "Neural radiance field (NeRF) and 3D Gaussian splatting (3DGS) are two mainstream approaches for novel view synthesis. They often show complementary performance, i.e., 3DGS demonstrating faster rendering speed and NeRF demonstrating higher rendering quality. Motivated by this, we propose leveraging NeRF-rendered images for 3DGS. Specifically, we target street scenes and utilize a pre-trained street-specific NeRF method to produce training images for a target 3DGS method. In our 3DGS training, NeRF-rendered images are used to remove transient objects in street-level input views and to generate bird's-eye views as additional views, inheriting the higher-quality rendering of NeRF into 3DGS. We further incorporate a diffusion-based image enhancement to improve the image quality of the additional views. Experimental results on one synthetic and two real datasets demonstrate that our proposed method improves street-scene rendering while preserving the speed of 3DGS and the quality of NeRF.",
+      "authors": [
+        "Mizuki Morikawa",
+        "Yuta Shimizu",
+        "Chunyu Li",
+        "Yusuke Monno",
+        "Masatoshi Okutomi"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-08T05:03:22+00:00",
+      "link": "https://arxiv.org/pdf/2606.09034v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Directly leverages 3D Gaussian Splatting for real-time rendering",
+      "llm_evidence_cn": "直接利用3D高斯溅射进行实时渲染",
+      "llm_evidence": "直接利用3D高斯溅射进行实时渲染",
+      "canonical_evidence": "直接利用3D高斯溅射进行实时渲染",
+      "llm_tldr_en": "Leverages NeRF-rendered images to enhance 3DGS training, removing transients and adding bird's-eye views to inherit NeRF quality with real-time rendering.",
+      "llm_tldr_cn": "利用NeRF渲染图像增强3D高斯溅射训练，通过去除瞬态物体和添加鸟瞰图，将NeRF的高质量渲染继承到实时3DGS中。",
+      "llm_tldr": "利用NeRF渲染图像增强3D高斯溅射训练，通过去除瞬态物体和添加鸟瞰图，将NeRF的高质量渲染继承到实时3DGS中。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.06685v1",
+      "source": "arxiv",
+      "title": "RigPAPR: Rig-Based Animation of Static Neural Point Clouds from a Fixed-Viewpoint Video",
+      "abstract": "Static neural point reconstructions capture a subject at high fidelity from posed images. Given such a reconstruction, we aim to animate it to follow a monocular fixed-viewpoint driving video of the subject, whether captured or produced by image-to-video (I2V) generation, and to recover a rigged, re-posable 3D asset. Existing methods deform Gaussian splats through direct linear blend skinning (LBS) or mesh proxies, both of which are prone to joint-boundary artifacts under articulation, even with per-primitive corrections. We trace the artifact to the representation: each splat carries an individual shape calibrated in the canonical pose to tile with its neighbours. Under rigid LBS, each splat moves with its bone but cannot bend, so the canonical tiling breaks at joint boundaries into gaps and spikes. Proximity attention point rendering (PAPR) instead carries no per-primitive shape; each pixel is recomposed at render time from the deformed primitives' positions, so the surface re-forms naturally with the articulation. We present RigPAPR, which auto-rigs a static PAPR cloud and drives it under direct LBS from a single fixed-viewpoint video, without mesh proxy, pose-dependent correction, or category template. On synthetic subjects, RigPAPR matches the strongest baseline at the supervised view and exceeds mesh-based and Gaussian-splatting baselines at novel views by 3+dB PSNR, with cleaner joint-boundary renderings of both synthetic and real subjects.",
+      "authors": [
+        "Shichong Peng",
+        "Yanshu Zhang",
+        "Ke Li"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.GR"
+      ],
+      "published": "2026-06-04T19:59:35+00:00",
+      "link": "https://arxiv.org/pdf/2606.06685v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Animates static neural point clouds using Gaussian splats for real-time rendering, representing scene with anisotropic Gaussians.",
+      "llm_evidence_cn": "使用高斯泼溅对静态神经点云进行动画，以各向异性高斯表示场景并实现实时渲染。",
+      "llm_evidence": "使用高斯泼溅对静态神经点云进行动画，以各向异性高斯表示场景并实现实时渲染。",
+      "canonical_evidence": "使用高斯泼溅对静态神经点云进行动画，以各向异性高斯表示场景并实现实时渲染。",
+      "llm_tldr_en": "Proposes a method to animate static neural point clouds represented as Gaussian splats by using rig-based skinning that accounts for per-splat shape, eliminating joint-boundary artifacts and recovering a re-posable 3D asset from a monocular fixed-viewpoint video.",
+      "llm_tldr_cn": "针对使用高斯泼溅表示静态点云在骨骼动画中出现关节边界伪影的问题，提出基于蒙皮的高斯泼溅变形方法，考虑每个基元的形状，实现无伪影动画，从单目固定视角视频生成可重新摆姿的三维资产。",
+      "llm_tldr": "针对使用高斯泼溅表示静态点云在骨骼动画中出现关节边界伪影的问题，提出基于蒙皮的高斯泼溅变形方法，考虑每个基元的形状，实现无伪影动画，从单目固定视角视频生成可重新摆姿的三维资产。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.11880v1",
+      "source": "arxiv",
+      "title": "SG2Loc: Sequential Visual Localization on 3D Scene Graphs",
+      "abstract": "Visual localization in complex indoor environments remains a critical challenge for robotics and AR applications. Sequential localization, where pose estimates are refined over time, is important for autonomous agents. However, traditional methods often require storing extensive image databases or point clouds, leading to significant overhead. This paper introduces a novel, lightweight approach to sequential visual localization using 3D scene graphs. Our method represents the environment with a compact scene graph, where nodes represent objects (with coarse meshes) and edges encode spatial relationships. For each image in the localization phase, we extract per-patch semantic features, predicting object identities. Localization is performed within a particle filter framework. Each particle, representing a camera pose, projects the coarse object meshes from the scene graph into the image, assigning object identities to patches based on visibility. The similarity of the per-patch features, in the input image, and object features from the scene graph determines the weight of a particle. Subsequent images are incorporated sequentially, refining the pose estimate. By leveraging a compact scene graph and efficient semantic matching, our method significantly reduces storage while maintaining performance on real-world datasets. The code will be available at https://github.com/DmblnNicole/sg2loc.",
+      "authors": [
+        "Nicole Damblon",
+        "Olga Vysotska",
+        "Federico Tombari",
+        "Marc Pollefeys",
+        "Daniel Barath"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-10T10:03:21+00:00",
+      "link": "https://arxiv.org/pdf/2606.11880v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "sequential visual localization for accurate camera pose tracking using scene graphs",
+      "llm_evidence_cn": "利用场景图进行序列视觉定位实现精确相机姿态跟踪",
+      "llm_evidence": "利用场景图进行序列视觉定位实现精确相机姿态跟踪",
+      "canonical_evidence": "利用场景图进行序列视觉定位实现精确相机姿态跟踪",
+      "llm_tldr_en": "Proposes a lightweight sequential visual localization method using 3D scene graphs, achieving accurate pose tracking without storing large image databases.",
+      "llm_tldr_cn": "针对传统视觉定位需要存储大量图像数据库或点云导致的显著存储和计算开销问题，提出一种基于三维场景图的轻量级序列视觉定位方法。该方法利用场景图中对象节点和空间关系边紧凑建模环境，通过粒子滤波器融合图像块语义特征进行连续姿态估计。实验表明，该方法在保持高精度定位的同时大幅减少存储需求，为资源受限的自主智能体提供了高效的视觉定位解决方案。",
+      "llm_tldr": "针对传统视觉定位需要存储大量图像数据库或点云导致的显著存储和计算开销问题，提出一种基于三维场景图的轻量级序列视觉定位方法。该方法利用场景图中对象节点和空间关系边紧凑建模环境，通过粒子滤波器融合图像块语义特征进行连续姿态估计。实验表明，该方法在保持高精度定位的同时大幅减少存储需求，为资源受限的自主智能体提供了高效的视觉定位解决方案。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "accurate camera pose tracking",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2606.09794v1",
+      "source": "arxiv",
+      "title": "Beyond Spherical Harmonics: Rethinking Appearance Models for Radiance Reconstruction",
+      "abstract": "View-dependent appearance modeling remains a challenging problem in novel-view synthesis and reconstruction. Accurately representing complex angular effects often requires substantial memory and computational resources. For new learning-based methods, a common approach is to rely on SH. However, capturing high-frequency phenomena such as specular reflections demands high-order expansions, which increase memory usage and computational cost. Consequently, most methods employ low-order SH, which limits the ability to model complex view-dependent effects, resulting in overly smooth or diffuse representations. To address these limitations, we systematically evaluate a wide range of spherical functions in the context of scene reconstruction. Some of them are introduced to graphics and computer vision for the first time in this paper. Based on the insights from the experiment, we develop a novel spherical formulation, the Normalized Anisotropic Spherical Gabor function that enables efficient modeling and learning of high-frequency appearance effects while maintaining compact representation. Compared to existing approaches, our function achieves higher-quality reconstruction of view-dependent phenomena such as glints, while being up to five times more memory-efficient and more efficient to evaluate. We validate its performance in radiance-field reconstruction tasks.",
+      "authors": [
+        "Ewa Miazga",
+        "Jorge Condor",
+        "Piotr Didyk"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.GR"
+      ],
+      "published": "2026-06-08T17:50:41+00:00",
+      "link": "https://arxiv.org/pdf/2606.09794v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "evaluates spherical functions for view-dependent appearance in scene reconstruction, relevant for volumetric Gaussian representations",
+      "llm_evidence_cn": "评估球面函数用于场景重建中的视角相关外观，与体积高斯表示相关",
+      "llm_evidence": "评估球面函数用于场景重建中的视角相关外观，与体积高斯表示相关",
+      "canonical_evidence": "评估球面函数用于场景重建中的视角相关外观，与体积高斯表示相关",
+      "llm_tldr_en": "Evaluates spherical functions for view-dependent appearance in scene reconstruction, identifying alternatives to SH that capture high-frequency effects with lower memory.",
+      "llm_tldr_cn": "针对球谐函数低阶展开难以捕捉高频视角相关效应（如镜面反射）的问题，系统评估了多种球面函数作为外观模型的性能。研究揭示了一些替代方案在减少内存的同时能更准确表示复杂视角效果，为基于高斯的体积场景表示提供了更优的外观建模选择，有望提升实时渲染和新视角合成质量。",
+      "llm_tldr": "针对球谐函数低阶展开难以捕捉高频视角相关效应（如镜面反射）的问题，系统评估了多种球面函数作为外观模型的性能。研究揭示了一些替代方案在减少内存的同时能更准确表示复杂视角效果，为基于高斯的体积场景表示提供了更优的外观建模选择，有望提升实时渲染和新视角合成质量。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

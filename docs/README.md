@@ -6,34 +6,37 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-06-11
-- 运行时间：2026-06-11 22:35:22 UTC
+- 最新运行日期：2026-06-12
+- 运行时间：2026-06-12 21:52:37 UTC
 - 运行状态：成功
-- 本次总论文数：4
-- 精读区：2
-- 速读区：2
+- 本次总论文数：5
+- 精读区：4
+- 速读区：1
 
 ### 今日简报（AI）
-今天精读两篇前沿3D重建论文：一篇用单目视频合成可操作的物体运动轨迹，另一篇从任意稀疏照片实时生成高质量3D场景。  
-最值得关注的是 3D高斯泼溅（3DGS）在动态操控和数据效率上的突破，让“随手拍”直接变成可编辑的3D内容流。  
-想快速上手？可以先从开源代码复现《ManiSplat》的机械臂轨迹合成部分，体验视觉到动作的直接映射。
-- 详情：[/202606/11/README](/202606/11/README)
+今日深度解析了低光场景下用自适应色调曲线生成伪真值来提升3D高斯泼溅，以及用NeRF渲染图辅助训练3DGS的两种最新方法。  
+最值得关注的方向：用非线性色调曲线在极端暗光中为3DGS构造可靠训练目标，可用性极高；同时NeRF合成视角能显著缓解稀疏输入问题。  
+建议普通读者从场景自适应色调曲线入手，它改造代价小、拟合快，适合快速在自己的图像重建流程中实验。
+- 详情：[/202606/12/README](/202606/12/README)
 
 ### 精读区论文标签
-1. [ManiSplat: Manipulation Trajectory Synthesis from Monocular Video via Decoupled 3D Gaussian Splatting](/202606/11/2606.10645v1-manisplat-manipulation-trajectory-synthesis-from-monocular-video-via-decoupled-3d-gaussian-splatting)  
+1. [Scene-Adaptive Nonlinear Tone Curves for Pseudo Ground-Truth Generation in Low-Light 3D Gaussian Splatting](/202606/12/2606.11841v1-scene-adaptive-nonlinear-tone-curves-for-pseudo-ground-truth-generation-in-low-light-3d-gaussian-splatting)  
+   标签：评分：10.0/10、query:gs-slam
+   evidence：场景自适应非线性色调曲线改进低光3DGS渲染
+2. [Leveraging NeRF-Rendered Images for 3D Gaussian Splatting](/202606/12/2606.09034v1-leveraging-nerf-rendered-images-for-3d-gaussian-splatting)  
    标签：评分：9.0/10、query:gs-slam
-   evidence：使用三维高斯泼溅从单目视频重建解耦的高斯数字孪生
-2. [Wild3R: Feed-Forward 3D Gaussian Splatting from Unconstrained Sparse Photo Collection](/202606/11/2606.11894v1-wild3r-feed-forward-3d-gaussian-splatting-from-unconstrained-sparse-photo-collection)  
+   evidence：直接利用3D高斯溅射进行实时渲染
+3. [RigPAPR: Rig-Based Animation of Static Neural Point Clouds from a Fixed-Viewpoint Video](/202606/12/2606.06685v1-rigpapr-rig-based-animation-of-static-neural-point-clouds-from-a-fixed-viewpoint-video)  
    标签：评分：8.0/10、query:gs-slam
-   evidence：提出前馈式3D高斯泼溅用于体积场景表示和实时渲染
+   evidence：使用高斯泼溅对静态神经点云进行动画，以各向异性高斯表示场景并实现实时渲染。
+4. [SG2Loc: Sequential Visual Localization on 3D Scene Graphs](/202606/12/2606.11880v1-sg2loc-sequential-visual-localization-on-3d-scene-graphs)  
+   标签：评分：8.0/10、query:gs-slam
+   evidence：利用场景图进行序列视觉定位实现精确相机姿态跟踪
 
 ### 速读区论文标签
-1. [Path-Traced Inverse Rendering with Global Illumination in 3D Gaussian Fields](/202606/11/2606.09606v1-path-traced-inverse-rendering-with-global-illumination-in-3d-gaussian-fields)  
+1. [Beyond Spherical Harmonics: Rethinking Appearance Models for Radiance Reconstruction](/202606/12/2606.09794v1-beyond-spherical-harmonics-rethinking-appearance-models-for-radiance-reconstruction)  
    标签：评分：6.0/10、query:gs-slam
-   evidence：使用3D高斯场的路径追踪逆渲染并考虑全局光照
-2. [Point Cloud Segmentation for Autonomous Clip Positioning in Laparoscopic Cholecystectomy on a Phantom](/202606/11/2606.12048v1-point-cloud-segmentation-for-autonomous-clip-positioning-in-laparoscopic-cholecystectomy-on-a-phantom)  
-   标签：评分：6.0/10、query:endo-dgs
-   evidence：在腹腔镜手术中使用点云分割实现自主夹定位
+   evidence：评估球面函数用于场景重建中的视角相关外观，与体积高斯表示相关
 
 
 <div class="dpr-home-promo-card">

@@ -1,0 +1,547 @@
+Title: RigPAPR: Rig-Based Animation of Static Neural Point Clouds from a Fixed-Viewpoint Video
+
+URL Source: https://arxiv.org/pdf/2606.06685v1
+
+Published Time: Mon, 08 Jun 2026 00:19:25 GMT
+
+Number of Pages: 30
+
+Markdown Content:
+# RigPAPR: Rig-Based Animation of Static Neural Point Clouds from a Fixed-Viewpoint Video 
+
+Shichong Peng, Yanshu Zhang, Ke Li 
+
+APEX Lab School of Computing Science Simon Fraser University 
+
+{shichong_peng,yanshu_zhang,keli}@sfu.ca 
+
+# Abstract 
+
+Static neural point reconstructions capture a subject at high fidelity from posed images. Given such a reconstruction, we aim to animate it to follow a monocular fixed-viewpoint driving video of the subject, whether captured or produced by image-to-video (I2V) generation, and to recover a rigged, re-posable 3D asset. Existing methods deform Gaussian splats through direct linear blend skinning (LBS) or mesh proxies, both of which are prone to joint-boundary artifacts under articulation, even with per-primitive corrections. We trace the artifact to the representation: each splat carries an individual shape calibrated in the canonical pose to tile with its neighbours. Under rigid LBS, each splat moves with its bone but cannot bend, so the canonical tiling breaks at joint boundaries into gaps and spikes. Proximity attention point rendering (PAPR) instead carries no per-primitive shape; each pixel is recomposed at render time from the deformed primitives’ positions, so the surface re-forms naturally with the articulation. We present RigPAPR, which auto-rigs a static PAPR cloud and drives it under direct LBS from a single fixed-viewpoint video, without mesh proxy, pose-dependent correction, or category template. On synthetic subjects, RigPAPR matches the strongest baseline at the supervised view and exceeds mesh-based and Gaussian-splatting baselines at novel views by 3+ dB PSNR, with cleaner joint-boundary renderings of both synthetic and real subjects. An overview video is available at this link. 
+
+# 1 Introduction 
+
+Triangle meshes are the default asset for 3D animation, yet recovering a high-fidelity mesh from real-world capture remains difficult, requiring both accurate surface reconstruction and view-consistent texture and material recovery. Neural rendering sidesteps this by reconstructing scenes at photoreal fidelity from posed images alone, beginning with NeRF’s volumetric formulation [ 31 ]. Explicit primitives have since become the more popular formulation, led by 3D Gaussian splatting [ 16 ]alongside other point-based alternatives [ 59 , 20 , 37 ]. Because each learned primitive is editable after reconstruction, these representations become viable animation assets, not only novel-view renderers. The most useful animation asset on top of such a static reconstruction is a skeletal rig: a sparse, human-interpretable, re-posable control interface that decades of skeletal-animation practice and automatic rigging are built around [ 30 , 22 , 1 ]. Driving such a rig requires motion; image-to-video (I2V) generation [ 5, 2, 3] is a natural source, animating any subject from a single canonical frame. Existing rig-based work for neural point representations [ 41 , 43 , 25 , 35 ] requires multi-camera or orbiting-camera motion capture, while I2V most directly produces a single fixed-viewpoint video. We focus on this fixed-viewpoint setting: given such a monocular driving video and a static multi-view reconstruction of the subject, we aim to recover a rigged 3D asset whose motion can be re-rendered from novel viewpoints and whose skeleton can be re-posed to unseen configurations. 
+
+> Preprint.
+> arXiv:2606.06685v1 [cs.CV] 4 Jun 2026
+
+Figure 1: Gaussian splats vs. an interpolation-based representation under LBS. Left: each splat carries its own fixed individual shape; under LBS it is reoriented by its bound bone but cannot bend with the surface. Neighbouring splats therefore stop tiling at the joint boundary even when their centers stay correctly on the deformed surface: the longer splat (red) protrudes past its neighbour as a spike, while the narrower one (green) cannot reach across and leaves a gap on the other side. Shrinking the longer splat would suppress the spike but only widens the gap. Right: an interpolation-based representation (PAPR) builds shape from a set of shape-free primitives, so each pixel is recomposed at render time from its deformed neighbours and tracks the LBS-deformed configuration directly. Most existing approaches to rigging neural point-based representations adopt Gaussian-splat primi-tives, deformed either by direct LBS on the splats [ 53 , 43 ] or by binding splats to a deforming mesh or parametric template [ 7 , 34 ]. Both routes produce visible gaps and spikes at joint boundaries when the deformation pushes splats far from their canonical configuration. The cause is built into the representation: each Gaussian splat has its own individual shape, with a per-primitive covariance fixed at reconstruction time. Neighbouring splats are jointly optimized to tile into a seamless surface in the canonical pose, but under deformation each splat is rigidly reoriented by its bone transform and cannot bend along with the surface, so gaps emerge between the adjacent splats (Fig. 1, left). Existing workarounds such as dual-quaternion skinning [ 15 ], local rigidity regularizers [ 40 ], and pose-conditioned correction MLPs [ 53 ] address the symptom rather than the underlying cause arising from the choice of 3D representation. Directly addressing the cause calls for a different representation: an interpolation-based representa-tion, in which no primitive carries a fixed shape parameter. Instead, the shape emerges from the spatial configuration of a set of primitives, not from any single one. Under deformation, the positions of the nearby primitives change, and so the rendered pixels change accordingly, which allows the rendering to adapt to the deformed spatial configuration automatically. Fig. 1, right, shows the consequence: the same deformation that broke the Gaussian tiling can be rendered as a seamless surface with interpolation. Proximity attention point rendering (PAPR) [ 59 ] realizes this representation: each primitive carries only a position and a view-independent feature, and each pixel is rendered as an attention-weighted aggregation of its top-K nearest primitives, with weights computed at render time from their current positions. Under direct LBS, the attention weights update automatically with the deformed positions, and no pose-conditioned correction MLP is needed to patch the rendering. Building on this insight, we present RigPAPR , a method that animates a static PAPR cloud from a single fixed-viewpoint driving video, captured or I2V-generated, and produces a re-posable rigged 3D asset without category templates. Given a pre-trained PAPR cloud and the driving video, the method first auto-rigs the point cloud through a transient mesh proxy, which is discarded once binding is set. The point cloud is then deformed directly under LBS, with joint rotations and skinning weights refined through two-phase optimization driven by the video. We evaluate on synthetic and real-captured subjects against strong representative baselines from the mesh-bound Gaussian-splat and mesh-based animation families. RigPAPR matches the strongest baseline at the supervised view and exceeds both families at held-out novel views by more than 3 dB in PSNR, with cleaner renderings of joint boundaries of both synthetic and real subjects. 
+
+# 2 Related Work 
+
+3D representations for animatable reconstruction. The choice of 3D representation determines how the reconstructed object’s geometry is stored before animation. Implicit representations [ 31 , 44 ,224 ] describe geometry as a continuous function of space, whereas explicit representations such as meshes and point clouds store geometry as discrete primitives with positions and, in some cases, local shape parameters. For animation, explicit representations are convenient because their primitives can be transformed directly to change the geometry. Among explicit neural representations, point-based neural renderers reconstruct real-world captures from posed images at high fidelity, without the surface-reconstruction step that mesh-based pipelines require. 3D Gaussian splatting [ 16 ] (3DGS) is the dominant such representation. An axis that matters under deformation is how shape is encoded: 3DGS encodes shape per primitive via an anisotropic 3D covariance (a local ellipsoidal kernel), whereas PAPR [ 59 ] carries no per-primitive shape parameter: shape emerges at render time from proximity attention over a neighbourhood of primitives. 
+
+Rig-based animation and its precedent. Captured subjects can be made animatable along a spectrum of control interfaces. Per-frame deformation fields [ 32 , 33 , 52 , 46 ] reconstruct the observed motion as a continuous 4D field, but they replay rather than re-pose: the asset exposes no re-pose interface beyond the captured latent trajectory. Cage and control-point methods [ 12 , 11 ] provide a re-posable asset, but steer it through a dense set of surface handles that remains cumbersome to manipulate directly. Rig-based methods expose a skeleton instead: a sparse, human-interpretable in-terface that the existing motion-capture data, retargeting tools, and authoring workflows of production pipelines are already built around. We target this setting. Rig-based animation has been studied extensively for meshes. Automatic rig prediction [ 1, 50 , 39 , 56 ,28 , 51 ] makes rigging tractable without manual authoring, producing a skeleton with skinning weights bound to a mesh. Skeleton-driven deformation on non-mesh primitives has precedent: meshless and point-sampled animation driven by skeletons dates to the mid-2000s [ 10 , 38 , 36 ], with modern differentiable descendants [ 55 ]. These methods drive point sets or lattices through physics-based deformation (meshless elasticity, shape matching) rather than linear blend skinning, and none target photorealistic rendering of captured scenes. 
+
+Fixed-viewpoint rig-based animation. Rig-based work for neural representations has explored multi-view supervision during the driving sequence, whether from multiple synchronised cameras or from a deliberately moving camera that encircles the subject across timesteps [ 41 , 4, 43 ], coverage that disambiguates depth from articulation. We focus on the setting where the driving sequence is a single fixed-viewpoint video, the form I2V models [ 5, 2, 3] produce most directly. In this regime, depth and articulation explain the same 2D residual at every frame, and the problem is under-constrained. Methods that operate here constrain the optimization with auxiliary information in three ways: (a) a strong generative prior based on an image or video generation model [ 47 , 8]; (b) a pre-existing category template such as SMPL [ 19 , 34 , 25 ]; (c) monocular pre-trained priors that provide approximate per-frame guidance, such as off-the-shelf depth estimators [ 27 ] and 2D point trackers [ 13 ]. Our work and AnimaMimic [ 48 ] both follow route (c). We differ on the representation axis : AnimaMimic’s pipeline runs on a mesh that must be supplied upstream, whereas our point-based neural representation is reconstructed directly from posed real images. 
+
+Rig-based animation of point-based neural representations. Recent work has begun to rig point-based neural representations. Most efforts operate on Gaussian-splat primitives; one line operates on density-field neural points under volumetric rendering. 
+
+Direct LBS on Gaussian splats. LBS is applied directly to the splats with learned per-primitive skinning weights [ 43 , 18 ]. A parallel line [ 53 , 4] retains the direct-LBS move but adds a pose-dependent detail-deformation head that displaces splat positions at each timestep to compensate for rendering artifacts under articulation. Because the head is trained on the observed pose distribution, this pose-dependent compensation may overfit to those poses and generalize weakly to novel ones. 
+
+Mesh-proxy binding. Splats are bound [ 9, 42 , 7 , 54 , 26 ] to a triangle mesh that provides a deforming surface reference: as the mesh deforms, splats follow it in position, and their covariances reorient with the local surface frame. A specialized sub-variant uses parametric templates such as SMPL [ 29 ]or FLAME [ 23 ] as the mesh proxy [ 19 , 25 , 34 , 35 ], avoiding topology estimation but restricting the method to categories with a pre-existing template. Several of these works also adopt dual-quaternion skinning [ 14 , 15 ] or local rigidity regularizers such as ARAP [ 40 ] to soften the non-rigid blending of bone transforms at joint boundaries. These fixes adjust the deformed position, but the splat covariance remains calibrated to the canonical-pose surface, so the artifacts are softened but persist. 3Figure 2: RigPAPR overview. A mesh proxy extracted from the PAPR cloud is auto-rigged and the resulting skeleton and initial skinning weights are transferred back onto the points; the proxy is then discarded (§3.3). A two-phase optimization drives the rigged cloud from the fixed-viewpoint video, recovering per-frame joint rotations and refining the skinning weights (§3.4). At inference, LBS deforms the canonical points and the frozen PAPR renderer renders the asset from different viewpoints. 
+
+Cage or sparse control graph. A third family operates on the same Gaussian-splat primitive but replaces the skeleton with a dense set of surface handles, so re-posing becomes geometric editing of the cage rather than skeletal manipulation [ 47 ]. These methods sit adjacent to rig-based work and share the primitive-level limitation analyzed below. Recent variants approach the skeleton from the other side: a kinematic-tree control graph [ 58 ], or piecewise-rigid Gaussian clusters [ 17 ]. Both still expose a dense-handle interface rather than a sparse rig. All the Gaussian-splat coping patterns above share a structural problem rooted in the primitive rather than the method. Each splat carries an individual binding-frame covariance, calibrated in the canonical pose to tile with its neighbours; under deformation each splat is rigidly reoriented and the canonical tiling breaks down at joint boundaries. The mesh-proxy, cage, and correction MLP mechanisms each target a symptom of this mismatch while leaving the per-primitive covariance, one structural source of the artifact, in place. We therefore build on PAPR, an interpolation-based representation whose primitives carry no such parameter: each pixel’s rendered output is recomposed at render time from the current positions of its top-K nearest primitives, so direct LBS requires no pose-dependent correction MLP. 
+
+Density-field neural points. Uzolas et al. [ 41 ] rig a Point-NeRF [ 49 ]-style density-field point cloud directly with LBS, with no pose-dependent correction MLP. Their points carry no explicit per-primitive shape, yet rendering aggregates per-primitive contributions independently rather than interpolating across primitives at the pixel. They further differ on supervision and on point distribution. They require multi-view supervision (a varying viewpoint across the sequence) to resolve the depth-articulation ambiguity, whereas we operate from a single fixed-viewpoint video. Their points also volumetrically sample the object interior for density-field rendering, which precludes feeding them to surface-based auto-riggers [39, 50, 56] that PAPR’s surface-concentrated points support directly. 
+
+# 3 Method 
+
+3.1 Overview 
+
+From a static PAPR [ 59 ] cloud and a fixed-viewpoint driving video, our method produces a rigged point-based asset that reproduces the driving motion, renders faithfully from unseen viewpoints, and is re-posable to unseen configurations. We write the PAPR scene as N points {(pi, ui, τ i)}Ni=1 with positions pi ∈ R3, view-independent features ui ∈ Rd, and influence scores τi ∈ R; the skeleton has 
+
+B bones and each point carries a per-bone skinning weight wi ∈ RB . A pose at frame t comprises one axis-angle rotation per bone, {Rtb}Bb=1 ⊂ SO (3) , plus a global root translation tt ∈ R3; forward kinematics composes these with the fixed bind-pose bone offsets to yield per-bone SE (3) transforms 
+
+Tb(Rt). The driving video supplies T frames {It}Tt=1 from a single camera C.4Figure 2 shows the overview of our method. §3.2 recalls the PAPR properties we exploit; §3.3 attaches an articulated rig directly to the PAPR cloud, with no mesh proxy at deformation or render time; §3.4 drives the rig from the video through a two-phase optimization that resolves the depth-articulation ambiguity inherent to a single fixed view. 
+
+3.2 Preliminaries: Proximity Attention Point Rendering 
+
+PAPR represents a scene as N points whose positions and view-independent features are stored as learnable parameters and trained end-to-end against the input images. To render a pixel, PAPR casts a camera ray, selects the top-K points nearest the ray, and aggregates them with a proximity-attention head: the head produces softmax weights over the top-K points and aggregates their per-point contributions into the rendered pixel RGB ˆI. The attention weights and per-point contributions are computed from each point’s relation to the ray (its position, its depth along the ray, and its perpendicular offset) together with the ray direction; we refer to [59] for the full attention design. Two properties of PAPR matter for what follows. First, the same indexed point set persists across reconstruction and deformation, and the renderer relies on no surface connectivity (such as mesh edges) that LBS could break. Second, because the attention weights renormalize over the current top-K neighbourhood at render time, every pixel still receives a non-vanishing gradient when points move far from the binding configuration; we exploit this property when fine-tuning the representation per frame. Backbone configuration and the variant we use are detailed in the appendix. 
+
+3.3 Direct Linear Blend Skinning on Neural Points 
+
+We attach an articulated rig to the PAPR scene by treating each point as a free linear blend skinning (LBS) handle: the same point set used for static reconstruction is the point set we deform per frame, with no mesh proxy or resampling at deformation or render time and no retraining of the renderer. 
+
+Skeleton and weight initialization. We mesh the trained PAPR cloud with OffsetOPT [ 21 ] and feed the proxy to Puppeteer [ 39 ], which returns a B-bone skeleton and per-vertex skinning weights; we transfer the weights to the PAPR points to obtain wi ∈ RB . The proxy is used only here, to seed the skeleton and skinning weights, and is discarded afterwards; it participates in neither deformation nor rendering. §3.4 then refines w and recovers per-frame rotations against the driving video. 
+
+LBS on PAPR points. Let {Rtb}Bb=1 be the bone rotations at frame t and Tb(Rt) ∈ SE (3) the corresponding skinning transform, defined as the bone-to-world transform at frame t composed with the world-to-bone transform at the binding pose, so that Tb(R0) = I for every bone and the canonical configuration is the fixed point of Equation (1) . With positions written in homogeneous coordinates, the deformed position of point i at frame t is 
+
+pti = tt +
+
+> B
+
+X
+
+> b=1
+
+wi,b Tb(Rt) p0 
+
+> i
+
+, (1) where p0 
+
+> i
+
+is the canonical position and tt the global root translation. Only positions are deformed: ui
+
+and τi travel rigidly with the point, and the proximity-attention renderer re-aggregates the deformed neighbourhood at render time. Each PAPR point is therefore a persistent, appearance-stable handle: articulation moves the handle while leaving its appearance content untouched. A useful side benefit follows directly: with no edges to preserve, the representation does not freeze connectivity at the binding frame. Deformations that require connectivity changes, such as an arm separating from a torso it touches at binding, remain expressible, whereas mesh-bound schemes propagate the binding-frame topology forward indefinitely through their splat-to-triangle pinning. 
+
+3.4 Video-Guided Two-Phase Optimization 
+
+The single-view setting is under-constrained: depth and articulation explain the same 2D residual at every frame, so a rendering loss alone cannot distinguish the correct configuration from one that renders identically at C but differs from every other viewpoint. Monocular depth and 2D tracks resolve the ambiguity but inject their own bias and noise; we therefore use them as decaying scaffolding: 5present early to break the ambiguity, then faded out so the converged optimum is not pinned by their failure modes. Loss weights and schedules are tabulated in the appendix. 
+
+Phase 1: Depth-supervised joint-rotation initialization. Phase 1 freezes the skinning weights and optimizes the per-frame joint rotations {Rtb}Tt=1 together with per-frame global root translations 
+
+{tt}Tt=1 ⊂ R3, fit sequentially from the binding frame with each frame warm-started from the previous. The objective combines a rendering loss Lrgb on the rendered patch with a relative-depth term L∆depth and a descendant-weighted rotation regularizer that keeps joint rotations small in proportion to how many child joints they propagate to. Monocular predictors such as Depth Anything 3 [ 27 ] do not produce depths in PAPR units. We use the metric-depth variant, whose frame-to-frame relative signal at the same canonical point tracks true depth changes reasonably well up to a per-frame scalar. We compute that scalar in closed form on each step’s sample (held constant in the backward pass) and penalize the calibrated residual in MSE; full construction in the appendix. We do not use 2D tracks at this phase: relative depth alone breaks the front-versus-back ambiguity, and tracking would overconstrain the rotations before they have settled. 
+
+Phase 2: Pose corrections and skinning-weight refinement. On top of the Phase 1 trajectory, Phase 2 unfreezes two additional parameter sets: per-joint axis-angle corrections produced by a small temporal MLP, and the skinning-weight logits that yield w. The Phase 1 rotations {Rtb} and the Phase 1 translations {tt} remain frozen; each correction is added to the Phase 1 rotation of its joint and propagates to points only through LBS with the refined weights. Unlike the per-primitive correction MLPs of Gaussian-splat-based methods (§1), these corrections act at the joint level, on bone rotations rather than primitive parameters. The Phase 2 objective extends Phase 1 with a CoTracker 3 [ 13 ] tracking loss Ltrack , an as-rigid-as-possible distance-preservation term over each point’s k-nearest canonical neighbours that anchors local geometry through deformation, and standard smoothness and magnitude regularizers on the corrections and weights. CoTracker queries are seeded from PAPR’s per-pixel attention dominance at the canonical view rather than raw projection, so each track corresponds to a point the renderer actually relies on (details in appendix). Both λ∆depth and λtrack decay to zero over Phase 2, leaving a pure rendering-driven refinement on top of the joint trajectories that depth and tracking established. 
+
+Rendering at novel views. At inference, novel views require a single forward pass: LBS-deform the canonical points with the optimized (w, {Rt}, {tt}), then render with the frozen PAPR network. The same canonical asset re-poses to arbitrary novel rotations and renders from arbitrary novel views without per-frame or per-view fitting. 
+
+# 4 Experiments 
+
+4.1 Experimental Setup Baselines. We compare against one baseline from each of the two representational families our analysis contrasts with: Puppeteer [ 39 ] as a mesh-based animation baseline, and a modified Mani-GS [ 7] as a Gaussian-splatting-based baseline. The Mani-GS baseline runs through the same two-stage process as our method, with three additional modifications. First, we disable the per-triangle adaptive scaling throughout training; left on, it drives covariance blow-up that Phase 2 binding-rotation refinement only partially suppresses, leaving visibly noisier renderings (see appendix B.2). Second, in Phase 2 we additionally fine-tune each splat’s binding rotation and offset against the driving-view loss, freeing the bindings from being fit only to the canonical frame. Third, we add a foreground-mask loss to its rendering objective for added silhouette supervision. Together these modifications yield the strongest Mani-GS baseline we could obtain for this fixed-camera setting. 
+
+Datasets. For synthetic evaluation we pick five objects from Objaverse [ 6 ] spanning three mor-phologies: bipeds (T-Rex, Simpsons), quadrupeds (fox, wolf), and an octopod (spider). For each scene we render a fixed-viewpoint 512 ×512 video as the training view. For Mani-GS and our method we additionally pre-train on the first frame using multi-view reconstruction, rendered from a ring of cameras around the subject; Puppeteer takes the ground-truth mesh and texture directly. For real scenes we captured two subjects (robot, statue) at 960 ×540 and run only Mani-GS and our method. We pretrain each static scene from these multi-view captures, then generate a fixed-viewpoint driving 6Table 1: Quantitative comparison on the synthetic and real scenes. Real-scene novel views have no ground truth and are compared qualitatively (Section 4.3); Puppeteer is only evaluated on synthetic scenes. Best in bold, second-best underlined.                                        
+
+> Synthetic Real-world Training view Novel view Training view Method PSNR ↑SSIM ↑LPIPS ↓PSNR ↑SSIM ↑LPIPS ↓PSNR ↑SSIM ↑LPIPS ↓
+> Puppeteer [39] 22.48 0.941 0.044 19.27 0.923 0.075 ———Mani-GS [7] 28.53 0.974 0.026 20.51 0.927 0.072 25.68 0.955 0.049
+> Ours 29.07 0.972 0.027 23.63 0.945 0.044 25.82 0.944 0.063
+
+video from the canonical frame with Kling 3.0 [ 5]. Real-scene training-view metrics therefore measure agreement with this generated reference. Across both settings, sequences are 16–40 frames; per-scene lengths are tabulated in the appendix. 
+
+Metrics. On both synthetic and real scenes we report PSNR, SSIM [ 45 ], and LPIPS [ 57 ] (VGG backbone) on the training view. On synthetic data we additionally report the same triple on four held-out novel-view cameras placed uniformly on a ring around the subject. We do not report quantitative metrics on real-scene novel views: no ground-truth imagery is available at held-out viewpoints, so we report a qualitative comparison instead (Section 4.3). 
+
+4.2 Quantitative Results 
+
+Table 1 reports the quantitative comparison. On the synthetic training view our method attains the highest PSNR and is competitive with Mani-GS on SSIM and LPIPS, while outperforming Puppeteer across all three; on the real-scene training view our method again edges Mani-GS on PSNR, with Mani-GS retaining slightly better SSIM and LPIPS. The picture on held-out synthetic novel views is different: our method outperforms both baselines on every metric, with a ∼3 dB PSNR margin over Mani-GS despite near-parity at the training view. Despite the expected drop in quality away from the supervised view, our method best preserves novel-view quality among the three. 
+
+4.3 Qualitative Results 
+
+Video renderings for all three comparisons below (synthetic, real-world, and novel-pose driving) are provided in the supplementary; we encourage the reader to consult them, as articulation artifacts are most evident in motion. 
+
+Synthetic qualitative. Figure 3 shows the qualitative comparison on synthetic T-Rex; the remaining four subjects (fox, Simpsons, wolf, spider) are deferred to the appendix (Figures 6–9). Mani-GS shows visible artifacts under articulation (highlighted in red), most pronounced around the head and belly in the novel view. Puppeteer fails to fit the correct geometry, exemplified by the head not pointing in the right orientation. Our method avoids both failure modes. 
+
+Real-world qualitative. Figure 4 shows the qualitative comparison on the robot real-world subject; the second subject (statue) is in the appendix (Figure 11). Mani-GS produces spiky artifacts along the limbs in the novel view. At joint boundaries, divergent per-triangle transforms (visible as elongated splats) prevent adjacent covariances from tiling; the spiky artifacts are further amplified by numerical sensitivity in the per-triangle covariance update under articulation. Ours yields clean renderings throughout the articulated sequence in both the input and novel views. 
+
+Novel pose driving. Figure 5 shows cross-sequence pose driving on a real-world subject: at test time we drive the trained model with two pose sequences that were not part of the fitting trajectory. Both methods see the same canonical (binding) frame and the same driving rotations; the comparison therefore tests how each method’s Phase 2 fine-tuning generalizes off-trajectory. Only the pose-independent Phase 2 outputs carry over to unseen poses: for both methods the refined skinning weights, and for Mani-GS additionally the refined per-splat binding rotation and offset. The Phase 2 correction MLP is frame-indexed and undefined on unseen sequences, so it is disabled at test time. 7Training View Novel View        
+
+> t0(canonical) t1t2t0(canonical) t1t2
+> Puppeteer
+> Mani-GS
+> Ours
+> GT
+
+Figure 3: Qualitative comparison on synthetic T-Rex. Rows are methods, columns are frames; left block is the supervised Training View , right block is a held-out Novel View . Column t0 is the canonical (binding) frame; t1, t 2 are progressively articulated frames. Red highlights mark Puppeteer’s joint-rotation errors and Mani-GS’s articulation artifacts; we encourage zooming in for detail.         
+
+> Training View Novel View
+> t0(canonical) t1t2t0(canonical) t1t2
+> Mani-GS
+> Ours
+
+Figure 4: Qualitative comparison on the real-world robot capture. Rows are methods (Mani-GS, ours); columns are matched frames split into the supervised Training View (left) and a held-out Novel View (right). t0 is the canonical (binding) frame; t1, t 2 are progressively articulated. Training-view ground truth is provided in the appendix (Figure 10). Our method produces cleaner renderings under articulation; we encourage zooming in for detail. Mani-GS produces visible artifacts around the arms and legs at the new poses, while our refined skinning generalizes to the unseen sequences. Appendix A.1 pairs this comparison with the Phase 1 configuration of both methods on the same poses: Mani-GS Phase 1 avoids the Phase-2-overfit artifacts but still shows joint-boundary artifacts, while our renderings remain clean across phases. 
+
+4.4 Ablation: Two-Phase Optimization 
+
+To isolate the effect of Phase 2 fine-tuning, we compare Phase 1 and Full (Phase 1 + Phase 2) configurations on the synthetic scenes, for both our method and the Mani-GS baseline. Table 2 presents the result. Phase 2 reliably improves the training-view metrics for both methods (+1 .8 dB PSNR on Mani-GS, +0 .9 dB on ours), with a similar lift on the real-world subjects 8Sequence 1 Sequence 2      
+
+> t0(canonical) t1t2t1t2
+> Mani-GS
+> Ours
+
+Figure 5: Novel pose driving. Both methods are driven at test time by two pose sequences not seen during the Phase 2 fitting trajectory. Rows are methods; columns show the shared canonical (binding) frame t0 followed by two frames from each driving sequence. No ground truth is available for the driven poses. Mani-GS produces visible artifacts around the arms and legs at the new poses; ours generalizes cleanly. Best viewed zoomed in. Table 2: Two-phase ablation on the synthetic scenes. Phase 1 stops after each method’s first training phase; Full adds Phase 2 (Section 3.4) on top. Best in bold, second-best underlined.                                
+
+> Training view Novel view Configuration PSNR ↑SSIM ↑LPIPS ↓PSNR ↑SSIM ↑LPIPS ↓
+> Mani-GS (Phase 1) 26.71 0.962 0.037 20.14 0.925 0.073 Mani-GS (Full) 28.53 0.974 0.026 20.51 0.927 0.072 Ours (Phase 1) 28.13 0.965 0.029 23.84 0.947 0.043
+> Ours (Full) 29.07 0.972 0.027 23.63 0.945 0.044
+
+(+3 .2 dB on Mani-GS, +1 .6 dB on ours). Beyond this training-view gain, Phase 2 also corrects per-frame joint rotations on top of the Phase 1 trajectory; Figure 2 marks examples on T-Rex, with the head rotation in the middle frame and the mouth articulation and tail position in the rightmost frame visibly corrected, and appendix B.1 provides further Phase 1 vs Full visualizations for this sequence. The accompanying ∼0.2 dB novel-view PSNR drop on ours reflects mild overfitting of the refined skinning weights to the supervised view, small enough that the asset still re-renders cleanly at novel views. Comparing the two methods, ours leads Mani-GS on novel views by 3.7 dB PSNR at Phase 1 ( 23 .84 vs 20 .14 ) and by 3.1 dB at Full ( 23 .63 vs 20 .51 ); the gap is independent of Phase 2 fine-tuning, and appendix B.3 further isolates it to the rendering representation. 
+
+# 5 Final Discussion and Conclusion 
+
+Limitations. RigPAPR inherits the failure modes of its 2D scaffolding. Phase 1 relies on monocular depth and Phase 2 further on 2D tracking; where these priors fail, the errors propagate into the recovered articulation and cannot be corrected by the rendering loss, since the single fixed view does not constrain the failure direction. The auto-rigging stage is similarly load-bearing: a poor skeleton or miscomputed skinning seeds an optimum that downstream refinement only partially escapes, particularly on morphologies the auto-rigger was not trained for. Finally, regions occluded in the binding frame receive no appearance supervision during canonical pretraining, so articulation that later exposes them tends to render as holes or stray colors rather than a coherent surface. 
+
+Conclusion. We traced joint-boundary artifacts in Gaussian-splat-based rigging methods to a representation-level incompatibility with LBS, and showed that covariance-free, interpolation-based point primitives address the underlying cause rather than patching the symptom. RigPAPR auto-rigs a static PAPR cloud and animates it from a fixed-viewpoint driving video, captured or I2V-generated. It renders cleanly under articulation at both the supervised and novel views. The rigged cloud is a reusable 3D asset, re-posable to new motions beyond the driving video. 9References 
+
+[1] Ilya Baran and Jovan Popovi´ c. Automatic rigging and animation of 3D characters. ACM Transactions on Graphics , 26(3):72:1–72:8, 2007. [2] Andreas Blattmann, Tim Dockhorn, Sumith Kulal, Daniel Mendelevitch, Maciej Kilian, Do-minik Lorenz, Yam Levi, Zion English, Vikram Voleti, Adam Letts, Varun Jampani, and Robin Rombach. Stable video diffusion: Scaling latent video diffusion models to large datasets. arXiv preprint arXiv:2311.15127 , 2023. [3] Tim Brooks, Bill Peebles, Connor Holmes, Will DePue, Yufei Guo, Li Jing, David Schnurr, Joe Taylor, Troy Luhman, Eric Luhman, Clarence Ng, Ricky Wang, and Aditya Ramesh. Video generation models as world simulators, 2024. [4] Jun-Jee Chao and Volkan Isler. SV-GS: Sparse view 4D reconstruction with skeleton-driven gaussian splatting, 2026. [5] Jialu Chen, Yuanzheng Ci, Xiangyu Du, Zipeng Feng, Kun Gai, Sainan Guo, Feng Han, Jing He, Kang He, Xiao Hu, Xiaohuan Hu, Boyuan Jiang, Fangyuan Kong, Hang Li, Jie Li, Qingyu Li, Shen Li, Xiaohan Li, Yan Qiang Li, Jiajun Liang, Borui Liao, Yiqiao Liao, Weihong Lin, Quande Liu, Xiaokun Liu, Yilun Liu, Yuliang Liu, Shun Lu, Hangyu Mao, Yu-Fei Mao, Haodong Ouyang, Wenyu Qin, Wan-Ying Shi, Xiao-Xue Shi, Li Su, Hao Sun, Peiqin Sun, Peng Wan, Chao Wang, Chenyu Wang, Meng Wang, Qiulin Wang, Runqian Wang, Xintao Wang, Xuebo Wang, Zekun Wang, Mingzhe Wei, Tian yong Wen, Guohao Wu, Xiaoshi Wu, Zhenhua Wu, Daihong Xie, Yi-Xue Xiong, Yulong Xu, Si bo Yang, Zikang Yang, Wei Ye, Ziyang Yuan, Shenglong Zhang, Shuai Zhang, Yuanxing Zhang, Yufang Zhang, Wen-Shan Zhao, Rui Zhou, Yan Zhou, Guosheng Zhu, and Yongji Zhu. Kling-Omni technical report, 2025. [6] Matt Deitke, Dustin Schwenk, Jordi Salvador, Luca Weihs, Oscar Michel, Eli VanderBilt, Ludwig Schmidt, Kiana Ehsani, Aniruddha Kembhavi, and Ali Farhadi. Objaverse: A universe of annotated 3D objects. arXiv preprint arXiv:2212.08051 , 2022. [7] Xiangjun Gao, Xiaoyu Li, Yiyu Zhuang, Qi Zhang, Wenbo Hu, Chaopeng Zhang, Yao Yao, Ying Shan, and Long Quan. Mani-GS: Gaussian splatting manipulation with triangular mesh. In IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 21392– 21402, 2025. [8] Zekai Gu, Rui Yan, Jiahao Lu, Peng Li, Zhiyang Dou, Chenyang Si, Zhen Dong, Qifeng Liu, Cheng Lin, Ziwei Liu, Wenping Wang, and Yuan Liu. Diffusion as shader: 3D-aware video diffusion for versatile video generation control. In ACM SIGGRAPH 2025 Conference Papers ,pages 62:1–62:12. ACM, 2025. [9] Antoine Guédon and Vincent Lepetit. SuGaR: Surface-aligned gaussian splatting for efficient 3D mesh reconstruction and high-quality mesh rendering. In IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 5354–5363, 2024. [10] Xiaohu Guo and Hong Qin. Real-time meshless deformation. Computer Animation and Virtual Worlds , 16(3-4):189–200, 2005. [11] Yi-Hua Huang, Yang-Tian Sun, Ziyi Yang, Xiaoyang Lyu, Yan-Pei Cao, and Xiaojuan Qi. SC-GS: Sparse-controlled Gaussian splatting for editable dynamic scenes. In IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 4220–4230, 2024. [12] Clément Jambon, Bernhard Kerbl, Georgios Kopanas, Stavros Diolatzis, Thomas Leimkühler, and George Drettakis. NeRFshop: Interactive editing of neural radiance fields. Proceedings of the ACM on Computer Graphics and Interactive Techniques , 6(1), May 2023. [13] Nikita Karaev, Iurii Makarov, Jianyuan Wang, Natalia Neverova, Andrea Vedaldi, and Christian Rupprecht. CoTracker3: Simpler and better point tracking by pseudo-labelling real videos. In 
+
+IEEE/CVF International Conference on Computer Vision (ICCV) , 2025. [14] Ladislav Kavan, Steven Collins, Jiˇ rí Žára, and Carol O’Sullivan. Skinning with dual quaternions. In Proceedings of the 2007 Symposium on Interactive 3D Graphics and Games , pages 39–46, 2007. 10 [15] Ladislav Kavan, Steven Collins, Jiˇ rí Žára, and Carol O’Sullivan. Geometric skinning with approximate dual quaternion blending. ACM Transactions on Graphics , 27(4):1–23, 2008. [16] Bernhard Kerbl, Georgios Kopanas, Thomas Leimkühler, and George Drettakis. 3D Gaussian splatting for real-time radiance field rendering. ACM Transactions on Graphics , 42(4), July 2023. [17] Jinhyeok Kim, Jaehun Bang, Seunghyun Seo, and Kyungdon Joo. Rigidity-aware 3D gaussian deformation from a single image. In SIGGRAPH Asia 2025 Conference Papers , pages 179:1– 179:11. ACM, 2025. [18] Taeyeon Kim, Youngju Na, Jumin Lee, Sebin Lee, Minhyuk Sung, and Sung-Eui Yoon. Mor-phGS: Morphology-adaptive articulated 3D motion transfer from videos, 2026. [19] Muhammed Kocabas, Jen-Hao Rick Chang, James Gabriel, Oncel Tuzel, and Anurag Ranjan. HUGS: Human Gaussian splats. In IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , 2024. [20] Christoph Lassner and Michael Zollhöfer. Pulsar: Efficient sphere-based neural rendering. In 
+
+IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 1440–1449, 2021. [21] Huan Lei. OffsetOPT: Explicit surface reconstruction without normals. In IEEE/CVF Confer-ence on Computer Vision and Pattern Recognition (CVPR) , 2025. [22] John P Lewis, Matt Cordner, and Nickson Fong. Pose space deformation: A unified approach to shape interpolation and skeleton-driven deformation. In Proceedings of the 27th Annual Conference on Computer Graphics and Interactive Techniques , pages 165–172, 2000. [23] Tianye Li, Timo Bolkart, Michael J. Black, Hao Li, and Javier Romero. Learning a model of facial shape and expression from 4D scans. ACM Transactions on Graphics , 36:1–17, 2017. [24] Zhaoshuo Li, Thomas Müller, Alex Evans, Russell H. Taylor, Mathias Unberath, Ming-Yu Liu, and Chen-Hsuan Lin. Neuralangelo: High-fidelity neural surface reconstruction. In IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , 2023. [25] Zhe Li, Zerong Zheng, Lizhen Wang, and Yebin Liu. Animatable Gaussians: Learning pose-dependent Gaussian maps for high-fidelity human avatar modeling. In IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , 2024. [26] Zhiqi Li, Yiming Chen, and Peidong Liu. DreamMesh4D: Video-to-4D generation with sparse-controlled gaussian-mesh hybrid representation. In Advances in Neural Information Processing Systems (NeurIPS) , 2024. [27] Haotong Lin, Sili Chen, Junhao Liew, Donny Y. Chen, Zhenyu Li, Guang Shi, Jiashi Feng, and Bingyi Kang. Depth anything 3: Recovering the visual space from any views. arXiv preprint arXiv:2511.10647 , 2025. [28] Isabella Liu, Zhan Xu, Wang Yifan, Hao Tan, Zexiang Xu, Xiaolong Wang, Hao Su, and Zifan Shi. RigAnything: Template-free autoregressive rigging for diverse 3D assets. ACM Transactions on Graphics , 44(4):1–12, 2025. [29] Matthew Loper, Naureen Mahmood, Javier Romero, Gerard Pons-Moll, and Michael J. Black. SMPL: A skinned multi-person linear model. ACM Trans. Graphics (Proc. SIGGRAPH Asia) ,34(6):248:1–248:16, October 2015. [30] Nadia Magnenat-Thalmann, Richard Laperrière, and Daniel Thalmann. Joint-dependent local deformations for hand animation and object grasping. In Proceedings on Graphics Interface’88 ,pages 26–33, 1989. [31] Ben Mildenhall, Pratul P. Srinivasan, Matthew Tancik, Jonathan T. Barron, Ravi Ramamoorthi, and Ren Ng. NeRF: Representing scenes as neural radiance fields for view synthesis. In 
+
+European Conference on Computer Vision (ECCV) , 2020. 11 [32] Keunhong Park, Utkarsh Sinha, Jonathan T. Barron, Sofien Bouaziz, Dan B Goldman, Steven M. Seitz, and Ricardo Martin-Brualla. Nerfies: Deformable neural radiance fields. In IEEE/CVF International Conference on Computer Vision (ICCV) , pages 5865–5874, 2021. [33] Albert Pumarola, Enric Corona, Gerard Pons-Moll, and Francesc Moreno-Noguer. D-NeRF: Neural radiance fields for dynamic scenes. In IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 10318–10327, 2021. [34] Shenhan Qian, Tobias Kirschstein, Liam Schoneveld, Davide Davoli, Simon Giebenhain, and Matthias Nießner. GaussianAvatars: Photorealistic head avatars with rigged 3D Gaussians. In 
+
+IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , 2024. [35] Zhiyin Qian, Shaofei Wang, Marko Mihajlovic, Andreas Geiger, and Siyu Tang. 3DGS-Avatar: Animatable avatars via deformable 3D gaussian splatting. In IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 5020–5030, 2024. [36] Alec R. Rivers and Doug L. James. FastLSM: Fast lattice shape matching for robust real-time deformation. In ACM SIGGRAPH 2007 Papers , pages 82:1–82:6, 2007. [37] Darius Rückert, Linus Franke, and Marc Stamminger. ADOP: Approximate differentiable one-pixel point rendering. ACM Transactions on Graphics , 41(4):99:1–99:14, 2022. [38] Chao Song, Hong-xin Zhang, Jin Huang, and Hu-jun Bao. Meshless simulation for skeleton driven elastic deformation. Journal of Zhejiang University-Science A , 7(9):1596–1602, 2006. [39] Chaoyue Song, Xiu Li, Fan Yang, Zhongcong Xu, Jiacheng Wei, Fayao Liu, Jiashi Feng, Guosheng Lin, and Jianfeng Zhang. Puppeteer: Rig and animate your 3D models. In Advances in Neural Information Processing Systems (NeurIPS) , 2025. [40] Olga Sorkine-Hornung and Marc Alexa. As-rigid-as-possible surface modeling. In Eurographics Symposium on Geometry Processing , volume 4, pages 109–116, 2007. [41] Lukas Uzolas, Elmar Eisemann, and Petr Kellnhofer. Template-free articulated neural point clouds for reposable view synthesis. In Advances in Neural Information Processing Systems (NeurIPS) , volume 36, pages 31621–31637, 2023. [42] Joanna Waczy´ nska, Piotr Borycki, Sławomir Tadeja, Jacek Tabor, and Przemysław Spurek. GaMeS: Mesh-based adapting and modification of Gaussian splatting. arXiv preprint arXiv:2402.01459 , 2024. [43] Diwen Wan, Yuxiang Wang, Ruijie Lu, and Gang Zeng. Template-free articulated Gaussian splatting for real-time reposable dynamic view synthesis. In Advances in Neural Information Processing Systems (NeurIPS) , volume 37, pages 62000–62023, 2024. [44] Peng Wang, Lingjie Liu, Yuan Liu, Christian Theobalt, Taku Komura, and Wenping Wang. NeuS: Learning neural implicit surfaces by volume rendering for multi-view reconstruction. In 
+
+Advances in Neural Information Processing Systems (NeurIPS) , 2021. [45] Zhou Wang, Alan C. Bovik, Hamid R. Sheikh, and Eero P. Simoncelli. Image quality assessment: from error visibility to structural similarity. IEEE Transactions on Image Processing , 13(4):600– 612, 2004. [46] Guanjun Wu, Taoran Yi, Jiemin Fang, Lingxi Xie, Xiaopeng Zhang, Wei Wei, Wenyu Liu, Qi Tian, and Xinggang Wang. 4D Gaussian Splatting for real-time dynamic scene rendering. In IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 20310– 20320, 2024. [47] Zijie Wu, Chaohui Yu, Yanqin Jiang, Chenjie Cao, Fan Wang, and Xiang Bai. SC4D: Sparse-controlled video-to-4D generation and motion transfer. In European Conference on Computer Vision (ECCV) , pages 361–379. Springer, 2024. [48] Tianyi Xie, Yunuo Chen, Yaowei Guo, Yin Yang, Bolei Zhou, Demetri Terzopoulos, Ying Jiang, and Chenfanfu Jiang. AnimaMimic: Imitating 3D animation from video priors, 2025. 12 [49] Qiangeng Xu, Zexiang Xu, Julien Philip, Sai Bi, Zhixin Shu, Kalyan Sunkavalli, and Ulrich Neumann. Point-NeRF: Point-based neural radiance fields. In IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 5438–5448, 2022. [50] Zhan Xu, Yang Zhou, Evangelos Kalogerakis, Chris Landreth, and Karan Singh. RigNet: Neural rigging for articulated characters. ACM Transactions on Graphics , 39(4):58:1–58:14, 2020. [51] Zhan Xu, Yang Zhou, Li Yi, and Evangelos Kalogerakis. MoRig: Motion-aware rigging of character meshes from point clouds. In SIGGRAPH Asia 2022 Conference Papers , 2022. [52] Ziyi Yang, Xinyu Gao, Wen Zhou, Shaohui Jiao, Yuqing Zhang, and Xiaogang Jin. Deformable 3D Gaussians for high-fidelity monocular dynamic scene reconstruction. In IEEE/CVF Confer-ence on Computer Vision and Pattern Recognition (CVPR) , pages 20331–20341, 2024. [53] Yuxin Yao, Zhi Deng, and Junhui Hou. RigGS: Rigging of 3D gaussians for modeling articulated objects in videos. In IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 5592–5601, 2025. [54] Yuxin Yao and Junhui Hou. A 3-GS: Animate any articulated objects with 3D Gaussian splatting, 2026. [55] Hao Zhang, Haolan Xu, Chun Feng, Varun Jampani, and Narendra Ahuja. PhysRig: Differen-tiable physics-based skinning and rigging framework for realistic articulated object modeling. In IEEE/CVF International Conference on Computer Vision (ICCV) , 2025. [56] Jia-Peng Zhang, Cheng-Feng Pu, Meng-Hao Guo, Yan-Pei Cao, and Shi-Min Hu. One model to rig them all: Diverse skeleton rigging with UniRig. ACM Transactions on Graphics , 44(4):1–18, 2025. [57] Richard Zhang, Phillip Isola, Alexei A. Efros, Eli Shechtman, and Oliver Wang. The unrea-sonable effectiveness of deep features as a perceptual metric. In IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 586–595, 2018. [58] Xinyu Zhang, Haonan Chang, Yuhan Liu, and Abdeslam Boularias. Motion blender gaussian splatting for dynamic reconstruction. In Proceedings of the 9th Conference on Robot Learning (CoRL) , volume 305 of Proceedings of Machine Learning Research , pages 5107–5128. PMLR, 2025. [59] Yanshu Zhang, Shichong Peng, Alireza Moazeni, and Ke Li. PAPR: Proximity attention point rendering. In Advances in Neural Information Processing Systems (NeurIPS) , 2023. 13 This appendix is organized into four parts. Section A extends the qualitative comparison of the main paper to the four remaining synthetic subjects (fox, Simpsons, wolf, spider) and to both real subjects (robot with training-view ground truth, statue), and pairs the novel-pose driving figure of the main paper with a Phase 1 vs Phase 2 cross-comparison on the same poses (Section A.1). Section B groups three additional ablations: an examination of what the two-phase optimization and its depth supervision each contribute on T-Rex (Section B.1), a Mani-GS configuration comparison that motivates disabling per-triangle adaptive scaling for the baseline (Section B.2), and a ground-truth mesh sequence ablation that isolates the rendering representation from geometry and skinning quality (Section B.3). Section C collects additional implementation details: dataset sequence lengths (Section C.1), the PAPR backbone and auto-rig pipeline (Section C.2), the two-phase optimization losses and schedules (Section C.3), and the attention-guided track-seeding procedure (Section C.4). Section D discusses the broader impact of this work. 
+
+# A Additional Qualitative Results 
+
+Figures 6–9 extend the synthetic qualitative comparison of Section 4.3 (Figure 3) to the four remaining synthetic subjects. Rows are methods (Puppeteer [ 39 ], Mani-GS [ 7], ours, ground truth) and columns are matched frames; each figure shows the supervised Training View and a held-out Novel View with 
+
+t0 the canonical (binding) frame. Spider is shown with two frames per view rather than three so each image stays large enough to read the limb-junction detail. The same failure modes observed in the main figure recur across morphologies. Mani-GS produces spiky artifacts, especially around joint boundaries: the neck and back for fox, the arm and leg for Simpsons, the chest and tail for wolf, and the legs for spider. Puppeteer fails to deform the geometry to match the observed motion sequence accurately. While its result is sometimes passable, it is not consistently accurate, with limbs and body parts often not reaching their target positions and the geometry sometimes structurally incorrect. Our method recovers the joint rotations more accurately throughout the motion sequence and renders cleanly without artifacts. For parts of the subject that remain occluded under the fixed training view, however, the geometry does not always track as accurately: the 2D priors we use to disambiguate single-view supervision provide no signal in occluded regions either (e.g., the left arm of Simpsons). Figures 10 and 11 extend the real-world qualitative comparison of Section 4.3 (Figure 4). For the robot subject we additionally include the training-view ground truth alongside each method, and we show a second real-world subject (statue) in the same layout. Rows are matched frames; columns are the supervised Training View (Mani-GS [ 7], ours, ground truth) and a held-out Novel View (Mani-GS, ours), with t0 the canonical (binding) frame and t1, t 2 progressively articulated frames. Novel-view ground truth is unavailable for real subjects (Section 4.1). The synthetic Mani-GS failure mode reappears on the real subjects: spiky artifacts are visible at the limbs of the robot and around the lower body of the statue. Our representation does not exhibit these artifacts and renders cleanly for both subjects. 
+
+A.1 Phase Configurations on Novel-Pose Driving 
+
+This subsection pairs the novel-pose driving comparison of Section 4.3 (Figure 5) with a Phase 1 counterpart for both methods on the same robot subject and the same two unseen pose sequences. The main-paper figure used the Phase 2 configuration of each method, which contains each method’s refined skinning weights (and, for Mani-GS, the refined per-splat binding rotation and offset). A natural question is whether the Mani-GS artifacts visible there are caused by Phase 2’s per-splat fine-tuning being applied off-trajectory rather than by the rendering representation itself. Figure 12 addresses this directly. Mani-GS at Phase 2 exhibits the per-splat overfit artifacts on the limbs already visible in the main paper, whereas Mani-GS at Phase 1 is free of those overfit-driven artifacts but still shows joint-boundary artifacts that ours does not. Our renderings, by contrast, remain comparably clean across phases: we observe slight softening at limb boundaries in our Phase 2 relative to Phase 1, consistent with mild overfitting of the refined skinning to the supervised trajectory, but neither phase produces the spiky limb artifacts of Mani-GS Phase 2 nor the joint-boundary artifacts of Mani-GS Phase 1. 14 Training View    
+
+> t0(canonical) t1t2
+> Puppeteer
+> Mani-GS
+> Ours
+> GT
+
+Novel View    
+
+> t0(canonical) t1t2
+> Puppeteer
+> Mani-GS
+> Ours
+> GT
+
+Figure 6: Qualitative comparison on synthetic fox. Training View is on top and Novel View is on the bottom. Rows are methods; columns are matched frames, with t0 the canonical (binding) frame and t1, t 2 progressively articulated. 15 Training View Novel View        
+
+> t0(canonical) t1t2t0(canonical) t1t2
+> Puppeteer
+> Mani-GS
+> Ours
+> GT
+
+Figure 7: Qualitative comparison on synthetic Simpsons. Rows are methods; columns are matched frames split into a supervised Training View (left) and a held-out Novel View (right). t0 is the canonical (binding) frame; t1, t 2 are progressively articulated frames. 16 Training View    
+
+> t0(canonical) t1t2
+> Puppeteer
+> Mani-GS
+> Ours
+> GT
+
+Novel View    
+
+> t0(canonical) t1t2
+> Puppeteer
+> Mani-GS
+> Ours
+> GT
+
+Figure 8: Qualitative comparison on synthetic wolf. Training View is on top and Novel View is on the bottom. Rows are methods; columns are matched frames, with t0 the canonical (binding) frame and t1, t 2 progressively articulated. 17 Training View Novel View      
+
+> t0(canonical) t1t0(canonical) t1
+> Puppeteer
+> Mani-GS
+> Ours
+> GT
+
+Figure 9: Qualitative comparison on synthetic spider. Rows are methods; columns are matched frames split into a supervised Training View (left) and a held-out Novel View (right). t0 is the canonical (binding) frame and t1 is the articulated frame shown; the additional t2 is omitted to allow larger images. 18 Training View Novel View     
+
+> Mani-GS Ours GT Mani-GS Ours
+> t0
+> (canonical)
+> t1
+> t2
+
+Figure 10: Qualitative comparison on the real-world robot capture (with training-view ground truth). Rows are matched frames ( t0 is the canonical/binding frame; t1, t 2 are progressively artic-ulated); columns are split into a supervised Training View (Mani-GS [ 7], ours, ground truth) and a held-out Novel View (Mani-GS, ours). 19 Training View Novel View     
+
+> Mani-GS Ours GT Mani-GS Ours
+> t0
+> (canonical)
+> t1
+> t2
+
+Figure 11: Qualitative comparison on the real-world statue capture. Rows are matched frames (t0 is the canonical/binding frame; t1, t 2 are progressively articulated); columns are split into a supervised Training View (Mani-GS [ 7 ], ours, ground truth) and a held-out Novel View (Mani-GS, ours). 20 Mani-GS Ours        
+
+> Phase 1 Phase 2 Phase 1 Phase 2
+> t0
+> (canoni-cal)
+> Seq. 1, t1
+> Seq. 1, t2
+> Seq. 2, t1
+> Seq. 2, t2
+
+Figure 12: Phase configurations on novel-pose driving (real-world robot). Rows are time steps: the canonical (binding) frame t0, then t1 and t2 from each of the two unseen driving sequences. Columns group the four configurations: Mani-GS at Phase 1 and Phase 2, then ours at Phase 1 and Phase 2. Mani-GS Phase 2 shows the per-splat overfit artifacts on the limbs visible in the main paper (Figure 5); Mani-GS Phase 1 avoids those overfit-driven artifacts but still exhibits joint-boundary artifacts that ours does not. Our renderings are stable across phases. Best viewed zoomed in. 21 B Additional Ablations 
+
+This section reports three additional ablations. Section B.1 examines what the two-phase optimization and its depth supervision each contribute on the T-Rex sequence. Section B.2 compares the Mani-GS baseline with its per-triangle adaptive scaling enabled and disabled, supporting the configuration choice in Section 4.1. Section B.3 isolates the rendering representation from any geometry or skinning quality by driving every method directly from a ground-truth mesh sequence. 
+
+B.1 Two-Phase Optimization Ablation on T-Rex 
+
+We expand the Phase 1 vs Full comparison of Section 4.4 (Table 2) on the T-Rex sequence with a larger qualitative figure than the method overview can contain. Figure 13 shows three configurations side by side: Phase 1 with the relative-depth term L∆depth disabled, the depth-supervised Phase 1, and Full (Phase 1 followed by Phase 2). Without L∆depth , the per-frame joint rotations are supervised only by the rendering loss at a single fixed view, giving the optimizer the freedom to twist rotations off their physically correct paths to improve the 2D pixel match. The no-depth variant therefore fits the training-view silhouette more aggressively, but misaligns the underlying 3D articulation across the sequence; the artifact is most visible at the head, whose rotation locks into a clearly wrong configuration that subsequent training cannot correct. The depth-supervised Phase 1, by contrast, keeps each rotation on a 3D-plausible trajectory, and with the auto-rigged skinning weights still unmodified at this stage (Phase 2 is what refines them), this fidelity to 3D motion comes at the cost of a slightly looser silhouette fit. The trade is reflected in the metrics: the no-depth variant outperforms the depth-supervised Phase 1 by ∼1.5 dB on training-view PSNR, but the chamfer distance against the ground-truth mesh jumps to 15 .64 ×10 −3 (2.8× that of the depth-supervised Phase 1), and the novel-view PSNR drops by ∼2.7 dB (Table 3). Building on the depth-supervised Phase 1, Phase 2 refines both the skinning weights and the per-joint rotation corrections, addressing both ends of the trade at once: with corrected skinning and refined rotations, the deformation matches the ground-truth silhouette without forcing rotations off their 3D-plausible paths. The visible corrections on T-Rex are highlighted in the figure: the head rotation at t1 and the mouth articulation and tail position at t2 are all brought closer to the ground truth. The metrics tell the same story: training-view PSNR climbs to its best across all configurations ( 31 .08 dB), and the chamfer distance against the ground-truth mesh improves further from 5.68 ×10 −3 at Phase 1 to 4.60 ×10 −3 at Full. Table 3 reports the per-configuration metrics for this sequence. Table 3: Two-phase optimization ablation on T-Rex. Training-view and novel-view PSNR/SSIM/LPIPS are reported on the same cameras as Table 2; chamfer distance is averaged over the driving-video frames against the ground-truth mesh. Best in bold, second-best underlined.                               
+
+> Training view Novel view Configuration PSNR ↑SSIM ↑LPIPS ↓PSNR ↑SSIM ↑LPIPS ↓Chamfer ( ×10 −3)↓
+> Phase 1 w/o L∆depth 29.21 0.953 0.034 21.38 0.934 0.045 15.64 Phase 1 27.72 0.945 0.035 24.05 0.942 0.039 5.68 Full 31.08 0.972 0.025 23.95 0.945 0.034 4.60
+
+B.2 Mani-GS Adaptive Scaling Ablation 
+
+In Section 4.1 we noted that the Mani-GS baseline has its per-triangle adaptive scaling disabled throughout training. Mani-GS rescales each splat’s scaling vector at every frame in proportion to its bound triangle’s deformed edge lengths, so the splat tracks the triangle’s shape change [ 7 ]. On thin or near-degenerate triangles, this rescaling drives the splat covariance to extreme values and produces visible artifacts under articulation. Phase 2 binding-rotation refinement reduces some of these artifacts by reorienting affected splats, but cannot address them as effectively as disabling adaptive scaling outright. Figure 14 compares the two configurations on Simpsons and fox. Both runs use our full two-phase optimization; only the adaptive-scaling toggle differs. With scaling enabled, articulated frames retain 22 Training View    
+
+> t0(canonical) t1t2
+> Phase 1 w/o
+> L∆depth
+> Phase 1
+> Full
+> GT
+
+Novel View    
+
+> t0(canonical) t1t2
+> Phase 1 w/o
+> L∆depth
+> Phase 1
+> Full
+> GT
+
+Figure 13: Two-phase optimization ablation on T-Rex. Training View is on top and Novel View is on the bottom. Rows are configurations (Phase 1 w/o L∆depth , Phase 1, Full, GT); columns are matched frames with t0 the canonical (binding) frame and t1, t 2 progressively articulated. 23 visible artifacts even after Phase 2; we therefore disable it to obtain the stronger Mani-GS baseline used throughout Section 4.         
+
+> Simpsons t0(canonical) t1t2
+> Mani-GS (scaling on)
+> Mani-GS (scaling off)
+> Fox t0(canonical) t1t2
+> Mani-GS (scaling on)
+> Mani-GS (scaling off)
+
+Figure 14: Mani-GS adaptive-scaling ablation. Simpsons (top) and fox (bottom), each shown as two rows comparing the default Mani-GS configuration (per-triangle adaptive scaling on ) with the configuration used in the main paper (scaling off ). Both rows share our full two-phase optimization; only the scaling toggle differs. Columns are matched training-view frames, with t0 the canonical (binding) frame and t1, t 2 progressively articulated. Artifacts produced by the most degenerate splats remain visible with scaling enabled even after Phase 2. 
+
+B.3 Ground-Truth Mesh Sequence 
+
+To isolate the rendering representation from any geometry or skinning quality, we drive each method directly from the ground-truth mesh sequence of the synthetic subjects, building on the motivation of Section 1 (Figure 1). Splats are bound to the canonical ground-truth mesh, and per-frame deformed positions are read directly from the ground-truth sequence rather than computed from learned 24 skinning. Our PAPR cloud, which does not sit on the mesh, is tied to the same ground-truth rig: we take the source skeleton and the per-vertex skinning weights that produced the ground-truth mesh sequence, transfer the per-vertex weights to each PAPR point by the same k-nearest-neighbour inverse-distance weighting used in our auto-rig pipeline (Section C.2, k = 6 ), and LBS-deform the points (Equation (1) ) with the ground-truth per-frame bone poses. All three methods therefore inherit identical oracle articulation, differing only in the rendering representation. We compare two structurally different mesh-bound splat bindings against ours: Mani-GS [ 7], which places three splats per triangle, and SuGaR [ 9 ], which places one splat per triangle. For both baselines, per-frame splat covariances are rotated using each method’s original rotation rule. We bypass SuGaR’s meshing step and bind both baselines to the same uniformly subdivided ground-truth mesh, which contains roughly 
+
+100 k– 200 k triangles per scene. No per-view binding fine-tuning is applied. Figure 15 shows the binding and deformed frames for each subject side by side. At the binding frame all three methods produce comparable canonical renderings, calibrating that any visible difference at the deformed frame is not a baseline gap. At the deformed frame, both Mani-GS and SuGaR exhibit joint-boundary tiling artifacts (spikes) even though the underlying geometry deformation is exact by construction; ours remains clean. Between the two splat bindings, SuGaR’s one-splat-per-triangle formulation produces thinner and more visible spikes than Mani-GS, and additionally leaves pinhole gaps where neighbouring triangle splats fail to overlap (visible, for example, around the head of the T-Rex), making Mani-GS the less artifact-prone of the two. Read across the splat family, this indicates that mesh-bound splat formulations inherit the joint-boundary failure mode regardless of binding density. The artifacts are a direct manifestation of the per-primitive binding-frame shape parameter: representation-inherent, not a downstream consequence of mesh or skinning quality. 
+
+# C Additional Implementation Details 
+
+C.1 Dataset Sequence Lengths 
+
+Table 4 lists the per-scene driving-video lengths referenced in Section 4.1. Table 4: Per-scene driving-video length, in frames. Synthetic scenes are rendered at 512 ×512 ;real-world captures and generated driving videos are at 960 ×540 .        
+
+> Scene Frames
+> Synthetic
+> T-Rex 40 Simpsons 34 Fox 24 Wolf 18 Spider 16
+> Real-world
+> Robot 36 Statue 18
+
+C.2 PAPR Backbone, Auto-Rig, and Conventions PAPR backbone. We use a U-Net-free variant of PAPR [ 59 ]: the rendering path is purely the proximity-attention aggregation over the top-K nearest points, with no image-space decoder. This keeps the rendering pipeline transparent and ensures that no learned image-space network can compensate for deformation artifacts at render time. Backbone hyperparameters (number of points, attention layer widths, top-K, training schedule) follow the official PAPR release [ 59 ]; the renderer is frozen for all downstream optimization in this paper. 
+
+Auto-rig pipeline. The auto-rig pipeline runs in two stages on the trained PAPR cloud, and the resulting skeleton and weights are used only as initialization for the two-phase optimization of Section 3.4. (i) We extract a triangle-mesh proxy from the PAPR point cloud using the pre-trained, off-the-shelf meshing model OffsetOPT [ 21 ], run with its public release defaults; the proxy serves only the next step. (ii) We feed this proxy to Puppeteer [ 39 ] with default settings, obtaining a skeleton 25 T-Rex    
+
+> Binding Deformed Mani-GS
+> SuGaR
+> Ours
+> Fox
+> Binding Deformed Mani-GS
+> SuGaR
+> Ours
+> Simpsons
+> Binding Deformed Mani-GS
+> SuGaR
+> Ours
+
+Figure 15: Renderings under an oracle (ground-truth) mesh deformation. All three methods are driven by the same ground-truth mesh sequence; the full setup, including the shared subdivided mesh used for both baselines, is described in Section B.3. The figure is laid out as two side-by-side panels: T-Rex (top) above Fox (bottom) on the left, and Simpsons on the right; within each subject sub-block, rows are methods and columns are the canonical Binding frame and one Deformed frame. Both splat bindings show joint-boundary artifacts at the deformed frame; ours does not. 26 of B bones and per-vertex skinning weights on the proxy mesh. We then transfer the per-vertex skinning weights to each PAPR point by k-nearest-neighbour inverse-distance weighting (IDW) in the canonical pose, with k = 6 by default, yielding wi ∈ RB . The proxy mesh is discarded after this transfer and participates in neither deformation nor rendering. 
+
+Mani-GS rig pipeline. The Mani-GS baseline binds splats to a triangle-mesh proxy extracted from its trained first-stage 3DGS, following Mani-GS’s own meshing procedure [ 7]. We auto-rig this proxy with Puppeteer [ 39 ] (the same auto-rigger used in our method) to obtain a skeleton and per-vertex skinning weights, and the resulting skinning weights are refined as part of the shared Phase 2 schedule. 
+
+Rotation parametrization. All bone rotations Rtb in the optimization, both the Phase 1 frame-wise rotations and the Phase 2 per-joint corrections, are parametrized as axis-angle vectors ωtb ∈ R3
+
+(direction giving the rotation axis, magnitude the rotation angle) and converted to SO (3) on the fly via the Rodrigues exponential map Rtb = exp([ ωtb]×), where [ · ]× denotes the skew-symmetric matrix of a 3-vector. No per-bone translation is optimized: only the root carries the global translation 
+
+tt ∈ R3, and non-root bone offsets are fixed at bind time. Forward kinematics composes these rest-pose offsets with the bone rotations along the skeleton tree to yield the per-bone SE (3) transforms 
+
+Tb(Rt) used in Equation (1). 
+
+Skinning-weight parametrization. The skinning weights wi ∈ RB used in Equation (1) are not optimized directly; instead we store unconstrained per-point logits li ∈ RB and recover the active weights at every forward pass by a per-point softmax over bones, wi = softmax( li). This guarantees 
+
+wi,b ≥ 0 and PBb=1 wi,b = 1 at every step without explicit projection. The logits are initialized from the auto-rig output as li = log ˜ wi, where ˜wi is the IDW-transferred Puppeteer weight clamped to a small floor for numerical stability so the logarithm is finite. Phase 1 keeps li frozen at this initialization; Phase 2 optimizes li jointly with the correction MLP, with the regularizers tabulated in Table 5 acting on the resulting wi.
+
+C.3 Optimization Details 
+
+This section gathers the loss weights, regularizers, and schedules used in the two-phase optimization of Section 3.4. Both phases use the rendering term Lrgb = 0 .8 · L1 + 0 .2 · (1 − SSIM) on the rendered patch, augmented with an LPIPS term at weight 0.01 . The remaining weights are summarized in Table 5. Table 5: Loss weights for the two-phase optimization of Section 3.4. Entries marked “decays a → 0”follow a schedule that decays from the listed value to zero over the course of Phase 2. Dashes indicate the term is not active in that phase.                                             
+
+> Term Phase 1 Phase 2
+> Lrgb (0.8·L1 + 0 .2·(1 −SSIM) )1.01.0
+> LPIPS 0.01 0.01
+> L∆depth (relative depth) 1.0decays 1.0→0
+> Lrot (descendant-weighted rotation reg.) 0.1—
+> Ltrack (2D tracking) —decays 0.005 →0
+> LARAP (k-NN distance preservation, k=8 )—500
+> Composed-rotation magnitude reg. (Phase 1 +correction) —0.01
+> Correction L2 magnitude —5×10 −4
+> Correction temporal smoothness —0.1
+> Skin-weight smoothness ( k-NN graph) —0.03
+> Skin-weight sparsity —0.01
+
+Optimizer and learning-rate schedule. Both phases use Adam with cosine-annealing learning-rate schedules. In Phase 1, each frame is fit with a single learning rate over its joint rotations and root translation, annealed from 5×10 −3 to 1×10 −4. In Phase 2, the optimizer uses per-parameter-group learning rates: 3×10 −4 for the correction MLP and 1×10 −2 for the skinning-weight logits. Both groups are cosine-annealed to 1×10 −5 over the full 30 ,000 -iteration Phase 2 schedule. 27 ∆-depth supervision. At each optimization step the relative-depth loss L∆depth is computed on a random subsample of 4096 canonical points. The same points are projected through the binding-frame and current-frame cameras to obtain camera-space depths z0 
+
+> i
+
+, z ti and pixel coordinates p0 
+
+> i
+
+, p ti; binding-frame quantities are detached so that gradients flow only through the deformation. Monocular depths 
+
+˜m0 
+
+> i
+
+, ˜mti are bilinearly sampled from the Depth Anything 3 maps at p0 
+
+> i
+
+and pti (we use the metric-depth variant of Depth Anything 3, so ˜m is in metric units rather than affine-invariant disparity, and the linear scale alignment below is well-posed), and we form the per-point deltas ∆zi = zti − z0 
+
+> i
+
+and 
+
+∆mi = ˜ mti − ˜m0 
+
+> i
+
+. We retain only points that lie in front of the camera and project inside the image at both frames, and whose current-frame projection lands on a foreground-mask pixel; the foreground requirement restricts the depth signal to points that currently contribute to the rendered silhouette. The per-frame scale is computed in closed form on the retained samples, st = ⟨∆z, ∆m⟩/∥∆m∥2,under no_grad , so it acts as a constant during backpropagation; it is recomputed fresh each step on the new subsample and never persists as state. The loss is then L∆depth = 1
+
+> n
+
+P
+
+> i
+
+(∆ zi − st∆mi)2,where n is the number of retained samples. Phase 2 uses the same construction with λ∆depth decayed to zero according to Table 5. 
+
+Correction network. The Phase 2 correction fθ (t) is a small temporal MLP that takes a positional encoding of the normalized frame index t/T as input and outputs a per-joint axis-angle offset, added to the Phase 1 rotation of that joint before LBS. The positional encoding uses sine and cosine bases with frequency exponents 0 through 10 (eleven bands), giving an input of dimension 1 + 2 · 11 = 23 .The MLP has two hidden layers of width 128 with ReLU activations and a linear output head producing 3B values reshaped to per-joint axis-angle vectors; the output layer is zero-initialized so 
+
+fθ produces zero correction at the start of training. The Phase 1 rotations and the PAPR network remain frozen throughout Phase 2. 
+
+Correction regularizers. The correction outputs are regularized with an L2 penalty on their magnitude (weight 5×10 −4) and a temporal-smoothness penalty on consecutive-frame differences (weight 0.1); together these keep the corrections small and slowly varying. 
+
+Skin-weight regularizers (Phase 2). The Phase 2 skin-weight refinement is regularized by two terms acting on the active weights wi = softmax( li). The smoothness term penalizes disagreement among k-nearest canonical neighbours, 
+
+Lsmooth = 1
+
+N k 
+
+> N
+
+X
+
+> i=1
+
+X 
+
+> j∈N (i)
+
+wi − wj 1, (2) on the same canonical k-NN graph used by LARAP (k = 8 ). The sparsity term is the per-coordinate negative binary entropy, 
+
+Lsparse = − 1
+
+N B 
+
+> N
+
+X
+
+> i=1
+> B
+
+X
+
+> b=1
+
+h
+
+wi,b log wi,b + (1 − wi,b ) log(1 − wi,b )
+
+i
+
+, (3) which pushes each wi,b toward 0 or 1 and so toward fewer effective bones per point. 
+
+Descendant-weighted rotation regularizer. Joint rotations are penalized in proportion to how many child joints they propagate to, so that bones high in the kinematic tree (which carry their entire subtree with them) are encouraged to be quieter than leaf bones. Let ndesc (b) denote the number of descendants of bone b in the Puppeteer-returned kinematic tree (zero for leaves), and define 
+
+αb = 1 + ndesc (b)1 + ndesc (·) , (4) normalized so α = 1 across the B bones. Phase 1 regularizes the per-frame axis-angle magnitudes, 
+
+L(1)  
+
+> rot
+
+= 1
+
+B
+
+> B
+
+X
+
+> b=1
+
+αb ωtb
+
+> 22
+
+. (5) Phase 2 regularizes the composed rotation (Phase 1 base Rtb rotated by the per-frame correction 
+
+R(c,t ) 
+
+> b
+
+produced by fθ ) via a Frobenius-norm proxy, 
+
+L(2)  
+
+> rot
+
+= 1
+
+T B 
+
+> T
+
+X
+
+> t=1
+> B
+
+X
+
+> b=1
+
+αb RtbR(c,t ) 
+
+> b
+
+− I 2 
+
+> F
+
+, (6) 28 which is monotonically related to rotation magnitude and avoids a matrix logarithm. 
+
+ARAP distance-preservation term. The as-rigid-as-possible term LARAP in Phase 2 acts on a fixed canonical k-nearest-neighbour graph over the PAPR points, with k = 8 neighbours per point computed once at the binding pose. For each canonical edge (i, j ) we penalize the squared change in pairwise distance under the deformed configuration, P
+
+> (i,j )
+
+ ∥pti − ptj ∥ − ∥ p0 
+
+> i
+
+− p0 
+
+> j
+
+∥2, weighted by the loss coefficient in Table 5. The graph is canonical (not recomputed per frame), so the term anchors local geometry to the binding-pose neighbourhood structure throughout the sequence. 
+
+Sequential frame fitting. In Phase 1 we fit the per-frame rotations sequentially from the binding frame: each frame t+1 is initialized from the optimized rotations of frame t, exploiting temporal smoothness in the driving video so that no frame is optimized from scratch. Each frame is optimized for 2,000 iterations. 
+
+Hardware and runtime. All optimization runs on a single NVIDIA RTX 3090 GPU. For a 16 -frame sequence, Phase 1 takes approximately one hour, and Phase 2 takes another hour for its 30 ,000 
+
+iterations. 
+
+C.4 Attention-Guided Track Seeding 
+
+The 2D tracking loss Ltrack in Phase 2 requires a set of (point, query-pixel) pairs at the canonical frame: each selected canonical point is propagated forward in time by CoTracker from its query pixel, and the resulting trajectory supervises the projection of the LBS-deformed point. The construction below chooses which points to supervise and where to query them. 
+
+Off-ray issue with naive projection. The simplest construction, projecting all canonical points through the camera and using those pixel positions as queries, is problematic for an attention-based renderer like PAPR. A point can contribute to a pixel without lying exactly on its ray, and conversely a point’s geometric projection is not necessarily where it visually contributes. Projection-only queries therefore include points the renderer effectively ignores at the canonical view, points whose projection lands a pixel or two off the visible surface, and silently-occluded back-facing points. Each of these injects label noise into the tracking loss. 
+
+Attention-dominant selection. We instead select queries from the renderer’s own attention. We run PAPR over the canonical-frame image (tiled in patches for memory) to obtain, for each foreground pixel, the indices and attention weights of the top-K points selected by proximity attention. For each foreground pixel we take the argmax over its top-K attention weights to identify the dominant point: the single point that most explains that pixel. Pixels whose top-1 attention falls below a threshold (we use 0.05 ) are discarded as smeared/low-confidence, and the remaining indices are deduplicated to yield the set of dominant points for the canonical view. Each selected point is then projected through the canonical camera; by construction this projection lies inside the rendered silhouette near a pixel the point dominates, and that 2D position is the CoTracker query for the point. Tracks and the corresponding 3D point indices are persisted together so that the optimizer knows which canonical point each trajectory supervises. 
+
+Mani-GS query seeding. For Mani-GS we seed CoTracker queries by projecting the canonical mesh vertices through the same canonical view, restricting to those inside the foreground mask, and uniformly subsampling on the image plane by grid binning to a comparable query count. The CoTracker model, temporal window, canonical view, and query count are thus matched to ours; the seeding differs only in per-pixel point selection (mesh-vertex grid sampling vs. attention dominance). 
+
+# D Broader Impact 
+
+RigPAPR enables turning a real-world capture into a rigged, re-posable asset directly from the capture itself, without an intermediate re-modeled mesh, which we expect to benefit animators, accessibility tools, and creators without specialized infrastructure. The same accessibility could be repurposed to re-animate captures of real people without consent. This concern is shared with related neural avatar 29 work; practitioners deploying such pipelines on human subjects should pair them with consent-aware capture, content provenance tags, and downstream detection. 30
