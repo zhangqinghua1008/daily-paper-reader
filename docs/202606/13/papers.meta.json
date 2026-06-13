@@ -1,0 +1,69 @@
+{
+  "label": "2026-06-13",
+  "date": "2026-06-13",
+  "generated_at": "2026-06-13T21:30:07",
+  "count": 4,
+  "papers": [
+    {
+      "paper_id": "202606/13/2606.09139v1-a-geometric-framework-for-absolute-pose-and-velocity-estimation-with-event-cameras",
+      "section": "deep",
+      "title_en": "A Geometric Framework for Absolute Pose and Velocity Estimation with Event Cameras",
+      "authors": "Zibin Liu, Shunkun Liang, Banglei Guan, Yang Shang, Qifeng Yu, Ji Zhao",
+      "date": "2026-06-08",
+      "pdf": "https://arxiv.org/pdf/2606.09139v1",
+      "score": "9.0",
+      "evidence": "提出基于事件相机和3D线的绝对位姿估计几何框架。",
+      "tldr": "事件相机运动估计研究中，绝对位姿估计相对滞后，同时恢复位姿与速度仍为开放难题。本文提出基于3D线-事件对应的几何框架，利用线-事件平面正交性与投影共线性约束，设计线性和多项式求解器以实现绝对位姿估计，并给出线性和优化求解器估计速度。方法仅需最少3个事件-线对应即可独立求解6-DoF位姿或速度，仿真与真实实验表明精度和效率均达最优。该工作填补了联合估计空白，代码已开源。",
+      "tags": "query:gs-slam",
+      "abstract_en": "Despite the rapid advancements in event-based motion estimation, current geometric methods primarily focus on velocity estimation. However, absolute pose estimation, which is equally crucial for key applications such as robotic navigation and augmented reality, remains relatively underexplored. Consequently, the simultaneous recovery of absolute pose and velocity from event streams remains an open and challenging problem. To address this gap, we propose a geometric framework for absolute pose and velocity estimation by leveraging 3D lines in the scene and the events they trigger. At the core of the framework lie two key geometric constraints: the orthogonality between a 3D line and the normal vector of its corresponding event plane, and the collinearity of an event with the 2D projection of its associated line. Based on these constraints, we present both linear and polynomial solvers for absolute pose estimation. The former enables efficient computation, while the latter provides a globally optimal solution for rotation. For velocity estimation, we develop an efficient linear solver and a more accurate optimization-based solver to recover both angular and linear velocities. Notably, our methods require a minimum of three event-line correspondences to determine the 6-DoF absolute pose or velocities independently. Extensive experiments in simulation and on real-world datasets demonstrate that our methods achieve state-of-the-art performance, with significant improvements in accuracy and computational efficiency compared to existing methods. The demo code is publicly available at https://github.com/Zibin6/EventPoseVelocity.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202606/13/2606.11782v1-seeing-what-matters-perceptual-wrapper-with-common-randomness-for-3d-gaussian-splatting",
+      "section": "deep",
+      "title_en": "Seeing What Matters: Perceptual Wrapper with Common Randomness for 3D Gaussian Splatting",
+      "authors": "He-Bi Yang, Jing-Zhong Chen, Yen-Kuan Ho, Sang NguyenQuang, Fan-Yi Hsu, Yun-Yu Lee, Jui-Chiu Chiang, Wen-Hsiao Peng",
+      "date": "2026-06-10",
+      "pdf": "https://arxiv.org/pdf/2606.11782v1",
+      "score": "9.0",
+      "evidence": "提出一种感知增强方法，用于改善3D高斯泼溅的实时渲染质量",
+      "tldr": "3D高斯泼溅（3DGS）在合成高频纹理时常出现模糊，尤其在内存受限和率失真优化场景下问题加剧。本文提出一个2D感知包装器，利用伪随机高斯噪声驱动的轻量合成网络，在Wasserstein失真监督下学习匹配局部特征统计而非严格像素重建，有效增强纹理细节。该方法即插即用，广泛适用于普通、内存受限和率失真优化3DGS，显著提升感知质量并大幅缩减模型大小，为实时渲染提供了高效后处理方案。",
+      "tags": "query:gs-slam",
+      "abstract_en": "While 3D Gaussian Splatting (3DGS) achieves impressive real-time rendering, it frequently struggles to synthesize high-frequency textures, a limitation heavily exacerbated in memory-constrained and rate-distortion-optimized (RDO) pipelines. To address this, we propose a versatile 2D perceptual wrapper that enhances the rendered outputs of existing 3DGS representations in a content- and view-dependent manner. Our method leverages a lightweight synthesis network conditioned on pseudo-random Gaussian noise to synthesize perceptually plausible textures. Supervised by Wasserstein Distortion, the network learns to match local feature statistics rather than strictly enforcing pixel-wise reconstruction fidelity, effectively mitigating the blurriness inherent in standard frameworks. We demonstrate the broad applicability of our plug-and-play approach across vanilla, memory-constrained, and RDO 3DGS methods. Comprehensive subjective and objective experiments confirm that our method significantly improves over existing baselines, yielding superior perceptual quality at sharply reduced file or model sizes.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202606/13/2606.11390v1-a-scalable-pytorch-abstraction-for-multi-gpu-gaussian-splatting",
+      "section": "deep",
+      "title_en": "A Scalable PyTorch Abstraction for Multi-GPU Gaussian Splatting",
+      "authors": "Matthew Cong, Francis Williams, Jonathan Swartz, Mark Harris, Sanja Fidler, Ken Museth",
+      "date": "2026-06-09",
+      "pdf": "https://arxiv.org/pdf/2606.11390v1",
+      "score": "8.0",
+      "evidence": "为体积场景表示和实时渲染扩展多GPU高斯泼溅",
+      "tldr": "高斯泼溅方法受限于计算与内存，难以处理大规模场景。本文提出多GPU后端，通过CUDA统一内存与NVLink实现算子级分布，无需显式跨设备通信。实现城市尺度重建，包含超10亿高斯点，细节达街道级，规模为现有方法的25倍。该抽象简化分布式开发，可扩展至其他PyTorch算子。",
+      "tags": "query:gs-slam",
+      "abstract_en": "Gaussian splatting methods have become increasingly popular for neural reconstruction of the real world. However, they are often limited in scale and resolution due to compute and memory constraints. We present a multi-GPU Gaussian splatting approach that scales reconstruction to higher resolutions and larger scenes while abstracting away the code complexity typically associated with distributing a model. To accomplish this, we propose a PyTorch backend that distributes the Gaussian parameters and splatting operators across GPUs via CUDA unified memory and NVLink. Because distribution occurs at the operator level, the model code requires no explicit cross-device communication. More broadly, the backend exposes multiple GPUs as an aggregate PyTorch device and supports other PyTorch operators. We demonstrate city-scale reconstructions with street-level detail consisting of over 1 billion Gaussian splats, more than 25 times as many as the current state of the art.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202606/13/2606.07514v1-unisharp-universal-sharp-monocular-view-synthesis",
+      "section": "quick",
+      "title_en": "UniSHARP: Universal Sharp Monocular View Synthesis",
+      "authors": "Meixi Song, Dizhe Zhang, Hao Ren, Ruiyang Zhang, Bo Du, Ming-Hsuan Yang, Lu Qi",
+      "date": "2026-06-05",
+      "pdf": "https://arxiv.org/pdf/2606.07514v1",
+      "score": "6.0",
+      "evidence": "使用高斯原语进行单目视图合成，适用于多种相机模型",
+      "tldr": "UniSHARP扩展了SHARP方法，通过将不同图像对齐到统一的球面潜在空间，并沿射线排列高斯原语，实现了从单张图像到多种相机模型的清晰新视角合成。",
+      "tags": "query:gs-slam",
+      "abstract_en": "In this work, we focus on extending SHARP, the popular photorealistic view synthesis method, for universal monocular rendering across a continuum of camera systems, from conventional perspective cameras to wide-field-of-view, fisheye and omnidirectional panoramic settings. To overcome the pinhole-specific assumptions of SHARP, our key idea is to align various images in a unified omnidirectional latent space. Thus, we propose UniSHARP, which performs implicit alignment in both feature and Gaussian spaces. Specifically, Gaussian primitives are arranged along rays and radial distances in a ray-based universal representation, while 2D semantic and 3D spatial features extracted from UniK3D-inspired encoders are jointly decoded to generate the complete Gaussian cloud. To comprehensively evaluate our method, we construct a benchmark covering diverse imaging systems across various scenes. The benchmark is further stratified by field of view (FoV) to enable fine-grained assessment of the universal monocular rendering task. Extensive experiments on the proposed benchmark demonstrate the effectiveness of UniSHARP, outperforming alternative methods by a large margin. The project page can be found at: https://insta360-research-team.github.io/Unisharp-website/",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

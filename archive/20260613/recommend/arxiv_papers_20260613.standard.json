@@ -1,0 +1,189 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-13T21:25:13.027521+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 3,
+    "deep_cap": 7,
+    "deep_selected": 3,
+    "quick_candidates": 1,
+    "quick_skim_target": 12,
+    "quick_selected": 1
+  },
+  "deep_dive": [
+    {
+      "id": "2606.09139v1",
+      "source": "arxiv",
+      "title": "A Geometric Framework for Absolute Pose and Velocity Estimation with Event Cameras",
+      "abstract": "Despite the rapid advancements in event-based motion estimation, current geometric methods primarily focus on velocity estimation. However, absolute pose estimation, which is equally crucial for key applications such as robotic navigation and augmented reality, remains relatively underexplored. Consequently, the simultaneous recovery of absolute pose and velocity from event streams remains an open and challenging problem. To address this gap, we propose a geometric framework for absolute pose and velocity estimation by leveraging 3D lines in the scene and the events they trigger. At the core of the framework lie two key geometric constraints: the orthogonality between a 3D line and the normal vector of its corresponding event plane, and the collinearity of an event with the 2D projection of its associated line. Based on these constraints, we present both linear and polynomial solvers for absolute pose estimation. The former enables efficient computation, while the latter provides a globally optimal solution for rotation. For velocity estimation, we develop an efficient linear solver and a more accurate optimization-based solver to recover both angular and linear velocities. Notably, our methods require a minimum of three event-line correspondences to determine the 6-DoF absolute pose or velocities independently. Extensive experiments in simulation and on real-world datasets demonstrate that our methods achieve state-of-the-art performance, with significant improvements in accuracy and computational efficiency compared to existing methods. The demo code is publicly available at https://github.com/Zibin6/EventPoseVelocity.",
+      "authors": [
+        "Zibin Liu",
+        "Shunkun Liang",
+        "Banglei Guan",
+        "Yang Shang",
+        "Qifeng Yu",
+        "Ji Zhao"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-08T07:35:28+00:00",
+      "link": "https://arxiv.org/pdf/2606.09139v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Proposes a geometric framework for absolute pose estimation using event cameras and 3D lines.",
+      "llm_evidence_cn": "提出基于事件相机和3D线的绝对位姿估计几何框架。",
+      "llm_evidence": "提出基于事件相机和3D线的绝对位姿估计几何框架。",
+      "canonical_evidence": "提出基于事件相机和3D线的绝对位姿估计几何框架。",
+      "llm_tldr_en": "This work introduces a geometric method to estimate absolute camera pose and velocity from event streams by exploiting constraints between 3D lines and event planes, addressing a gap in event-based pose estimation.",
+      "llm_tldr_cn": "该文针对事件相机仅关注速度估计、忽视绝对位姿估计的问题，提出利用场景中的3D线及其触发的事件，通过3D线与事件平面法向量的正交性等几何约束，同步估计绝对位姿和速度。实验证明了该方法在机器人导航和增强现实等应用中的潜力，为事件相机位姿估计提供了新思路。",
+      "llm_tldr": "该文针对事件相机仅关注速度估计、忽视绝对位姿估计的问题，提出利用场景中的3D线及其触发的事件，通过3D线与事件平面法向量的正交性等几何约束，同步估计绝对位姿和速度。实验证明了该方法在机器人导航和增强现实等应用中的潜力，为事件相机位姿估计提供了新思路。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "accurate camera pose tracking",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.11782v1",
+      "source": "arxiv",
+      "title": "Seeing What Matters: Perceptual Wrapper with Common Randomness for 3D Gaussian Splatting",
+      "abstract": "While 3D Gaussian Splatting (3DGS) achieves impressive real-time rendering, it frequently struggles to synthesize high-frequency textures, a limitation heavily exacerbated in memory-constrained and rate-distortion-optimized (RDO) pipelines. To address this, we propose a versatile 2D perceptual wrapper that enhances the rendered outputs of existing 3DGS representations in a content- and view-dependent manner. Our method leverages a lightweight synthesis network conditioned on pseudo-random Gaussian noise to synthesize perceptually plausible textures. Supervised by Wasserstein Distortion, the network learns to match local feature statistics rather than strictly enforcing pixel-wise reconstruction fidelity, effectively mitigating the blurriness inherent in standard frameworks. We demonstrate the broad applicability of our plug-and-play approach across vanilla, memory-constrained, and RDO 3DGS methods. Comprehensive subjective and objective experiments confirm that our method significantly improves over existing baselines, yielding superior perceptual quality at sharply reduced file or model sizes.",
+      "authors": [
+        "He-Bi Yang",
+        "Jing-Zhong Chen",
+        "Yen-Kuan Ho",
+        "Sang NguyenQuang",
+        "Fan-Yi Hsu",
+        "Yun-Yu Lee",
+        "Jui-Chiu Chiang",
+        "Wen-Hsiao Peng"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-10T08:14:47+00:00",
+      "link": "https://arxiv.org/pdf/2606.11782v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "proposes a perceptual enhancement method for 3D Gaussian Splatting to improve real-time rendering quality",
+      "llm_evidence_cn": "提出一种感知增强方法，用于改善3D高斯泼溅的实时渲染质量",
+      "llm_evidence": "提出一种感知增强方法，用于改善3D高斯泼溅的实时渲染质量",
+      "canonical_evidence": "提出一种感知增强方法，用于改善3D高斯泼溅的实时渲染质量",
+      "llm_tldr_en": "A perceptual wrapper with common randomness is proposed to enhance texture synthesis in 3D Gaussian Splatting, improving real-time rendering quality under memory constraints.",
+      "llm_tldr_cn": "针对3D高斯泼溅(3DGS)在内存受限和率失真优化下难以合成高频纹理的问题，本文提出一个基于伪随机高斯噪声的2D感知包装器，通过瓦瑟斯坦失真监督学习局部特征统计量，而非严格像素重建，从而以内容和视角依赖的方式增强现有3DGS表示的渲染输出。实验表明，该方法能有效缓解模糊伪影，提升可感知的纹理质量，为高效神经渲染提供了一种可行的增强途径。",
+      "llm_tldr": "针对3D高斯泼溅(3DGS)在内存受限和率失真优化下难以合成高频纹理的问题，本文提出一个基于伪随机高斯噪声的2D感知包装器，通过瓦瑟斯坦失真监督学习局部特征统计量，而非严格像素重建，从而以内容和视角依赖的方式增强现有3DGS表示的渲染输出。实验表明，该方法能有效缓解模糊伪影，提升可感知的纹理质量，为高效神经渲染提供了一种可行的增强途径。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.11390v1",
+      "source": "arxiv",
+      "title": "A Scalable PyTorch Abstraction for Multi-GPU Gaussian Splatting",
+      "abstract": "Gaussian splatting methods have become increasingly popular for neural reconstruction of the real world. However, they are often limited in scale and resolution due to compute and memory constraints. We present a multi-GPU Gaussian splatting approach that scales reconstruction to higher resolutions and larger scenes while abstracting away the code complexity typically associated with distributing a model. To accomplish this, we propose a PyTorch backend that distributes the Gaussian parameters and splatting operators across GPUs via CUDA unified memory and NVLink. Because distribution occurs at the operator level, the model code requires no explicit cross-device communication. More broadly, the backend exposes multiple GPUs as an aggregate PyTorch device and supports other PyTorch operators. We demonstrate city-scale reconstructions with street-level detail consisting of over 1 billion Gaussian splats, more than 25 times as many as the current state of the art.",
+      "authors": [
+        "Matthew Cong",
+        "Francis Williams",
+        "Jonathan Swartz",
+        "Mark Harris",
+        "Sanja Fidler",
+        "Ken Museth"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.DC",
+        "cs.GR",
+        "cs.LG"
+      ],
+      "published": "2026-06-09T19:15:39+00:00",
+      "link": "https://arxiv.org/pdf/2606.11390v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Scales multi-GPU Gaussian splatting for volumetric scene representation and real-time rendering",
+      "llm_evidence_cn": "为体积场景表示和实时渲染扩展多GPU高斯泼溅",
+      "llm_evidence": "为体积场景表示和实时渲染扩展多GPU高斯泼溅",
+      "canonical_evidence": "为体积场景表示和实时渲染扩展多GPU高斯泼溅",
+      "llm_tldr_en": "This paper presents a multi-GPU Gaussian Splatting approach using a PyTorch backend with CUDA unified memory, enabling scalable high-resolution 3D reconstruction without code complexity.",
+      "llm_tldr_cn": "高斯泼溅方法在真实世界神经重建中受限于计算和内存，难以扩展到高分辨率和大场景。本文提出多GPU高斯泼溅方案，通过PyTorch后端利用CUDA统一内存和NVLink实现算子级分布式高斯参数，模型代码无需显式跨设备通信。实验表明重建分辨率提高了四倍，且保持易用性。这项工作为大规模3D高斯场景表示提供了工程基础，对GS-SLAM等应用具有重要助推作用。",
+      "llm_tldr": "高斯泼溅方法在真实世界神经重建中受限于计算和内存，难以扩展到高分辨率和大场景。本文提出多GPU高斯泼溅方案，通过PyTorch后端利用CUDA统一内存和NVLink实现算子级分布式高斯参数，模型代码无需显式跨设备通信。实验表明重建分辨率提高了四倍，且保持易用性。这项工作为大规模3D高斯场景表示提供了工程基础，对GS-SLAM等应用具有重要助推作用。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2606.07514v1",
+      "source": "arxiv",
+      "title": "UniSHARP: Universal Sharp Monocular View Synthesis",
+      "abstract": "In this work, we focus on extending SHARP, the popular photorealistic view synthesis method, for universal monocular rendering across a continuum of camera systems, from conventional perspective cameras to wide-field-of-view, fisheye and omnidirectional panoramic settings. To overcome the pinhole-specific assumptions of SHARP, our key idea is to align various images in a unified omnidirectional latent space. Thus, we propose UniSHARP, which performs implicit alignment in both feature and Gaussian spaces. Specifically, Gaussian primitives are arranged along rays and radial distances in a ray-based universal representation, while 2D semantic and 3D spatial features extracted from UniK3D-inspired encoders are jointly decoded to generate the complete Gaussian cloud. To comprehensively evaluate our method, we construct a benchmark covering diverse imaging systems across various scenes. The benchmark is further stratified by field of view (FoV) to enable fine-grained assessment of the universal monocular rendering task. Extensive experiments on the proposed benchmark demonstrate the effectiveness of UniSHARP, outperforming alternative methods by a large margin. The project page can be found at: https://insta360-research-team.github.io/Unisharp-website/",
+      "authors": [
+        "Meixi Song",
+        "Dizhe Zhang",
+        "Hao Ren",
+        "Ruiyang Zhang",
+        "Bo Du",
+        "Ming-Hsuan Yang",
+        "Lu Qi"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-05T17:59:41+00:00",
+      "link": "https://arxiv.org/pdf/2606.07514v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "uses Gaussian primitives for monocular view synthesis across various camera models",
+      "llm_evidence_cn": "使用高斯原语进行单目视图合成，适用于多种相机模型",
+      "llm_evidence": "使用高斯原语进行单目视图合成，适用于多种相机模型",
+      "canonical_evidence": "使用高斯原语进行单目视图合成，适用于多种相机模型",
+      "llm_tldr_en": "UniSHARP adapts the SHARP method for universal monocular rendering by aligning features in an omnidirectional latent space and using Gaussian primitives, achieving sharp view synthesis for various camera types.",
+      "llm_tldr_cn": "UniSHARP扩展了SHARP方法，通过将不同图像对齐到统一的球面潜在空间，并沿射线排列高斯原语，实现了从单张图像到多种相机模型的清晰新视角合成。",
+      "llm_tldr": "UniSHARP扩展了SHARP方法，通过将不同图像对齐到统一的球面潜在空间，并沿射线排列高斯原语，实现了从单张图像到多种相机模型的清晰新视角合成。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

@@ -1,0 +1,1422 @@
+Title: A Geometric Framework for Absolute Pose and Velocity Estimation with Event Cameras
+
+URL Source: https://arxiv.org/pdf/2606.09139v1
+
+Published Time: Tue, 09 Jun 2026 02:23:03 GMT
+
+Number of Pages: 15
+
+Markdown Content:
+> 1
+
+# A Geometric Framework for Absolute Pose and Velocity Estimation with Event Cameras 
+
+Zibin Liu ∗, Shunkun Liang ∗, Banglei Guan, Member, IEEE , Yang Shang, Qifeng Yu, Ji Zhao 
+
+Abstract —Despite the rapid advancements in event-based mo-tion estimation, current geometric methods primarily focus on velocity estimation. However, absolute pose estimation, which is equally crucial for key applications such as robotic navigation and augmented reality, remains relatively underexplored. Conse-quently, the simultaneous recovery of absolute pose and velocity from event streams remains an open and challenging problem. To address this gap, we propose a geometric framework for absolute pose and velocity estimation by leveraging 3D lines in the scene and the events they trigger. At the core of the framework lie two key geometric constraints: the orthogonality between a 3D line and the normal vector of its corresponding event plane, and the collinearity of an event with the 2D projection of its associated line. Based on these constraints, we present both linear and polynomial solvers for absolute pose estimation. The former enables efficient computation, while the latter provides a globally optimal solution for rotation. For velocity estimation, we develop an efficient linear solver and a more accurate optimization-based solver to recover both angular and linear velocities. Notably, our methods require a minimum of three event-line correspondences to determine the 6-DoF absolute pose or velocities independently. Extensive experiments in simulation and on real-world datasets demonstrate that our methods achieve state-of-the-art performance, with significant improvements in accuracy and computational efficiency com-pared to existing methods. The demo code is publicly available at https://github.com/Zibin6/EventPoseVelocity. 
+
+Index Terms —Event camera, Pose estimation, Velocity estima-tion, Geometric solution. 
+
+I. I NTRODUCTION 
+
+Pose estimation has long been a fundamental technology in the domains of computer vision and robotics, playing a crucial role in various applications such as Visual Odometry (VO) [1] and Simultaneous Localization and Mapping (SLAM) [2]. This task is broadly categorized into absolute pose estimation [3], [4], which recovers the rigid transformation from the world co-ordinate system to the camera coordinate system using 2D-3D correspondences, and relative pose estimation [5]–[7], which computes the motion between two or more camera views via 2D-2D correspondences. Beyond these pose initial estimations, recent advances focus on refining pose accuracy through bundle adjustment [8] and rigorous geometric constraints [9]. 
+
+∗These authors contributed equally to this work. Manuscript received *, 2021; revised *, 2021. This work was supported by the National Natural Science Foundation of China under Grant 12372189 and the Science and Technology Innovation Program of Hunan Province under Grant 2025RC1045. (Corresponding author: Banglei Guan) .Zibin Liu, Shunkun Liang, Banglei Guan, Yang Shang, and Qifeng Yu are with the College of Aerospace Science and Engineering, National University of Defense Technology, Changsha 410073, China. Ji Zhao is an independent researcher, Beijing 100000, China. (e-mail: liuzibin@nudt.edu.cn; liangshunkun21@nudt.edu.cn; guanban-glei12@nudt.edu.cn; shangyang1977@nudt.edu.cn; yuqifeng@nudt.edu.cn; zhaoji84@gmail.com)  
+
+,R t  
+
+,ω υ 
+
+Fig. 1. Illustration of joint absolute pose and velocity estimation for event camera. Our methods leverage the geometric constraints between events and lines to recover motion parameters, including both the absolute pose ( R, t)and velocities ( ω, υ). 
+
+While pose estimation has been explored with frame-based camera, accurately capturing fast motions remains challenging due to motion blur and limited temporal resolution. The advent of event cameras presents a new frontier for resolving this limitation. Event cameras, bio-inspired neuromorphic vision sensors, have recently garnered significant attention in the computer vision and robotics communities [10], [11]. Unlike conven-tional frame-based cameras that capture full-intensity images at fixed intervals, event cameras operate with a paradigm-shifting principle of asynchronous triggering. They capture per-pixel brightness changes, generating sparse events that encode the spatio-temporal dynamics of the scene. This unique sensing paradigm offers numerous advantages [12]–[14], in-cluding high temporal resolution, ultra-high dynamic range, and minimal power consumption. Event cameras are widely recognized as excellent velocity estimators, with their utility well-demonstrated in dynamic tasks such as autonomous driv-ing [15] and obstacle avoidance [16]. However, estimating velocity in the absence of specific positional information holds limited value for many critical applications, such as robotic manipulation [17] and augmented reality [18]. Despite this, event-based absolute pose estimation remains compar-atively underexplored. The core challenge lies in effectively associating the sparse, motion-centric event streams with a static 3D world model to anchor the pose globally. Therefore, developing a unified framework that directly exploits event data for joint absolute pose and velocity estimation remains an important and open problem. A primary challenge in harnessing event data stems from its motion-coupled nature: events are generated only in response 
+
+> arXiv:2606.09139v1 [cs.CV] 8 Jun 2026 2
+
+to relative motion, and each event carries a precise, asyn-chronous timestamp [15], [19]. Existing methods commonly attempt to bridge this gap by compressing events into frame-like representations, which can then be processed by con-ventional pose estimation algorithms [10]. This aggregation, however, sacrifices the high temporal resolution and inherent asynchronicity that are the key advantages of event sensing. This raises a crucial question: Can a motion estimation frame-work directly leverage event to jointly recover absolute pose and velocity? 
+
+Another critical issue is the choice of geometric features that are naturally suited to the sparse, edge-like nature of events. While traditional features like corners [20], [21] have been adapted for event streams, lines offer distinct advantages [22], [23]. They are ubiquitous in structured environments, often more so than feature points [24], and their structure directly aligns with the high-frequency response of event cameras to edges [10]. Recent work has highlighted the effectiveness of lines for event-based relative pose estimation, often by fusing events with angular velocity from an IMU to solve for the remaining linear velocity [25], [26]. This demonstrated success motivates our investigation into a more comprehensive problem: Can event–line correspondences alone suffice to re-trieve full 6-DoF absolute pose and velocity without auxiliary sensors? 
+
+Motivated by these observations, we revisit the pose and velocity estimation problem, seeking a purely event-based solution that leverages the unique principles of event cameras. The proposed framework is built on geometric constraints between events and lines to jointly solve for the camera’s absolute pose (rotation and translation), and velocity (angular and linear), as illustrated in Fig. 1. We first develop two distinct solvers for absolute pose estimation: a computationally efficient linear solver and a polynomial solver that guarantees globally optimal rotation estimates. We then introduce two methods for velocity estimation: a direct linear solver that prioritizes speed, and a non-linear optimization solver that yields high-accuracy recovery of both angular and linear velocities. Comprehensive evaluations conducted on synthetic data, simulated events, and real-world datasets validate the superior performance of the proposed methods. The main contributions of this paper are as follows:  
+
+> •
+
+We present a geometric framework for 6-DoF abso-lute pose and velocity estimation from event-line cor-respondences, based on orthogonality and collinearity constraints.  
+
+> •
+
+We derive two solvers for absolute pose estimation: an efficient linear solver for rapid computation, and a polynomial-based solver with globally optimal rotation estimation.  
+
+> •
+
+We derive two solvers for velocity estimation: a fast linear solver and an optimization-based solver for more accurate and robust recovery of angular and linear velocities. The paper is organized as follows. We review related work in Section II. Section III establishes an event-based geometric framework for absolute pose and velocity estimation. In Sec-tion IV, we derive two solvers for absolute pose estimation: a linear method and a polynomial method. Section V addresses velocity estimation, presenting both a linear solver and an optimization-based solver. Degenerate cases are discussed and analyzed in Section VI. The performance of the proposed methods is evaluated in Section VII. Finally, Section VIII concludes the paper with a discussion of future research. II. R ELATED WORK 
+
+This section reviews the literature on line-based camera pose estimation, with a focus on both frame-based and event-based methods. 
+
+Frame-based pose estimation. The problem of recovering camera pose from 2D-3D line correspondences, known as the Perspective-n-Line (PnL) problem, has been extensively studied for decades. Estimating the full 6-DoF pose requires a minimum of three line correspondences, as each provides two constraints on the pose parameters. This minimal config-uration, termed the Perspective-three-Line (P3L) problem, can yield up to eight distinct solutions. Xu et al. [27] conducted a systematic analysis of the relationships between various 3D line configurations and solution multiplicities. For cases involving four or more line correspondences, nu-merous well-established solutions exist to guarantee a unique solution. These solutions are broadly categorized into direct and iterative approaches. Among direct methods, Hartley et al. [28] pioneered the Direct Linear Transformation (DLT) algorithm, which recovers the pose from a measurement matrix constructed from a minimum of six lines. Building on this framework, Pˇ ribyl et al. [29] introduced an enhanced DLT formulation that leverages Pl¨ ucker line coordinates, albeit re-quiring at least nine line correspondences. In contrast, iterative methods [30], while flexible, are prone to converging to local minima and are sensitive to initialization [27]. 
+
+Event-based pose estimation. The event-based vision com-munity has developed distinct approaches for pose estimation, which can be classified into relative and absolute pose esti-mation. In the domain of relative pose estimation, contrast maximization (CMax) is a prominent technique, particularly for estimating rotation. Pioneered by Gallego et al. [31], [32], CMax operates by maximizing the contrast of motion-compensated event images and has proven effective across various motion scenarios. Various methods have also been proposed for linear velocity estimation. Peng et al. [33] developed a closed-form initialization using trifocal tensor geometry, while Gao et al. [25], [26] proposed minimal and linear solvers that simultaneously estimate velocity and line parameters. Recent work by Lu et al. [34] introduced event-based normal flow constraints for real-scale velocity estima-tion, though these methods typically require IMU support for angular velocity measurements. Without relying on additional sensors, Zhao et al. [35] propose a novel coplanarity relation for the eventail manifold and solve the 5-DoF relative pose estimation problem. Absolute pose estimation remains central to both VO and SLAM research [36]–[38]. Existing approaches can be broadly categorized into two main paradigms: filtering-based [39] and optimization-based [22], [40] methods. Chamorro et al. [41] combined a Lie-formulated error-state Kalman filter for state 3
+
+prediction with the Levenberg-Marquardt algorithm for precise 6-DoF camera pose optimization. Furthermore, Liu et al. [42] developed a 6-DoF object pose tracking method that first extracts lines from event streams and then utilizes the Branch-and-Bound algorithm for pose estimation. Although recent years have witnessed the emergence of geometric solutions for event-based sensors, these methods primarily focus on addressing relative pose estimation chal-lenges [25], [26], [33], [34]. To the best of our knowledge, no closed-form solution exists that directly leverages events and lines for simultaneous absolute pose and velocity estimation. This gap in the literature highlights the need for more efficient approaches in event-based vision, particularly those capable of unifying absolute pose and velocity estimation within a single framework. III. G EOMETRY OF EVENT -B ASED POSE PROBLEM 
+
+This section establishes the geometric foundations for our event-based pose and velocity estimation framework. Assum-ing a calibrated event camera undergoes continuous motion within a structured environment, we leverage 3D lines in the scene and events to determine the camera’s absolute pose and velocity. The continuous event stream is segmented into event clusters using fixed-time windows. The absolute pose is estimated using events at the central time instant within each window, while velocity estimation utilizes events across the entire temporal window. Based on single rigid body assumption, the absolute pose is represented by a SE (3) 
+
+transformation, including a rotation matrix R and a translation vector t. Given the discrete and asynchronous nature of events, the estimation of the velocity is transformed into solving the angular velocity ω and the linear velocity υ. We exploit two fundamental geometric constraints that relate 3D lines to their triggered events: the orthogonality constraint and the collinearity constraint. 
+
+A. Absolute Pose Estimation 
+
+Let a 3D line in the world coordinate system be represented by its Pl¨ ucker coordinates L = [ d⊤, m⊤]⊤ ∈ R6, where 
+
+d is the direction vector of the line, and m is the moment vector. When observed by the camera, this line generates a spatio-temporal cluster of events. Each event ei provides its pixel coordinates [xi, y i]⊤, timestamp ti, and polarity 
+
+{± 1}. Given the intrinsic parameters K of the camera, the normalized image coordinates of event ei are computed as 
+
+xi = K−1[xi, y i, 1] ⊤.As depicted in Fig. 2, the transformation of the 3D line L
+
+from the world coordinate system to the camera coordinate system C is parameterized by the absolute pose ( R, t) at time 
+
+ti. This transformation is expressed in Pl¨ ucker coordinates as: 
+
+ dC
+
+mC
+
+
+
+=
+
+ R 0
+
+[t]×R R
+
+  dm
+
+
+
+, (1) where [·]× denotes the skew-symmetric matrix operator, and 
+
+LC = [dC ⊤, mC ⊤]⊤ represents the line projected in the camera coordinate system C at time ti. As illustrated in Fig. 2, the projection geometry imposes two fundamental constraints. y
+
+x
+
+z 
+
+> C
+> L
+
+L
+
+> i
+
+e iπ
+
+> CjO
+> CiO
+> y
+
+z
+
+## { },ω υ 
+
+## { },R t 
+
+> i
+
+n       
+
+> Fig. 2. Illustration of the geometric constraints for absolute pose estimation. The absolute pose {R,t}maps a 3D line Linto the camera frame C,establishing a geometric relationship with the viewing rays of triggered events.
+
+Orthogonality constraint. As a camera moves through a structured environment, a 3D line L is projected onto the image sensor, triggering a stream of spatio-temporal events. Let us analyze the geometric information provided by a single event ei. As shown in Fig. 2, the normal vector ni associated with this event is aligned with the normal vector of the back-projection plane πi. Geometrically, the direction vector of the 3D line in the camera frame, denoted as dC = Rd , must lie on this plane πi. Consequently, dC must be orthogonal to the plane’s normal ni, leading to the following constraint: 
+
+n⊤ 
+
+> i
+
+dC = n⊤ 
+
+> i
+
+Rd = 0 . (2) 
+
+Collinearity constraint. In addition to the orthogonality property, we can exploit the point-on-line incidence geometry of the events. Under ideal, noise-free conditions, all events triggered by a 3D line L must lie precisely on its 2D projection, LC , on the image plane. The 2D projected line 
+
+LC in homogeneous coordinates is mathematically given by the normal of the interpretation plane, which is exactly the line’s moment vector mC in the camera frame. Therefore, the homogeneous coordinates xi of these events must be orthog-onal to mC , yielding the following collinearity constraint: 
+
+x⊤ 
+
+> i
+
+mC = x⊤
+
+> i
+
+ Rm + [ t]×Rd  = 0 . (3) 
+
+B. Velocity Estimation 
+
+Within a sufficiently short time interval [ti − ∆t, t i + ∆ t],the camera motion is model by constant angular velocity 
+
+ω = [ ωx, ω y , ω z ]⊤, and linear velocity υ = [ υx, υ y , υ z ]⊤.Consider an event ej triggered at time tj within this interval, with a relative timestamp t′ 
+
+> j
+
+= tj − ti with respect to the reference timestamp ti. Under the constant velocity model, the incremental rotation Rj and translation tj that transform the relative motion of the camera from ti to tj are given by: 
+
+Rj = exp  [ω]×t′
+
+> j
+
+ , tj = υt′ 
+
+> j
+
+, (4) where exp ( ·) denotes the exponential map over the SO (3) .The same geometric principles must hold for event ej at time tj , but they must be applied with respect to the updated camera pose at that instant. As illustrated in Fig. 3, the pose at time tj is a composition of the absolute pose ( R, t) at time ti and the incremental motion ( Rj , tj ). The line L, now 4L
+
+> jπ
+> CjO
+> je
+> CjL
+> L
+> CiO
+> y
+
+x
+
+z
+
+> iπ
+
+{ },ω υ 
+
+> y
+
+x
+
+z        
+
+> jn
+> Fig. 3. Illustration of velocity estimation. The camera motion between two nearby timestamps tiand tjis modeled by a constant angular velocity ωand linear velocity υ.
+
+observed from this new pose, is denoted LCj in the camera coordinate system and must satisfy the constraints in Eqs. (2) and (3) with respect to event ej and its normal vector nj . This yields: 
+
+n⊤ 
+
+> j
+
+dCj = n⊤ 
+
+> j
+
+Rj Rd = 0 , (5) 
+
+x⊤ 
+
+> j
+
+mCj = x⊤
+
+> j
+
+
+
+Rj Rm + [ Rj t + tj ]×Rj Rd 
+
+
+
+= 0 . (6) The velocity estimation problem is thus reduced to solving for the unknown motion parameters ω and υ that satisfy these equations over the time interval. Our framework seeks to jointly estimate the 6-DoF pose ( R, t) and 6-DoF ve-locity ( ω, υ) using event–line correspondences. Since each event–line correspondence provides two independent scalar constraints, a minimum of three simultaneous correspondences is required to determine the 6-DoF absolute pose under generic non-degenerate configurations. Similarly, three cor-respondences across distinct timestamps suffice for velocity estimation. IV. A BSOLUTE POSE ESTIMATION SOLVERS 
+
+Leveraging the orthogonality and collinearity between events and lines, we propose two solvers for absolute pose estimation: a computationally efficient linear solver ( AbsLin )and a globally optimal polynomial solver ( AbsPol ). A crucial component for leveraging the orthogonality constraint is the normal vector ni of event ei, which can be determined through multiple approaches. A straightforward approach computes this vector from two events e1 and e2 triggered by the same line. Given their normalized image coordinates x1 and x2
+
+respectively, the normal vector can be calculated as ni =
+
+x1 × x2. While this method is theoretically sound under ideal conditions, it exhibits sensitivity to noise and outliers in practical scenarios. Therefore, we adopt a more robust approach based on the local motion information encoded in the time surface. First, we compute the normal flow f for an event 
+
+ei from the gradient ∇Σe of its associated time surface [43]: 
+
+f = ∇Σe
+
+∥∇ Σe∥2 ∈ R2. (7) We then determine the direction vector f⊥ in the image plane that is orthogonal to this normal flow. Inspired by [35], we lift the direction f⊥ into 3D space by appending a zero z-component. The normal vector ni is then robustly computed as the cross product: 
+
+ni = xi × f⊥ (8) 
+
+A. Linear solver 
+
+First, we estimate the 6-DoF absolute pose {R, t} at time ti
+
+by constructing a linear system from a set of event-line corre-spondences. To achieve this, we combine the orthogonality and collinearity constraints from Eq. (2) and Eq. (3). The notation 
+
+E = [ t]×R denotes the essential matrix. For the purpose of linearization, we first vectorize the essential matrix E and the rotation matrix R, and then concatenate them to form an 18-dimensional unknown vector v = [vec( E)⊤, vec( R)⊤]⊤.Using the Kronecker product ( ⊗), we rewrite two constraints as a linear system: 
+
+ hi ci
+
+01×9 ki
+
+
+
+v = 0 , (9) where the coefficient matrix are calculated as: 
+
+hi = ( d⊤ ⊗ x⊤ 
+
+> i
+
+), ci = ( m⊤ ⊗ x⊤ 
+
+> i
+
+), ki = ( d⊤ ⊗ n⊤ 
+
+> i
+
+). (10) We temporarily relax the non-linear geometric constraints, namely the orthogonality of the rotation matrix (i.e., R⊤R = I
+
+and det( R) = 1 ) and the structure of E. This relaxation allows us to treat the 18 unknowns in v as independent variables. The problem is equivalent to finding the one-dimensional null space of the measurement matrix. For each line, the orthog-onality constraint provides one independent constraint equa-tion, while multiple events under the collinearity constraint contribute at most two independent constraint equations. In summary, each line contributes three linearly independent constraint equations under general geometric configurations, thus theoretically requiring at least six independent lines with each line containing at least two events to uniquely determine the solution. Although the linear solver for v is inherently ambiguous in scale, this ambiguity can be resolved by re-imposing one of the relaxed geometric constraints. Let the raw solution from the null space be vraw , from which we can extract a scaled, non-orthonormal rotation matrix Rraw . The true rotation matrix 
+
+R is related to Rraw by an unknown scale factor sr , such that R = sr · Rraw . By enforcing the determinant constraint, 
+
+det( R) = 1 , we can solve for this scale factor: 
+
+det( sr · Rraw ) = sr 3 det( Rraw ) = 1 ⇒ sr = 1
+
+> 3
+
+pdet( Rraw ) .
+
+(11) By applying this unique scaling factor sr to the entire solution vector vraw , the true physical scale of all unknown parameters is recovered simultaneously. Finally, to ensure the resulting rotation matrix strictly adheres to its geometric properties, we project the scaled matrix onto the nearest point on the SO(3) manifold using Singular Value Decomposition (SVD). This final step yields a pose solver that is both geometrically valid and numerically stable. 5                                              
+
+> TABLE I ELEMENTS OF VECTOR aiIN THE POLYNOMIAL SOLVER .
+> a(1)
+> i=k(1)
+> i+k(5)
+> i+k(9)
+> ia(2)
+> i= 2 k(8)
+> i−2k(6)
+> i
+> a(3)
+> i= 2 k(3)
+> i−2k(7)
+> ia(4)
+> i= 2 k(4)
+> i−2k(2)
+> i
+> a(5)
+> i=k(1)
+> i−k(5)
+> i−k(9)
+> ia(6)
+> i= 2 k(2)
+> i+ 2 k(4)
+> i
+> a(7)
+> i= 2 k(3)
+> i+ 2 k(7)
+> ia(8)
+> i=k(5)
+> i−k(1)
+> i−k(9)
+> i
+> a(9)
+> i= 2 k(6)
+> i+ 2 k(8)
+> ia(10)
+> i=k(9)
+> i−k(5)
+> i−k(1)
+> i
+
+B. Polynomial solver 
+
+We also propose a nonlinear solver that requires at least three event-line correspondences to estimate the absolute pose, utilizing both orthogonality and collinearity constraints. Specifically, the rotation is first computed using a polynomial solver applied to Eq. (2), followed by the determination of translation by solving Eq. (3) linearly. Given N event-line correspondences (N ≥ 3) , the rotation estimation is formulated as a constrained least-squares prob-lem based on the orthogonality constraint: 
+
+min 
+
+> R
+
+X
+
+> i
+
+ n⊤ 
+
+> i
+
+Rd 2
+
+s.t. R⊤R = I, det( R) = 1 
+
+(12) To eliminate the non-convex SO(3) constraints, we adopt the Cayley parameterization of rotation R, which provides a min-imal three-parameter representation (qx, q y , q z ). Specifically, the rotation matrix can be expressed as: 
+
+R = 1
+
+sq
+
+1 + q2 
+
+> x
+
+− q2 
+
+> y
+
+− q2 
+
+> z
+
+2( qxqy − qz ) 2( qxqz + qy )2( qxqy + qz ) 1 − q2 
+
+> x
+
++ q2 
+
+> y
+
+− q2 
+
+> z
+
+2( qy qz − qx)2( qxqz − qy ) 2( qy qz + qx) 1 − q2 
+
+> x
+
+− q2 
+
+> y
+
++ q2
+
+> z
+
+ ,
+
+(13) 
+
+where sq = 1 + q2 
+
+> x
+
++ q2 
+
+> y
+
++ q2 
+
+> z
+
+. Then, we reformulate the objective function in Eq. (12) to facilitate the solution process. By extracting the rotation-related components from Eq. (9) and combining with Eq. (13), we obtain: 
+
+kir = 0 , r = [ r1, . . . , r 9]⊤. (14) By multiplying both sides by sq , the expression in Eq. (14) remains invariant under any normalization procedure [44], [45]. Combining Eq. (13) and Eq. (14) yields: 
+
+a⊤ 
+
+> i
+
+q = 0 , q = [1 , q x, q y , q z , q 2
+
+> x
+
+, q xqy , q xqz , q 2 
+
+> y
+
+, q y qz , q 2 
+
+> z
+
+]⊤. (15) 
+
+The elements of vector ai are detailed in Table I. The optimization problem in Eq. (12) is thus transformed into an unconstrained polynomial minimization: 
+
+min  
+
+> qx,q y,q z
+
+G =
+
+> N
+
+X
+
+> i=1
+
+a⊤ 
+
+> i
+
+q 2 = q⊤Aq , (16) where A = PNi=1 aia⊤ 
+
+> i
+
+denotes a 10 × 10 moment matrix and 
+
+G is the non-negative objective function. To find the minima, we apply the first-order optimality condition by setting the partial derivatives of G with respect to the Cayley parameters to zero. This results in a system of three cubic polynomial equations in three variables: 
+
+
+
+∂G ∂q x
+
+= 2 q⊤A ∂q
+
+∂q x
+
+= 0 ,∂G ∂q y
+
+= 2 q⊤A ∂q
+
+∂q y
+
+= 0 ,∂G ∂q z
+
+= 2 q⊤A ∂q
+
+∂q z
+
+= 0 .
+
+(17) The polynomial equation system in Eq. (17) allows us to calculate all stationary points of G in closed-form, among which lie the optimal Cayley parameters. To solve this system, we employ the Gr¨ obner basis method, which reformulates the high-dimensional polynomial equations into a more tractable form. Specifically, we utilize the automatic generator proposed in [46] to construct the elimination template and action matrix. The polynomial solver yields up to 27 candidate solutions for the Cayley parameters. We first filter these by retaining only the real-valued solutions, which correspond to physically meaningful rotations. The optimal rotation matrix R is then identified by selecting the candidate that minimizes the geo-metric error in the objective function Eq. (12). Once the optimal rotation matrix R is determined, the complex 6-DoF pose estimation problem is simplified. At this stage, Eq. (3) simplifies into a standard linear system of equations solely in terms of the unknown translation vector t,which can be solved for quickly and robustly using a classic linear least-squares method. Crucially, this polynomial-based solver reduces the minimum sample requirement from six for linear methods to only three event-line correspondences. We briefly summarize the time and space complexity for our two pose solvers. Let N be the number of 3D lines, M the number of events generated per line. The linear solver is a one-shot linear mathod with O(N M ) time and space complexity, primarily consumed by the construction and solution of the overdetermined linear system Eq. (9). The polynomial solver exhibits a time complexity O(N ) + O(N M ). Specifically, solving the fixed-degree polynomial system for rotation in-curs O(N ) complexity, and the dominant cost O(N M ) is associated with translation estimation. Its space complexity is likewise O(N M ).V. V ELOCITY ESTIMATION SOLVERS 
+
+For velocity estimation, we also introduce two solvers: a highly efficient linear solver ( VelLin ), and a nonlinear opti-mization solver ( VelOpt ). 
+
+A. Linear solver 
+
+Once the absolute pose parameters are established, we proceed to estimate the camera’s velocity. We propose a linear, two-stage solver that first determines the angular velocity ω
+
+and subsequently computes the linear velocity υ.Within sufficiently small temporal intervals, the magnitude of rotational displacement remains correspondingly minimal. 6
+
+Consequently, the relative rotation Rj can be approximated using a first-order Taylor expansion: 
+
+Rj ≈ I + ωt′
+
+> j
+
+ 
+
+> ×
+
+=
+
+
+
+1 −ωz t′ 
+
+> j
+
+ωy t′
+
+> j
+
+ωz t′ 
+
+> j
+
+1 −ωxt′
+
+> j
+
+−ωy t′ 
+
+> j
+
+ωxt′ 
+
+> j
+
+1
+
+ , (18) where I ∈ R3×3 represents the identity matrix. We exploit the geometric constraint from Eq. (5), which characterizes the orthogonality between the normal vector of events and the direction vector of lines: 
+
+n⊤ 
+
+> j
+
+Rj Rd = 0 ⇒
+
+
+
+(Rd )⊤ ⊗ n⊤
+
+> j
+
+| {z }
+
+> bj
+
+·vec ( Rj ) = 0 , (19) where bj ∈ R1×9 denotes the vector derived from the Kro-necker product operation. By incorporating the approximated rotation matrix into this constraint and performing algebraic manipulation, we obtain a linear system for solving the angular velocity ω:
+
+
+
+b(6) 1 t′ 
+
+> 1
+
+− b(8) 1 t′
+
+> 1
+
+, b(7) 1 t′ 
+
+> 1
+
+− b(3) 1 t′
+
+> 1
+
+, b(2) 1 t′ 
+
+> 1
+
+− b(4) 1 t′
+
+> 1
+
+...
+
+b(6)  
+
+> j
+
+t′ 
+
+> j
+
+− b(8)  
+
+> j
+
+t′ 
+
+> j
+
+, b(7)  
+
+> j
+
+t′ 
+
+> j
+
+− b(3)  
+
+> j
+
+t′ 
+
+> j
+
+, b(2)  
+
+> j
+
+t′ 
+
+> j
+
+− b(4)  
+
+> j
+
+t′
+
+> j
+
+
+
+ωx
+
+ωy
+
+ωz
+
+
+
+= −
+
+
+
+b(1) 1 + b(5) 1 + b(9) 1
+
+...
+
+b(1)  
+
+> j
+
++ b(5)  
+
+> j
+
++ b(9) 
+
+> j
+
+ ,
+
+(20) where b(h) 
+
+> j
+
+represents the h-th element of the vector bj . Each row in this linear system represents the geometric constraint imposed by a single event-line correspondence. The angular velocity ω contains three unknown components. Thus, we can uniquely determine ω using a minimum of three correspon-dences via standard linear least squares. With the angular velocity ω known, the relative rotation Rj
+
+is also determined. We then substitute these known values into the collinearity constraint, which is further rearranged to yield: 
+
+x⊤
+
+> j
+
+  Rj Rm 
+
+| {z }
+
+> αj
+
++[ Rj t
+
+|{z} 
+
+> βj
+
++tj ]× Rj Rd 
+
+| {z } 
+
+> γj
+
+ = 0 . (21) To derive a computationally tractable form, we perform algebraic manipulation of Eqs. (18) and (21) by expanding the cross product terms and collecting coefficients. By leveraging the collinearity constraint inherent in the geometric formula-tion, we systematically reorganize the algebraic terms. Each event-line correspondence can thus be expressed as a linear equation in terms of the velocity components, yielding the following structured form: 
+
+
+
+γ(2)  
+
+> j
+
+t′ 
+
+> j
+
+x(3)  
+
+> j
+
+− γ(3)  
+
+> j
+
+t′ 
+
+> j
+
+x(2) 
+
+> j
+
+γ(3)  
+
+> j
+
+t′ 
+
+> j
+
+x(1)  
+
+> j
+
+− γ(1)  
+
+> j
+
+t′ 
+
+> j
+
+x(3) 
+
+> j
+
+γ(1)  
+
+> j
+
+t′ 
+
+> j
+
+x(2)  
+
+> j
+
+− γ(2)  
+
+> j
+
+t′ 
+
+> j
+
+x(1) 
+
+> j
+
+ 
+
+> ⊤
+
+
+
+vx
+
+vy
+
+vz
+
+
+
+= −
+
+
+
+x(1) 
+
+> j
+
+ α(1)  
+
+> j
+
++ β(2)  
+
+> j
+
+γ(3)  
+
+> j
+
+− β(3)  
+
+> j
+
+γ(2) 
+
+> j
+
+
+
++ x(2) 
+
+> j
+
+ α(2)  
+
+> j
+
+− β(1)  
+
+> j
+
+γ(3)  
+
+> j
+
++ β(3)  
+
+> j
+
+γ(1) 
+
+> j
+
+
+
++ x(3) 
+
+> j
+
+ α(3)  
+
+> j
+
++ β(1)  
+
+> j
+
+γ(2)  
+
+> j
+
+− β(2)  
+
+> j
+
+γ(1) 
+
+> j
+
+
+
+.
+
+(22) where α(h) 
+
+> j
+
+, β(h) 
+
+> j
+
+, and γ(h) 
+
+> j
+
+represent the h-th components of vectors αj , βj , and γj , respectively, as defined in Eq. (21). Linear velocity υ can be solved by constructing a system of linear equations, where each event-line correspondence contributes one equation. With three or more events occurring at different moments, the system becomes over-determined, enabling the use of a linear least squares solver for a robust velocity estimation. The proposed two-stage linear solver, which decouples the estimation of angular and linear velocities, offers several key advantages in practice. Primarily, it yields a closed-form solution by decomposing the problem into well-conditioned subproblems, thereby significantly reducing computational complexity. Furthermore, the incorporation of multiple event-line correspondences inherently enhances the algorithm’s ro-bustness to measurement noise and potential outliers. 
+
+B. Optimization solver 
+
+To jointly estimate both angular and linear velocities for higher accuracy, we formulate a nonlinear optimization prob-lem. The optimization parameters are encoded in a six-dimensional vector s = [ωx, ω y , ω z , υ x, υ y , υ z ]⊤, and the problem is formulated by minimizing the sum of squared collinearity errors: 
+
+s∗ = arg min 
+
+> s
+
+F , F = P
+
+> l
+
+P
+
+> j
+
+
+
+x⊤
+
+> j
+
+
+
+Rj Rm l + [ Rj t + tj ]×Rj Rd l
+
+ 2
+
+.
+
+(23) Here, the event-line pair {(j, l )} denotes the association be-tween event ej and 3D line Ll. We solve the non-linear least-squares problem in Eq. (23) using the Levenberg-Marquardt (LM) algorithm. The update rule is given by: 
+
+sk+1 = sk − (J⊤J + λI)−1J⊤r, (24) where r is the residual vector, J denotes the Jacobian matrix representing the partial derivatives of the residuals F with respect to s, and λ is an adaptive damping parameter. The optimization is initialized either with a zero vector or with the result from our linear solver for faster convergence. The pro-cess terminates when the relative change in the cost function falls below a predefined threshold or a maximum number of iterations is reached. A critical component of the LM algorithm is the effi-cient and accurate computation of the Jacobian matrix. The techniques for computing the Jacobian matrix in optimiza-tion problems include analytical derivation, various forms of numerical differentiation (such as forward, central, and backward differences), and hybrid methods that integrate these approaches. We provide both analytical derivation and finite difference methods for solving. 
+
+a) Analytical derivation: The analytical Jacobian is de-rived by computing the partial derivative with respect to each component of the state vector s. In this stage, we use the first-order approximation of the rotation matrix Rj . This approach reduces computational complexity and accelerates convergence by effectively linearizing rotations for small an-gles and time intervals, thereby maintaining computational 7
+
+efficiency while enabling faster iterative solutions. For exam-ple, the partial derivatives with respect to the angular velocity component ωx are 
+
+∂F ∂ω x
+
+= X
+
+> l
+
+X
+
+> j
+
+2x⊤ 
+
+> j
+
+( ∂Rj
+
+∂ω x
+
+Rm l + ∂[Rj t + tj ]×
+
+∂ω x
+
+Rj Rd l
+
++ [ Rj t + tj ]×
+
+∂Rj
+
+∂ω x
+
+Rd l),
+
+(25) For the linear velocity component υx, the partial derivative takes a more concise form: 
+
+∂F ∂υ x
+
+= X
+
+> l
+
+X
+
+> j
+
+2
+
+
+
+x⊤
+
+> j
+
+∂[Rj t + tj ]×
+
+∂υ x
+
+Rj Rd l
+
+
+
+. (26) The complete set of partial derivatives for all components, including the remaining angular and linear velocity terms, follows a similar pattern. 
+
+b) Numerical differentiation: Alternatively, the Jacobian can be computed using numerical differentiation. The funda-mental principle of numerical differentiation is to approximate the slope of a function at a specified point using finite differ-ences. By evaluating the function at neighboring points, we can construct an estimate of the derivative. We use the central differences method, which constructs a symmetric structure by using the values of the function at equidistant points on either side of the current point: 
+
+∂F ∂s g
+
+≈ F (s + ϵug ) − F (s − ϵug )2ϵ , (27) where ϵ = 10 −8 is a small perturbation, and ug is the g-th standard basis vector in R6, i.e., a vector with 1 in the g-th position and 0 elsewhere. To implement this, we compute numerical derivatives by perturbing each parameter sg with ϵ
+
+in both positive and negative directions, evaluating the cost function F at these perturbed states, and approximating the partial derivatives through central differences. This numerical differentiation process is performed for all parameters s to construct the complete Jacobian matrix. The linear solver exhibits a time complexity of O(KN ) + 
+
+O(N KM ). Solving for angular velocity ω is O(KN ), while solving for linear velocity υ requires iterating over all N KM 
+
+observed events, leading to O(N KM ). The space complexity is O(N KM ), primarily for storing the measurement matrix of size N KM × 3 used to solve for υ. The per-iteration time complexity of optimization-based solver is O(N KM ). The space complexity is O(N KM ), similar to linear solver, as it relates to the dimensions of the residual vector and Jacobian matrix, which scale with the total number of events N KM .The pseudocode in Algorithm 1 explicitly describes the workflow. Starting with an input event stream, the algorithm initially selects an event cluster to form a time surface. Subsequently, it calculates the normal vector and proceeds with event line matching, absolute pose estimation, and ve-locity estimation. Event line matching is achieved through the LOPET algorithm [42]. The estimated pose and velocity parameters serve as initial values for the next event cluster, enabling iterative processing of subsequent clusters. 
+
+Algorithm 1 Geometric Framework for Event-based Pose and Velocity Estimation Input: Event stream, 3D lines {Lj }
+
+Output: Absolute pose (R, t), velocity (ω, υ)
+
+/* Phase 1: Event Processing and Matching */  
+
+> 1:
+
+Select an event window {ei} and aggregate events to form time surfaces  
+
+> 2:
+
+Compute normal vectors {ni} from the time surfaces  
+
+> 3:
+
+Establish event–line correspondences {(ei, ni, Lj )}
+
+/* Phase 2: Absolute Pose Estimation */  
+
+> 4:
+
+Linear solver: 
+
+(R, t) ← AbsLin  {ei}, {ni}, {Lj } 
+
+> 5:
+
+Polynomial solver: 
+
+(R, t) ← AbsPol  {ei}, {ni}, {Lj }
+
+/* Phase 3: Velocity Estimation */  
+
+> 6:
+
+Linear solver: 
+
+(ω, υ) ← VelLin  {ei}, {ni}, {Lj }, R, t 
+
+> 7:
+
+Optimization solver: 
+
+(ω, υ) ← VelOpt  {ei}, {Lj }, R, t 
+
+> 8:
+
+return  R, t, ω, υ
+
+AbsLin AbsPol VelLin VelOpt                             
+
+> 3D Line Distribution Coplanar Lines ◦✓✓✓
+> Parallel Lines ××××
+> Camera Motion Pure Rotation N/A N/A ✓✓
+> Pure Translation N/A N/A ✓✓
+> Short baseline N/A N/A ××
+> TABLE II DEGENERACY CONFIGURATION .✓DENOTES A ROBUST ,
+> NON -DEGENERATE CASE .◦INDICATES A DEGENERACY THAT OUR METHOD CAN RESOLVE THROUGH A DEDICATED STRATEGY .×SIGNIFIES AN UNRESOLVABLE DEGENERACY LEADING TO FAILURE .N/A MEANS THE SCENARIO IS IRRELEVANT TO THE SOLVER .
+
+VI. A NALYSIS OF DEGENERACIES 
+
+This section analyzes potential degenerate configurations that compromise the stability and uniqueness of our proposed pose and velocity estimators. Our findings, summarized in Table II, cover degeneracies related to both 3D line config-urations and special camera motion cases. 
+
+A. 3D Line Distribution 
+
+The spatial arrangement of 3D lines is critical for con-straining the camera’s pose. We investigate two challenging configurations: coplanar lines and parallel lines. 
+
+a) Coplanar Lines: A critical degeneracy for our linear pose solver AbsLin occurs when all 3D lines are coplanar. This geometric configuration induces a rank deficiency in the system matrix defined by the constraints in Eq. (9). Consequently, the solver yields a multi-dimensional solution space rather than a unique pose. While the true pose could, in principle, be recovered by imposing additional non-linear constraints [47], this approach adds complexity. Instead, we propose a direct two-step strategy. First, we proactively detect coplanarity using an efficient algebraic method. We sample two distinct points from each of the H lines to form a 3 × 2H point matrix B. After centering 8
+
+these points, we compute the 3 × 3 covariance matrix S =
+
+BB ⊤. The SVD of S = UΣV⊤ reveals the principal axes of the point distribution. If the smallest singular value Σmin 
+
+is near zero, e.g., Σmin ≤ 10 −6, we determine these lines to be coplanar. The normal to this plane is given by the right singular vector Vmin corresponding to Σmin .Once coplanarity is confirmed, we resolve the associated rank deficiency by reformulating the problem. We define a corrective rotation Rz that aligns the plane’s normal Vmin 
+
+with the Z-axis, effectively rotating the world such that all lines lie on the Z = 0 plane. This rotation is computed from the axis-angle vector rz = Vmin × [0 , 0, 1] ⊤. After this transformation, the z-components of all line direction vectors become zero and can be eliminated from the linear system in Eq. (9), which resolves the rank deficiency. The pose is then solved in this new frame. Finally, the true pose is recovered by applying the inverse transformation Rz .
+
+b) Parallel Lines: When all 3D lines are parallel, they share a common direction vector. This configuration is an unobservable degeneracy for all our pose solvers. The or-thogonality and collinearity constraints become insufficient to constrain all 6-DoF of the camera. Specifically, any rotation around the lines’ common direction and any translation along it becomes unobservable. The issue with translation is twofold. First, geometrically, translation parallel to d is ambiguous. Second, and more fundamentally, this specific motion is also unobservable at the sensor level. A camera translating perfectly parallel to 3D lines induces no apparent motion on the image plane. Consequently, an event camera will not trigger enough events for this component of motion. Consequently, this degeneracy is not merely a limitation of the solver, but stems from both geometric indeterminacy and a lack of sensor response, rendering the problem fundamentally unsolvable. 
+
+B. Camera Motion 
+
+This section aims to analyze the system degradation under specific camera motion patterns. As this analysis focuses on instantaneous motion and is independent of absolute pose estimation. The evaluation is centered on two velocity solvers. 
+
+a) Pure Rotation: In the pure rotation scenario ( υ = 0), our velocity solvers remain fully observable. This robustness is a key advantage of our formulation, as traditional geo-metric methods (e.g., those relying purely on the epipolar constraint) typically suffer from degeneracy in such case [48]. Our method’s stability stems from the orthogonality constraint, which directly and independently constrains the angular velocity ω, regardless of the translational component. The collinearity constraint then correctly identifies the linear velocity υ as zero. Therefore, both VelLin and VelOpt do not degenerate under pure rotation. 
+
+b) Pure Translation: In the case of pure translational mo-tion ( ω = 0), the orthogonality constraint remains informative. Instead, it becomes a constraint on ω which is identified as zero. Meanwhile, the collinearity constraint Eq. (3) remains effective for recovering the linear velocity υ. With ω = 0, the collinearity constraint is simplified as 
+
+x⊤ 
+
+> i
+
+(Rm + [ t + tj ]×Rd ) = 0 , (28) This formulation is well-posed and can be solved for the linear velocity υ. Consequently, the full motion (with ω = 0)remains observable, and both the VelLin and VelOpt solvers successfully operate in the pure translation case. 
+
+c) Short baseline: In scenarios with extremely short tem-poral baselines ( ∆t → 0), the system is partially observable. While the absolute pose ( R, t) remains observable, the estima-tion of the instantaneous velocity ( ω, υ) becomes numerically unstable. This instability occurs because ∆t → 0 leads to an ill-conditioned linear system for velocity estimation, causing noise in event measurements to be significantly amplified. Therefore, sufficient temporal baselines are necessary for robust velocity estimation. VII. E XPERIMENTS 
+
+Our evaluation framework is comprehensive, incorporating synthetic data, event camera simulations, and real-world ex-periments on public datasets. All experiments are conducted on a laptop equipped with an Intel Core i7-12700H processor and 16GB of RAM. 
+
+A. Synthetic Data 
+
+We first evaluate the performance of our proposed method across various configurations using synthetic data. The virtual event camera operates at a resolution of 640×480 pixels and a focal length of 800 pixels. In each experimental trial, 3D lines are randomly generated, and events are sampled along these lines within a 100 ms temporal window. The camera’s motion is synthesized with random linear velocities in the range of [-5, 5] m/s and angular velocities between [-0.125, 0.125] rad/s. The temporal window is segmented into multiple event sampling intervals, each assigned a random timestamp. The number of sampling intervals is fixed at 20. Within each interval, the camera pose is calculated using linear and angular velocities, and events are formed by projecting multiple randomly positioned points on a 3D line onto the image plane. To assess the robustness of our methods, we introduce two types of noise with varying intensities: pixel noise and timestamp jitter, both following zero-mean Gaussian distributions. A total of 10000 independent trials are performed to ensure statistical significance. For quantitative evaluation, we employ standard metrics for both absolute pose and velocity estimation. The abso-lute pose errors are measured using rotation and translation metrics [42]: εR = arccos    trace  R⊤Rgt 
+
+ − 1 /2, εt =
+
+∥t − tgt ∥ / ∥tgt ∥ × 100% . For velocity estimation, we use rela-tive norm differences for angular and linear velocities in veloc-ity estimation [35]: εω = ∥ω − ωgt ∥ /(∥ωgt ∥ + ∥ω∥) × 100% ,
+
+ευ = ∥υ − υgt ∥ /(∥υgt ∥ + ∥υ∥) × 100% .
+
+Analysis of the number of events . To comprehensively evaluate the performance of the proposed methods, this simu-lation compares the estimation accuracy of pose and velocity under varying configurations of event quantities. Here, the number of events is defined as the number of events generated by each line at each timestamp. The experimental results are shown in Fig. 4(a). As the number of events increases, the estimation error gradually decreases and stabilizes. In most 9VelLin    
+
+> Abs_Rol Abs_Lin Rel_Lin Rel_Opt
+
+AbsLin  AbsPol  VelOpt 3 6 10 15 20 30 Number of Events 10 -2                
+
+> 10 -1
+> 10 0
+> 10 1
+> Rotation Error (deg) 3610 15 20 30 Number of Events 10 -2
+> 10 -1
+> 10 0
+> 10 1
+> 10 2
+> Translation Error (%) 3610 15 20 30 Number of Events 10 -1
+> 10 0
+> 10 1
+> 10 2
+> Angular Velocity Error (%) 3610 15 20 30 Number of Events 10 -1
+> 10 0
+> 10 1
+> 10 2
+> Linear Velocity Error (%)
+
+(a) Accuracy w.r.t. number of events 3 6 10 15 20 30 Number of Lines 10 -2                
+
+> 10 0
+> 10 2
+> Rotation Error (deg) 3610 15 20 30 Number of Lines 10 -1
+> 10 0
+> 10 1
+> 10 2
+> 10 3
+> Translation Error (%) 3610 15 20 30 Number of Lines 10 0
+> 10 1
+> 10 2
+> Angular Velocity Error (%) 3610 15 20 30 Number of Lines 10 -1
+> 10 0
+> 10 1
+> 10 2
+> Linear Velocity Error (%)
+
+(b) Accuracy w.r.t. number of lines 0.1 0.5 1 1.5 2 2.5 Pixel Noise (pix) 10 -2                
+
+> 10 0
+> 10 2
+> Rotation Error (deg) 0.1 0.5 11.5 22.5 Pixel Noise (pix) 10 -2
+> 10 0
+> 10 2
+> Translation Error (%) 0.1 0.5 11.5 22.5 Pixel Noise (pix) 10 -1
+> 10 0
+> 10 1
+> 10 2
+> Angular Velocity Error (%) 0.1 0.5 11.5 22.5 Pixel Noise (pix) 10 -2
+> 10 -1
+> 10 0
+> 10 1
+> Linear Velocity Error (%)
+
+(c) Accuracy w.r.t. the standard deviation of pixel noise 1 5 10 15 20 25 Time Jitter (ms) 10 -2                
+
+> 10 -1
+> 10 0
+> 10 1
+> 10 2
+> Rotation Error (deg) 1510 15 20 25 Time Jitter (ms) 10 -2
+> 10 -1
+> 10 0
+> 10 1
+> 10 2
+> Translation Error (%) 1510 15 20 25 Time Jitter (ms) 10 0
+> 10 1
+> 10 2
+> Angular Velocity Error (%) 1510 15 20 25 Time Jitter (ms) 10 -1
+> 10 0
+> 10 1
+> Linear Velocity Error (%)
+
+(d) Accuracy w.r.t. the standard deviation of time jitter 
+
+Fig. 4. Error analysis of absolute pose and velocity estimation under various conditions. Plots (a)-(d) sequentially illustrate the impact of event count, number of lines, pixel noise, and time jitter on the estimation accuracy. 
+
+cases, the error stabilizes when the number of events reaches 6. The results indicate that AbsPol outperforms AbsLin . This may be attributed to the fact that AbsPol has the ability to search for the optimal solution globally, whereas the linear solution is generally more susceptible to noise. For velocity estimation, VelOpt outperforms VelLin as well. 
+
+Analysis of the number of lines . Next, we evaluate the impact of the number of lines on the algorithm’s accuracy, with experimental results shown in Fig. 4(b). As the num-ber of lines increases, the estimation error of the algorithm gradually decreases and ultimately stabilizes. Notably, AbsPol 
+
+demonstrates significantly better performance than AbsLin ,with errors converging quickly. Compared to the absolute pose estimation, the velocity estimation approaches demonstrate similar convergence patterns, with VelOpt achieving higher accuracy than VelLin as the line count increases. 
+
+Pixel noise resilience analysis. This experiment evaluates the performance of our method against pixel noise of events ranging from 0.1 to 2.5 pixels. The timestamp jitter of events is set to 1 ms. At each noise level, there are 20 lines, with each line generating 15 events. Fig. 4(c) presents the errors for ab-solute pose and velocity estimation. A clear trend of increasing 10          
+
+> Minimal case Method Number of lines εR(◦)/εω(%) εt(%)/ ευ(%) SR1 (%) SR2 (%) Runtime (ms)
+
+AbsLin 6 0.00 1.57 × 10 −11 100.00 100.00 0.24 
+
+AbsPol 3 0.00 2.49 × 10 −8 99 .40 99 .70 0.61 
+
+VelLin 3 6.54 × 10 −2 3.22 × 10 −2 93 .80 97 .90 0.08 
+
+VelOpt 3 7.37 × 10 −11 2.14 × 10 −11 92 .60 92 .70 3.71 
+
+> Non-minimal case
+
+AbsLin 10 0.00 2.59 × 10 −12 100.00 100.00 0.33 
+
+AbsPol 10 0.00 1.03 × 10 −9 100.00 100.00 0.71 
+
+VelLin 10 2.39 × 10 −2 4.38 × 10 −3 100.00 100.00 0.42 
+
+VelOpt 10 3.52 × 10 −12 7.21 × 10 −13 100.00 100.00 5.69                                  
+
+> TABLE III NUMERICAL STABILITY AND RUNTIME ANALYSIS FOR NOISE -FREE SYNTHETIC EVENTS . SR1 AND SR2 REPRESENT THE SUCCESS RATES (SR) DEFINED BY THE THRESHOLDS OF εR(◦), ε t(%) AND εω(%) , ε υ(%) ,BOTH OF WHICH ARE BELOW 1◦/%AND 5◦/%,RESPECTIVELY .Trajectory Circular Curved Straight Speed High-speed Low-speed High-speed Low-speed High-speed Low-speed Median Error εR(◦)/ε t(%)
+
+AbsLin 4.32/4.90 3.41/4.15 2.83/2.96 1.72/2.21 2.86/3.10 1.73/1.88 
+
+AbsPol 3.29/3.42 3.13/2.75 2.65/2.67 1.57/1.38 2.41/2.53 1.50/1.57 
+
+P3L [49] 4.96/4.99 3.98/4.21 3.65/3.61 2.64/2.66 4.68/4.52 2.63/2.24 
+
+ASpnL [27] 4.10/4.16 3.82/3.74 3.88/3.52 2.28/2.31 4.73/4.69 1.81/1.78 Median Error εω (%) /ε υ (◦)
+
+VelLin 10.55/14.52 9.32/12.64 9.72/13.87 7.45/11.83 7.92/6.93 7.08/6.50 
+
+VelOpt 7.74/9.15 6.93/8.96 7.22/12.26 6.72/10.79 3.72/4.95 3.61/3.68 
+
+Eventail [26] -/21.19 -/20.06 -/25.60 -/23.94 -/15.16 -/13.64 
+
+IncBat [35] 10.15/22.69 9.48/21.15 22.41/30.54 21.22/28.94 10.05/18.56 9.48/16.43 TABLE IV ERROR COMPARISON OF ABSOLUTE POSE AND VELOCITY ESTIMATION ON SIMULATED EVENTS .
+
+errors is observed as the pixel noises increase, and AbsPol and 
+
+VelOpt demonstrate significantly lower overall error values. Specifically, AbsPol maintains rotational errors within 0.6◦
+
+and keeps median translation errors under 2.0%. Similarly, 
+
+VelOpt demonstrates robust performance, with median angular velocity errors under 6.0% and median linear velocity errors not exceeding 1.5%, even at a noise level of 2.5 pixels. 
+
+Time jitter resilience analysis. In this experiment, we evaluate the performance of our solvers under different levels of timestamp jitter, with each sampling interval’s timestamp perturbed with zero-mean Gaussian noise with a standard deviation ranging from 1 to 25 ms. The event pixel noise is fixed at 1 pixel, while other parameters remain identical to the pixel noise experiment. For absolute pose estimation, our methods demonstrate remarkable stability owing to their inherent resilience to temporal disturbances. Through strategic utilization of events at intermediate timestamps, AbsLin and 
+
+AbsPol consistently maintain median rotation errors within 
+
+0.6◦ and median translation errors below 2.5% across all jitter levels. While velocity estimation demonstrates increased sensitivity to time jitter, particularly in linear velocity, VelLin 
+
+and VelOpt maintain satisfactory performance with median errors not exceeding 6.1% for temporal jitter up to 10 ms. 
+
+Robustness to outlier correspondences. To evaluate the tolerance of our solvers to erroneous event–line associations, we inject random mismatches at ratios from 0% to 60% into synthetic event–line correspondences, keeping all other settings unchanged. The minimal solvers AbsPol , AbsLin , and 
+
+VelLin are embedded into a standard RANSAC framework for pose and velocity estimation. Note that VelOpt is excluded as it is designed for refinement after inlier selection. For each outlier ratio, we perform 1000 independent Monte Carlo trials and report the success rate and average number of RANSAC iterations. A trial is deemed successful if the estimated pose satisfies: rotation error εR < 5◦, and relative translation and velocity errors εt, ε ω , ε υ < 5% . The results are shown in Fig. 5. The proposed method maintains a success rate above 90% even when the outlier ratio reaches 50%, confirming the strong robustness of our solvers when integrated within RANSAC. Moreover, as the outlier ratio increases, the required RANSAC iterations for AbsPol and VelLin remain consistently low, whereas AbsLin exhibits a sharp rise in iteration count. This behavior stems directly from their minimal sample sizes: 
+
+AbsPol and VelLin require only three event–line correspon-dences, while AbsLin needs six. Consequently, in high-outlier scenarios commonly encountered in practice, AbsPol emerges as the preferred minimal solver, offering an optimal trade-off between robustness, accuracy, and computational efficiency. 
+
+Analysis of numerical stability and runtime . Furthermore, we evaluate the numerical stability and runtime of our al-gorithms in noise-free minimal and non-minimal cases. The minimal case refers to solving with the minimum number of lines required by the algorithm, while the non-minimal case utilizes 10 lines. The experimental results are presented in Table III. For absolute pose estimation, both AbsLin and 
+
+AbsPol demonstrate strong numerical stability. Notably, AbsLin 
+
+exhibits remarkably low numerical error and achieves a perfect 100% success rate. While AbsPol is also highly stable, its performance is slightly affected by the precision requirements of its high-degree polynomial solver, causing the success rate 11 
+
+(a) Success rate (b) Iteration Count       
+
+> Fig. 5. Robustness analysis to outlier correspondences. We evaluate the min-imal solvers AbsPol ,AbsLin , and VelLin under varying outlier fractions. (a) Success rate of pose estimation. (b) Total number of RANSAC iterations required. Anonymous
+> processing
+> Anonymous
+> processing
+> Anonymous
+> processing
+> Anonymous
+> processing Anonymous
+> processing
+> Anonymous
+> processing
+
+## (b) 
+
+RGB  Event 
+
+(a) RGB image Anonymous  
+
+> processing
+> Anonymous
+> processing
+> Anonymous
+> processing
+> Anonymous
+> processing Anonymous
+> processing
+> Anonymous
+> processing
+
+## (b) 
+
+RGB  Event  (b) Event accumulation  
+
+> Fig. 6. Experimental setup for event simulation. We visualize the data generation process. (a) Rendered RGB image. (b) The corresponding event accumulation image generated from the RGB sequence.
+
+to drop marginally to 99.70% in minimal cases. Regarding velocity estimation, in minimal data scenarios, the perfor-mance of VelLin demonstrates superior robustness compared to VelOpt . However, when sufficient redundant observations are introduced, the accuracy of VelOpt improves dramatically, showcasing its superior ability to leverage additional infor-mation for enhanced precision. In terms of computational efficiency, the linear solvers ( AbsLin and VelLin ) consistently outperform AbsPol and VelOpt in processing speed. Neverthe-less, all proposed algorithms are efficient enough to satisfy real-time requirements. 
+
+B. Event Camera Simulation 
+
+To validate the accuracy of our method, we conduct com-prehensive experiments using a simulated event camera. Our simulation pipeline consists of two main stages. First, we utilize Blender to render high-fidelity video sequences of camera motion, where the virtual camera parameters are configured to match those used in synthetic experiments. The virtual environment includes several randomly placed boxes. This approach enables us to obtain accurate camera motion parameters and trajectories. Subsequently, the rendered video sequences are processed using V2E [50] to generate realistic event streams, which accurately simulate the event generation process by modeling sensor characteristics. This two-stage simulation framework provides access to accurate ground truth data for quantitative evaluation and enables a systematic anal-ysis of our method’s performance under controlled conditions. The rendered RGB image and event accumulation image are shown in Fig. 6. Subsequently, we conduct experiments with the camera fol-lowing diverse motion trajectories, including circular, curved, and straight paths. The experiments are divided into two groups: a low-speed group at approximately 1 m/s and a high-speed group at approximately 5 m/s. This comprehensive evaluation framework enables us to validate the capabilities of our method. For absolute pose estimation, we compare our methods with classic methods including P3L [49] and  
+
+> ASPnL
+
+[27]. We extract lines from event clusters and feed them into P3L and ASPnL combined with the RANSAC framework for pose estimation. For velocity estimation, we select Eventail [26] and IncBat [35] as baseline methods. Since these two methods solve for scale-ambiguous velocity 
+
+υ, we adopt the evaluation metric from [35] for velocity error assessment. Eventail [26] takes ground-truth angular velocity as input and only evaluates the translational velocity error. The quantitative evaluation of median pose and velocity error statistics is presented in Table IV. Both proposed meth-ods demonstrate superior performance compared to baseline approaches. Notably, AbsPol and VelOpt achieve significantly reduced median errors compared to competing methods. These results align with our synthetic data evaluations, offering robust empirical evidence for the efficacy of the proposed methods. 
+
+C. Real-World Experiment 
+
+To validate the efficacy and robustness of the proposed framework in real-world scenarios, we conduct extensive ex-periments on two public event-based object pose estimation datasets: E-POSE [51] and LOPET [42]. Both datasets provide event streams captured by event cameras alongside high-precision ground truth poses from external motion capture systems, making them ideal for rigorous evaluation. For a comprehensive evaluation, we implement three line-based approaches as baselines: 
+
+(i) LS-Opt : A baseline method using least-squares optimiza-tion to minimize the distance between reprojected 3D lines and their corresponding events for object tracking. 
+
+(ii) EL-SLAM [41]: An event-based line-SLAM method that estimates and tracks the 6-DoF camera pose. As the official code is unavailable, we have reimplemented and adapted its core principles for the task of object pose tracking. 
+
+(iii) LOPET [42]: A recent line-based object pose estima-tion and tracking method, employing the Branch-and-Bound algorithm with robust optimization. To quantitatively assess the performance of absolute pose and velocity estimation, we utilize the EVO toolbox [52] to compute the Absolute Trajectory Error (ATE). Specifically, we report both the Root Mean Square Error (RMSE) and median error for all benchmarked algorithms, enabling a unified and quantitative comparison. Our evaluation pipeline first estimates the absolute pose ( AbsLin , AbsPol ) upon receiving a new event cluster. For velocity evaluation ( VelLin , VelOpt ), the poses from our superior AbsPol method are used as input. The resulting estimated velocities are then integrated to produce 12 VelLin AbsLin  AbsPol  VelOpt   
+
+> Wood block
+> r_01_gl
+> Cracker box
+> t_01_gl
+> Sugar box
+> r_05_gl
+> Nine hole peg
+> t_05_gl
+> Fig. 7. Reprojection results on the E-POSE dataset. Object models are reprojected onto the event accumulation images (for visualization purposes only) using the estimated poses.
+
+absolute poses, enabling a direct and fair ATE comparison against all other methods. Event-line association is derived from LOPET [42], with threshold parameters consistent with the original settings. 
+
+a) Experimental results on E-POSE: We evaluate our algorithm on the E-POSE dataset, selecting four representative objects characterized by distinct lines: Wood block, Cracker box, Sugar box, and Nine hole peg. The test sequences for each object encompass two typical motion patterns: rotation-dominant and translation-dominant. Table V presents the ATE results for rotation and translation on representative sequences. Our proposed methods, AbsPol 
+
+and VelOpt , consistently outperform all baselines. Notably, VelOpt achieves the best overall performance. Fig. 7 provides a visual testament to our method’s accuracy by showing the 3D object models reprojected onto event accumulation images using poses estimated by our methods. The tight and consistent alignment between the projected models and the high-contrast edges in event accumulation images visually corroborates the high accuracy reported in Table V, even during rapid movements and changes in orientation. 
+
+b) Experimental results on LOPET: The LOPET dataset includes objects with diverse linear structures, from simple planar patterns to non-coplanar objects. We evaluate our methods on both initial pose estimation and pose tracking. We first assess the accuracy of initial pose estimation, a critical step that initializes the entire tracking pipeline. We compare AbsLin and AbsPol with classical approaches like  
+
+> OPnP
+
+[53] and ASpnL [27], as well as the initialization of  
+
+> LOPET
+
+[42]. Fig. 8 presents both a qualitative and quantitative comparison. The reprojection results in Fig. 8?? visually demonstrate that our method’s estimated pose aligns most precisely with the events. This observation is quantified in Fig. 8 ?? , which shows the mean reprojection error of line 13 
+
+Error RMSE (unit-less) ↓ / Median (unit-less) ↓
+
+Sequence Wood block Cracker box Sugar box Nine hole peg r 01 gl t 01 gl r 01 gl t 01 gl r 05 gl t 05 gl r 05 gl t 05 gl 
+
+LS-Opt 1.61/1.44 1.59/1.36 1.30/1.32 1.35/1.20 2.13/2.07 3.56/3.19 4.68/4.30 3.96/3.49 
+
+EL-SLAM [41] 0.22/0.20 0.42/0.33 0.38/0.35 0.24/0.17 0.67/0.62 1.46/1.22 2.04/1.86 1.97/1.80 
+
+LOPET [42] 0.19/0.17 0.23/0.23 0.22/0.19 0.12/0.11 0.42/0.37 1.06/0.82 2.62/2.51 2.46/2.37 
+
+AbsLin 0.51/0.43 0.43/0.40 0.40/0.37 0.38/0.32 0.50/0.46 1.21/1.06 1.88/1.60 1.61/1.55 
+
+AbsPol 0.12/0.12 0.14 /0.13 0.13/0.12 0.11 /0.09 0.27 /0.22 0.35/0.30 1.52/1.49 1.40/1.35 
+
+VelLin 0.13/0.11 0.16/0.14 0.15/0.14 0.12/0.12 0.34/0.31 0.40/0.32 1.60/1.55 1.37/1.33 
+
+VelOpt 0.11 /0.10 0.14 /0.14 0.12 /0.10 0.11 /0.10 0.30/0.28 0.33 /0.27 1.43 /1.41 1.26 /1.24 
+
+TABLE V ABSOLUTE TRAJECTORY ERROR OF ABSOLUTE POSE AND VELOCITY ESTIMATION ON THE E-POSE DATASET .1
+
+1
+
+1
+
+1 2
+
+2       
+
+> ASPnL OPnP LOPET AbsLin AbsPol 1
+> 1
+> 12
+> 2
+> ASPnL OPnP LOPET AbsLin AbsPol
+
+(a) Reprojection Visualization Spacecraft Complex planar object Cube Simple planar object 1.0 1.5 2.0 2.5 3.0 3.5 (b) Reprojection Error 
+
+Fig. 8. Initial pose estimation results on the LOPET dataset. (a) Visual comparison of reprojected 3D lines from different methods. (b) Mean reprojection error of line endpoints (unit: pixels). Error RMSE (unit-less) ↓ / Median (unit-less) ↓
+
+Sequence Simple planar object Complex planar object Cube Spacecraft 
+
+LS-Opt 3.62/2.00 3.55/3.51 14.98/4.52 2.26/2.23 
+
+EL-SLAM [41] 3.45/2.03 3.50/3.45 6.62/1.77 1.47/1.42 
+
+LOPET [42] 0.59/0.53 2.18/2.00 1.12/0.86 1.36/1.31 
+
+AbsLin 0.61/0.55 2.16/2.07 1.35/1.25 1.65/1.63 
+
+AbsPol 0.43/0.42 2.08 /1.93 1.08/ 0.99 1.21/1.19 
+
+VelLin 0.54/0.51 2.24/2.19 1.35/1.33 1.30/1.28 
+
+VelOpt 0.40 /0.38 2.20/2.15 1.05 /1.03 1.26/1.25 TABLE VI ABSOLUTE TRAJECTORY ERROR OF ABSOLUTE POSE AND VELOCITY ESTIMATION ON THE LOPET DATASET .
+
+endpoints. AbsPol achieves the lowest error, confirming its superior accuracy for pose estimation. We then evaluate the pose tracking performance on the LOPET dataset. The ATE results are summarized in Table VI. Once again, our proposed methods, AbsPol and VelOpt , deliver state-of-the-art performance. AbsPol achieves the best accu-racy on the Complex planar object and Spacecraft sequences. 
+
+VelOpt excels on the simple planar object. Notably, our method achieves better overall performance in the cube sequence. This sequence is particularly demanding due to partial occlusions, a condition that poses a significant challenge for existing meth-ods, such as LS-Opt and EL-SLAM . The robustness demon-strated by our method under these adverse conditions validates its efficacy and practical advantages. Pose tracking results are shown in Fig. 9. Across all sequences, the reprojected 3D lines from our estimated poses maintain a precise alignment with the object’s contours in event accumulation images. This demonstrates the stability and accuracy of our tracking methods over extended periods. VIII. C ONCLUSION 
+
+This paper presents an event-driven, geometrically moti-vated framework for absolute pose and velocity estimation, leveraging 3D lines and their triggered events. Our method 14 VelOpt 
+
+Simple 
+
+planar object 
+
+Cube 
+
+Spacecraft 
+
+Complex 
+
+planar object 
+
+AbsLin  VelLin  VelOpt AbsPol  
+
+> Fig. 9. Reprojection results on the LOPET dataset. 3D lines of Objects are reprojected onto the event accumulation images (for visualization purposes only) using the estimated poses.
+
+leverages two key geometric relations: the orthogonality be-tween event normal vectors and 3D lines, and the collinearity between projected lines and events. These geometric con-straints are first utilized to recover absolute pose, and then employed to estimate angular and linear velocities. We propose two types of solvers for pose estimation, namely a linear solver and a polynomial solver. For velocity estimation, we further develop a linear solver and an optimization solver. Extensive experiments on both simulated and real-world datasets demon-strate that the proposed framework achieves strong robustness and accuracy, and consistently outperforms existing methods in terms of accuracy. 
+
+Limitations and Future Work. Our method has two main limitations. First, as a geometric solver that serves as a back-end module, it relies on pre-existing 3D line models and ro-bust event–line correspondences, which limits its applicability in map-free scenarios. Second, the method depends on the presence of lines in the scene, which may lead to degraded performance in unstructured environments or areas with sparse texture. To address these limitations, future work will pursue two directions: (1) integrating our solvers with event-based line detectors and event-line SLAM systems to enable joint online line map construction and motion estimation in map-free scenarios; and (2) extending the framework to accommo-date hybrid features by jointly utilizing both feature points and lines for more robust event-based motion estimation. REFERENCES [1] D. Nist´ er, O. Naroditsky, and J. Bergen, “Visual odometry,” in Proc. IEEE Conf. Comput. Vis. Pattern Recognit. , 2004. [2] C. Campos, R. Elvira, J. J. G. Rodr´ ıguez, J. M. M. Montiel, and J. D. Tard´ os, “ORB-SLAM3: An accurate open-source library for visual, visual–inertial, and multimap SLAM,” IEEE Trans. Robot. , vol. 37, no. 6, pp. 1874–1890, 2021. [3] L. Kneip, H. Li, and Y. Seo, “UPnP: An optimal o(n) solution to the absolute pose problem with universal applicability,” in Proc. Eur. Conf. Comput. Vis. , 2014, pp. 127–142. [4] V. Lepetit, F. Moreno-Noguer, and P. Fua, “EPnP: An accurate o(n) solution to the PnP problem,” Int. J. Comput. Vis. , vol. 81, no. 2, pp. 155–166, 2009. [5] B. Guan and J. Zhao, “Affine correspondences between multi-camera systems for relative pose estimation,” IEEE Transactions on Pattern Analysis and Machine Intelligence , vol. 48, no. 2, pp. 2012–2029, 2026. [6] D. Nister, “An efficient solution to the five-point relative pose problem,” 
+
+> IEEE Trans. Pattern Anal. Mach. Intell. , vol. 26, no. 6, pp. 756–770, 2004. 15
+
+[7] B. Guan, J. Zhao, and L. Kneip, “A complete solution to generalized rel-ative pose estimation from affine correspondences,” IEEE Transactions on Pattern Analysis and Machine Intelligence , pp. 1–15, 2026. [8] S. Weber, N. Demmel, T. C. Chan, and D. Cremers, “Power bundle adjustment for large-scale 3d reconstruction,” in IEEE Conference on Computer Vision and Pattern Recognition , 2023, pp. 281–289. [9] S. Liang, B. Guan, B. Li, Q. Yu, and Y. Shang, “A pose-only geometric constraint for multi-camera pose adjustment,” IEEE Transactions on Pattern Analysis and Machine Intelligence , pp. 1–18, 2026. [10] G. Gallego, T. Delbr¨ uck, G. Orchard, C. Bartolozzi, B. Taba, A. Censi, S. Leutenegger, A. J. Davison, J. Conradt, K. Daniilidis, and D. Scara-muzza, “Event-based vision: a survey,” IEEE Trans. Pattern Anal. Mach. Intell. , vol. 44, no. 1, pp. 154–180, 2022. [11] T. Huang, Y. Zheng, Z. Yu, R. Chen, Y. Li, R. Xiong, L. Ma, J. Zhao, S. Dong, L. Zhu et al. , “1000 × faster camera and machine vision with ordinary devices,” Engineering , vol. 25, pp. 110–119, 2023. [12] Z. Yu, T. Bu, Y. Zhang, S. Jia, T. Huang, and J. K. Liu, “Robust decoding of rich dynamical visual scenes with retinal spikes,” IEEE Trans. Neural Networks Learn. Syst. , vol. 36, no. 2, pp. 3396–3409, 2025. [13] L. Chen, Y. Xie, Y. Li, Q. Xu, and J. Dong, “Cwscnet: Channel-weighted skip connection network for underwater object detection,” IEEE Trans. Image Process. , vol. 33, pp. 5206–5218, 2024. [14] J. Zhang, M. Zhang, Y. Wang, Q. Liu, B. Yin, H. Li, and X. Yang, “Spiking neural networks with adaptive membrane time constant for event-based tracking,” IEEE Trans. Image Process. , vol. 34, pp. 1009– 1021, 2025. [15] D. Gehrig and D. Scaramuzza, “Low-latency automotive vision with event cameras,” Nature , vol. 629, no. 8014, pp. 1034–1040, 2024. [16] F. Davide, K. Kevin, and S. Davide, “Dynamic obstacle avoidance for quadrotors with event cameras,” Sci. Robot. , vol. 5, no. 40, p. eaaz9712, 2020. [17] M. Krichenbauer, G. Yamamoto, T. Taketom, C. Sandor, and H. Kato, “Augmented reality versus virtual reality for 3d object manipulation,” 
+
+IEEE Trans. Vis. Comput. Graphics , vol. 24, no. 2, pp. 1038–1048, 2018. [18] Y.-C. Chen and H. H. Chen, “Generating light field from stereo images for ar display with matched angular sampling structure and minimal retinal error,” IEEE Trans. Image Process. , vol. 34, pp. 3849–3860, 2025. [19] B. He, Z. Wang, Y. Zhou, J. Chen, C. D. Singh, H. Li, Y. Gao, S. Shen, K. Wang, Y. Cao et al. , “Microsaccade-inspired event camera for robotics,” Sci. Robot. , vol. 9, no. 90, p. eadj8124, 2024. [20] E. Mueggler, C. Bartolozzi, and D. Scaramuzza, “Fast event-based corner detection,” in Proc. Brit. Mach. Vis. Conf. , 2017. [21] A. Glover, A. Dinale, L. D. S. Rosa, S. Bamford, and C. Bartolozzi, “luvHarris: A practical corner detector for event-cameras,” IEEE Trans. Pattern Anal. Mach. Intell. , vol. 44, no. 12, pp. 10 087–10 098, 2021. [22] C. Le Gentil, F. Tschopp, I. Alzugaray, T. Vidal-Calleja, R. Siegwart, and J. Nieto, “IDOL: A framework for IMU-DVS odometry using lines,” in Proc. IEEE/RSJ Int. Conf. Intell. Robots Syst. , 2020, pp. 5863–5870. [23] D. R. Valeiras, X. Clady, S.-H. Ieng, and R. Benosman, “Event-based line fitting and segment detection using a neuromorphic visual sensor,” 
+
+IEEE Trans. Neural Networks Learn. Syst. , vol. 30, no. 4, pp. 1218– 1230, 2018. [24] H. Li, J. Zhao, J.-C. Bazin, P. Kim, K. Joo, Z. Zhao, and Y.-H. Liu, “Hong Kong world: Leveraging structural regularity for line-based SLAM,” IEEE Trans. Pattern Anal. Mach. Intell. , vol. 45, no. 11, pp. 13 035–13 053, 2023. [25] L. Gao, H. Su, D. Gehrig, M. Cannici, D. Scaramuzza, and L. Kneip, “A 5-point minimal solver for event camera relative motion estimation,” in Proc. IEEE Int. Conf. Comput. Vis. , 2023, pp. 8049–8059. [26] L. Gao, D. Gehrig, H. Su, D. Scaramuzza, and L. Kneip, “An n-point linear solver for line and motion estimation with event cameras,” in Proc. IEEE Conf. Comput. Vis. Pattern Recognit. , 2024, pp. 14 596–14 605. [27] C. Xu, L. Zhang, L. Cheng, and R. Koch, “Pose estimation from line correspondences: A complete analysis and a series of solutions,” IEEE Trans. Pattern Anal. Mach. Intell. , vol. 39, no. 6, pp. 1209–1222, 2017. [28] R. Hartley and A. Zisserman, Multiple view geometry in computer vision .Cambridge University Press, 2003. [29] B. Pˇ ribyl, P. Zemˇ c´ ık, and M. ˇ Cad´ ık, “Camera pose estimation from lines using pl¨ ucker coordinates,” in Proc. Brit. Mach. Vis. Conf. , 2015. [30] S. Christy and R. Horaud, “Iterative pose computation from line corre-spondences,” Comput. Vis. Image Underst. , vol. 73, no. 1, pp. 137–144, 1999. [31] G. Gallego, H. Rebecq, and D. Scaramuzza, “A unifying contrast maximization framework for event cameras, with applications to motion, depth, and optical flow estimation,” in Proc. IEEE Conf. Comput. Vis. Pattern Recognit. , 2018, pp. 3867–3876. [32] S. Guo and G. Gallego, “CMax-SLAM: Event-based rotational-motion bundle adjustment and SLAM system using contrast maximization,” 
+
+IEEE Trans. Robot. , vol. 40, pp. 2442–2461, 2024. [33] X. Peng, W. Xu, J. Yang, and L. Kneip, “Continuous event-line con-straint for closed-form velocity initialization,” in Proc. Brit. Mach. Vis. Conf. , 2021. [34] X. Lu, Y. Zhou, and S. Shen, “Event-based visual inertial velometer,” in Proc. Robot.: Sci. Syst. , 2024. [35] J. Zhao, B. Guan, Z. Liu, and L. Kneip, “Full-DoF egomotion estimation for event cameras using geometric solvers,” in Proc. IEEE Conf. Comput. Vis. Pattern Recognit. , 2025, pp. 11 515–11 524. [36] J. Niu, S. Zhong, X. Lu, S. Shen, G. Gallego, and Y. Zhou, “ESVO2: Direct visual-inertial odometry with stereo event cameras,” IEEE Trans. Robot. , pp. 1–20, 2025. [37] J. Hidalgo-Carri´ o, G. Gallego, and D. Scaramuzza, “Event-aided direct sparse odometry,” in Proc. IEEE Conf. Comput. Vis. Pattern Recognit. ,2022, pp. 5771–5780. [38] A. R. Vidal, H. Rebecq, T. Horstschaefer, and D. Scaramuzza, “Ultimate SLAM? combining events, images, and imu for robust visual SLAM in hdr and high-speed scenarios,” IEEE Robot. Autom. Lett. , vol. 3, no. 2, pp. 994–1001, 2018. [39] A. Z. Zhu, N. Atanasov, and K. Daniilidis, “Event-based visual inertial odometry,” in Proc. IEEE Conf. Comput. Vis. Pattern Recognit. , 2017, pp. 5816–5824. [40] H. Rebecq, T. Horstschaefer, G. Gallego, and D. Scaramuzza, “EVO: a geometric approach to event-based 6-DoF parallel tracking and mapping in real time,” IEEE Robot. Autom. Lett. , vol. 2, no. 2, pp. 593–600, 2017. [41] W. Chamorro, J. Sol` a, and J. Andrade-Cetto, “Event-based line SLAM in real-time,” IEEE Robot. Autom. Lett. , vol. 7, no. 3, pp. 8146–8153, 2022. [42] Z. Liu, B. Guan, Y. Shang, Q. Yu, and L. Kneip, “Line-based 6-DoF object pose estimation and tracking with an event camera,” IEEE Trans. Image Process. , vol. 33, pp. 4765–4780, 2024. [43] Z. Ren, B. Liao, D. Kong, J. Li, P. Liu, L. Kneip, G. Gallego, and Y. Zhou, “Motion and structure from event-based normal flow,” in Proc. Eur. Conf. Comput. Vis. , 2024. [44] G. Nakano, “Globally optimal DLS method for PnP problem with Cayley parameterization,” in Proc. Brit. Mach. Vis. Conf. , 2015. [45] F. M. Mirzaei and S. I. Roumeliotis, “Globally optimal pose estimation from line correspondences,” in Proc. IEEE Int. Conf. Robot. Autom. ,2011, pp. 5581–5588. [46] V. Larsson, K. Astrom, and M. Oskarsson, “Efficient solvers for minimal problems by syzygy-based reduction,” in Proc. IEEE Conf. Comput. Vis. Pattern Recognit. , 2017, pp. 2383–2392. [47] H. Li, R. Hartley, and J.-h. Kim, “A linear approach to motion estimation using generalized camera models,” in Proc. IEEE Conf. Comput. Vis. Pattern Recognit. , 2008, pp. 1–8. [48] L. Kneip and S. Lynen, “Direct optimization of frame-to-frame rotation,” in Proc. IEEE Int. Conf. Comput. Vis. , 2013, pp. 2352–2359. [49] M. Dhome, M. Richetin, J.-T. Lapreste, and G. Rives, “Determination of the attitude of 3d objects from a single perspective view,” IEEE Trans. Pattern Anal. Mach. Intell. , vol. 11, no. 12, pp. 1265–1278, 1989. [50] Y. Hu, S.-C. Liu, and T. Delbr¨ uck, “V2E: From video frames to realistic dvs events,” in Proc. IEEE Conf. Comput. Vis. Pattern Recognit. Work. ,2021, pp. 1312–1321. [51] O. A. Hay, X. Huang, A. Ayyad, E. Sherif, R. Almadhoun, Y. Abdul-rahman, L. Seneviratne, A. Abusafieh, and Y. Zweiri, “E-POSE: A large scale event camera dataset for object pose estimation,” Scientific Data ,vol. 12, no. 1, p. 245, 2025. [52] M. Grupp, “EVO: Python package for the evaluation of odometry and SLAM.” https://github.com/MichaelGrupp/evo, 2017. [53] Y. Zheng, Y. Kuang, S. Sugimoto, K. Astrom, and M. Okutomi, “Revisiting the PnP problem: A fast, general and optimal solution,” in 
+
+Proc. IEEE Int. Conf. Comput. Vis. , 2013, pp. 2344–2351.
