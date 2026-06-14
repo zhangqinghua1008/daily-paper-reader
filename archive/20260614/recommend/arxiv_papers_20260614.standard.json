@@ -1,0 +1,147 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-14T21:28:12.013434+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 1,
+    "deep_cap": 7,
+    "deep_selected": 1,
+    "quick_candidates": 2,
+    "quick_skim_target": 12,
+    "quick_selected": 2
+  },
+  "deep_dive": [
+    {
+      "id": "2606.13376v1",
+      "source": "arxiv",
+      "title": "MoVerse: Real-Time Video World Modeling with Panoramic Gaussian Scaffold",
+      "abstract": "We present MoVerse, a real-time video world model that creates an interactively navigable scene from a single narrow-field-of-view image. This setting is challenging because the input observes only a small fraction of the environment, while interactive roaming requires a complete surrounding world, persistent geometry, controllable camera motion, and temporally coherent high-fidelity observations. MoVerse addresses this problem by separating world construction from observation rendering. It first expands the input into a gravity-aligned 360$^\\circ$ panorama with topology-aware diffusion, closing the missing field of view before 3D reasoning. It then lifts the panorama into a persistent 3D Gaussian scaffold using panoramic geometry-aware residual prediction, yielding a dense and directly renderable spatial memory. Finally, a Gaussian-conditioned video renderer translates scaffold renderings along user-specified camera trajectories into photorealistic video. To make this renderer practical for interaction, we train a bidirectional diffusion teacher for high-quality conditional rendering and distill it into a causal autoregressive student for bounded-latency streaming. This design combines the controllability and long-range consistency of explicit 3D representations with the perceptual quality of generative video models. MoVerse supports real-time scene roaming at 8~FPS on a single NVIDIA RTX~4090 GPU, demonstrating a practical path toward single-image world creation with interactive video output.",
+      "authors": [
+        "Yang Zhou",
+        "Ziheng Wang",
+        "Yuqin Lu",
+        "Haofeng Liu",
+        "Jun Liang",
+        "Shengfeng He",
+        "Jing Li"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-11T14:01:02+00:00",
+      "link": "https://arxiv.org/pdf/2606.13376v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Builds a persistent 3D Gaussian scaffold for real-time, interactive world modeling from a single narrow-FoV image, enabling volumetric scene representation and real-time rendering",
+      "llm_evidence_cn": "构建一个持久的三维高斯支架，从单一窄视场图像实现实时交互式世界建模，支持体积场景表示和实时渲染",
+      "llm_evidence": "构建一个持久的三维高斯支架，从单一窄视场图像实现实时交互式世界建模，支持体积场景表示和实时渲染",
+      "canonical_evidence": "构建一个持久的三维高斯支架，从单一窄视场图像实现实时交互式世界建模，支持体积场景表示和实时渲染",
+      "llm_tldr_en": "MoVerse builds a 3D Gaussian scaffold from a single narrow-FoV image via panorama diffusion and geometry-aware lifting, enabling real-time interactive navigation and coherent rendering.",
+      "llm_tldr_cn": "针对单张窄视场图像难以重建完整可导航三维世界的挑战，本文提出MoVerse，一种实时视频世界模型。它首先利用拓扑感知扩散将输入扩展为360°全景图，再通过全景几何感知残差预测将其提升为持久的三维高斯支架，从而分离世界构建与观测渲染。该方法实现了从单一视图实时交互式漫游，并保持时间一致的高保真渲染，为单目三维场景建模提供了高效解决方案。",
+      "llm_tldr": "针对单张窄视场图像难以重建完整可导航三维世界的挑战，本文提出MoVerse，一种实时视频世界模型。它首先利用拓扑感知扩散将输入扩展为360°全景图，再通过全景几何感知残差预测将其提升为持久的三维高斯支架，从而分离世界构建与观测渲染。该方法实现了从单一视图实时交互式漫游，并保持时间一致的高保真渲染，为单目三维场景建模提供了高效解决方案。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2606.10656v1",
+      "source": "arxiv",
+      "title": "Envision4D: Envisioning Visual Futures via Feed-forward 4D Gaussian Splatting for Autonomous Driving",
+      "abstract": "Forecasting the future evolution of dynamic scenes is crucial in autonomous driving. However, existing feed-forward paradigms are primarily designed for interpolation. When extended to future extrapolation, they suffer from ghosting artifacts under large displacements and are constrained by simplified motion assumptions or strict future priors. To overcome these challenges, we propose Envision4D, a fully self-supervised feed-forward framework for pose-free future extrapolation. Specifically, we introduce a Future Pose Prediction module that infers future camera parameters via an iterative denoising process. Furthermore, to capture non-linear dynamics, we propose In-layer Temporal Attention and employ Conditioned Motion Lifting, which transforms the highly uncertain extrapolation process into robust relational mappings. Finally, a Progressive Training Strategy is utilized to stabilize unsupervised motion learning against error accumulation. Extensive experiments demonstrate that Envision4D achieves state-of-the-art performance, significantly outperforming existing methods in future view synthesis.",
+      "authors": [
+        "Qi Song",
+        "Yifei He",
+        "Chi Zhang",
+        "Zheng Fu",
+        "Xuhe Zhao",
+        "Mengmeng Yang",
+        "Kun Jiang",
+        "Rui Huang",
+        "Diange Yang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-09T10:04:38+00:00",
+      "link": "https://arxiv.org/pdf/2606.10656v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "4D Gaussian Splatting for volumetric scene representation and future rendering",
+      "llm_evidence_cn": "用于体积场景表示和未来渲染的4D高斯泼溅",
+      "llm_evidence": "用于体积场景表示和未来渲染的4D高斯泼溅",
+      "canonical_evidence": "用于体积场景表示和未来渲染的4D高斯泼溅",
+      "llm_tldr_en": "Envision4D proposes a feed-forward framework using 4D Gaussian Splatting for future extrapolation in autonomous driving, featuring a future pose prediction module and in-layer temporal attention to capture non-linear dynamics, achieving state-of-the-art future frame synthesis.",
+      "llm_tldr_cn": "Envision4D提出一种使用4D高斯泼溅的前馈框架，用于自动驾驶的未来场景外推。该框架通过未来位姿预测模块和层内时间注意力捕获非线性动态，能够在单目和多视角设置下生成清晰的未来帧，性能优于现有方法。",
+      "llm_tldr": "Envision4D提出一种使用4D高斯泼溅的前馈框架，用于自动驾驶的未来场景外推。该框架通过未来位姿预测模块和层内时间注意力捕获非线性动态，能够在单目和多视角设置下生成清晰的未来帧，性能优于现有方法。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.13655v1",
+      "source": "arxiv",
+      "title": "Flex4DHuman: Flexible Multi-view Video Diffusion for 4D Human Reconstruction",
+      "abstract": "We present Flex4DHuman, a multi-view video diffusion model that transforms a monocular or sparse multi-view video of a dynamic subject into synchronized dense multi-view videos using only relative camera-pose conditioning. Unlike prior human-centric methods that rely on skeletons, depth maps, normals, or rendered target-view geometry, Flex4DHuman requires no explicit geometry priors and instead conditions generation through relative camera-pose positional encoding. The generated videos can be directly ingested by downstream reconstruction pipelines to create dynamic 4D Gaussian splats. Built on the Wan 2.1 1.3B text-to-video model, Flex4DHuman preserves the backbone architecture and encodes camera and view information through a five-axis positional encoding that extends spatio-temporal RoPE with view indices and continuous SE(3) relative camera geometry. A three-stage curriculum progressively trains the model for pose following, flexible reference-to-target view generation, and temporal rollout. To support temporal rollout, we train with clean historical target-view tokens. We also add multi-view captions to enable test-time text control. Combined with an off-the-shelf 4D Gaussian Splatting stage, our framework lifts monocular static-camera videos into dynamic 4D Gaussian splats. Experiments on DNA-Rendering and ActorsHQ show that Flex4DHuman surpasses prior state-of-the-art methods, while the same formulation generalizes to animal categories after mixed human-animal training. These capabilities make Flex4DHuman a practical step toward scalable 4D content creation from casual monocular videos for simulation, gaming, AR/VR, and video re-shooting.",
+      "authors": [
+        "Jen-Hao Cheng",
+        "Yipeng Wang",
+        "Hao Zhang",
+        "Gengshan Yang",
+        "Jenq-Neng Hwang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.GR"
+      ],
+      "published": "2026-06-11T17:54:05+00:00",
+      "link": "https://arxiv.org/pdf/2606.13655v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Generates dense multi-view videos that are used to create dynamic 4D Gaussian splats for volumetric human representation.",
+      "llm_evidence_cn": "生成稠密多视角视频，用于创建动态4D高斯泼溅以表示体积人体。",
+      "llm_evidence": "生成稠密多视角视频，用于创建动态4D高斯泼溅以表示体积人体。",
+      "canonical_evidence": "生成稠密多视角视频，用于创建动态4D高斯泼溅以表示体积人体。",
+      "llm_tldr_en": "Flex4DHuman converts monocular/sparse multi-view video into dense views using only relative camera-pose conditioning, enabling downstream 4D Gaussian splatting for dynamic human reconstruction.",
+      "llm_tldr_cn": "Flex4DHuman仅依赖相对相机位姿条件将单目/稀疏多视角视频转换为稠密视图，进而生成4D高斯泼溅实现动态人体重建，简化了人体建模流程。",
+      "llm_tldr": "Flex4DHuman仅依赖相对相机位姿条件将单目/稀疏多视角视频转换为稠密视图，进而生成4D高斯泼溅实现动态人体重建，简化了人体建模流程。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

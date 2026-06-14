@@ -1,0 +1,54 @@
+{
+  "label": "2026-06-14",
+  "date": "2026-06-14",
+  "generated_at": "2026-06-14T21:31:21",
+  "count": 3,
+  "papers": [
+    {
+      "paper_id": "202606/14/2606.13376v1-moverse-real-time-video-world-modeling-with-panoramic-gaussian-scaffold",
+      "section": "deep",
+      "title_en": "MoVerse: Real-Time Video World Modeling with Panoramic Gaussian Scaffold",
+      "authors": "Yang Zhou, Ziheng Wang, Yuqin Lu, Haofeng Liu, Jun Liang, Shengfeng He, Jing Li",
+      "date": "2026-06-11",
+      "pdf": "https://arxiv.org/pdf/2606.13376v1",
+      "score": "8.0",
+      "evidence": "构建一个持久的三维高斯支架，从单一窄视场图像实现实时交互式世界建模，支持体积场景表示和实时渲染",
+      "tldr": "从单张窄视场图像创建可实时导航的视频世界模型面临观测缺失与实时性挑战。MoVerse通过拓扑感知扩散补全360°全景，并提升为3D高斯脚手架，再结合蒸馏的自回归渲染器实现条件视频生成。在RTX 4090上达到8 FPS实时漫游，验证了单图世界生成与交互的可行性。",
+      "tags": "query:gs-slam",
+      "abstract_en": "We present MoVerse, a real-time video world model that creates an interactively navigable scene from a single narrow-field-of-view image. This setting is challenging because the input observes only a small fraction of the environment, while interactive roaming requires a complete surrounding world, persistent geometry, controllable camera motion, and temporally coherent high-fidelity observations. MoVerse addresses this problem by separating world construction from observation rendering. It first expands the input into a gravity-aligned 360$^\\circ$ panorama with topology-aware diffusion, closing the missing field of view before 3D reasoning. It then lifts the panorama into a persistent 3D Gaussian scaffold using panoramic geometry-aware residual prediction, yielding a dense and directly renderable spatial memory. Finally, a Gaussian-conditioned video renderer translates scaffold renderings along user-specified camera trajectories into photorealistic video. To make this renderer practical for interaction, we train a bidirectional diffusion teacher for high-quality conditional rendering and distill it into a causal autoregressive student for bounded-latency streaming. This design combines the controllability and long-range consistency of explicit 3D representations with the perceptual quality of generative video models. MoVerse supports real-time scene roaming at 8~FPS on a single NVIDIA RTX~4090 GPU, demonstrating a practical path toward single-image world creation with interactive video output.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202606/14/2606.10656v1-envision4d-envisioning-visual-futures-via-feed-forward-4d-gaussian-splatting-for-autonomous-driving",
+      "section": "quick",
+      "title_en": "Envision4D: Envisioning Visual Futures via Feed-forward 4D Gaussian Splatting for Autonomous Driving",
+      "authors": "Qi Song, Yifei He, Chi Zhang, Zheng Fu, Xuhe Zhao, Mengmeng Yang, Kun Jiang, Rui Huang, Diange Yang",
+      "date": "2026-06-09",
+      "pdf": "https://arxiv.org/pdf/2606.10656v1",
+      "score": "6.0",
+      "evidence": "用于体积场景表示和未来渲染的4D高斯泼溅",
+      "tldr": "在自动驾驶动态场景预测中，现有前馈方法外推时存在鬼影、运动假设简化等问题。本研究提出Envision4D，一种全自监督前馈框架，通过未来姿态预测、层内时序注意力、条件运动提升及渐进训练策略，将不确定的外推转化为稳健映射。实验表明，该方法在视角合成任务上达到最优性能，显著超越现有方案，为无姿态先验的未来外推提供了新范式。",
+      "tags": "query:gs-slam",
+      "abstract_en": "Forecasting the future evolution of dynamic scenes is crucial in autonomous driving. However, existing feed-forward paradigms are primarily designed for interpolation. When extended to future extrapolation, they suffer from ghosting artifacts under large displacements and are constrained by simplified motion assumptions or strict future priors. To overcome these challenges, we propose Envision4D, a fully self-supervised feed-forward framework for pose-free future extrapolation. Specifically, we introduce a Future Pose Prediction module that infers future camera parameters via an iterative denoising process. Furthermore, to capture non-linear dynamics, we propose In-layer Temporal Attention and employ Conditioned Motion Lifting, which transforms the highly uncertain extrapolation process into robust relational mappings. Finally, a Progressive Training Strategy is utilized to stabilize unsupervised motion learning against error accumulation. Extensive experiments demonstrate that Envision4D achieves state-of-the-art performance, significantly outperforming existing methods in future view synthesis.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202606/14/2606.13655v1-flex4dhuman-flexible-multi-view-video-diffusion-for-4d-human-reconstruction",
+      "section": "quick",
+      "title_en": "Flex4DHuman: Flexible Multi-view Video Diffusion for 4D Human Reconstruction",
+      "authors": "Jen-Hao Cheng, Yipeng Wang, Hao Zhang, Gengshan Yang, Jenq-Neng Hwang",
+      "date": "2026-06-11",
+      "pdf": "https://arxiv.org/pdf/2606.13655v1",
+      "score": "6.0",
+      "evidence": "生成稠密多视角视频，用于创建动态4D高斯泼溅以表示体积人体。",
+      "tldr": "从单目或稀疏多视图视频重建动态人体三维模型通常依赖于骨架、深度等几何先验，这些先验容易引入误差且限制灵活性。Flex4DHuman基于Wan 2.1文生视频模型，利用五轴位置编码融合视图索引和连续SE(3)相对相机位姿，通过三阶段课程训练实现灵活的多视图视频生成和时序 rollout，并加入多视图文本控制。在DNA-Rendering和ActorsHQ数据集上性能超越先前方法，且经混合训练可泛化至动物类别，结合4D高斯溅射可从单目视频生成动态4D场景。为仿真、游戏、AR/VR等应用的大规模4D内容创作提供了无需显式几何先验的实用途径。",
+      "tags": "query:gs-slam",
+      "abstract_en": "We present Flex4DHuman, a multi-view video diffusion model that transforms a monocular or sparse multi-view video of a dynamic subject into synchronized dense multi-view videos using only relative camera-pose conditioning. Unlike prior human-centric methods that rely on skeletons, depth maps, normals, or rendered target-view geometry, Flex4DHuman requires no explicit geometry priors and instead conditions generation through relative camera-pose positional encoding. The generated videos can be directly ingested by downstream reconstruction pipelines to create dynamic 4D Gaussian splats. Built on the Wan 2.1 1.3B text-to-video model, Flex4DHuman preserves the backbone architecture and encodes camera and view information through a five-axis positional encoding that extends spatio-temporal RoPE with view indices and continuous SE(3) relative camera geometry. A three-stage curriculum progressively trains the model for pose following, flexible reference-to-target view generation, and temporal rollout. To support temporal rollout, we train with clean historical target-view tokens. We also add multi-view captions to enable test-time text control. Combined with an off-the-shelf 4D Gaussian Splatting stage, our framework lifts monocular static-camera videos into dynamic 4D Gaussian splats. Experiments on DNA-Rendering and ActorsHQ show that Flex4DHuman surpasses prior state-of-the-art methods, while the same formulation generalizes to animal categories after mixed human-animal training. These capabilities make Flex4DHuman a practical step toward scalable 4D content creation from casual monocular videos for simulation, gaming, AR/VR, and video re-shooting.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

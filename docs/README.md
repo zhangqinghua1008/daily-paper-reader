@@ -6,34 +6,31 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-06-13
-- 运行时间：2026-06-13 21:29:57 UTC
+- 最新运行日期：2026-06-14
+- 运行时间：2026-06-14 21:31:12 UTC
 - 运行状态：成功
-- 本次总论文数：4
-- 精读区：3
-- 速读区：1
+- 本次总论文数：3
+- 精读区：1
+- 速读区：2
 
 ### 今日简报（AI）
-今日精选4篇前沿论文，重点拆解事件相机位姿估计与3D高斯泼溅的感知优化。
-最值得看：用几何框架统一求解事件相机的绝对位姿与速度，以及通过感知包装和共同随机性让3D高斯泼溅更聚焦关键细节。
-普通读者可先入手事件相机的高效运动捕捉思路，3D渲染方向则跟进感知驱动压缩的实战效果。
-- 详情：[/202606/13/README](/202606/13/README)
+今日研读以实时视频世界建模为代表的高质量重建方案，并速览了4D高斯泼溅在自动驾驶未来视觉与人体重建的两项轻量尝试。  
+最值得关注的是《MoVerse》提出的全景高斯支架，它让真实视频能即时转化为可自由漫游的3D世界，精度与效率均令人印象深刻。  
+如果想入门视频生成与动态重建，建议从复现这种“全景高斯漫游”开始，它对普通开发者更友好且效果立竿见影。
+- 详情：[/202606/14/README](/202606/14/README)
 
 ### 精读区论文标签
-1. [A Geometric Framework for Absolute Pose and Velocity Estimation with Event Cameras](/202606/13/2606.09139v1-a-geometric-framework-for-absolute-pose-and-velocity-estimation-with-event-cameras)  
-   标签：评分：9.0/10、query:gs-slam
-   evidence：提出基于事件相机和3D线的绝对位姿估计几何框架。
-2. [Seeing What Matters: Perceptual Wrapper with Common Randomness for 3D Gaussian Splatting](/202606/13/2606.11782v1-seeing-what-matters-perceptual-wrapper-with-common-randomness-for-3d-gaussian-splatting)  
-   标签：评分：9.0/10、query:gs-slam
-   evidence：提出一种感知增强方法，用于改善3D高斯泼溅的实时渲染质量
-3. [A Scalable PyTorch Abstraction for Multi-GPU Gaussian Splatting](/202606/13/2606.11390v1-a-scalable-pytorch-abstraction-for-multi-gpu-gaussian-splatting)  
+1. [MoVerse: Real-Time Video World Modeling with Panoramic Gaussian Scaffold](/202606/14/2606.13376v1-moverse-real-time-video-world-modeling-with-panoramic-gaussian-scaffold)  
    标签：评分：8.0/10、query:gs-slam
-   evidence：为体积场景表示和实时渲染扩展多GPU高斯泼溅
+   evidence：构建一个持久的三维高斯支架，从单一窄视场图像实现实时交互式世界建模，支持体积场景表示和实时渲染
 
 ### 速读区论文标签
-1. [UniSHARP: Universal Sharp Monocular View Synthesis](/202606/13/2606.07514v1-unisharp-universal-sharp-monocular-view-synthesis)  
+1. [Envision4D: Envisioning Visual Futures via Feed-forward 4D Gaussian Splatting for Autonomous Driving](/202606/14/2606.10656v1-envision4d-envisioning-visual-futures-via-feed-forward-4d-gaussian-splatting-for-autonomous-driving)  
    标签：评分：6.0/10、query:gs-slam
-   evidence：使用高斯原语进行单目视图合成，适用于多种相机模型
+   evidence：用于体积场景表示和未来渲染的4D高斯泼溅
+2. [Flex4DHuman: Flexible Multi-view Video Diffusion for 4D Human Reconstruction](/202606/14/2606.13655v1-flex4dhuman-flexible-multi-view-video-diffusion-for-4d-human-reconstruction)  
+   标签：评分：6.0/10、query:gs-slam
+   evidence：生成稠密多视角视频，用于创建动态4D高斯泼溅以表示体积人体。
 
 
 <div class="dpr-home-promo-card">
