@@ -1,0 +1,54 @@
+{
+  "label": "2026-06-15",
+  "date": "2026-06-15",
+  "generated_at": "2026-06-15T23:01:29",
+  "count": 3,
+  "papers": [
+    {
+      "paper_id": "202606/15/2606.11894v2-wild3r-feed-forward-3d-gaussian-splatting-from-unconstrained-sparse-photo-collection",
+      "section": "deep",
+      "title_en": "Wild3R: Feed-Forward 3D Gaussian Splatting from Unconstrained Sparse Photo Collection",
+      "authors": "Yuto Furutani, Takashi Otonari, Kaede Shiohara, Toshihiko Yamasaki",
+      "date": "2026-06-10",
+      "pdf": "https://arxiv.org/pdf/2606.11894v2",
+      "score": "9.0",
+      "evidence": "前馈式3D高斯泼溅实现场景表示，从稀疏照片快速合成新视图。",
+      "tldr": "现有前馈式3D高斯泼溅方法难以处理包含多样光照和瞬态物体的无约束稀疏照片集，主要瓶颈在于缺乏训练数据。本文提出Wild3R，构建了包含200个场景、170种光照条件和瞬态物体的WildCity数据集，以此训练模型学习基于参考视图的外观一致性并去除瞬态内容。实验表明，该方法性能超越现有前馈方案，并与需要逐场景优化的传统方法效果相当，显著推动了真实复杂场景下的前馈3D重建能力。",
+      "tags": "query:gs-slam",
+      "abstract_en": "Feed-forward 3D Gaussian Splatting (3DGS) removes the need for time-consuming per-scene optimization required by traditional 3DGS. However, existing feed-forward approaches struggle with real-world photo collections that include diverse lighting conditions and transient objects. In this paper, we present Wild3R, a feed-forward approach for unconstrained sparse photo collections. The main bottleneck is the lack of training data that provides multiple viewpoints, a variety of illuminations, and transient variations necessary for learning robust scene representations. To address this, we introduce the WildCity dataset, which comprises 200 scenes, 170 lighting conditions, and transient objects, resulting in 337,500 images in total. By leveraging the dataset, our model learns appearance consistency across viewpoints conditioned on reference views, while removing transient content. Extensive experiments demonstrate that our method outperforms existing feed-forward approaches and achieves results competitive with prior per-scene optimization-based methods.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202606/15/2606.13032v1-geocfnet-geometry-aware-confidence-field-network-for-robot-assisted-endoscopic-submucosal-dissection",
+      "section": "deep",
+      "title_en": "GeoCFNet: Geometry-Aware Confidence Field Network for Robot-Assisted Endoscopic Submucosal Dissection",
+      "authors": "Rui Tang, Guankun Wang, Long Bai, Haochen Yin, Huxin Gao, Jiewen Lai, Jiazheng Wang, Hongliang Ren",
+      "date": "2026-06-11",
+      "pdf": "https://arxiv.org/pdf/2606.13032v1",
+      "score": "8.0",
+      "evidence": "利用几何感知置信场作为内镜手术导航的3D场景表示",
+      "tldr": "针对内镜黏膜下剥离术中因烟雾、高光和形变导致的置信场估计困难问题，提出几何感知置信场网络GeoCFNet，通过编码内镜图像的几何线索，生成稠密置信场以精确引导手术剥离路径。实验在动态内镜场景中验证了该方法的鲁棒性和准确性。该工作为内镜手术导航提供了精确的3D场景解析手段。",
+      "tags": "query:endo-dgs",
+      "abstract_en": "Advanced surgical robotics has made robot-assisted endoscopic submucosal dissection (ESD) a promising approach for the en-bloc resection of large lesions, with the potential to reduce recurrence and improve long-term outcomes. However, the technical complexity and risk of complications in ESD demand stable and precise visual guidance to maintain an accurate dissection corridor and a safe tissue margin. Dense confidence fields provide an effective representation for this purpose by describing both the preferred dissection region and its spatial transition to surrounding tissue. However, reliable confidence field estimation remains challenging in dynamic endoscopic scenes due to smoke, specular highlights, tissue deformation, weak texture, and the thin geometric structure of the target region. To address these challenges, we formulate dissection guidance as a geometry-aware confidence field estimation problem and propose GeoCFNet, a geometry-aware confidence field network built on a pretrained DINOv3 backbone. GeoCFNet integrates a Token-Differentiated Fusion module to aggregate class-token context with dense patch representations, a SegFormer decoder for confidence regression, and Geometry-Aware Spatial Regularization (GASR) to preserve spatial coherence and local geometric transitions. Experimental results show that GeoCFNet achieves RMSE 0.0480, PSNR 27.1995, SSIM 0.3397, and CC 0.2466, indicating accurate and geometrically stable confidence field estimation for robot-assisted ESD guidance.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202606/15/2606.12368v2-depthmaster-unified-monocular-depth-estimation-for-perspective-and-panoramic-images",
+      "section": "quick",
+      "title_en": "DepthMaster: Unified Monocular Depth Estimation for Perspective and Panoramic Images",
+      "authors": "Pengfei Wang, Shihao Wang, Liyi Chen, Zhiyuan Ma, Guowen Zhang, Lei Zhang",
+      "date": "2026-06-10",
+      "pdf": "https://arxiv.org/pdf/2606.12368v2",
+      "score": "6.0",
+      "evidence": "统一的单目深度估计方法可应用于透视图像（包括内窥镜），有望用于内窥镜场景深度估计。",
+      "tldr": "单目深度估计在透视与全景图像间实现通用度量估计仍面临挑战，主要障碍是几何差异与全景度量数据匮乏。本文提出DepthMaster，通过将全景图分解为重叠透视块，引入对应一致性损失和虚拟投影相机作为几何先验，实现无缝拼接并统一到规范透视表示，从而充分利用大规模透视数据集的度量先验。在仅用一份全景数据训练下，模型在13个数据集上取得零样本最优性能，同时超越通用和专用方法。该框架无需定制操作，保持标准Transformer兼容性，为跨相机类型的通用深度估计提供了新范式。",
+      "tags": "query:endo-dgs",
+      "abstract_en": "While monocular depth estimation has achieved significant progress, achieving generalized metric depth estimation for both narrow field-of-view (FoV) perspectives and $360^\\circ$ panoramas remains an unsolved challenge. Existing methods are often tailored to specific camera types and struggle to produce accurate metric depth that generalizes across diverse settings. This limitation stems from two key challenges: the inherent geometric discrepancy between perspective and panoramic cameras, and the scarcity of panoramic training data with metric annotations. In this work, we introduce DepthMaster, a unified metric depth estimation framework. Rather than employing specialized networks to learn spherical distortions, we reformulate the problem by decomposing panoramic images into overlapping perspective patches. Crucially, distinct from prior projection-based methods that rely on ad-hoc architectural modifications to handle boundaries, we introduce a novel Correspondence Consistency Loss (CCL) and inject virtual projection cameras as geometric priors, allowing us to seamlessly stitch the patches while avoiding specialized operators and keeping the backbone largely compatible with standard Transformer designs. This strategy also resolves the geometric differences by unifying all inputs into a canonical perspective representation, and effectively circumvents data scarcity by directly unlocking powerful metric priors from vast perspective datasets. Trained on a mixed dataset that contains only one panorama dataset, DepthMaster achieves state-of-the-art zero-shot performance on 13 diverse datasets, outperforming not only universal methods but also leading specialist models in both perspective and panoramic domains.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

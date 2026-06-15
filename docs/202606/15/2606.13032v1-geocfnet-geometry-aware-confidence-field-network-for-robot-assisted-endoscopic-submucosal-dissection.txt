@@ -1,0 +1,275 @@
+Title: GeoCFNet: Geometry-Aware Confidence Field Network for Robot-Assisted Endoscopic Submucosal Dissection
+
+URL Source: https://arxiv.org/pdf/2606.13032v1
+
+Published Time: Fri, 12 Jun 2026 00:38:46 GMT
+
+Number of Pages: 6
+
+Markdown Content:
+# GeoCFNet: Geometry-Aware Confidence Field Network for Robot-Assisted Endoscopic Submucosal Dissection 
+
+Rui Tang*, Guankun Wang*, Long Bai, Haochen Yin, Huxin Gao, Jiewen Lai, Jiazheng Wang, Hongliang Ren, Senior Member, IEEE 
+
+Abstract —Advanced surgical robotics has made robot-assisted endoscopic submucosal dissection (ESD) a promising approach for the en-bloc resection of large lesions, with the potential to reduce recurrence and improve long-term outcomes. However, the technical complexity and risk of complications in ESD demand stable and precise visual guidance to maintain an accurate dis-section corridor and a safe tissue margin. Dense confidence fields provide an effective representation for this purpose by describing both the preferred dissection region and its spatial transition to surrounding tissue. However, reliable confidence field estimation remains challenging in dynamic endoscopic scenes due to smoke, specular highlights, tissue deformation, weak texture, and the thin geometric structure of the target region. To address these challenges, we formulate dissection guidance as a geometry-aware confidence field estimation problem and propose GeoCFNet, a geometry-aware confidence field network built on a pretrained DINOv3 backbone. GeoCFNet integrates a Token-Differentiated Fusion module to aggregate class-token context with dense patch representations, a SegFormer decoder for confidence regression, and Geometry-Aware Spatial Regularization (GASR) to preserve spatial coherence and local geometric transitions. Experimental results show that GeoCFNet achieves RMSE 0.0480, PSNR 27.1995, SSIM 0.3397, and CC 0.2466, indicating accurate and geometrically stable confidence field estimation for robot-assisted ESD guidance. 
+
+Index Terms —Robot-Assisted Endoscopic Submucosal Dis-section, Geometry-Aware Confidence Field Network, DINOv3, Anisotropic Regularization. 
+
+I. I NTRODUCTION 
+
+Robot-assisted endoscopic submucosal dissection (ESD) aims to improve the stability and precision of complex proce-dures [1]–[4]. A key requirement is to maintain an accurate dissection trajectory within a narrow endoscopic field under dynamic intraoperative conditions. Errors in localizing the dis-section region or following the intended submucosal plane may lead to incomplete resection, bleeding, or perforation [5]–[7]. 
+
+This work was supported by Hong Kong Research Grants Coun-cil (14200425, R4020-22, R1007-24, C4026-21GF, 14206125, 14204524, 14216022), the National Natural Science Foundation of China (62403402), the Guangdong Basic and Applied Research Foundation (2025A1515011594), the National Natural Science Foundation of China (T252500134), the Ministry of Science and Technology of China (2025YFE0122500), and the Hong Kong Innovation and Technology Fund (MHP/185/24). ( Corresponding author: Hongliang Ren. )R. Tang, G. Wang, L. Bai, H. Yin, H. Gao, J. Lai, and H. Ren are with the Department of Electronic Engineering, The Chinese University of Hong Kong, Hong Kong SAR, China. J. Wang is with the Theory Lab, Central Research Institute, 2012 Labs, Huawei Technologies Co. Ltd., Hong Kong SAR, China （a) Raw endoscopic view （b) AI -guided ESD cu8ng guidance 
+
+Fig. 1. Illustration of AI-guided ESD cutting guidance. The raw endoscopic view contains ambiguous local visual cues, while the AI-guided overlay indicates the preferred cutting region for robot-assisted ESD. 
+
+Reliable intraoperative visual guidance is therefore essential for safe and consistent robot-assisted dissection. Existing visual guidance formulations are commonly based on point-level prediction [8], [9] or binary segmentation [10], but these discrete representations provide limited information about the safety transition around the target region. Confidence field estimation addresses this limitation by encoding the pre-ferred dissection region and its graded transition toward sur-rounding tissue, supporting safety-margin-aware intraoperative guidance [11]. As shown in Fig. 1, the objective is to transform ambiguous endoscopic appearance into a structured guidance output with spatial continuity and geometric consistency. This estimation remains challenging due to both visual ambiguity and geometric sensitivity. Smoke, specular reflection, motion blur, occlusion, bleeding, and tissue deformation reduce the reliability of local appearance cues [12], [13]. Meanwhile, the dissection target is often thin, elongated, and curved, making the confidence field sensitive to local regression errors. Such errors can cause discontinuous responses, boundary drift, or deformation of the intended guidance region [14], [15]. Prior work in surgical video analysis and endoscopic dense perception has advanced procedural understanding and pixel-level scene interpretation [16], [17], yet geometry-consistent confidence estimation remains insufficiently explored. Work-flow understanding and surgical phase recognition methods model procedural states from surgical videos [18]–[21], but they do not generate dense guidance maps for intraoperative decision support. Encoder–decoder architectures such as U-Net and TransUNet are widely used for biomedical dense pre-diction [22], [23], but their objectives are usually defined for mask prediction rather than continuous confidence regression. 
+
+> arXiv:2606.13032v1 [cs.CV] 11 Jun 2026
+
+Recent endoscopic perception methods introduce stronger vi-sual priors and foundation-model adaptation for depth esti-mation and dissection-zone segmentation [13]–[15]. ETSM further studies confidence map-based safety-margin guidance for robot-assisted ESD [11], but reliable confidence prediction under smoke, weak texture, and specular artifacts remains challenging. Existing methods still rarely couple transferable dense semantics with geometry-aware constraints designed for thin, elongated, and line-shaped confidence transitions. Vision foundation models provide strong dense representa-tions for addressing semantic ambiguity in endoscopic con-fidence estimation. DINOv2 demonstrates the transferability of large-scale self-supervised features for recognition and dense prediction [24], and DINOv3 further improves dense feature quality and frozen-backbone transfer performance [25]. Recent analysis of vision transformers also suggests that class-token information can complement patch-level descrip-tors in downstream prediction [26]. Nevertheless, pretrained semantics alone do not guarantee geometric coherence in confidence fields. With point-wise regression, predictions may still contain local noise, fragmented responses, or blurred transitions around the dissection corridor [25], [27]. Therefore, reliable confidence estimation requires both transferable dense semantics and geometry-aware regularization. To address these limitations, we define robot-assisted dissec-tion guidance as geometry-aware confidence field estimation and propose GeoCFNet for dissection region confidence pre-diction. GeoCFNet integrates four components: a pretrained DINOv3 backbone for dense semantic encoding, a Token-Differentiated Fusion (TDF) module for global-to-local con-text aggregation, SegFormer decoding for spatial confidence reconstruction, and GASR for geometry-aware field regular-ization. The DINOv3 backbone provides transferable dense features for challenging endoscopic frames. TDF uses the class token as a global surgical-context prior to guide patch-level representations under ambiguous local appearance. The Seg-Former decoder maps the enhanced features to a full-resolution confidence field. GASR further constrains the prediction by reducing local noise and preserving line-shaped transitions around the dissection region. The main contributions of this paper are summarized as follows:  
+
+> •
+
+We establish geometry-aware confidence field estimation as a dense guidance formulation for robot-assisted ESD, representing both the preferred dissection region and its safety-related spatial transition in a continuous field.  
+
+> •
+
+We develop GeoCFNet by coupling DINOv3 dense rep-resentations with Token-Differentiated Fusion, enabling global surgical context to guide local confidence estima-tion under weak texture and visual artifacts.  
+
+> •
+
+We design GASR with smoothness and anisotropic con-straints, imposing structural priors that reduce local noise while preserving the line-shaped topology.  
+
+> •
+
+Extensive experiments on robot-assisted ESD images demonstrate that GeoCFNet consistently outperforms rep-resentative baselines and produces spatially coherent confidence fields under visual artifacts, validating the effectiveness of the proposed framework. II. M ETHOD 
+
+To address the challenges of unstable boundaries and noisy confidence maps, we propose GeoCFNet, a geometry-aware confidence field network for intraoperative confidence field estimation in robot-assisted ESD. The method uses a pre-trained DINOv3 encoder, a Token-Differentiated Fusion (TDF) module, a confidence field decoder, and GASR to improve spatial stability. We first define the confidence field used for dissection guidance, and then present the overall architecture, the TDF module, and the GASR objective. 
+
+A. Confidence Field Definition 
+
+Given an intraoperative endoscopic image I ∈ RH×W ×3,the target is a continuous confidence field Y ∈ [0 , 1] H×W .Each value Yij represents the relative confidence that pixel 
+
+(i, j ) belongs to the preferred dissection guidance region. Higher values correspond to locations closer to the desired dissection region, whereas lower values indicate surrounding tissue with lower guidance preference. Compared with a binary mask, the confidence field preserves graded transitions around the target region and provides a continuous representation of the dissection region and its safety-related spatial margin. The supervision target is constructed from the annotated dissection guidance region using nonlinear distance decay, where confidence values decrease progressively from the target region to surrounding tissue and are normalized to [0 , 1] .This formulation converts intraoperative guidance into a dense regression problem, requiring the model to estimate both the location of the preferred dissection region and the geometric continuity of its surrounding confidence transition. 
+
+B. Overall Framework 
+
+Existing pixel-wise regression methods mainly optimize numerical errors, but they do not explicitly model the spa-tial organization and geometric continuity of the confidence field. To address this limitation, Fig. 2 illustrates the overall architecture of GeoCFNet, which follows an encoder fusion decoder pipeline with GASR during training. The input image is tokenized into patch tokens and a CLS token by a pretrained DINOv3 encoder. The Token-Differentiated Fusion (TDF) module then fuses the class token with patch features to form an enhanced representation, and the confidence field decoder reconstructs the full-resolution confidence map. The pretrained DINOv3 backbone is frozen to preserve large-scale visual representations, while LoRA parameters in the QKV projections, the TDF module, and the confidence decoder are trainable for task adaptation. Given an input image I ∈ RH×W ×3, the DINOv3 encoder tokenizes the image into non-overlapping 16 × 16 patches and produces a sequence of visual tokens. We extract the hidden representation from the last transformer block, 
+
+T(L) = B(I), (1) where T(L) ∈ RB×(N +1) ×d, B is the batch size, N is the number of patch tokens, and d is the feature dimension. The Block1 Block2 BlockN                   
+
+> Input
+> d×H/16 ×W/16 3×H×W
+> Patch Embedding
+> …
+> ❄DINOv3 VIT （Frozen ）+LoRA on QKV
+> CLS
+> Token
+> Patch
+> Tokens Token -
+> DifferenNated
+> Fusion
+> Output
+> Confidence
+> Head
+> APenNon
+> Specialized Transformer Block
+> Layer
+> Norm
+> Layer
+> Norm
+> QKV
+> Proj.
+> QKV
+> Proj.
+> Linear
+> Linear
+> Layer
+> Scale
+> Layer
+> Scale
+> Layer
+> Norm
+> Layer
+> Norm
+> MLP
+> MLP
+> Layer
+> Scale
+> Layer
+> Scale
+> Sharable Weights
+> Trainable LoRA
+> Parameters
+> Frozen Pre -trained
+> Backbone
+> Trainable
+> Head
+> …
+> …
+> …
+> …
+> …
+> …
+> …
+> …
+> 🔥 LoRA 🔥 LoRA 🔥 LoRA
+> 🔥 ❄Fig. 2. Overall architecture of GeoCFNet. A pretrained DINOv3 backbone extracts dense patch features and a CLS token from the input endoscopic image. The Token-Differentiated Fusion module uses the CLS token to enhance patch-level representations with global semantic context, and a SegFormer decoder reconstructs the full-resolution confidence field. During training, GASR imposes smoothness and anisotropic constraints to improve geometric coherence and preserve line-shaped transitions around the target dissection region.
+
+token sequence is decomposed into one class token and N
+
+patch tokens: 
+
+T(L) = [ c(L), P(L)], (2) where c(L) ∈ RB×1×d and P(L) ∈ RB×N ×d. In our imple-mentation, we use DINOv3-Base with d = 768 .The patch tokens are reshaped into a two-dimensional feature map for dense prediction: 
+
+Fdeep = Reshape( P(L)) ∈ RB×d×Hp×Wp , (3) where Hp = H/ 16 , Wp = W/ 16 , and N = HpWp. This representation preserves the spatial layout of patch tokens and provides dense semantic features for confidence field estima-tion. The class token c(L) is retained for TDF, where the class-token context is fused with the dense patch representation. The TDF module produces an enhanced feature map ˜F,which is passed to a SegFormer decoder [28]. The decoder projects ˜F into a lower-dimensional hidden space, refines the representation through feature fusion, and outputs a single-channel confidence map. The prediction is then bilinearly upsampled to the original image resolution: 
+
+ˆY = Up 
+
+
+
+D( ˜F)
+
+
+
+, (4) where D(·) denotes the SegFormer decoder and Up( ·) denotes bilinear interpolation to resolution H × W . The decoder reconstructs the confidence field from the semantically en-hanced feature map, while the geometric regularization terms described below constrain the predicted field during training. 
+
+C. Token-Differentiated Fusion 
+
+In endoscopic scenes, visual degradations may obscure local evidence of the dissection region, making confidence predic-tion unstable when relying only on patch-level features. The target region is also constrained by global visual context, such as tissue layout, flap orientation, and the relative position of the dissection plane. The class token provides a global summary of the input image, and TDF uses learnable projections to adapt this generic visual context into task-specific guidance for interpreting corrupted local patches. As illustrated in Fig. 2, the DINOv3 transformer produces a class token and a set of patch tokens. The class token captures global visual information, whereas the patch tokens retain the spatial layout required for dense confidence estimation. Inspired by recent studies on class-patch token interaction in vision transformers [26], TDF maps the class token into a task-adapted semantic embedding and uses it to refine the patch feature map for confidence field prediction. Given the class token c(L) from the last transformer block, TDF first maps it to a global semantic embedding: 
+
+s = ϕ(c(L)) ∈ RB×d, (5) where ϕ(·) denotes a learnable linear projection that adapts the class-token representation to the confidence estimation task. The embedding s is then broadcast to the spatial lattice of the patch feature map: 
+
+G = Broadcast( s) ∈ RB×d×Hp×Wp . (6) The broadcast global context is adapted and fused with the dense patch representation: 
+
+˜F = Fdeep + ψ(G), (7) where ψ(·) denotes a learnable feature adaptation layer. Addi-tive fusion incorporates class-token context without increasing the channel dimension or modifying the pretrained trans-former, yielding an efficient dense representation aligned with the target confidence geometry. 
+
+D. Geometry-Aware Spatial Regularization (GASR) 
+
+The token fusion module improves semantic discrimina-tion by incorporating image-level context into dense patch representations. However, semantic enhancement alone does not explicitly constrain the spatial structure of the predicted confidence field. When optimized only with point-wise super-vision, the prediction may still contain local noise, fragmented responses, or blurred transitions around the target dissection region. To address this remaining limitation, we introduce GASR to impose spatial continuity while preserving line-shaped confidence transitions. We use a composite objective that combines numerical supervision with geometric regularization: 
+
+L = Ldata + λsmooth Lsmooth + λanis Lanis . (8) The data term is defined as the mean squared error between the predicted confidence field and the ground-truth map: 
+
+Ldata = 1
+
+HW 
+
+> H
+
+X
+
+> i=1
+> W
+
+X
+
+> j=1
+
+ ˆYij − Yij 
+
+2
+
+. (9) To encourage spatial continuity, we impose a diffusion-style smoothness penalty on the gradients of the predicted field. Let 
+
+∂x and ∂y denote finite differences along the horizontal and vertical directions. We define 
+
+Lsmooth = 1
+
+HW 
+
+X
+
+> i,j
+
+
+
+(∂x ˆYij )2 + ( ∂y ˆYij )2
+
+. (10) This term penalizes abrupt local variations and encourages smooth confidence changes in homogeneous regions. Uniform smoothing may blur meaningful confidence tran-sitions. We therefore introduce an anisotropic diffusion term guided by the ground-truth confidence gradient, whose nonlin-ear distance decay produces stronger variation near annotated transitions: 
+
+gxij = ∂xYij , gyij = ∂y Yij . (11) The direction-dependent diffusion coefficients are defined as 
+
+cxij = exp − (gxij )2
+
+κ2anis 
+
+!
+
+, cyij = exp − (gyij )2
+
+κ2anis 
+
+!
+
+, (12) where κanis > 0 controls the sensitivity of the diffusion weights to structural variation. The anisotropic regularization term is formulated as 
+
+Lanis = 1
+
+HW 
+
+X
+
+> i,j
+
+
+
+cxij (∂x ˆYij )2 + cyij (∂y ˆYij )2
+
+. (13) Large gradients near annotated transitions reduce the cor-responding diffusion coefficients, preventing the loss from over-penalizing valid confidence changes. In contrast, low-gradient regions receive stronger regularization, where abrupt variations are more likely to be noise. The anisotropic coef-ficients are computed from the ground-truth confidence field only during training and are not required during inference. Together, Lsmooth and Lanis suppress spurious fluctuations in homogeneous regions while allowing sharp, label-consistent transitions around the target dissection structure. III. E XPERIMENTS 
+
+A. Dataset 
+
+The dataset contains 1,849 endoscopic images collected from robot-assisted ESD scenes [11]. We split the dataset into 1,480 training images and 369 test images. Each image is paired with a ground-truth confidence map that represents the target dissection region and its surrounding confidence transition. The same training and test split is used for all compared methods to ensure a fair evaluation. 
+
+B. Implementation Details 
+
+All experiments are conducted on a single NVIDIA RTX 4090 GPU. Each model is trained for 100 epochs using the Adam optimizer with a cosine annealing schedule. The backbone of GeoCFNet is initialized with pretrained DINOv3 weights. LoRA is inserted into the QKV projections of the DINOv3 transformer blocks with rank r = 4 . The pretrained backbone is frozen, and only the LoRA parameters, TDF module, and confidence decoder are updated during training. All competing methods are trained under the same data split and basic training protocol. We report RMSE [29], PSNR [30], SSIM [31], and CC [32] to evaluate pixel-level accuracy, reconstruction quality, local geometric consistency, and global distribution agreement, respectively. 
+
+C. Results 1) Main Comparison: We compare GeoCFNet with rep-resentative dense prediction baselines, including U-Net [22], TransUNet [23], DINOv2-small/base [24], and DINOv3-small/base [25]. GeoCFNet uses DINOv3-base with the pro-posed TDF module, a confidence decoder, and GASR. Table I reports the quantitative comparison. GeoCFNet achieves the best performance across all four metrics. Compared with U-Net and TransUNet, the foundation-model baselines obtain lower RMSE and higher structural metrics, showing the benefit of pretrained dense representations under weak texture and large appearance variation. DINOv3-small and DINOv3-base further outperform DINOv2-small and DINOv2-base, suggest-ing stronger transferability for dissection-region confidence estimation. Compared with the strongest DINOv3 baseline, GeoCFNet reduces RMSE from 0.0801 to 0.0480 and im-proves PSNR from 22.3018 to 27.1995, while also achieving additional gains in SSIM and CC. Fig. 3 presents qualitative comparisons on representative endoscopic frames. Compared with DINOv2-base and Tran-sUNet, which generate diffuse responses and leakage into sur-rounding tissue, GeoCFNet produces more concentrated con-fidence fields around the target dissection region. Compared with DINOv3-base, GeoCFNet further improves alignment with the annotated line-shaped guidance structure. 
+
+2) Ablation Studies: Table II evaluates the effects of the TDF module and the proposed GASR. Starting from the DINOv3 baseline, adding TDF reduces RMSE from 0.0801 to 0.0501 and improves PSNR from 22.3018 to 26.8803, showing that class-token context aggregation substantially improves dense confidence estimation under ambiguous local GT DINOv2 -base DINOv3 -base Ours TransUNet Fig. 3. Qualitative comparison of confidence field estimation on representative endoscopic frames. The proposed method generates more spatially coherent confidence fields with reduced leakage to surrounding tissue and better alignment with the line-shaped target structure compared with DINOv3-base, DINOv2-base, and TransUNet. TABLE I COMPARISON OF CONFIDENCE FIELD ESTIMATION PERFORMANCE ACROSS DIFFERENT METHODS .
+
+Method RMSE ↓ PSNR ↑ SSIM ↑ CC ↑
+
+U-Net [22] 0.1510 16.0430 0.2604 0.2109 TransUNet [23] 0.1009 19.0649 0.2793 0.2210 DINOv2-small [24] 0.1257 18.3119 0.2749 0.1873 DINOv2-base [24] 0.1250 18.8553 0.2880 0.2198 DINOv3-small [25] 0.0901 21.1935 0.3212 0.2203 DINOv3-base [25] 0.0801 22.3018 0.3196 0.2125 GeoCFNet 0.0480 27.1995 0.3397 0.2466 
+
+TABLE II ABLATION STUDY OF THE CORE COMPONENTS IN GEO CFN ET .
+
+Method RMSE ↓ PSNR ↑ SSIM ↑ CC ↑
+
+DINOv3 0.0801 22.3018 0.3196 0.2125 DINOv3 + TDF 0.0501 26.8803 0.3251 0.2312 DINOv3 + GASR 0.0542 24.3731 0.3205 0.2237 DINOv3 + TDF + GASR 0.0480 27.1995 0.3397 0.2466 
+
+appearance. The GASR-only variant also improves over the baseline, with RMSE decreasing to 0.0542, indicating that GASR contributes to more stable confidence prediction. Com-bining TDF with GASR achieves the best overall performance, with RMSE 0.0480, PSNR 27.1995, SSIM 0.3397, and CC 0.2466. Compared with DINOv3+TDF, the full model further improves SSIM and CC, suggesting better structural consis-tency and global correlation. These results indicate that TDF and GASR provide complementary benefits: TDF enhances semantic disambiguation, while the regularization terms im-prove the spatial coherence of the predicted confidence field. 
+
+3) Fine-tuning Experiments on Loss Sensitivity: We analyze the sensitivity of anisotropic regularization to λanis and κanis 
+
+in Table III. For λanis , removing the anisotropic constraint 
+
+TABLE III SENSITIVITY ANALYSIS OF ANISOTROPIC REGULARIZATION PARAMETERS .
+
+λanis RMSE ↓ PSNR ↑ SSIM ↑ CC ↑
+
+0 0.0627 25.0611 0.3233 0.2311 0.1 0.0480 27.1995 0.3397 0.2466 
+
+0.2 0.0507 26.0935 0.3353 0.2351 0.5 0.0505 26.1216 0.3297 0.2395 
+
+κanis RMSE ↓ PSNR ↑ SSIM ↑ CC ↑
+
+0 0.0511 26.7386 0.3128 0.2255 0.1 0.0510 27.0189 0.3191 0.2276 0.2 0.0480 27.1995 0.3397 0.2466 
+
+0.5 0.0509 26.0609 0.3179 0.2374 
+
+limits structural consistency, while λanis = 0 .1 gives the best overall result; larger weights provide no further gain and may over-constrain local confidence regression. For κanis , the best result is obtained at κanis = 0 .2. Smaller values make the diffusion weights overly sensitive to local ground-truth gradi-ents, whereas larger values make the anisotropic term closer to uniform smoothing. This trend shows that gradient-guided diffusion should preserve line-shaped confidence transitions without suppressing valid local variations. IV. C ONCLUSION 
+
+In this work, we introduced GeoCFNet, a geometry-aware confidence field network for robot-assisted ESD. By in-tegrating pretrained DINOv3 dense representations, Token-Differentiated Fusion, and GASR, GeoCFNet addresses visual ambiguity and geometric instability in endoscopic confidence prediction. The proposed framework improves both numerical accuracy and spatial coherence, producing confidence fields that better preserve line-shaped transitions around the tar-get dissection region. Extensive experiments demonstrate the effectiveness of combining foundation-model semantics with geometry-aware regularization for reliable dissection guidance. This work highlights the potential of geometry-aware con-fidence estimation for safer intraoperative decision-making and provides a foundation for developing more robust robot-assisted endoscopic guidance systems. REFERENCES [1] S. Cao, G. Wang, N. Zhong, H. Ren et al. , “Ai-endo: a computer-aided endoscopic surgery system with intelligent surgical workflow recognition for robotic submucosal dissection,” Nature Communications , vol. 14, no. 1, p. 7722, 2023. [2] F. Meng, M. Li, M. Cai et al. , “Robotic-assisted vs non-robotic traction techniques in endoscopic submucosal dissection for malignant gastrointestinal lesions: a systematic review and meta-analysis,” Surgical Endoscopy , vol. 36, no. 12, pp. 9201–9214, 2022. [3] R. Tang, H. Yin, G. Wang, L. Bai, A. Wang, H. Gao, J. Wang, and H. Ren, “Geo-repnet: Geometry-aware representation learning for surgical phase recognition in endoscopic submucosal dissection,” in 
+
+2025 International Conference on Information and Automation (ICIA) .IEEE, 2025, pp. 359–364. [4] G. Wang, R. Tang, M. Xu, L. Bai, H. Gao, and H. Ren, “Endoarss: Adapting spatially aware foundation model for efficient activity recog-nition and semantic segmentation in endoscopic surgery,” Advanced Intelligent Systems , vol. 7, no. 12, p. e202500288, 2025. [5] G. Wang, H. Xiao, R. Zhang, H. Gao, L. Bai, X. Yang, Z. Li, H. Li, and H. Ren, “Copesd: A multi-level surgical motion dataset for training large vision-language models to co-pilot endoscopic submucosal dissection,” in Proceedings of the 33rd ACM International Conference on Multimedia , 2025, pp. 12 636–12 643. [6] S. Yilmaz and E. Gorgun, “Endoscopic mucosal resection and endo-scopic submucosal dissection,” Clinics in Colon and Rectal Surgery ,vol. 37, no. 5, pp. 277–288, 2023. [7] J. Kim et al. , “Efficacy of robot arm-assisted endoscopic submucosal dissection in live porcine stomach,” Scientific Reports , vol. 14, p. 17367, 2024. [8] M. Fathollahi, M. H. Sarhan, R. Pena, L. DiMonte, A. Gupta, A. Atali-wala, and J. Barker, “Video-based surgical skills assessment using long term tool tracking,” in International Conference on Medical Image Computing and Computer-Assisted Intervention . Springer, 2022, pp. 541–550. [9] J. Li, Y. Jin, Y. Chen, H.-C. Yip, M. Scheppach, P. W.-Y. Chiu, Y. Yam, H. M.-L. Meng, and Q. Dou, “Imitation learning from expert video data for dissection trajectory prediction in endoscopic surgical procedure,” in 
+
+International Conference on Medical Image Computing and Computer-Assisted Intervention . Springer, 2023, pp. 494–504. [10] A. Lin, B. Chen, J. Xu, Z. Zhang, G. Lu, and D. Zhang, “Ds-transunet: Dual swin transformer u-net for medical image segmentation,” IEEE Transactions on Instrumentation and Measurement , vol. 71, pp. 1–15, 2022. [11] M. Xu, W. Mo, G. Wang, H. Gao, A. Wang, L. Bai, C. Lyu, X. Yang, Z. Li, and H. Ren, “Etsm: Automating dissection trajectory suggestion and confidence map-based safety margin prediction for robot-assisted endoscopic submucosal dissection,” in 2025 IEEE International Confer-ence on Robotics and Automation (ICRA) . IEEE, 2025, pp. 4513–4519. [12] X. Liu, A. Sinha, M. Ishii, G. D. Hager, A. Reiter, R. H. Taylor, and M. Unberath, “Dense depth estimation in monocular endoscopy with self-supervised learning methods,” IEEE transactions on medical imaging , vol. 39, no. 5, pp. 1438–1447, 2019. [13] B. Cui, M. Islam, L. Bai, and H. Ren, “Surgical-dino: adapter learning of foundation models for depth estimation in endoscopic surgery,” 
+
+International Journal of Computer Assisted Radiology and Surgery ,vol. 19, no. 6, pp. 1013–1020, 2024. [14] B. Cui, M. Islam, L. Bai, A. Wang, and H. Ren, “Endodac: Efficient adapting foundation model for self-supervised depth estimation from any endoscopic camera,” in International Conference on Medical Image Computing and Computer-Assisted Intervention . Springer, 2024, pp. 208–218. [15] M. Xu, W. Mo, G. Wang, H. Gao, A. Wang, N. Zhong, Z. Li, X. Yang, and H. Ren, “Pdzseg: adapting the foundation model for dissection zone segmentation with visual prompts in robot-assisted endoscopic submucosal dissection,” International Journal of Computer Assisted Radiology and Surgery , vol. 20, pp. 2335–2344, 2025. [16] T. Blum, H. Feußner, and N. Navab, “Modeling and segmentation of sur-gical workflow from laparoscopic video,” in Medical Image Computing and Computer-Assisted Intervention–MICCAI 2010: 13th International Conference, Beijing, China, September 20-24, 2010, Proceedings, Part III 13 . Springer, 2010, pp. 400–407. [17] N. Padoy, T. Blum, S.-A. Ahmadi, H. Feussner, M.-O. Berger, and N. Navab, “Statistical modeling and recognition of surgical workflow,” 
+
+Medical image analysis , vol. 16, no. 3, pp. 632–641, 2012. [18] A. P. Twinanda, S. Shehata, D. Mutter, J. Marescaux, M. De Mathelin, and N. Padoy, “Endonet: a deep architecture for recognition tasks on laparoscopic videos,” IEEE transactions on medical imaging , vol. 36, no. 1, pp. 86–97, 2016. [19] Y. Jin, Q. Dou, H. Chen, L. Yu, J. Qin, C.-W. Fu, and P.-A. Heng, “Sv-rcnet: workflow recognition from surgical videos using recurrent convolutional network,” IEEE transactions on medical imaging , vol. 37, no. 5, pp. 1114–1126, 2017. [20] T. Czempiel, M. Paschali, M. Keicher, W. Simson, H. Feussner, S. T. Kim, and N. Navab, “Tecno: Surgical phase recognition with multi-stage temporal convolutional networks,” in Medical Image Computing and Computer Assisted Intervention–MICCAI 2020: 23rd International Conference, Lima, Peru, October 4–8, 2020, Proceedings, Part III 23 .Springer, 2020, pp. 343–352. [21] X. Gao, Y. Jin, Y. Long, Q. Dou, and P.-A. Heng, “Trans-svnet: Accurate phase recognition from surgical videos via hybrid embedding aggregation transformer,” in Medical Image Computing and Computer Assisted Intervention–MICCAI 2021: 24th International Conference, Strasbourg, France, September 27–October 1, 2021, Proceedings, Part IV 24 . Springer, 2021, pp. 593–603. [22] O. Ronneberger, P. Fischer, and T. Brox, “U-net: Convolutional networks for biomedical image segmentation,” in Medical Image Computing and Computer-Assisted Intervention (MICCAI) . Springer, 2015, pp. 234– 241. [23] J. Chen, J. Mei, X. Li, Y. Lu, Q. Yu, Q. Wei, X. Luo, Y. Xie, E. Adeli, Y. Wang et al. , “Transunet: Rethinking the u-net architecture design for medical image segmentation through the lens of transformers,” Medical Image Analysis , vol. 97, p. 103280, 2024. [24] M. Oquab, T. Darcet, T. Moutakanni, H. V. Vo, M. Szafraniec, V. Khali-dov, P. Fernandez, D. Haziza, F. Massa, A. El-Nouby, M. Assran, N. Ballas, W. Galuba, R. Howes, P.-Y. Huang, S.-W. Li, I. Misra, M. Rabbat, V. Sharma, G. Synnaeve, H. Xu, H. Jegou, J. Mairal, P. Labatut, A. Joulin, and P. Bojanowski, “Dinov2: Learning robust visual features without supervision,” arXiv preprint arXiv:2304.07193 ,2023. [25] O. Sim´ eoni, H. V. Vo, M. Seitzer, F. Baldassarre, M. Oquab, C. Jose, V. Khalidov, M. Szafraniec, S. Yi, M. Ramamonjisoa, F. Massa, D. Haz-iza, T. Moutakanni, R. Howes, R. Hallade, A. El-Nouby, M. Assran, M. Caron, P. Bojanowski, G. Synnaeve, M. Rabbat, P. Labatut, and A. Joulin, “Dinov3,” arXiv preprint arXiv:2508.10104 , 2025. [26] A. Marouani, O. Sim´ eoni, H. J´ egou, P. Bojanowski, and H. V. Vo, “Revisiting [CLS] and patch token interaction in vision transformers,” 
+
+arXiv preprint arXiv:2602.08626 , 2026. [27] B. Gupta, S. S. Lamba et al. , “An efficient anisotropic diffusion model for image denoising with edge preservation,” Computers & Mathematics with Applications , vol. 93, pp. 106–119, 2021. [28] E. Xie, W. Wang, Z. Yu, A. Anandkumar, J. M. Alvarez, and P. Luo, “Segformer: Simple and efficient design for semantic segmentation with transformers,” Advances in Neural Information Processing Systems ,vol. 34, pp. 12 077–12 090, 2021. [29] T. Chai and R. R. Draxler, “Root mean square error (RMSE) or mean absolute error (MAE)? – arguments against avoiding RMSE in the literature,” Geoscientific Model Development , vol. 7, no. 3, pp. 1247– 1250, 2014. [30] Q. Huynh-Thu and M. Ghanbari, “Scope of validity of psnr in im-age/video quality assessment,” Electronics Letters , vol. 44, no. 13, pp. 800–801, 2008. [31] Z. Wang, A. C. Bovik, H. R. Sheikh, and E. P. Simoncelli, “Image quality assessment: From error visibility to structural similarity,” IEEE Transactions on Image Processing , vol. 13, no. 4, pp. 600–612, 2004. [32] K. Pearson, “Note on regression and inheritance in the case of two parents,” Proceedings of the Royal Society of London , vol. 58, pp. 240– 242, 1895.

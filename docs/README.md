@@ -6,31 +6,31 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-06-14
-- 运行时间：2026-06-14 21:31:12 UTC
+- 最新运行日期：2026-06-15
+- 运行时间：2026-06-15 23:01:18 UTC
 - 运行状态：成功
 - 本次总论文数：3
-- 精读区：1
-- 速读区：2
+- 精读区：2
+- 速读区：1
 
 ### 今日简报（AI）
-今日研读以实时视频世界建模为代表的高质量重建方案，并速览了4D高斯泼溅在自动驾驶未来视觉与人体重建的两项轻量尝试。  
-最值得关注的是《MoVerse》提出的全景高斯支架，它让真实视频能即时转化为可自由漫游的3D世界，精度与效率均令人印象深刻。  
-如果想入门视频生成与动态重建，建议从复现这种“全景高斯漫游”开始，它对普通开发者更友好且效果立竿见影。
-- 详情：[/202606/14/README](/202606/14/README)
+今天拆解了无约束稀疏影像的3D重建与手术机器人感知两大前沿。  
+最值得看的是Wild3R（9.0分）：从几张随手拍直接前馈生成3D高斯场景，彻底绕过传统重建流水线。  
+建议普通读者上手体验其开源代码，并留意几何引导的AI在AR/VR与医疗领域的快速落地。
+- 详情：[/202606/15/README](/202606/15/README)
 
 ### 精读区论文标签
-1. [MoVerse: Real-Time Video World Modeling with Panoramic Gaussian Scaffold](/202606/14/2606.13376v1-moverse-real-time-video-world-modeling-with-panoramic-gaussian-scaffold)  
-   标签：评分：8.0/10、query:gs-slam
-   evidence：构建一个持久的三维高斯支架，从单一窄视场图像实现实时交互式世界建模，支持体积场景表示和实时渲染
+1. [Wild3R: Feed-Forward 3D Gaussian Splatting from Unconstrained Sparse Photo Collection](/202606/15/2606.11894v2-wild3r-feed-forward-3d-gaussian-splatting-from-unconstrained-sparse-photo-collection)  
+   标签：评分：9.0/10、query:gs-slam
+   evidence：前馈式3D高斯泼溅实现场景表示，从稀疏照片快速合成新视图。
+2. [GeoCFNet: Geometry-Aware Confidence Field Network for Robot-Assisted Endoscopic Submucosal Dissection](/202606/15/2606.13032v1-geocfnet-geometry-aware-confidence-field-network-for-robot-assisted-endoscopic-submucosal-dissection)  
+   标签：评分：8.0/10、query:endo-dgs
+   evidence：利用几何感知置信场作为内镜手术导航的3D场景表示
 
 ### 速读区论文标签
-1. [Envision4D: Envisioning Visual Futures via Feed-forward 4D Gaussian Splatting for Autonomous Driving](/202606/14/2606.10656v1-envision4d-envisioning-visual-futures-via-feed-forward-4d-gaussian-splatting-for-autonomous-driving)  
-   标签：评分：6.0/10、query:gs-slam
-   evidence：用于体积场景表示和未来渲染的4D高斯泼溅
-2. [Flex4DHuman: Flexible Multi-view Video Diffusion for 4D Human Reconstruction](/202606/14/2606.13655v1-flex4dhuman-flexible-multi-view-video-diffusion-for-4d-human-reconstruction)  
-   标签：评分：6.0/10、query:gs-slam
-   evidence：生成稠密多视角视频，用于创建动态4D高斯泼溅以表示体积人体。
+1. [DepthMaster: Unified Monocular Depth Estimation for Perspective and Panoramic Images](/202606/15/2606.12368v2-depthmaster-unified-monocular-depth-estimation-for-perspective-and-panoramic-images)  
+   标签：评分：6.0/10、query:endo-dgs
+   evidence：统一的单目深度估计方法可应用于透视图像（包括内窥镜），有望用于内窥镜场景深度估计。
 
 
 <div class="dpr-home-promo-card">
