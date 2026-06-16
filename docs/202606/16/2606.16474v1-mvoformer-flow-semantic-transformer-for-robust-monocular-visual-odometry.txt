@@ -1,0 +1,636 @@
+Title: MVOFormer: Flow-Semantic Transformer for Robust Monocular Visual Odometry
+
+URL Source: https://arxiv.org/pdf/2606.16474v1
+
+Published Time: Tue, 16 Jun 2026 02:00:01 GMT
+
+Number of Pages: 8
+
+Markdown Content:
+> IEEE ROBOTICS AND AUTOMATION LETTERS. PREPRINT VERSION. ACCEPTED JUNE, 2026 1
+
+# MVOFormer: Flow-Semantic Transformer for Robust Monocular Visual Odometry 
+
+Jituo Li 1,*, , Shunwang Sun 1,* , Jialu Zhang 1, Xinqi Liu 2, , Jinyao Hu 1, Zhicheng Lu 3, Sajad Saeedi 4,Guodong Lu 1
+
+Abstract —Monocular visual odometry (MVO) is foundational to autonomous navigation and robotic localization. However, existing learning-based MVO approaches often struggle with either a lack of interpretable, complementary features or overly complex multi-stage architectures. These limitations inherently restrict their robustness and cross-domain generalization. In this work, we propose MVOFormer, a novel transformer frame-work for robust monocular visual odometry. Our architecture features a Flow-Semantic Dual Branch Encoder that syner-gizes dense geometric motion cues with object-centric semantic priors, explicitly distinguishing static structures from dynamic distractors. These representations are then fused by an Iterative Multimodal Decoder, enabling coarse-to-fine pose refinement while dynamically suppressing attention on unreliable regions. Extensive evaluations demonstrate that, without any target-domain fine-tuning, MVOFormer achieves superior zero-shot generalization and robustness, significantly outperforming prior learning-based frame-to-frame methods across diverse bench-marks including TartanAir, KITTI, TUM-RGBD, and ETH3D-SLAM. Code and model checkpoints will be made available at https://github.com/Sun-Shun/MVOFormer. 
+
+Index Terms —Camera Pose, Monocular Visual Odometry, Robustness, Transformer. 
+
+I. I NTRODUCTION 
+
+# MONOCULAR visual odometry estimates camera ego-motion from a single image stream and forms a core component of visual SLAM, autonomous driving, AR/VR, and robotic navigation. Classical methods [1]–[3] rely on hand-crafted multi-stage pipelines (feature extraction, tracking, outlier rejection, and bundle adjustment), which are brittle under illumination changes, low texture, or dynamic objects and require careful parameter tuning. 
+
+Manuscript received: February 20, 2026; Revised: May 11, 2026; Accepted: June 12, 2026. This paper was recommended for publication by Editor Ayoung Kim upon evaluation of the Associate Editor and Reviewers’ comments. This work was supported in part by the “Pioneer& Leading Goose” R&D Program of Zhejiang Province, China under Grant 2023C01067, and in part by the State Key Laboratory of Digital-Intelligent Modeling and Simulation, and Funding of Zhejiang University Robotics Institute. *Equal contribution. 
+
+Corresponding authors: Jituo Li and Xinqi Liu. 
+
+> 1
+
+Jituo Li, Shunwang Sun, Jialu Zhang, Jinyao Hu and Guodong Lu are with State Key Laboratory of Fluid Power and Mechatronic Systems, Zhejiang University and with Zhejiang Key Laboratory of Industrial Big Data and Robot Intelligent Systems. They are also with the School of Mechanical Engineering, Zhejiang University, Hangzhou 310027, China, and with Robotics Institute, Zhejiang University, Hangzhou 310027, China (e-mail: jituo li@zju.edu.cn). 
+
+> 2
+
+Xinqi Liu is with the School of Artificial Intelligence and Robotics, Hunan University, Changsha, 410012, China (e-mail: liuxinqi@hnu.edu.cn). 
+
+> 3
+
+Zhicheng Lu is with the Rural Health Research Institute, Charles Sturt University, Sydney, Australia. 
+
+> 4
+
+Sajad Saeedi is with University College London, U.K. Digital Object Identifier (DOI): see top of this page. 
+
+Deep learning offers superior robustness and simplicity, and current deep VO methods can be broadly divided into direct pose regression and hybrid paradigms (Fig. 1). Early works employed recurrent convolutional networks [4] to directly model camera motion dynamics from image sequences. The advent of transformers has further inspired a series of VO architectures [12], [17], [19], which benefit from powerful global context modeling capabilities. Despite these advances, transformer-based methods continue to exhibit limited zero-shot capability when deployed outside their training distri-butions. A key limitation lies in their reliance on a single global class token to regress poses from noisy image pairs, which leads to a lack of interpretable representations. To alleviate domain shift across diverse environments, incorpo-rating optical flow has proven highly effective [6]. As shown in Fig. 1 (b), TartanVO [6] and DytanVO [15] introduced auxiliary optical flow prediction as a self-supervised signal, significantly enhancing cross-dataset generalization. Despite its advantages, optical flow inherently captures only 2D pixel-level motion and lacks object-level semantic context, which can lead to ambiguous or failed motion estimation in textureless or homogeneous regions where pixel appearance provides insufficient discriminative cues. In contrast, recent hybrid methods mitigate these limitations by explicitly injecting semantic or geometric priors. For in-stance, flow-based hybrid methods [7], [23] (Fig. 1 (c)) itera-tively refine dense correspondences through recurrent update operators. Similarly, PVO [9] integrates semantic segmentation with visual odometry, yielding strong performance. However, it relies on multi-model training, requires extra semantic labels, and employs three heavily intertwined modules, which significantly complicates both training and inference. More recently, matching-based hybrid methods [13], [14] (Fig. 1 (d)) exploit semantic features [16] or depth to achieve robust pixel correspondence. Despite their effectiveness, these hy-brid approaches invariably rely on multi-stage or multi-model pipelines, require meticulous per-component hyperparameter tuning, and entail substantially more intricate training and inference procedures than direct pose regression methods. To bridge this gap, we propose MVOFormer , a novel transformer-based framework (Fig. 1(e)) that preserves ar-chitectural simplicity while injecting explicit geometric and semantic priors for more robust motion estimation. As illus-trated in Fig. 2, we introduce a Flow-Semantic Dual Branch Encoder to jointly extract dense optical flow and object-centric semantics. An Iterative Multimodal Decoder then fuses these complementary cues, progressively suppressing      
+
+> arXiv:2606.16474v1 [cs.CV] 15 Jun 2026 2IEEE ROBOTICS AND AUTOMATION LETTERS. PREPRINT VERSION. ACCEPTED JUNE, 2026 Bundle Adjustment
+> Update Module
+> t
+> (c) Flow-based
+> hybrid methods
+> Pose Network (CNN)
+> Flow Network
+> (b) Flow-based
+> end-to-end methods
+> Match Module
+> Bundle Adjustment
+> t
+> (d) Match-based
+> hybrid methods
+> (e) Flow-based
+> transformer methods (Ours)
+> Iterative Multimodal Decoder
+> +Pose Heads
+> Pose Queries
+> (a) Image-based
+> end-to-end methods
+> Pose
+> Network
+> Aux. Sup.
+> t
+> Flow Net Semantic
+> Flow-Semantic Dual Branch Encoder
+> Common Route
+> Optional Route
+> Iterative Operation
+> Flow Network
+> Pose Layer
+> or Optimization
+> tt
+> Aux. Sup.
+> Aux. Sup.
+> Transformer
+> Encoder
+> LSTM
+> CNN/RCNN
+> Inputs Network s
+> Unsup.
+
+Fig. 1. Comparison of contemporary learning-based MVO methods. Yellow boxes indicate learnable pose network modules. “Aux. Sup.” denotes methods requiring auxiliary supervision (e.g., semantics, depth), while “Unsup.” represents unsupervised approaches. Dashed lines indicate components utilized by only a subset of methods within the category. 
+
+dynamic objects and refining 6-DoF poses in a coarse-to-fine manner. Crucially, MVOFormer directly estimates poses from raw image pairs in a single forward pass, achieving highly competitive results without target-domain fine-tuning. Our primary contributions are summarized as follows:  
+
+> •
+
+We propose MVOFormer, a novel transformer-based MVO framework without auxiliary semantic segmenta-tion or depth supervision. By seamlessly integrating two complementary geometric cues into a unified architecture, MVOFormer delivers superior accuracy and remarkable zero-shot capability without multi-model training.  
+
+> •
+
+We introduce a Flow-Semantic Dual Branch Encoder that jointly captures 2D motion correspondences and object-level semantic priors, thereby enriching object perception and distinguishing dynamic regions from static ones.  
+
+> •
+
+We design an Iterative Multimodal Decoder that seam-lessly fuses these features for coarse-to-fine pose refine-ment while actively suppressing dynamic distractors.  
+
+> •
+
+Extensive experiments on TartanAir [20], KITTI [21], TUM-RGBD [22], and ETH3D-SLAM [30] demonstrate that our framework outperforms existing learning-based frame-to-frame methods and exhibits remarkable robust-ness in dynamic scenes. II. R ELATED WORK 
+
+A. Visual Odometry 
+
+Classical Methods. Classical VO methods fall into feature-based [1], direct [3], and semi-direct [2] categories. However, these hand-crafted systems are fundamentally brittle: feature-based models drift in low-texture or dynamic scenes, direct methods fail under illumination changes, and semi-direct ap-proaches require fragile parameter tuning. These limitations heavily motivate the shift toward learning-based VO. 
+
+Hybrid Methods. These systems [7], [23] combine learned correspondence matching with classical optimization (e.g., bundle adjustment). While demonstrating impressive accuracy, their multi-stage nature introduces architectural complexity, which sacrifices the elegance of direct inference and remains sensitive to erroneous dense correspondences. 
+
+Direct Pose Regression Methods. These models di-rectly regress poses from image sequences. Early CNN-based works [4], [5] suffered from poor zero-shot capability. TartanVO [6] alleviated this by introducing auxiliary flow supervision to enhance generalization. Recent transformer-based models [12], [17], [19] exploit self-attention for spatio-temporal modeling and object suppression, yet most are trained and evaluated in-domain and show limited generalization. In contrast, MVOFormer provides a unified solution, seamlessly integrating geometric flow with semantic priors to deliver robust zero-shot accuracy while retaining inference simplicity. 
+
+B. Multi-Task and Multimodal Visual Odometry 
+
+Recent works combine VO with dense predictions (seman-tics, depth, flow) for richer supervision. Specifically, systems jointly predict panoptic/instance segmentation [9], [10], couple VO with dense reconstruction [24], or exploit temporal consis-tency and pretrained priors [8], [11], [13], [15] to effectively handle dynamic objects. Despite their effectiveness, these hybrid methods often rely on multi-stage pipelines, require explicit semantic labels, or introduce architectural redundancy. In contrast, MVOFormer adopts a compact transformer architecture with direct single-pass pose regression. By seamlessly fusing geometric flow and semantic priors, it delivers robust zero-shot capability without relying on auxiliary supervision or complex optimization. III. M ETHODS 
+
+A. Overview 
+
+As illustrated in Fig. 2, given a monocular sequence 
+
+{It}Tt=0 , MVOFormer directly estimates 6-DoF relative poses 
+
+Pt−1→t = F VO (It−1, I t) in a single forward pass. To over-come the limited interpretability and poor zero-shot general-ization of direct RGB regression, our framework comprises two core transformer modules. Li et al. : MVOFormer: Flow-Semantic Transformer for Robust Monocular Visual Odometry 3× 𝟑𝟑            
+
+> Time
+> Flow
+> Encoder
+> Flow
+> Network
+> DINOv3
+> 𝐊𝐊
+> Flow-Intrinsics Token
+> ···
+> (b) Motion-Semantic Encoder
+> (a) Flow-Intrinsics Encoder
+> Semantic Tokens
+> ··· ···
+> 𝑡𝑡 − 1
+> 𝑡𝑡
+> 𝑡𝑡 − 2
+> 𝑡𝑡 + 1
+> Warp 𝐒𝐒 𝑡𝑡 −1
+> 𝐒𝐒 𝑡𝑡
+> 𝐒𝐒 𝑡𝑡 𝑤𝑤
+> Final Pose
+> 𝐌𝐌 𝑡𝑡
+> Query
+> ···
+> Semantic Feature Fusion
+> Feed Forward Network
+> Self Attention
+> Flow
+> Attention
+> MS Attention
+> MS Block
+> Warp Module
+> Flow-Semantic Dual Branch Encoder Iterative Multimodal Decoder
+> Key&Value
+> Supervise
+> Residual Pose
+> Frozen Trainable Summation Training Specific Route Common Route
+> Inputs
+> Pose Heads
+> Conv 1D
+
+Fig. 2. Overview of the MVOFormer architecture. It consists of a Flow-Semantic Dual Branch Encoder comprising the Flow-Intrinsics Encoder and the Motion-Semantic Encoder, an Iterative Multimodal Decoder, and the final Pose Heads. Note that the training-specific route is deactivated during inference, introducing no computational overhead during deployment. During training, the Warp Module is activated to generate the supervisory signal for the Uncertainty Module within the MS Block. 
+
+First, the Flow-Semantic Dual Branch Encoder (Sec-tion III-B) extracts complementary features: a Flow-Intrinsics branch (Sea-RAFT [25]) captures dense geometric motion, while a Motion-Semantic branch (frozen DINOv3 [26]) pro-vides object-centric tokens. A Warp Module then fuses these streams into a static similarity map to detect dynamic regions. Second, the Iterative Multimodal Decoder (Section III-C) fuses these representations to iteratively refine pose queries across three layers, actively utilizing uncertainty estimates to downweight dynamic distractors. Finally, Pose Heads (Sec-tion III-D) regress the relative residuals ∆Pt−1→t to yield the final pose. Training objectives are detailed in Section III-E. 
+
+B. Flow-Semantic Dual Branch Encoder 
+
+Ft−1→t = FlowNet (It−1, I t) (1) We convert the camera intrinsics {fx, f y , o x, o y } into a full-resolution map K ∈ RH×W ×2 via bilinear indexing. Following TartanVO [6], random cropping is applied to both the optical flow Ft−1→t ∈ RH×W ×2 and K, effectively simu-lating diverse camera parameters and boosting generalization. The extracted flow and camera intrinsics are channel-wise concatenated, downsampled to 1/4 resolution, and subse-quently processed by a trainable ResNet-50 backbone. To conserve memory while focusing on sparse informative re-gions [19], the resulting features are augmented with positional embeddings and refined through three multi-scale deformable attention blocks [18]. This branch ultimately yields Flow-Intrinsics Tokens Tt−1→t 
+
+> flow
+
+, equipping the downstream decoder with geometrically precise motion cues. 
+
+Tt−1→t 
+
+> flow
+
+= FlowEncoder (Ft−1→t, K) (2) 
+
+Motion-Semantic Encoder. As depicted in Fig. 2 (b), each frame It−1 and It is independently processed by the frozen DINOv3 backbone, producing dense semantic tokens TMS =
+
+{St−1, St}, St ∈ R Hn × Wn ×CDINO (CDINO = 384) . DINOv3’s features are highly robust and object-centric, providing strong high-level scene understanding for subsequent dynamic-region suppression and multimodal fusion. To obtain an explicit motion mask without any labeled data, we warp the previous-frame features St−1 toward the current frame using the optical flow Ft−1→t from Sea-RAFT: 
+
+Swt = Warp (St−1, Ft−1→t) (3) where Ft−1→t is first resized to match the spatial resolution of St−1, before warping. As shown in Fig. 2, we compute per-pixel cosine similarity between St and their flow-warped counterparts: 
+
+Mt = cos( St, Swt ) = St ⊙ Swt
+
+∥St∥∥ Swt ∥ ∈ [−1, 1] (4) where ⊙ denotes element-wise multiplication. The similarity is computed only over valid warped pixels. As expected, Mt
+
+yields high values on static regions and low values on dynamic objects, thereby providing a robust, self-supervised confidence weight for our uncertainty-aware loss. 
+
+C. Iterative Multimodal Decoder 
+
+The Iterative Multimodal Decoder (Fig. 2) is designed to fuse flow-intrinsics tokens Tflow and motion-semantic tokens 
+
+[Tt−1 
+
+> MS
+
+, Tt
+
+> MS
+
+]. It consists of L = 3 stacked layers that progres-sively refine N = 100 learnable pose queries Q0 
+
+> l
+
+∈ RN ×C
+
+(C = 256 ) for coarse-to-fine pose estimation. Guided by the Warp Module’s similarity maps during training, the decoder effectively suppresses attention on irrelevant dynamic regions. Specifically, each layer comprises the following sequentially executed components: 
+
+(1) Self-Attention. Standard multi-head self-attention with 8 heads and residual connection: 
+
+Q1 
+
+> l
+
+= MHSAttn (Q0 
+
+> l
+
+) (5) 4 IEEE ROBOTICS AND AUTOMATION LETTERS. PREPRINT VERSION. ACCEPTED JUNE, 2026 ··· ···  
+
+> Key&Val
+> Dynamic-aware Semantic
+> Query
+> Temporal Align
+> ···
+> Temporal Fuse
+> Uncertainty Module
+> MS Attention
+> ···
+> ···
+> Query
+> Key&Value
+> Supervise
+> MS Block
+> Fig. 3. Dynamic-aware processing in the Motion-Semantic (MS) branch. Temporal Align aligns per-frame DINOv3 tokens, Temporal Fuse aggregates them, and Uncertainty Module generates a self-supervised confidence map
+> Wmask .
+
+(2) Flow Attention. We address the problem of attention overly focusing on a sparse set of pixels [19] by employing multi-scale deformable cross-attention. Specifically, decoder queries attend to the low-level Flow-Intrinsics Tokens: 
+
+Q2 
+
+> l
+
+= DeformCrossAttn (Q1 
+
+> l
+
+, Tt−1→t 
+
+> flow
+
+) + Q1 
+
+> l
+
+(6) 
+
+(3) Motion-Semantic (MS) Block. As shown in Fig. 3, this block generates robust, dynamic-aware semantic tokens before the final cross-attention. It consists of three components. 
+
+Temporal Align Module: Inspired by PanoOcc [28], we replace their computationally intensive 3D voxel convolutions with efficient 2D variants to implicitly align spatio-temporal contexts. It takes the adjacent Semantic Tokens [Tt−1 
+
+> MS
+
+, Tt
+
+> MS
+
+]
+
+as input and outputs the aligned temporal semantic features 
+
+Talign ∈ R Hn × Wn ×CDINO :
+
+Talign = Bottleneck2D ([ Tt−1 
+
+> MS
+
+∥ Tt
+
+> MS
+
+]) (7) where [·∥· ] denotes channel-wise concatenation. Bottleneck 2D
+
+is a lightweight residual 2D bottleneck block. It captures local temporal dynamics. 
+
+Temporal Fuse Module: A multi-head cross-attention layer models the interaction between the query and the aligned features, yielding the fused output Tfuse :
+
+Tfuse = MHCAttn (Talign , Q1 
+
+> l
+
+) (8) where Talign as the query and Q1 
+
+> l
+
+as the key and value in this cross-attention. This assignment ensures that the temporal semantic feature Talign is dominant in the resulting tokens. 
+
+Uncertainty Module. Inspired by the probabilistic for-mulation in [29], this module predicts a continuous per-patch uncertainty map U ∈ R Hn × Wn . The map down-weights contributions from moving objects. The fused feature Tfuse 
+
+is processed by spatial dropout, batch normalization, and a 
+
+1 × 1 convolution to produce a scalar map. We then apply a Softplus activation with a shifted prior for positivity and numerical stability: 
+
+U = Softplus  Conv2D 1×1(Tfuse ) + ln( e − 1) . (9) The predicted uncertainty U generates the dynamic-aware modulation mask Wmask . To prevent gradient explosion, we make the masking weights inversely proportional to squared uncertainty and clip them at 3: 
+
+Wmask = min 
+
+ 12 max(0 .1, U)2 , 3
+
+
+
+. (10) 
+
+(4) Motion-Semantic Attention (MS Attention). Queries attend to the processed semantic tokens Tfuse , modulated by the learned uncertainty mask: 
+
+Q3 
+
+> l
+
+= MHCAttn (Q1 
+
+> l
+
+, Tfuse , Wmask )= Softmax 
+
+ QK ⊤
+
+√d + log Wmask 
+
+
+
+V (11) where Tfuse is used as both key and value. The mask Wmask 
+
+reweights the attention scores. This helps the network priori-tize stable, semantically rich regions and suppress dynamic or unreliable distractors. 
+
+(5) Feed-Forward Network (FFN). The flow-refined query 
+
+Q2 
+
+> l
+
+and the dynamic-aware semantic query Q3 
+
+> l
+
+are fused and passed to the FFN. The output is the pose query Qpose  
+
+> l
+
+for the current decoder block, which encodes both flow cues and motion-masked semantic information: 
+
+Qpose  
+
+> l
+
+= FFN (Q2 
+
+> l
+
++ γQ3 
+
+> l
+
+) (12) where γ is the weight assigned to the motion-semantic query, fixed at γ = 0 .8.
+
+D. Pose Heads 
+
+To enable explicit coarse-to-fine refinement, we attach a shared lightweight pose regression head to the output queries of each decoder layer l ∈ {1, 2, 3}. Each pose head pre-dicts a residual pose update ∆ ˆPt−1→tl ∈ se (3) , which is parameterized as ∆ ˆPt−1→tl = (∆ ˆTt−1→tl , ∆ ˆRt−1→tl ), where 
+
+∆ ˆTt−1→tl ∈ R3 is the 3D translation and ∆ ˆRt−1→tl ∈ so (3) 
+
+is the 3D rotation component: 
+
+∆ ˆPt−1→tl = Pose θl,k (Qpose  
+
+> l
+
+) (13) where the pose head network Pose θl,k (Qpose  
+
+> l
+
+) is constructed using a 1D convolution followed by a 3-layer MLP as illus-trated in Fig. 2. For the two pose components, translation 
+
+∆ ˆTt−1→tl and rotation ∆ ˆRt−1→tl , we employ two distinct prediction networks, indexed by k ∈ { 1, 2}, each utilizing different parameters θl,k .The final pose ˆPt−1→t is obtained by sequentially accumu-lating the predicted pose adjustments from all decoder layers, thereby realizing the coarse-to-fine iterative reasoning process: 
+
+ˆPt−1→t =
+
+> 2
+
+X
+
+> l=0
+
+∆ ˆPt−1→tl (14) This progressive residual formulation allows early layers to capture coarse motion primarily from flow tokens, while deeper layers incorporate finer semantic corrections and dy-namic suppression, resulting in superior robustness. Li et al. : MVOFormer: Flow-Semantic Transformer for Robust Monocular Visual Odometry 5Flow Encoder 
+
+> Decoder
+> Ground Truth
+> Optical Flow
+> Training
+> Pose Heads
+> Flow Backbone
+> The First Stage
+> of Pretraining
+> Flow Encoder
+> MS Encoder
+> Decoder
+> Pose Heads
+> t
+> Flow Net
+> Offline
+> The Second Stage
+> of Fine-tuning
+> MVOFormer
+> Training Pipeline
+> Weights
+> MVOFormer
+> Warp Module
+> Uncertainty Loss
+
+ℒ 𝑢𝑢      
+
+> Warp
+> ··· ···
+> 𝐌𝐌 𝑡𝑡
+> Temporal Align
+> ···
+> Key
+> &Value Temporal Fuse
+> 𝑄𝑄 𝑙𝑙 1
+> Query
+> Uncertainty Module
+> MS
+> Key
+> &Value
+> ···
+> Motion Semantic Fusion Pr
+> 𝐒𝐒 𝑡𝑡 −1 𝐒𝐒 𝑡𝑡
+> 𝐒𝐒 𝑡𝑡 𝑤𝑤
+> 𝑆𝑆 𝑡𝑡 𝑤𝑤
+> Dynamic-awa
+> Supervise
+> Fig. 4. Two-stage training pipeline of MVOFormer.
+
+E. Loss Functions 
+
+Pose Loss. Following the learning-based MVO [6], we supervise the relative pose at every decoder layer using a weighted combination of translation and rotation errors. For layer l ∈ { 0, 1, 2}, the per-layer pose loss is defined as 
+
+Lpose  
+
+> l
+
+=∥ ∆ ˆTt−1→tl
+
+max( ∥∆ ˆTt−1→tl ∥, ϵ ) − ∆Tt−1→t
+
+> gt
+
+max( ∥∆Tt−1→t 
+
+> gt
+
+∥, ϵ ) ∥1
+
++ ∥∆ ˆRt−1→tl − ∆Rt−1→t 
+
+> gt
+
+∥1 (15) To handle monocular scale ambiguity, we normalize the predicted and ground-truth translations ( ˆT, Tgt ) to purely penalize directional errors, setting ϵ = 10 −6.The final pose loss is the weighted sum over all layers: 
+
+Lpose =
+
+> L−1
+
+X
+
+> l=0
+
+wlLpose  
+
+> l
+
+(16) where L = 3 and the weights wl increase with depth to empha-size finer corrections from deeper layers w = [0 .2, 0.3, 1.0] .
+
+Uncertainty-aware Loss. To further encourage meaningful dynamic masking without resorting to heuristic thresholding or auxiliary binary segmentation heads [7], [9], [15], we introduce an effective self-supervised uncertainty regulariza-tion. Instead of predicting per-pixel dynamic probabilities, we directly estimate a continuous uncertainty value U for each downsampled image patch (not per-pixel). This uncertainty is predicted from the concatenated query-patch features within the Motion-Semantic attention module. We compute the photometric inconsistency induced by warping with the previous-frame flow estimate (same cosine distance used for the static confidence map Mt): 
+
+Lul = min   12 , 1 − Mt
+
+
+
+2U2
+
+> l
+
++ λ log Ul, Lu =
+
+> L−1
+
+X
+
+> l=0
+
+Lul (17) where a similarity close to 1 indicates high confidence (likely static), while lower similarity suggests potential dynamic con-tent, resulting in larger U . The normalized logarithmic term with λ = 0 .5 ensures gradient stability. The final visual odometry loss is a weighted combination: 
+
+Lvo = αLpose + βLu (18) 
+
+F. Training and Inference Pipeline 
+
+Training Phase. As illustrated in Fig. 4, we employ a two-stage training strategy. First, the Flow Backbone is pretrained independently using ground-truth optical flow to establish robust motion representations. Second, the full MVOFormer loads this pretrained backbone and jointly fine-tunes it along-side the MS Encoder. To minimize computational and memory overhead, optical flow is pre-computed and cached offline using a frozen Sea-RAFT model [25]. Notably, the Warp Module is activated exclusively during training to provide self-supervisory signals for the Uncertainty Module. 
+
+Inference Phase. During deployment, MVOFormer directly regresses 6-DoF relative poses from raw image pairs in a single forward pass, entirely bypassing hand-crafted heuristics and classical backend optimization. This architectural simplicity is central to our model’s efficiency and robustness. IV. E XPERIMENTS 
+
+A. Implementation Details 
+
+Datasets and Evaluation. To address the scarcity of dy-namic scenes in the standard TartanAir dataset [20], we jointly train MVOFormer on both TartanAir and the dynamic Shibuya sequence [15]. We perform true zero-shot evaluation—without any target-domain fine-tuning—across KITTI [21], the Tar-tanAir test split, TUM-RGBD [22], and ETH3D-SLAM [30]. Following [1], performance is measured by the Absolute Trajectory Error (ATE [m]) after Sim (3) alignment of the estimated monocular trajectories to the ground truth. 
+
+Configuration and Training. Our network utilizes 8 atten-tion heads, a 256-channel dimension, and 100 decoder queries. Implemented on an NVIDIA A100 GPU via the AdamW optimizer (weight decay 10 −4), we adopt a two-stage training strategy (Fig. 4) [6]. First, the Flow Backbone is pretrained on TartanAir for 200 epochs (batch size 256, lr 4 × 10 −4, 0.1 ×
+
+decay at epochs 100 and 150). Second, the full model is fine-tuned for 50 epochs using offline-cached flow (batch size 64, lr 2 × 10 −4, 0.1 × decay at epoch 30). 
+
+B. Evaluated on Open-Source Benchmarks 
+
+KITTI Dataset. Table I reports the ATE on 11 real-world driving sequences. While traditional SLAM systems struggle in high-speed or feature-poor scenes, learning-based monoc-ular VO demonstrates strong robustness. Notably, although it is evaluated strictly in a zero-shot setting (trained solely on TartanAir), MVOFormer outperforms all prior learning-based monocular VO approaches—including those explicitly fine-tuned on KITTI (marked with “*”). It achieves the lowest average ATE, reducing it by 42.22% compared with TartanVO. 
+
+TartanAir Monocular Benchmark. Table II evaluates 16 sequences featuring aggressive motion, extreme weather, and dynamic objects. While geometric and hybrid systems benefit from multi-frame backend optimization, we primarily com-pare against strictly learning-based Frame-to-Frame methods. 6 IEEE ROBOTICS AND AUTOMATION LETTERS. PREPRINT VERSION. ACCEPTED JUNE, 2026 
+
+TABLE I ATE ↓ RESULTS ON KITTI O DOMETRY 0-10, C OMPARING WITH OTHER SLAM/VO M ETHODS 
+
+Methods 00 01 02 03 04 05 06 07 08 09 10 Avg SLAM ORB-SLAM3 [1]‡ 6.77 % 30.50 1.04 0.93 5.54 16.61 9.70 60.69 7.89 8.65 %
+
+LDSO [33]‡ 9.32 11.68 31.98 2.85 1.22 5.10 13.55 2.96 129.02 21.64 17.36 22.43 DROID-SLAM [7]‡ 92.10 344.60 % 2.38 1.00 118.50 62.47 21.78 161.60 % 118.70 %
+
+DPV-SLAM++ [34]‡ 8.30 11.86 39.64 2.50 0.78 5.74 11.60 1.52 110.90 76.70 13.70 25.75 VO MambaVO [13] 112.39 8.16 93.78 1.80 0.66 56.51 57.19 17.90 116.01 73.56 14.37 50.21 DROID-VO [7] 98.43 84.20 108.80 2.58 0.93 59.27 64.40 24.20 64.55 71.80 16.91 54.19 DPVO [23] 113.21 12.69 123.40 2.09 0.68 58.96 54.78 19.26 115.90 75.10 13.63 53.61 DeepVO [4] * % 19.98 % 11.74 3.85 123.30 108.00 22.83 % % 57.90 %
+
+TSformer-VO [17] * % 101.70 % 20.12 6.01 37.68 46.79 23.16 % % 23.14 %
+
+SWformer-VO [12] * % 82.74 % 14.83 4.37 50.15 24.26 28.12 % % 16.97 %
+
+TartanVO [6] † 69.11 53.19 78.78 2.70 1.99 55.18 10.50 13.87 48.16 27.93 11.90 33.94 DytanVO [15] † 41.79 13.06 83.97 2.17 1.33 26.56 25.39 21.45 38.43 11.89 8.57 24.96 MVOFormer (Ours) † 22.37 53.70 67.15 3.13 1.63 9.91 14.24 6.52 19.39 13.84 3.81 19.61 
+
+“*” Methods trained or fine-tuned on the KITTI dataset. “†” learning-based Frame-to-Frame methods. Methods marked with (‡) use global optimization / loop closure. Bold indicates the best VO result, while underline denotes the second-best result. Original image    
+
+> MVOFormer (Ours)
+> TSformer -VO Flow Attention MS Attention
+
+Fig. 5. Qualitative comparison of attention maps and motion trajectories on KITTI sequences. 
+
+Under such severe visual degradation, MVOFormer achieves the best average ATE among learning-based Frame-to-Frame methods and reduces it by 59.32% compared with the previous leading method, TartanVO [6]. 
+
+The TUM-RGBD and ETH3D-SLAM Datasets. We fur-ther evaluate our method on indoor benchmarks using the same zero-shot model. We use sequences with “fr1” camera intrinsics for TUM-RGBD and the “1” training sequences for ETH3D-SLAM. As shown in Table III, MVOFormer reduces the average ATE by 27.75% on TUM-RGBD and 24.14% on ETH3D-SLAM compared with the previous best learning-based Frame-to-Frame method, while considerably narrowing the gap to multi-frame SLAM systems that exploit loop closure and bundle adjustment. 
+
+Failure Cases. MVOFormer exhibits reduced reliability on vegetation-heavy or highly cluttered sequences, such as KITTI 03 and 06, TartanAir MH005, and TUM-RGBD rpy. In these scenarios, dense foliage heavily degrades the underlying Sea-RAFT optical flow estimation, thereby destabilizing pose prediction. Furthermore, highly cluttered environments induce overly fragmented semantic representations. Constrained by the limited spatial resolution of the semantic tokens, the 
+
+TABLE II PERFORMANCE COMPARISON OF VARIOUS METHODS ON THE 
+
+TARTAN AIR MONOCULAR TEST SPLIT (ATE ↓). Methods ME Avg MH 000 MH 001 MH 002 MH 003 MH 004 MH 005 MH 006 MH 007 Avg                                                                                             
+
+> MF (Geom./Hyb.)  ORB-SLAM3 [1]‡ 15.99 15.44 2.92 13.51 8.18 2.59 21.91 11.70 25.88 14.38 DSO [3] 7.46 9.92 0.35 7.96 3.46 %12.58 8.42 7.50 %
+> COLMAP [31]‡ 9.80 12.26 13.45 13.45 20.95 24.97 16.79 7.01 7.97 12.21 DROID-VO [7] 0.64 0.32 0.13 0.08 0.09 1.52 0.69 0.39 0.97 0.58 DPVO [23] 0.24 0.21 0.04 0.04 0.08 0.58 0.17 0.11 0.15 0.21
+> F2F (Learning)  DiffPoseNet [32] %2.56 0.31 1.57 0.72 0.82 1.83 1.32 1.24 %
+> TartanVO [6] 5.39 2.12 0.31 1.28 1.09 0.99 1.40 1.74 1.42 3.34 DytanVO [15] 5.56 5.10 0.22 1.62 0.79 1.29 4.46 2.06 2.36 3.90 MVOFormer (Ours) 1.81 0.91 0.25 0.89 0.58 0.40 1.37 1.20 1.01 1.36
+> MF (Geom./Hyb.) denotes Multi-Frame (Geometric/Hybrid), and F2F (Learning) denotes learning-based Frame-to-Frame methods. Bold indicates the best F2F result, while underline indicates the second-best result.
+
+subsequent flow warping becomes imprecise, causing the uncertainty mask to erroneously over-suppress geometrically informative static regions. Future efforts will focus on joint flow-VO fine-tuning and efficiently scaling up token resolu-tions to enhance domain robustness. 
+
+Qualitative Analysis. Fig. 5 visualizes attention maps (brighter regions indicate higher weights) from the final de-coder block on KITTI. Notably, MVOFormer is evaluated strictly zero-shot, whereas the baseline TSformer-VO was trained in-domain. Compared to TSformer-VO’s space-time attention, our Flow Attention already reduces distractions from moving vehicles. Furthermore, the fused Motion-Semantic (MS) Attention largely ignores dynamic objects and focuses on geometrically stable and semantically meaningful static structures (e.g., roads and lane markings), even under partial foliage occlusion. This behavior highlights the object-level understanding provided by DINOv3. Finally, the plotted x-y motion trajectories confirm MVOFormer’s strong resistance to drift and superior generalization on unseen datasets. 
+
+C. Efficiency Analysis 
+
+To ensure a rigorous comparison, we standardize our effi-ciency evaluation on an NVIDIA RTX 4090 GPU and an Intel i7-14700KF CPU with a batch size of 1. Table IV details the computational efficiency. For MVOFormer, the standard image input is 480 × 640 (TartanAir native; KITTI center-cropped). Internally, the optical flow is downsampled to 120 × 160 
+
+before entering the encoder, and DINOv3 inputs are resized to 518 × 518 . To ensure a fair frame-to-frame comparison, Li et al. : MVOFormer: Flow-Semantic Transformer for Robust Monocular Visual Odometry 7
+
+TABLE III PERFORMANCE COMPARISON OF VARIOUS METHODS ON THE TUM-RGBD AND ETH3D-SLAM (ATE ↓). Methods TUM-RGBD ETH3D-SLAM 360 desk desk2 floor plant room rpy teddy xyz Avg Avg MF (Geom./Hyb.) ORB-SLAM3 [1]‡ % 0.016 % % 0.038 % % 0.145 0.005 % %
+
+DSO [3] % 0.405 0.322 0.041 0.108 0.800 % % 0.058 % %
+
+DROID-VO [7] 0.141 0.064 0.078 0.063 0.041 0.393 0.030 0.221 0.017 0.116 0.238 DPVO [23] 0.156 0.034 0.050 0.183 0.034 0.383 0.038 0.073 0.012 0.107 0.203 F2F (Learning) TrianFlow [36] 0.187 0.526 0.483 0.739 0.388 0.884 0.050 0.554 0.182 0.444 0.706 TartanVO [6] 0.160 0.478 0.539 0.348 0.395 0.417 0.050 0.329 0.160 0.320 0.421 DytanVO [15] 0.188 0.159 0.224 0.191 0.343 0.530 0.053 0.508 0.131 0.259 0.364 MVOFormer (Ours) 0.130 0.095 0.122 0.286 0.302 0.294 0.089 0.297 0.069 0.187 0.276 
+
+TABLE IV COMPARISON OF INFERENCE EFFICIENCY (P ARAMETERS , M EMORY , AND 
+
+FPS) Methods Parameters (M) GPU Memory (GB) FPS DROID-VO 4.00 21.22 6.36 TartanVO 24.51 0.22 80.03 DytanVO 163.04 3.20 6.18 TSformer-VO 30.66 0.54 15.07 MVOFormer (Ours) 90.86 1.02 32.19 TABLE V MODULE ABLATION ON MVOF ORMER .Configuration TartanAir KITTI TUM-RGBD Avg Baseline TartanVO [6] 3.34 33.94 0.320 12.533 Flow Backbone (w/o Semantic Branch)                                
+
+> N= 50 2.696 32.175 0.254 11.708
+> N= 100 2.667 30.595 0.259 11.174
+> N= 500 2.420 41.571 0.266 14.752 MVOFormer (w. Semantic Branch) w/o IP, w/o UM 1.980 28.020 0.254 10.085 w. IP only 1.979 25.759 0.232 9.323 w. UM only 1.516 20.109 0.191 7.272 Full model 1.359 19.609 0.187 7.052
+> UM: Uncertainty Module; IP: Iterative Pose Refinement.
+
+TABLE VI LOSS WEIGHT ABLATION .Model λ (α, β ) TartanAir KITTI TUM-RGBD Avg MVOFormer  0.1 
+
+(0 .5, 0.1) 1.231 31.272 0.267 10.923 
+
+(0 .5, 0.3) 1.225 30.408 0.236 10.623 
+
+(0 .5, 0.5) 1.342 32.971 0.241 11.518 0.3 (0 .5, 0.3) 1.209 29.995 0.249 10.484 0.5 (0 .5, 0.3) 1.173 28.885 0.209 10.089 1.0 (0 .5, 0.3) 1.583 30.288 0.202 10.691 0.8 (0 .5, 0.3) 1.359 19.609 0.187 7.052 
+
+λ is the uncertainty regularization coefficient in (17), while α and β corre-spond to the loss weights in (18). The last gray row denotes final MVOFormer. 
+
+baseline models strictly adopt their default framework settings, with DROID-VO explicitly evaluated without global bundle adjustment. Under these configurations, MVOFormer achieves 32.19 FPS (averaged across test splits), exceeding the 10 Hz real-time requirement of KITTI benchmarks. 
+
+D. Ablation Studies 
+
+We summarize the ablation results on TartanAir, KITTI, and TUM-RGBD in Tables V and VI. For the flow backbone, increasing the number of queries from 50 to 100 consistently improves performance. However, a larger setting ( N = 500 )causes overfitting and degrades generalization. We therefore adopt N = 100 . As shown in Table V, adding the semantic Bonn – balloon and placing_nonobstructing_box 
+
+> Original image Uncertainty Original image Uncertainty Uncertainty Map
+> KITTI -03 YouTube -tomyum2
+
+Fig. 6. Uncertainty evaluation on dynamic sequences. TABLE VII ABLATION ON THE DYNAMIC BONN DATASET (ATE ↓). Configuration balloon BT PT PNO PO RNO RO Avg w/o UM, w/o IP 0.127 0.195 0.162 0.121 0.175 0.085 0.123 0.141 w. IP only 0.125 0.169 0.163 0.116 0.167 0.069 0.114 0.132 w. UM only 0.121 0.164 0.135 0.102 0.137 0.065 0.080 0.115 Full model 0.117 0.110 0.130 0.079 0.128 0.062 0.065 0.099                
+
+> BT/PT denote balloon tracking/person tracking; PNO/PO: placing (nonobstruct-ing)/(obstructing) box; RNO/RO: removing (nonobstructing)/(obstructing) box. The shaded final row corresponds to the Full model with λ= 0 .5.
+
+branch improves all three benchmarks over the pure flow baseline. On this backbone, IP is most beneficial on KITTI, while UM is more effective on TartanAir. Combining IP and UM gives the best overall trade-off. For the loss weights in (17) and (18), Table VI shows that 
+
+(α, β ) = (0 .5, 0.3) performs best. An excessively large β
+
+over-emphasizes uncertainty and weakens pose estimation. In contrast, a smaller β makes the uncertainty effect insufficient. The regularization weight λ = 0 .8 also gives the best trade-off. A higher λ makes uncertainty dominate optimization, whereas a lower λ cannot adequately suppress dynamic regions. Dynamic-scene ablations on the Bonn RGB-D dynamic dataset are reported separately in Table VII. Introducing the Uncertainty Module alone reduces the error by 18.44% rela-tive to the baseline. Adding iterative pose refinement further increases the improvement to 29.79%. As shown in Fig. 6, the warp-supervised UM highlights subtle motion boundaries even under small inter-frame displacement. The estimated uncertainty also increases with motion magnitude over larger temporal intervals. 8 IEEE ROBOTICS AND AUTOMATION LETTERS. PREPRINT VERSION. ACCEPTED JUNE, 2026 
+
+V. C ONCLUSION 
+
+Limitations and Future Work. As a strictly frame-to-frame monocular system, MVOFormer remains vulnerable to accumulated drift compared with global SLAM backends. Future work will extend the framework to stereo and RGB-D modalities through either joint prediction models analogous to FoundationStereo [37] or explicit depth-prior fusion following TartanVO-Stereo [14]. In addition, integrating a lightweight multi-frame optimization module may further mitigate long-term trajectory drift. 
+
+Conclusion. In this paper, we introduced MVOFormer, a transformer-based framework for robust monocular visual odometry. By combining pixel-level optical flow with object-aware motion-semantic priors within a unified architecture, MVOFormer achieves iterative pose refinement and robust dynamic distractor suppression while operating at 32.19 FPS. Extensive evaluations across TartanAir, KITTI, TUM-RGBD, and ETH3D-SLAM confirm that our method consistently sur-passes existing learning-based frame-to-frame monocular VO baselines under a strict zero-shot protocol, requiring neither dataset-specific fine-tuning nor classical post-processing. We expect MVOFormer to provide a robust and reproducible foun-dation for future research in learning-based visual odometry. REFERENCES [1] C. Campos, R. Elvira, J. J. G´ omez Rodr´ ıguez, J. M. Montiel, and J. D. Tard´ os, “ORB-SLAM3: An accurate open-source library for visual, visual-inertial, and multi-map SLAM,” IEEE Trans. Robot. , vol. 37, no. 6, pp. 1874–1890, 2021. [2] C. Forster, M. Pizzoli, and D. Scaramuzza, “SVO: Fast semi-direct monocular visual odometry,” in Proc. IEEE Int. Conf. Robot. Automat. (ICRA) , 2014, pp. 15–22. [3] J. Engel, V. Koltun, and D. Cremers, “Direct sparse odometry,” IEEE Trans. Pattern Anal. Mach. Intell. , vol. 40, no. 3, pp. 611–625, 2017. [4] S. Wang, R. Clark, H. Wen, and N. Trigoni, “DeepVO: Towards end-to-end visual odometry with deep recurrent convolutional neural networks,” in Proc. IEEE Int. Conf. Robot. Automat. (ICRA) , 2017, pp. 2043–2050. [5] K. Konda and R. Memisevic, “Learning visual odometry with a convolu-tional network,” in Proc. Int. Conf. Comput. Vis. Theory Appl. (VISAPP) ,vol. 2, 2015, pp. 486–490. [6] W. Wang, Y. Hu, and S. Scherer, “TartanVO: A generalizable learning-based VO,” in Proc. Conf. Robot Learn. (CoRL) , 2021, pp. 1761–1772. [7] Z. Teed and J. Deng, “Droid-SLAM: Deep visual SLAM for monocular, stereo, and RGB-D cameras,” in Proc. Annu. Conf. Neural Inf. Process. Syst. (NeurIPS) , vol. 34, 2021, pp. 16 558–16 569. [8] Y. Wei, S. Lu, F. Han, et al. , “BEV-ODOM: Reducing scale drift in monocular visual odometry with bev representation,” in Proc. IEEE/RSJ Int. Conf. Intell. Robots Syst. (IROS) , 2024, pp. 349–356. [9] W. Ye, X. Lan, S. Chen, et al. , “PVO: Panoptic visual odometry,” in 
+
+Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR) , 2023, pp. 9579–9589. [10] Y. Xie, J. Yang, H. Zhou, and F. Sun, “InstanceVO: Self-supervised semantic visual odometry by using metric learning to incorporate geometrical priors in instance objects,” IEEE Robot. Autom. Lett. , 2024. [11] Z. Zhang, J. Cheng, G. Xu, et al. , “Leveraging consistent spatio-temporal correspondence for robust visual odometry,” in Proc. AAAI Conf. Artif. Intell. , vol. 39, no. 10, 2025, pp. 10 367–10 375. [12] Z. Wu and Y. Zhu, “SWformer-VO: A monocular visual odometry model based on swin transformer,” IEEE Robot. Autom. Lett. , vol. 9, no. 5, pp. 4766–4773, 2024. [13] S. Wang, W. Li, Y. Wang, Z. Fan, Z. Huang, X. Cai, J. Zhao, and D. Li, “MambaVO: Deep visual odometry based on sequential matching refinement and training smoothing,” in Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR) , 2025, pp. 1252–1262. [14] Y. Qiu, Y. Chen, Z. Zhang, W. Wang, and S. Scherer, “MAC-VO: Metrics-aware covariance for learning-based stereo visual odometry,” in Proc. IEEE Int. Conf. Robot. Automat. (ICRA) , 2025, pp. 3803–3814. [15] S. Shen, Y. Cai, W. Wang, et al. , “DytanVO: Joint refinement of visual odometry and motion segmentation in dynamic environments,” in Proc. IEEE/RSJ Int. Conf. Intell. Robots Syst. (IROS) , 2023. [16] M. Oquab, T. Darcet, T. Moutakanni, H. Vo, M. Szafraniec, V. Khalidov, P. Fernandez, D. Haziza, F. Massa, A. El-Nouby et al. , “DINOv2: Learning robust visual features without supervision,” Trans. Mach. Learn. Res. , 2024. [17] H. Zhao, X. Qiao, Y. Ma, and R. Tafazolli, “Transformer-based self-supervised monocular depth and visual odometry,” IEEE Sensors J. ,vol. 23, no. 2, pp. 1436–1446, 2022. [18] X. Zhu, W. Su, L. Lu, B. Li, X. Wang, and J. Dai, “Deformable DETR: Deformable transformers for end-to-end object detection,” in Proc. Int. Conf. Learn. Represent. (ICLR) , 2021. [19] C.-C. Chiu, H.-K. Yang, H.-W. Chen, et al. , “ViTVO: Vision transformer based visual odometry with attention supervision,” in Proc. Int. Conf. Mach. Vis. Appl. (MVA) , 2023, pp. 1–5. [20] W. Wang, D. Zhu, X. Wang, et al. , “TartanAir: A dataset to push the limits of visual SLAM,” in Proc. IEEE/RSJ Int. Conf. Intell. Robots Syst. (IROS) , 2020, pp. 4909–4916. [21] A. Geiger, P. Lenz, and R. Urtasun, “Are we ready for autonomous driving? The KITTI vision benchmark suite,” in Proc. IEEE Conf. Comput. Vis. Pattern Recognit. (CVPR) , 2012, pp. 3354–3361. [22] J. Sturm, N. Engelhard, F. Endres, W. Burgard, and D. Cremers, “A benchmark for the evaluation of RGB-D SLAM systems,” in Proc. IEEE/RSJ Int. Conf. Intell. Robots Syst. (IROS) , 2012, pp. 573–580. [23] Z. Teed, L. Lipson, and J. Deng, “Deep patch visual odometry,” in Proc. Annu. Conf. Neural Inf. Process. Syst. (NeurIPS) , vol. 36, 2023, pp. 39 033–39 051. [24] J. Naumann, B. Xu, S. Leutenegger, and X. Zuo, “Nerf-VO: Real-time sparse visual odometry with neural radiance fields,” IEEE Robot. Autom. Lett. , vol. 9, no. 8, pp. 7278–7285, 2024. [25] Y. Wang, L. Lipson, and J. Deng, “SEA-RAFT: Simple, efficient, accurate raft for optical flow,” in Proc. Eur. Conf. Comput. Vis. (ECCV) ,2024, pp. 36–54. [26] O. Sim´ eoni, H. V. Vo, M. Seitzer, F. Baldassarre, M. Oquab, C. Jose, V. Khalidov, M. Szafraniec, S. Yi, M. Ramamonjisoa, et al. , “DINOv3,” 
+
+arXiv:2508.10104 , 2025. [27] E. Palazzolo, J. Behley, P. Lottes, P. Giguere, and C. Stachniss, “ReFu-sion: 3D reconstruction in dynamic environments for RGB-D cameras exploiting residuals,” in Proc. IEEE/RSJ Int. Conf. Intell. Robots Syst. (IROS) , 2019, pp. 7855–7862. [28] Y. Wang, Y. Chen, X. Liao, et al. , “PanoOcc: Unified occupancy representation for camera-based 3D panoptic segmentation,” in Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR) , 2024, pp. 17 158–17 168. [29] J. Kulhanek, S. Peng, Z. Kukelova, M. Pollefeys, and T. Sattler, “WildGaussians: 3D Gaussian splatting in the wild,” in Proc. Annu. Conf. Neural Inf. Process. Syst. (NeurIPS) , vol. 37, 2024, pp. 21271– 21288. [30] T. Schops, T. Sattler, and M. Pollefeys, “Bad SLAM: Bundle adjusted direct RGB-D SLAM,” in Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR) , 2019, pp. 134–144. [31] J. L. Schonberger and J.-M. Frahm, “Structure-from-motion revisited,” in Proc. IEEE Conf. Comput. Vis. Pattern Recognit. (CVPR) , 2016, pp. 4104–4113. [32] C. M. Parameshwara, G. Hari, C. Ferm¨ uller, and Y. Aloimonos, “DiffPoseNet: Direct differentiable camera pose estimation,” in Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR) , 2022, pp. 6845–6854. [33] X. Gao, R. Wang, N. Demmel, and D. Cremers, “LDSO: Direct sparse odometry with loop closure,” in Proc. IEEE/RSJ Int. Conf. Intell. Robots Syst. (IROS) , 2018, pp. 2198–2204. [34] L. Lipson, Z. Teed, and J. Deng, “Deep patch visual SLAM,” in Proc. Eur. Conf. Comput. Vis. (ECCV) , 2024, pp. 424–440. [35] Z. Teed and J. Deng, “DeepV2D: Video to depth with differentiable structure from motion,” in Proc. Int. Conf. Learn. Represent. (ICLR) ,2020. [36] W. Zhao, S. Liu, Y. Shu, and Y.-J. Liu, “Towards better generalization: Joint depth-pose learning without PoseNet,” in Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR) , 2020, pp. 9151–9161. [37] B. Wen, M. Trepte, J. Aribido, J. Kautz, O. Gallo, and S. Birchfield, “FoundationStereo: Zero-shot stereo matching,” in Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR) , 2025, pp. 5249–5260.

@@ -1,0 +1,308 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-16T23:17:03.694619+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 4,
+    "deep_cap": 7,
+    "deep_selected": 4,
+    "quick_candidates": 3,
+    "quick_skim_target": 12,
+    "quick_selected": 3
+  },
+  "deep_dive": [
+    {
+      "id": "2606.16474v1",
+      "source": "arxiv",
+      "title": "MVOFormer: Flow-Semantic Transformer for Robust Monocular Visual Odometry",
+      "abstract": "Monocular visual odometry (MVO) is foundational to autonomous navigation and robotic localization. However, existing learning-based MVO approaches often struggle with either a lack of interpretable, complementary features or overly complex multi-stage architectures. These limitations inherently restrict their robustness and cross-domain generalization. In this work, we propose MVOFormer, a novel transformer framework for robust monocular visual odometry. Our architecture features a Flow-Semantic Dual Branch Encoder that synergizes dense geometric motion cues with object-centric semantic priors, explicitly distinguishing static structures from dynamic distractors. These representations are then fused by an Iterative Multimodal Decoder, enabling coarse-to-fine pose refinement while dynamically suppressing attention on unreliable regions. Extensive evaluations demonstrate that, without any target-domain fine-tuning, MVOFormer achieves superior zero-shot generalization and robustness, significantly outperforming prior learning-based frame-to-frame methods across diverse benchmarks including TartanAir, KITTI, TUM-RGBD, and ETH3D-SLAM.",
+      "authors": [
+        "Jituo Li",
+        "Shunwang Sun",
+        "Jialu Zhang",
+        "Xinqi Liu",
+        "Jinyao Hu",
+        "Zhicheng Lu",
+        "Sajad Saeedi",
+        "Guodong Lu"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.RO"
+      ],
+      "published": "2026-06-15T09:39:28+00:00",
+      "link": "https://arxiv.org/pdf/2606.16474v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "Robust monocular visual odometry for accurate camera pose estimation using flow-semantic transformer.",
+      "llm_evidence_cn": "基于光流-语义Transformer的鲁棒单目视觉里程计，用于精确相机位姿跟踪",
+      "llm_evidence": "基于光流-语义Transformer的鲁棒单目视觉里程计，用于精确相机位姿跟踪",
+      "canonical_evidence": "基于光流-语义Transformer的鲁棒单目视觉里程计，用于精确相机位姿跟踪",
+      "llm_tldr_en": "MVOFormer introduces a flow-semantic dual-branch transformer for robust monocular visual odometry, synergizing geometric motion cues and semantic priors to improve cross-domain generalization.",
+      "llm_tldr_cn": "现有学习的单目视觉里程计方法缺乏可解释的互补特征或架构过于复杂，限制了鲁棒性和跨域泛化。本文提出MVOFormer，采用光流-语义双分支Transformer编码器，融合密集几何运动线索与目标中心语义先验，通过迭代多模态解码器实现由粗到精的位姿估计，在多个数据集上表现出优异的鲁棒性和泛化能力，为单目VO提供了新框架。",
+      "llm_tldr": "现有学习的单目视觉里程计方法缺乏可解释的互补特征或架构过于复杂，限制了鲁棒性和跨域泛化。本文提出MVOFormer，采用光流-语义双分支Transformer编码器，融合密集几何运动线索与目标中心语义先验，通过迭代多模态解码器实现由粗到精的位姿估计，在多个数据集上表现出优异的鲁棒性和泛化能力，为单目VO提供了新框架。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "accurate camera pose tracking",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.15681v1",
+      "source": "arxiv",
+      "title": "3D Consistency Optimization for Self-Supervised Monocular Video Depth Estimation",
+      "abstract": "Reliable monocular video depth estimation is crucial for downstream 3D reasoning and embodied AI in endoscopic navigation. However, existing self-supervised approaches typically treat video frames independently or rely on weak temporal regularization. These methods, lacking a holistic perception of the underlying 3D scene, inevitably suffer from geometrically inconsistent predictions and severe cross-frame drift. To address these limitations, we introduce a new paradigm that recasts sequential video depth estimation as an unconstrained multi-view 3D reconstruction problem, enabling full exploitation of the powerful geometric priors embedded in recent 3D foundation models. The core of our approach is a 3D consistency optimization framework driven by three constraints: image-level photometric rendering, explicit world-coordinate geometric alignment, and multi-scale temporal gradient consistency. Such unified optimization elegantly anchors isolated frames to a globally coherent 3D structure. Our method has been validated in both the self-supervised training scenarios and challenging zero-shot clinical environments. Results show that the proposed approach achieves state-of-the-art spatial accuracy, outperforming the frame-based, video-based depth estimators and the multi-view 3D reconstruction baselines.",
+      "authors": [
+        "Yuanye Liu",
+        "Ke Zhang",
+        "Junzhe Jiang",
+        "Li Zhang",
+        "Vishal Patel",
+        "Xiahai Zhuang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-14T08:56:45+00:00",
+      "link": "https://arxiv.org/pdf/2606.15681v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "self-supervised monocular video depth estimation for endoscopic navigation",
+      "llm_evidence_cn": "自监督单目视频深度估计用于内窥镜导航",
+      "llm_evidence": "自监督单目视频深度估计用于内窥镜导航",
+      "canonical_evidence": "自监督单目视频深度估计用于内窥镜导航",
+      "llm_tldr_en": "Proposes 3D consistency optimization to achieve geometrically consistent monocular depth from endoscopic video by treating depth estimation as multi-view 3D reconstruction.",
+      "llm_tldr_cn": "本文针对现有自监督方法在单目视频深度估计中缺乏时序一致性的问题，提出将序列深度估计重构为无约束多视角三维重建，利用三维基础模型中的几何先验实现帧间几何一致性。在多个内窥镜数据集上的实验表明，该方法能有效减少跨帧漂移，生成更平滑且一致的深度图，为下游三维推理和具身智能提供可靠基础。",
+      "llm_tldr": "本文针对现有自监督方法在单目视频深度估计中缺乏时序一致性的问题，提出将序列深度估计重构为无约束多视角三维重建，利用三维基础模型中的几何先验实现帧间几何一致性。在多个内窥镜数据集上的实验表明，该方法能有效减少跨帧漂移，生成更平滑且一致的深度图，为下游三维推理和具身智能提供可靠基础。",
+      "llm_tags": [
+        "query:endo-dgs"
+      ],
+      "matched_query_tag": "query:endo-dgs",
+      "matched_query_text": "depth estimation for endoscopic scenes",
+      "matched_requirement_id": "req-12",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.16566v1",
+      "source": "arxiv",
+      "title": "Local-GS: Accelerating 3D Gaussian Splatting via Tile-Local Warp Coherence",
+      "abstract": "3D Gaussian Splatting (3DGS) has significantly advanced real-time novel view synthesis by representing scenes as dense collections of anisotropic 3D Gaussian primitives. However, the irregular spatial distribution of Gaussians often leads to poor GPU utilization, as warp divergence and redundant computation degrade rendering performance. To address this, we present Local-GS, a warp-coherent rendering paradigm that, organizes Gaussian primitives with respect to SIMT (Single Instruction, Multiple Threads) execution boundaries rather than scene geometry. Specifically, we propose three warp-coherent stages: a hoisting stage that precomputes shared parameters at tile level, a culling stage that discards warps with no contribution, and a blending stage that replaces per-pixel branching with a uniform instruction stream. Across extensive benchmarks on multiple datasets, Local-GS improves efficiency without compromising quality. As a plug-and-play optimization, it provides additional performance gains to all tested baselines, culminating in a $7.76\\times$ speedup on Deep Blending scenes.",
+      "authors": [
+        "Yang Luo",
+        "Yan Gong",
+        "Yongsheng Gao",
+        "Jie Zhao",
+        "Xinyu Zhang",
+        "Huaping Liu"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-15T11:08:10+00:00",
+      "link": "https://arxiv.org/pdf/2606.16566v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "warp-coherent rendering of anisotropic Gaussian primitives",
+      "llm_evidence_cn": "各向异性高斯原语的warp相干渲染",
+      "llm_evidence": "各向异性高斯原语的warp相干渲染",
+      "canonical_evidence": "各向异性高斯原语的warp相干渲染",
+      "llm_tldr_en": "Presents Local-GS, a warp-coherent rendering paradigm for 3D Gaussian Splatting that organizes Gaussians by SIMT boundaries to improve GPU utilization and accelerate real-time novel view synthesis.",
+      "llm_tldr_cn": "为了解决3D高斯泼溅（3DGS）中高斯分布不规则导致的GPU利用率低和渲染性能下降问题，提出Local-GS，一种基于warp相干性的渲染范式。该方法按SIMT执行边界而非场景几何组织高斯原语，通过提升、剔除和混合三个warp相干阶段加速渲染。实验表明显著提升实时新视角合成速度，为3DGS高效渲染提供新方案，对要求实时渲染的SLAM和AR/VR应用具有重要意义。",
+      "llm_tldr": "为了解决3D高斯泼溅（3DGS）中高斯分布不规则导致的GPU利用率低和渲染性能下降问题，提出Local-GS，一种基于warp相干性的渲染范式。该方法按SIMT执行边界而非场景几何组织高斯原语，通过提升、剔除和混合三个warp相干阶段加速渲染。实验表明显著提升实时新视角合成速度，为3DGS高效渲染提供新方案，对要求实时渲染的SLAM和AR/VR应用具有重要意义。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.16881v1",
+      "source": "arxiv",
+      "title": "SGM-SLAM: Scene Graph Matching for Data-Efficient Distributed SLAM",
+      "abstract": "We introduce a data-efficient distributed Simultaneous Localization and Mapping (SLAM) framework designed for a team of robots equipped with LiDAR, cameras, and inertial sensors. Our framework uses scene graph matching to identify inter-robot measurement constraints. Unlike prior approaches that rely on feature-level matching, our framework is the first to perform scene graph matching using only object labels and centroids. Our approach constructs a scene graph by using fused RGB-LiDAR point clouds to generate both a semantically segmented point cloud layer, and a layer of discrete bounded objects, to accompany estimated robot trajectories. Scene graph matching is performed collaboratively through exchanging and matching object data with neighboring robots. To maximize communication efficiency, we utilize a multi-step data exchange and optimization process. We demonstrate the effectiveness and efficiency of our approach using both simulation and real-world datasets collected by legged robots in indoor and outdoor environments.",
+      "authors": [
+        "Yewei Huang",
+        "Tixiao Shan",
+        "Abhinav Rajvanshi",
+        "Niluthpol Chowdhury Mithun",
+        "Yaxuan Li",
+        "Brendan Englot",
+        "Han-Pang Chiu"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-06-15T15:53:59+00:00",
+      "link": "https://arxiv.org/pdf/2606.16881v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Proposes a distributed SLAM framework using scene graph matching with camera and LiDAR data for multi-robot localization and mapping.",
+      "llm_evidence_cn": "提出分布式SLAM框架，利用场景图匹配结合相机和激光雷达数据实现多机器人协同定位与建图。",
+      "llm_evidence": "提出分布式SLAM框架，利用场景图匹配结合相机和激光雷达数据实现多机器人协同定位与建图。",
+      "canonical_evidence": "提出分布式SLAM框架，利用场景图匹配结合相机和激光雷达数据实现多机器人协同定位与建图。",
+      "llm_tldr_en": "SGM-SLAM introduces data-efficient distributed SLAM via scene graph matching using object labels and centroids, enabling inter-robot constraints without feature-level matching. It fuses RGB and LiDAR for robust multi-session mapping, relevant to visual SLAM with collaborative agents.",
+      "llm_tldr_cn": "针对多机器人SLAM数据关联和通信开销大的问题，提出SGM-SLAM，利用场景图匹配仅用物体标签和中心点建立相对测量约束，实现数据高效的分布式建图。融合RGB与激光雷达点云构建语义层，通过交换对象信息进行协同定位，在多种环境下验证了精度与数据效率。",
+      "llm_tldr": "针对多机器人SLAM数据关联和通信开销大的问题，提出SGM-SLAM，利用场景图匹配仅用物体标签和中心点建立相对测量约束，实现数据高效的分布式建图。融合RGB与激光雷达点云构建语义层，通过交换对象信息进行协同定位，在多种环境下验证了精度与数据效率。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Visual SLAM methods for camera tracking and mapping",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2606.13990v1",
+      "source": "arxiv",
+      "title": "SplatlessDF: Continuous Distance Field Mapping with Non-Splatting Gaussians",
+      "abstract": "Recent Gaussian splatting (GS) methods have shown that scenes can be represented efficiently with optimisable Gaussians for high-quality reconstruction and rendering. In this paper, building on this principle, we introduce SplatlessDF, a continuous distance field (DF) mapping framework that uses anisotropic Gaussian elements from a spatial rather than photometric perspective. SplatlessDF directly parameterises the Gaussians and optimises to recover a differentiable DF, enabling distances and gradients to be queried in the spatial domain for downstream robotic tasks such as navigation. Furthermore, SplatlessDF can be coupled with 2D Gaussian splatting (2DGS), providing a unified framework based solely on Gaussian primitives that can learn continuous DF and surface models and supports photometric rendering. We consider two settings: a standalone DF-only formulation and a joint DF-rendering formulation coupled with 2DGS. Experiments show that the standalone formulation provides efficient and accurate distance and gradient queries, while the joint formulation improves rendering geometry and simultaneously models a continuous DF. These results highlight the potential of GS-style representations not only for surface modelling and rendering but also for mapping representations suited to robotic navigation.",
+      "authors": [
+        "Monisha Mushtary Uttsha",
+        "Lan Wu",
+        "Teresa Vidal-Calleja"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-06-12T00:18:52+00:00",
+      "link": "https://arxiv.org/pdf/2606.13990v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Uses anisotropic Gaussian primitives for differentiable continuous distance field mapping, enabling unified Gaussian-based scene representation for robotics tasks including potential SLAM.",
+      "llm_evidence_cn": "使用各向异性高斯基元进行可微连续距离场映射，可为基于高斯的视觉SLAM场景表示提供方法。",
+      "llm_evidence": "使用各向异性高斯基元进行可微连续距离场映射，可为基于高斯的视觉SLAM场景表示提供方法。",
+      "canonical_evidence": "使用各向异性高斯基元进行可微连续距离场映射，可为基于高斯的视觉SLAM场景表示提供方法。",
+      "llm_tldr_en": "SplatlessDF proposes a continuous distance field mapping framework using anisotropic Gaussians, optimized for spatial queries. It can integrate with 2D Gaussians for unified scene representation, offering a Gaussian-primitive-only alternative that is highly relevant to 3D Gaussian SLAM systems.",
+      "llm_tldr_cn": "针对机器人任务中对显式空间距离场的需求，提出SplatlessDF，将各向异性高斯从光度域扩展到空间域，直接参数化并优化高斯分布以恢复可微距离场。与2D高斯溅射结合，形成统一的纯高斯基元框架，为同时定位与建图提供高效的三维场景表示，尤其在SLAM中具有应用前景。",
+      "llm_tldr": "针对机器人任务中对显式空间距离场的需求，提出SplatlessDF，将各向异性高斯从光度域扩展到空间域，直接参数化并优化高斯分布以恢复可微距离场。与2D高斯溅射结合，形成统一的纯高斯基元框架，为同时定位与建图提供高效的三维场景表示，尤其在SLAM中具有应用前景。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "efficient visual SLAM with 3D Gaussian scene representations",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.13488v1",
+      "source": "arxiv",
+      "title": "Point-Wise Geometry-Aware Transformer for Partial-to-Full Point Cloud Registration in Computer-Assisted Surgery",
+      "abstract": "Partial-to-full registration remains challenging due to varying overlap ratios, fluctuating point densities, and the presence of noise. While transformers have shown strong potential for point cloud processing, prior methods typically confine them to global context aggregation, overlooking fine-grained local geometry crucial for accurate correspondence. We propose \\emph{GAPR-Net}, a learning-based point cloud registration framework with a coarse-to-fine architecture that combines convolution and transformer modules, in which local and global information is fused between the partial and full point clouds using a cross-attention mechanism. To achieve this, a transformation-invariant point-wise geometric feature representation is proposed, which can robustly capture relative geometric features for individual points with respect to their neighboring points. To evaluate the effectiveness of the proposed approach, experiments are conducted on four geometrically distinct bones, including the tibia, femur, pelvis, and thoracic cartilage. The overall registration recall reaches 94.2\\%, the method results in a low RMSE of 1.992 mm and $R^2$ values of 0.908 and 0.974 for rotation and translation, respectively. The results demonstrate that the proposed method effectively addresses the partial-to-full point cloud registration problem. The proposed method enables highly accurate 3D point cloud registration using partial observation, providing a critical foundation for precise surgical navigation and robotic interventions in computer-assisted surgery. The code will be accessed after the double-blind review process.",
+      "authors": [
+        "Siyu Zhou",
+        "Zhongliang Jiang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-11T15:37:53+00:00",
+      "link": "https://arxiv.org/pdf/2606.13488v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Point cloud registration method for computer-assisted surgery, enabling surgical navigation with 3D scene alignment.",
+      "llm_evidence_cn": "基于点云配准的计算机辅助手术方法，用于手术导航中的三维场景对齐",
+      "llm_evidence": "基于点云配准的计算机辅助手术方法，用于手术导航中的三维场景对齐",
+      "canonical_evidence": "基于点云配准的计算机辅助手术方法，用于手术导航中的三维场景对齐",
+      "llm_tldr_en": "Proposes a geometry-aware transformer for partial-to-full point cloud registration in surgery, fusing local and global features with cross-attention to improve accuracy in varying overlap and noise conditions.",
+      "llm_tldr_cn": "针对手术导航中局部到整体点云配准的挑战，如重叠率变化、密度波动和噪声，提出GAPR-Net，结合卷积与Transformer，利用交叉注意力融合局部与全局几何信息，实现鲁棒的对应关系学习，在计算机辅助手术场景中提升了配准精度和鲁棒性。",
+      "llm_tldr": "针对手术导航中局部到整体点云配准的挑战，如重叠率变化、密度波动和噪声，提出GAPR-Net，结合卷积与Transformer，利用交叉注意力融合局部与全局几何信息，实现鲁棒的对应关系学习，在计算机辅助手术场景中提升了配准精度和鲁棒性。",
+      "llm_tags": [
+        "query:endo-dgs"
+      ],
+      "matched_query_tag": "query:endo-dgs",
+      "matched_query_text": "surgical navigation using 3D scene representations",
+      "matched_requirement_id": "req-13",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.15924v1",
+      "source": "arxiv",
+      "title": "TurboGS: Accelerating 3D Gaussian Splatting via Error-Guided Sparse Pixel Sampling and Optimization",
+      "abstract": "Consumer-level applications require fast optimization of 3D Gaussian Splatting (3DGS) with high-fidelity novel view rendering. However, existing 3DGS acceleration approaches still incur substantial computation on redundant pixels while sacrificing fine details. In this paper, we present TurboGS, an error-guided training framework that accelerates 3DGS by concentrating optimization on perceptually informative pixels. TurboGS is built upon four core components: (1) a tile-wise sparse pixel sampling, which, driven by multi-view reconstruction errors during training, prioritizes challenging regions and skips well-reconstructed ones to avoid redundant gradient computation; (2) a tile-wise structure-aware loss with sparse Normalized Cross-Correlation, which provides sparse yet effective supervision to preserve fine details and stabilize training; (3) an error-driven Gaussian density control strategy, which dynamically allocates model capacity and removes redundant primitives; and (4) a tailored hybrid optimizer that couples Hessian-informed updates with Adam moment damping to stabilize and improve convergence under sparse supervision. Experiments on standard benchmarks demonstrate that TurboGS can deliver on par or superior rendering quality within 100 seconds on a single RTX 5090 GPU card (up to 10x training speedup over vanilla 3DGS).",
+      "authors": [
+        "Zheng Dong",
+        "Daifei Qiu",
+        "Pinxuan Dai",
+        "Ke Xu",
+        "Jiamin Xu",
+        "Lili He",
+        "Rynson W. H. Lau",
+        "Weiwei Xu"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.GR"
+      ],
+      "published": "2026-06-14T16:59:48+00:00",
+      "link": "https://arxiv.org/pdf/2606.15924v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Accelerates 3D Gaussian Splatting via error-guided sparse pixel sampling for fast scene optimization, supporting real-time rendering applications.",
+      "llm_evidence_cn": "通过误差引导稀疏像素采样加速3D高斯泼溅，支持实时渲染应用。",
+      "llm_evidence": "通过误差引导稀疏像素采样加速3D高斯泼溅，支持实时渲染应用。",
+      "canonical_evidence": "通过误差引导稀疏像素采样加速3D高斯泼溅，支持实时渲染应用。",
+      "llm_tldr_en": "TurboGS accelerates 3DGS optimization by focusing on challenging pixels, reducing computation and enabling faster high-fidelity novel view synthesis.",
+      "llm_tldr_cn": "TurboGS通过误差引导的瓦片级稀疏像素采样，专注于感知重要区域进行优化，避免冗余计算，从而在保持高保真度的同时显著加速3D高斯泼溅的训练过程，为消费者级实时新视图合成应用铺平道路。",
+      "llm_tldr": "TurboGS通过误差引导的瓦片级稀疏像素采样，专注于感知重要区域进行优化，避免冗余计算，从而在保持高保真度的同时显著加速3D高斯泼溅的训练过程，为消费者级实时新视图合成应用铺平道路。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}

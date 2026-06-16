@@ -1,0 +1,403 @@
+Title: SGM-SLAM: Scene Graph Matching for Data-Efficient Distributed SLAM
+
+URL Source: https://arxiv.org/pdf/2606.16881v1
+
+Published Time: Tue, 16 Jun 2026 02:46:00 GMT
+
+Number of Pages: 12
+
+Markdown Content:
+# SGM-SLAM: Scene Graph Matching for Data-E ffi cient Distributed SLAM 
+
+Yewei Huang 1, Tixiao Shan 2, Abhinav Rajvanshi 2, Niluthpol Chowdhury Mithun 2, Yaxuan Li 3, Brendan Englot 3 and Han-Pang Chiu 2
+
+> 1Dartmouth College, 100 N Main St, Hanover, NH 03755, USA
+> 2SRI International, 201 Washington Rd, Princeton, NJ 08540, USA
+> 3Stevens Institute of Technology, 1 Castle Point Terrace, Hoboken, NJ 07030, USA
+
+Abstract 
+
+We introduce a data-e ffi cient distributed Simultaneous Localization and Mapping (SLAM) framework designed for a team of robots equipped with LiDAR, cameras, and inertial sensors. Our framework uses scene graph matching to identify inter-robot measure-ment constraints. Unlike prior approaches that rely on feature-level matching, our framework is the first to perform scene graph matching using only object labels and centroids. Our approach constructs a scene graph by using fused RGB-LiDAR point clouds to generate both a semantically segmented point cloud layer, and a layer of discrete bounded objects, to accompany estimated robot trajectories. Scene graph matching is performed collaboratively through exchanging and matching object data with neighboring robots. To maximize communication e ffi ciency, we utilize a multi-step data exchange and optimization process. We demonstrate the e ff ectiveness and e ffi ciency of our approach using both simulation and real-world datasets collected by legged robots in indoor and outdoor environments. 
+
+1. Introduction 
+
+Simultaneous Localization and Mapping (SLAM) is a crit-ical capability for robots to execute multiple tasks e ff ectively. Numerous SLAM techniques for both single [1, 2] and multi-robot systems [3, 4] have been developed using a wide range of sensors. To some extent, these approaches can deliver accu-rate 6-DoF (degrees of freedom) pose estimation of the robots and produce sparse reconstructions of the surrounding environ-ment. However, traditional feature-based SLAM methods are sensitive to limited trajectory overlap, viewpoint variations, and changes in lighting conditions due to inherent feature limita-tions. Additionally, point-cloud maps are not intuitive for hu-mans to interpret or interact with e ff ectively. With the recent proliferation of Large Language Models (LLMs), there is a growing need to understand the environ-ment at a semantic level to support task and motion planning, and human-robot interaction. Semantic maps are also more in-tuitive compared to the purely metric-based point cloud maps produced by traditional SLAM methods. Early semantic SLAM methods [5, 6] primarily focused on using semantic objects as landmarks to enhance the accuracy of data registration and improve the robustness of loop closure detection. However, these semantic maps typically include a limited variety of ob-   
+
+> Email address: yewei.huang@dartmouth.edu, tixiao.shan@sri.com, abhinav.rajvanshi@sri.com, niluthpol.mithun@sri.com, yli21@stevens.edu, benglot@stevens.edu, han-pang.chiu@sri.com (Yewei Huang 1,Tixiao Shan 2, Abhinav Rajvanshi 2, Niluthpol Chowdhury Mithun 2, Yaxuan Li 3, Brendan Englot 3and Han-Pang Chiu 2)
+
+ject types and lack a hierarchical structure, making them less intuitive to understand. 
+
+Figure 1: The merged result of an outdoor two-robot dataset using scene graph matching. The fused point-cloud data is from LiDAR and camera sensors. The trajectories of the two robots are represented in blue and green within the keyframe layer. Objects are represented as bounding boxes in various colors to indicate di ff erent object types in the object layer. In the semantic layer, the segmented point cloud is colorized by semantic classes. 
+
+To achieve a better semantic understanding of the environ-ment, researchers are now exploring the utilization of scene graphs in SLAM. A scene graph is a data structure that uses nodes in a graph to represent entities in the environment and edges to represent the relationships among these entities [7]. As shown in Figure 1, a scene graph consists of entities such as 
+
+> arXiv:2606.16881v1 [cs.RO] 15 Jun 2026
+
+objects, keyframes, and the associated semantic point clouds, with all their relationships represented as edges. Compared to point cloud maps and semantic maps, scene graphs are easier to manage and their straightforward representation is intuitive for humans to understand and interact with. Many SLAM methods with scene graphs have been devel-oped for robot teams with cameras and LiDAR. However, most of these methods are either designed for indoor environments [4, 8, 9] or specifically developed for outdoor autonomous driv-ing environments [10, 11]. In addition, these methods typically rely on image-based descriptors for inter-robot data association. We refer to this inter-robot data association process in scene graph SLAM as scene graph matching in this paper. These high-dimensional descriptors may create a communication bur-den on the system, leading to map discrepancies and delayed updates, particularly in low-bandwidth outdoor environments. A more communication e ffi cient scene graph matching tech-nique is needed for multi-robot SLAM systems working on long term missions in large-scale indoor and outdoor environments. To address these issues, we propose SGM-SLAM, which per-forms scene graph matching e ffi ciently using limited semantic and geometric data in distributed SLAM systems. SGM-SLAM is designed using a set of onboard sensors (LiDAR, camera, and inertial sensors) on each robot, without relying on external prior geometric information from GPS. In this algorithm, scene graph matching is initiated by matching the object data of the scene graph, making the system more robust to viewpoint changes across di ff erent robots. Our contributions are summarized as follows: 
+
+• We present and demonstrate a distributed multi-robot SLAM framework that constructs scene graphs for both indoor and outdoor environments. 
+
+• This is the first distributed multi-robot SLAM approach to detect scene graph matching candidates using only object semantics and geometry. 
+
+• A novel data-e ffi cient communication strategy is intro-duced, which is designed to support distributed SLAM systems on robots equipped with LiDARs and cameras. The remainder of the paper are organized as follows. Sec. 2 provides a brief overview of scene graphs and multi-robot SLAM algorithms. Sec. 3 formulates the multi-robot SLAM problem in a distributed manner. Sec. 4 presents a detailed explanation of the proposed SGM-SLAM algorithm. Sec. 5 demonstrates the performance of SGM-SLAM, and Sec. 6 con-cludes the paper. 
+
+2. Related Works 
+
+A key challenge that distinguishes multi-robot SLAM from single-robot SLAM is inter-robot data association . Unlike single-robot SLAM, which relies on the robot’s trajectory his-tory to reject ambiguous loop closures, multi-robot systems lack such prior pose information for outlier rejection and point cloud registration. Limited communication bandwidth further requires selective data exchange, making e ffi cient centralized or distributed strategies essential for robust inter-robot data asso-ciation. To address the data size issue for transmission, LiDAR-SLAM methods such as SWARM-SLAM [12] use compact de-scriptors to represent LiDAR scans. LAMP [3] performs multi-sensor fusion and uses visual feature descriptors to provide can-didates for LiDAR scan registration. While compact descrip-tors are relatively communication e ffi cient, they often fail un-der viewpoint changes. To mitigate this, Zhou et al. [13] and CoLRIO [14] restrict loop closure detection to rendezvous sce-narios. However, this approach requires robots stay in close proximity, significantly limiting its applicability. Some approaches attempt to address these issues. For example, Dubé et al. [15] introduce semantic segmentation to represent environments. However, these segmented maps are still represented as point clouds, which can impose a communication burden for large-scale environments. MG-GMMapping [16] represents the environment using a Gaussian Mixture Model, yet inter-robot loop closure candidates are still determined by compact descriptor matching. 
+
+Scene graphs, initially introduced by the computer vision community as a semantic image retrieval technique [17], have gained increasing attention in robotics due to their potential to support human-robot interaction [18]. The scene graph com-monly adopted in robotics is a 3D scene graph [19], which uses a graph-based structure to represent the semantic information of a 3D model of the environment. Unlike semantic maps [5, 6], a scene graph not only encapsulates the semantic details of the environment but also explicitly describes the relationships be-tween semantic entities. Most multi-robot SLAM works with scene graphs use visual descriptors for scene graph matching. Hydra [20] and Hydra-multi [4] introduce hierarchical descriptors, with the lowest level based on bag-of-words descriptors. Moreover, Hydra-multi operates as a centralized system, with a central node re-sponsible for all scene graph construction and matching. While Kimera-Multi [21] is a distributed system, its scene graph matching also relies on visual bag-of-words descriptors. Rad-wan et al. [22] introduce visual fiducial markers to enable scene graph construction in under-construction environments. MR-COGraphs [9] proposes a learning-based, data-e ffi cient visual feature method for scene graph matching. The only exception is Multi S-graphs [8], which includes LiDAR in the multi-robot SLAM system. However, they use specific room-based com-pact descriptors for scene graph matching, which only work in indoor environments. There are also LiDAR-based SLAM works with scene graphs in outdoor environments [10], [23]. However, in these works, the scene graph serves only as a prod-uct, and its structure does not directly contribute to robot lo-calization. CURB-OSG [11] is the first to perform scene graph matching with unknown initial alignment in outdoor environ-ments. However, since it is a centralized method, the system tends to su ff er from delayed map updates due to limited com-munication bandwidth. Many robust object-level loop closure detection methods have been proposed for object-based SLAM. Qin et al. [24] and SemanticLoop [25] formulate object-level loop closure as 2a bipartite graph matching problem, using both semantic and geometric information of the objects. In addition to semantic and geometric information, SymbioLCD2 and Ji et al. [26] add visual learning-based descriptors for object data associ-ation. Liu et al. [27] combine semantic and geometric in-formation with the corresponding image histograms. To fur-ther enhance robustness, SemanticTopoLoop [28] introduces a multi-layer object data association strategy that considers se-mantic and geometric information alongside probabilistic cri-teria. However, since these methods are primarily designed for single-robot SLAM problems, they do not consider the commu-nication bandwidth limitations in multi-robot scenarios. Inspired by these object-based loop closure detection meth-ods for single robot SLAM, we propose SGM-SLAM, a ro-bust and communication-e ffi cient distributed SLAM method that works for low-bandwidth indoor and outdoor environments using limited object data. The scene graph from each robot is constructed using keyframe, object and point cloud informa-tion from a semantic SLAM system with visual, LiDAR, and inertial sensors. Our approach reduces data transmission by ex-changing only the semantic labels and centroids of grouped ob-jects across robots, and performing object matching to search for scene graph matching candidates. The estimated transfor-mations between grouped objects serve as geometric priors for inter-robot point cloud registration, helping to reduce failures caused by outliers. 
+
+3. Problem Formulation and Approach 
+
+The key problem in multi-robot SLAM is determining the transformation from each robot’s local frame to a common global frame. We aim for a simplified approach that achieves promising performance even under limited communication bandwidth, while ensuring consistent and reliable robot state estimation. This paper adopts a two-fold approach: robot frame transformation estimation followed by local SLAM pose graph optimization [29] (PGO) with relevant neighboring robot states. We define the set of n robots in the team as R =
+
+{R0, . . . , Rn−1}. For each robot Rα ∈ R, we align the local world frame Wα with Bα0 , the body frame B of the local robot α at the initial timestep t0. This allows us to transform the inter-robot data association problem into estimating the relative transfor-mations T = {TWα→Wβ | Rβ ∈ R} from the local world frames of other robots Wβ to the local world frame Wα.The state (a 6 DoF pose) of robot Rα at a timestep ti is defined as xαi . The complete trajectory of robot Rα from the initial timestep t0 to the current timestep ti is denoted as 
+
+Xα = {xα0 , . . . , xαi }.A shown in Fig. 2, we consider three types of observations in this paper: 
+
+• odometry observation Zodom  
+
+> α
+
+= {zodom  
+
+> αi,α i+1
+
+}, for sequential matching; 
+
+• loop closure observation Zintra  
+
+> α
+
+= {zintra   
+
+> αi,α j
+
+}, for intra-robot data association within the local robot trajectory;   
+
+> Figure 2: Factor graph structure of the local step. Factor vertices are represented as squares, while variable vertices are depicted as circles.
+
+• inter-robot observation Zinter  
+
+> α
+
+= {zinter   
+
+> αi,β j
+
+| β ∈ R, β , α}, for data association with inter-robot point-cloud registration between the local and neighboring robot trajectories. To simplify the approach, we do not share our detected inter-robot observations with neighboring robots. Therefore, zinter   
+
+> βi,α j
+
+is only considered an observation for robot β, not for robot α. For robot α, the complete observation set is Zα = {Zodom  
+
+> α
+
+∪ Zintra  
+
+> α
+
+∪
+
+Zinter  
+
+> α
+
+}.In the global step, we start by constructing fully connected graphs Gα and Gβ using selected semantic objects from the lo-cal scene graph and the objects received from the neighboring robot Rβ. These object graphs are then matched using a graph matching algorithm similar to SemanticLoop [25]. Once the overlapping component Gα ∩ Gβ is identified, the relative trans-formation TWα→Wβ can be estimated through rigid transforma-tion calculations based on matched object positions, and further refined using associated object point clouds. A detailed expla-nation of the relative transformation estimation can be found in Sec. 4.3. In the local step, each robot performs PGO. The problem is formulated as a maximum a posteriori estimation problem [30]: 
+
+Xα∗, Xassoc ∗ = arg max 
+
+> Xα,Xassoc
+
+P(Xα, Xassoc | Zα), (1) where Xassoc = {xβ j : zinter   
+
+> αi,β j
+
+∈ Zinter  
+
+> α
+
+} denotes the states of neigh-boring robots that are associated with the local robot due to detected inter-robot observations. 
+
+4. Algorithm 
+
+In this section, we present our multi-robot LiDAR-Visual-Inertial SLAM algorithm, and describe the scene graph match-ing process. The system architecture within each robot is illus-trated in Fig. 3. We perform semantic sensor fusion using both camera and LiDAR data, while simultaneously estimating the robot states through LiDAR-Inertial odometry and intra-robot loop-closures. We employ Point-LIO [2] to compute LiDAR-Inertial odometry, and intra-robot loop closures are detected us-ing a Euclidean distance-based approach similar to that of LIO-SAM [31]. Next, we construct a scene graph based on the estimated robot states and the semantically labeled point-cloud from the 3Figure 3: System Architecture. The SGM-SLAM pipeline for each robot, with inter-robot parts marked with red stars. 
+
+semantic fusion. The object data (semantic labels and cen-troids) of this scene graph is then shared with robot neighbors. Once the local robot receives the object data from a robot neigh-bor, scene graph matching is performed. If a su ffi cient number of objects in the scene graph are matched, a relative transforma-tion is computed to determine the inter-robot loop closures. Fi-nally, all the observations are added to the SLAM factor graph. Both the local robot states and the scene graph are then subse-quently updated. 
+
+4.1. Scene Graph Construction 
+
+Fig. 1 illustrates a scene graph constructed by two robots. The keyframe layer includes keyframes selected by the SLAM front-end as vertices, connected by odometry observations be-tween them, along with loop closure observations and inter-robot observations. The object layer is a fully connected graph where object vertices are interconnected by edges, using Eu-clidean distances between objects as the edge weights. The se-mantic layer contains the labeled semantic point clouds. Cross-layer connections link keyframe vertices to object vertices when the corresponding object is observed in that keyframe. Ad-ditionally, each scan in the semantic layer is linked to the keyframe where it was captured. The object vertices in the object layer are detected through semantic sensor fusion. During this process, RGB images are aligned with LiDAR scans to create a semantically labeled point cloud containing objects of interest. As shown in the top part of Fig. 4, the RGB images are segmented using Oneformer [32]. We perform segmentation using only image data to ensure the consistency and accuracy of the semantic labeling. The point set from the corresponding LiDAR scan is then transformed into the 2D RGB image frame utilizing the LiDAR-camera ex-trinsics and camera intrinsics. Subsequently, the semantic label from the nearest pixel is assigned to the corresponding point. Finally, the labeled point cloud is clustered into distinct objects. The object layer is constructed using objects (nodes) across keyframes, with relationships (edges) weighted by Euclidean distances among objects. It can be formulated as a Linear As-signment Problem (LAP): 
+
+A∗ 
+
+> n
+
+= arg min 
+
+> An
+
+X
+
+C ⊙ An (2) 
+
+= arg min 
+
+> An
+
+X
+
+> vi∈V(t)
+> α
+
+X 
+
+> vj∈V(t−1)
+> α
+
+ci j · ai j ; (3) 
+
+> Figure 4: Segmented image with detected objects shown in di ff erent colors (top left) and LiDAR scan projected onto the segmented image, with objects of interest marked by red rectangles (top right). The bot-tom shows an example of the connectivity between the keyframe layer and the object layer.
+
+s.t. ∀v j ∈ V(t−1)  
+
+> α
+
+,
+
+X
+
+> vi∈V(t)
+> α
+
+ai j ≤ 1; 
+
+∀vi ∈ V(t) 
+
+> α
+
+,
+
+X 
+
+> vj∈V(t−1)
+> α
+
+ai j ≤ 1. (4) Given two sets of object candidates (vertices) at the current keyframe timestep t and the previous keyframe timestep t − 1, denoted as V(t) 
+
+> α
+
+and V(t−1)  
+
+> α
+
+, we define the cost matrix C such that each element ci j = pi − p j 2 represents the Euclidean dis-tance between the object centroids pi, p j of the two vertices. 
+
+An is the Boolean assignment matrix indicating object vertex matches between two sets with elements ai j ∈ { 0, 1}. If ai j = 1and the cost ci j < cmax , then the ith vertex vi ∈ V(t) 
+
+> α
+
+and jth 
+
+vertex v j ∈ V(t−1)  
+
+> α
+
+are matched. cmax represents the maximum allowable distance for two object candidates across keyframes to be identified as the same object. Objects are allowed to re-main unmatched to accommodate newly observed objects and objects that are no longer tracked. We use the Hungarian Algo-rithm [33] to solve this LAP. One benefit of using a hierarchi-cal graph structure is the convenience of propagating updates across layers. The bottom part of Fig. 4 illustrates the con-nections between keyframes and objects. While a loop closure happens and the keyframe poses are adjusted, object positions are also sequentially updated based on the latest keyframe that observes each object. 
+
+4.2. Scene Graph Matching with Object Data 
+
+In the scene graph matching step, we present the object data as graphs and match them with graph matching. Dur-ing scene graph matching, object data is used to construct a 4Figure 5: An example illustrating edge-wise matching between two graphs. Edge lengths represent weights, and node colors (green and blue) indicate vertex types. 
+
+fully-connected undirected graph. We use only selected ob-ject classes for matching since the estimated centroids of larger objects could vary significantly when observed from di ff erent viewpoints. We define the object as a vertex vi with attribute 
+
+ϕ(vi) = (pi, li), where pi denotes the centroid of the object and 
+
+li denotes its semantic label. The edge ei j connects vertices vi
+
+and v j, with weight wi j = pi − p j 2 being the Euclidean dis-tance between the centroids of two objects. Define the graph of the local robot α as Gα = ⟨Vα, Eα⟩, where 
+
+Vα = {vi} denotes the set of vertices and Eα = {ei j } denotes the set of edges connecting them. The graph constructed us-ing object data received from a neighbor robot β is denoted as 
+
+Gβ = ⟨Vβ, Eβ⟩. This graph matching problem can be viewed as a maximum bipartite matching problem. Since each robot has its own local world frame, we cannot directly use Euclidean dis-tances between object centroids for graph matching, as is done in the intra-robot case (Sec. 4.A) when constructing the object layer. Instead, we adopt a similar technique used in Semanti-cLoop [25], and formulate the problem as a Quadratic Assign-ment Problem (QAP): 
+
+A∗ 
+
+> e
+
+= arg max 
+
+> Ae
+
+X
+
+Ae ⊙ U ⊙ Ae (5) 
+
+= arg max 
+
+> Ae
+
+X 
+
+> vi,vj∈Vα
+
+X
+
+> vm,vn∈Vβ
+
+aim · ui jmn · a jn ; (6) s.t. ∀vi ∈ Vα,
+
+X
+
+> vm∈Vβ
+
+aim ≤ 1; 
+
+∀vm ∈ Vβ,
+
+X
+
+> vi∈Vα
+
+aim ≤ 1. (7) Here Ae is the Boolean assignment matrix where each element 
+
+aim ∈ { 0, 1} indicates the matching status of vertices vi ∈ Vα
+
+and vm ∈ Vβ. aim = 1 means vi and vm are matched. ui jmn is an element of the 4D utility tensor U, measuring the similarity between edge ei j from Gα and edge emn from Gβ:
+
+ui jmn = dv(vi, vm) · dv(v j, vn) · de(ei j , emn ). (8) The function dv(·) represents the vertex-wise comparison. In our case, we compare only the labels of two objects to avoid confusion caused by partially observed large objects. If two objects have the same label, we set dv(·) = 1; otherwise, 
+
+dv(·) = 0. The edge-wise comparison is defined as de(ei j , emn ) =
+
+exp( −μ|wi j −wmn |), where wi j is the weight of edge ei j and μ is a scaling factor. Fig. 5 showcases a simple example of edge-wise matching with μ = 1. In this figure, the edge lengths represent the actual weights of the graph. Consequently, de(w13 , wbd ), 
+
+de(w12 , wbc ) and de(w23 , wcd ) are significantly higher than the 
+
+de(·) values of other matches. However, since vertex b and ver-tex 1 are of di ff erent types, dv(vb, v1) = 0, resulting in only e23 
+
+and ecd being matched. We then vectorize the assignment matrix as vec( Ae), and re-shape U into a 2D matrix U2D , allowing for the rewriting of Eq. (5): 
+
+A∗ 
+
+> e
+
+= arg max 
+
+> Ae
+
+vec( Ae)⊤ · U2D · vec( Ae). (9) In Eq. (5), ai j is originally constrained to be Boolean. However, to make the problem more tractable, we relax this constraint by allowing ai j ∈ [0 , 1]. As proved by Leordeanu et al. [34], the solution, A∗
+
+> e
+
+, is then given by the positive eigenvector of U2D 
+
+corresponding to its principal eigenvalue. Finally, the vertex-wise matching of the objects can once again be formulated as an LAP similar to Eq. (2), with cost matrix C = −A∗
+
+> e
+
+. Additionally, a minimum allowable eigenvector value is introduced to prevent mismatches during the assignment. 
+
+4.3. Transformation Estimation 
+
+The transformation estimation module provides an initial guess for inter-robot point-cloud registration. Let the matched vertex pairs from local graph Gα and neighbor graph Gβ be de-noted by Aα,β . Our goal is to estimate the relative robot frame transformation TWα→Wβ using this matched pair set alone. For each matched object pair ∀⟨ vα, vβ⟩ ∈ Aα,β , pα and pβ represent the object centroids of the corresponding vertices. The trans-formation relationship between these points can be expressed as: [pα
+
+1 ] = TWα→Wβ [pβ
+
+1 ]. (10) 5As long as we have more than 3 non-collinear objects, we can estimate TWα→Wβ using a rigid body transformation. To avoid potential tilting due to odometry drift and ensure robustness, we assume that all objects lie on a plane, allowing us to reduce the problem to a 2D rigid body transformation estimation. 
+
+4.4. Inter-robot Point-Cloud Registration 
+
+The robot frame transformation estimate TWα→Wβ is used as the coarse initial transformation guess for inter-robot point-cloud registration. We then refine the result by performing It-erative Closest Point (ICP) registration using the sparse object cloud associated with the matched objects. In the scene graph, each object node v is connected to a set of keyframes (point clouds), Fv = {F(i)} in which the cor-responding object is observed. For each matched object pair 
+
+⟨vα, vβ⟩, point-cloud registration is performed as follows. The target point cloud for registration is constructed by aggregat-ing all keyframes associated with the object from local scene graph: Mvα = Si Fvα (i). Each Fvβ ( j) ∈ Fvβ is processed us-ing a sliding-window approach to construct a source cloud, 
+
+Mvβ = ∪5 
+
+> k=−5
+
+Fvβ ( j + k). This source cloud Mvβ is then trans-formed into local world frame Wα using the transformation 
+
+TWα→Wβ . Point cloud registration between each source cloud and the target cloud is performed using ICP, and the resulting inter-robot loop closures are added into the SLAM factor graph to improve local robot state estimation. To ensure computa-tional e ffi ciency, each keyframe from the neighboring robot is registered with only one local keyframe. 
+
+4.5. Communication Between Robots 
+
+The robots continuously share the object data with neighbor-ing robots. Only the object ID, type and centroid position are shared with the neighbors at a relatively high frequency. After receiving object data from a neighbor, the robot stores it and compares it with its local object data. If a su ffi cient number of matched objects are detected, the robot sends a service re-quest to the corresponding neighbor for the sparse object point cloud and the associated keyframe IDs of the matched objects. Then, the local robot checks the neighbor’s keyframe database, and sends a service request for the compressed point cloud, op-timized robot state estimate, and marginalized covariances of any keyframes it needs but has not yet stored. To optimize com-munication bandwidth, the shared point cloud includes only geometric information (pose); intensity and color data are not transmitted between neighbors. The point cloud is compressed using the Point Cloud Library (PCL) [35]. Upon receiving the request, the neighbor robot searches its dataset and sends the required data. This data-e ffi cient message-passing strategy ensures that the latest lightweight object data is continuously shared, while the bandwidth-intensive compressed point cloud is transmitted only when required. 
+
+5. Experiments 
+
+We evaluate the performance of our proposed scene graph matching with object data algorithm using both simulation and         
+
+> Figure 6: Our data-gathering platform consists of aUnitree quadrupedal robot with sensors mounted on the top.
+
+real-world datasets. The simulation dataset is used to test the algorithm’s capability in performing su ffi cient graph matching and transformation estimation. The real-world datasets in this paper were collected using a heterogeneous multi-robot setup, which includes a handheld device and a Unitree Go2 EDU, as shown in Fig. 6. Both platforms are equipped with a Livox mid-360 LiDAR, an inertial sensor, and an Intel RealSense Depth Camera. We note that only the RGB image from this sensor is utlized in our work. Furthermore, the onboard sensors of the Unitree quadrupedal robot are not utilized in this work; instead, the same handheld device is attached to the quadrupedal robot for data collection. We collected this dataset specifically because existing multi-robot SLAM datasets [36, 37, 38] use a Velodyne VLP-16 Li-DAR, which produces sparse, layered point clouds within a fixed vertical field of view. The low vertical resolution and the large inter-layer gaps make it di ffi cult to directly apply the clustering-based algorithm we used for object detection on the denser Livox point-cloud. The data sequences are collected in a suburban campus environment. Due to limitations in equipment availability, we collected sequences for each robot individually as ROS2 bag files and later synchronized them o ffl ine by play-ing them simultaneously. The entire system is implemented us-ing Robot Operating System (ROS) 2 Foxy on Ubuntu 20.04. The GPU is utilized only for image segmentation. 
+
+5.1. Evaluation of Object Matching on Synthetic Data 
+
+To quantitatively evaluate the robustness of the scene graph-based transformation estimation module, we create a 60m ×60m environment containing 50 objects, each assigned a label from 6 distinct classes, along with randomly generated poses and di-mensions. This experiment simulates a hypothetical matching between robots, which can be extended to any n-robot scenario. Tab. 1 and 2 show the success rate of transformation estimation under various conditions. Each experiment is repeated 20 times, with random initial transformations applied to both graphs for consistent results. The transformation estimation is considered successful if the translation error et < 2m, and the rotation error 
+
+er < 20 ◦ on each axis. The recall represents the aggregate re-call over all object matching results. In both tables, the “NoErr" column indicates when the true object pose is used for graph 6Figure 7: An example illustrating a successful transformation esti-mation despite the presence of both position and semantic label er-rors. Objects in G1 are marked with red cuboids, and objects in G2           
+
+> are marked with blue cuboids. The objects in G2are transformed into the local coordinate system of G1using the transformation estimation result. A table in G1is misclassified as a sofa (highlighted by the black rectangle), yet the transformation estimation remains correct and serves as a su ffi cient initial guess. Table 1: Success Rate of transformation estimation and recall of ob-ject matching for di ff erent graph sizes and overlap levels, without se-mantic label errors.
+
+Objects Success (%) Recall (%) Time 
+
+G1 G2 Overlap NoErr Err NoErr Err (ms) 8 8 4 100 65 100 100 715 15 7 100 100 100 100 14 35 32 17 100 100 100 100 226 matching and transformation estimation, whereas the “Err" col-umn corresponds to the case where the object pose includes ran-dom errors following a uniform distribution: ±1m on the x- and y-axes, ±0.5m on the z-axis, ±2.5◦ for roll and pitch, and ±10 ◦
+
+for yaw. While the runtime increases as the graph size grows, the proposed algorithm maintains real-time performance. Tab. 1 presents the success rate and recall for di ff erent graph sizes. Object count denotes the number of objects in each object graph, while overlap refers to the number of overlapping objects between two graphs. Our algorithm succeeds in all cases when no pose error is introduced. When pose error is present, it still achieves a relatively high success rate given a su ffi cient number of objects in the graph. However, the success rate is signifi-cantly lower in the 4-object overlap case, which is challenging due to the limited number of correct matches for transformation estimation. Tab. 2 presents the success rate and recall when incorrect se-mantic classification is also considered. In all cases shown in Tab. 2, G1 contains 35 objects, and G2 contains 32 objects, with an overlap of 17 objects. Fig. 7 illustrates a scenario where both pose and semantic errors are present, yet the proposed al-gorithm successfully handles the matching. 
+
+5.2. SLAM Results over Real-World Data 
+
+We compared our SGM-SLAM pipeline with a state-of-the-art LiDAR SLAM method on our self-gathered datasets. Due to equipment limitations, GPS was not available for either the     
+
+> Table 2: Success Rate of transformation estimation and recall of ob-ject matching with di ff erent semantic label errors.
+
+Mislabel Success (%) Recall (%) Time 
+
+NoErr Err NoErr Err (ms) 3 100 100 82 82 209 6 100 100 63 59 188 9 95 95 46 46 183 12 55 30 29 27 178 indoor or outdoor dataset. Instead, we used Structure from Motion (SfM) from COLMAP [39] as the ground truth, since it is a global method that optimizes observations across all images and performs inter-image registration globally. The SfM results ensure accurate inter-robot relative pose estimation, which is crucial for evaluating multi-robot SLAM algorithms. Swarm-SLAM is selected for comparison as it is a ROS2-based distributed method that supports both camera and LiDAR in-puts. Its odometry is derived from LiDAR scans using RTAB-Map [40]. Tab. 3 shows the Root Mean Square Error (RMSE) of the Absolute Trajectory Error (ATE) between our SLAM and SfM results, while Fig. 8 provides a qualitative comparison. “Swarm-SC" denotes the use of the LiDAR descriptor Scan Context [41] for inter-robot data association, while “Swarm-CP" denotes the use of the image descriptor CosPlace [42]. We collected two datasets in the suburban campus environ-ment. The outdoor dataset consists of two robots covering a larger area and contains sparse and repeated human-made ob-jects like chairs and benches, with some of the scenes occluded by trees, while the indoor dataset involves three robots cover-ing a relatively small area with a large number of repeated and occluded objects like chairs, tables and bookshelves. We use COLMAP to reconstruct only feature-rich areas, en-suring a precise reconstruction result as ground truth. The main challenge in the outdoor dataset is the low overlap ratio between trajectories, requiring robust inter-robot data association. The indoor dataset, on the other hand, is a ff ected by dim lighting conditions. Additionally, both datasets contain repeated feature patterns from objects such as chairs, benches, and tables. To align the trajectories and evaluate error, we use EVO 1. Since EVO is designed for single-robot usage, we combine the trajec-tories collected by di ff erent robots into a single file and evalu-ate the results as a whole trajectory. The merged result based on scene graph matching from the outdoor dataset is shown in Fig. 1, while the result from the indoor dataset is shown in Fig. 10. Swarm-SC performs poorly on the outdoor dataset be-cause the two trajectories share only a small portion of over-lap, whereas Scan-Context is e ff ective primarily when there is a large enough viewpoint overlap. Swarm-CP does not perform well in the indoor environment due to dim lighting and the dif-ference in viewpoint height between the human operator and the robot platform. However, because our object-based scene graph matching strategy treats the entire object graph as a sin-
+
+> 1https: // github.com /MichaelGrupp /evo
+
+7Figure 8: SLAM trajectories from multiple robots aligned with pose estimates from COLMAP sparse reconstruction, shown for our out-door (left) and indoor (right) datasets. 
+
+gle entity, it is more robust to viewpoint changes and limited trajectory overlap. 
+
+5.3. Communication Analysis 
+
+We next analyze the size and number of perception messages exchanged in our real-world datasets using simulated wireless communication. We summarize the size of perception mes-sages for the proposed method in Tab. 4. The “Point-cloud Raw” baseline we compared against refers to a brute-force cen-tralized strategy, where all raw point clouds are transmitted to a centralized server. To further reduce the communication overhead of our framework, only limited object information is shared, which includes the object ID, centroid position, dimen-sions and semantic label. Object data is only exchanged when there is a significant update to the scene graph, such as when a new object is added or a large odometry drift is corrected. This strategy enables us to publish the object data at a much lower frequency compared to the LiDAR sensor frequency. Once a relative graph transformation estimation is computed, the relevant keyframes are requested from the robot neighbors. A keyframe is only sent after the requesting robot confirms it  
+
+> Figure 9: Top-down view of the merged result from the two-robot dataset collected in an outdoor area of the campus.
+> Figure 10: The merged result from the three-robot dataset collected in an indoor area of the campus environment.
+
+8Table 3: Absolute Trajectory Error (ATE) [m] for the proposed method compared to state-of-the-art methods. 
+
+Environment Swarm-SC Swarm-CP Ours 
+
+Outdoor 20.29 3.92 1.32 
+
+Indoor 3.36 5.70 0.81   
+
+> Table 4: Perception message sizes [KB] for the proposed method. “No.” denotes the number of messages during a dataset run.
+
+Message Type Env. Mean Max No. 
+
+Point-cloud Raw Outdoor 508.2 516.9 3073 Indoor 508.1 512.1 3079 Object Data Outdoor 7.76 16.93 701 Indoor 18.40 44.37 845 Keyframe Request Outdoor 0.02 0.02 61 Indoor 0.02 0.02 411 Keyframe Response Outdoor 18.87 22.95 10 Indoor 6.90 11.05 72 has not been sent previously. The point cloud keyframe mes-sage is compressed using PCL [35] to minimize its size. During the experiments, we observed that keyframe requests were sent at a much higher frequency than the keyframe responses. This occurred mainly because, once two scene graphs are matched, a burst of similar requests are sent to the neighbor, causing the oldest requests to be dropped. Further optimization, such as implementing a delayed request strategy, may be needed to im-prove performance further. 
+
+6. Conclusion 
+
+In this paper, we propose SGM-SLAM, a data-e ffi cient dis-tributed SLAM method using limited object data scene graph matching. We extract geometric and semantic information from LiDAR and camera data, and construct a multi-level scene graph collaboratively with the multi-robot team. The intro-duction of object-level graph matching improves the general-ity, robustness, and communication e ffi ciency of our distributed SLAM system in both indoor and outdoor environments. In fu-ture work, we aim to integrate the proposed system with LLM-based motion planning, creating a fully functional pipeline for human-robot interaction with multi-robot teams. 
+
+Acknowledgments References 
+
+[1] T. Shan, B. Englot, C. Ratti, D. Rus, LVI-SAM: Tightly-coupled lidar-visual-inertial odometry via smoothing and mapping, IEEE International Conference on Robotics and Automation (ICRA) (2021) 5692–5698. [2] D. He, W. Xu, N. Chen, F. Kong, C. Yuan, F. Zhang, Point-LIO: Robust high-bandwidth light detection and rang-ing inertial odometry, Advanced Intelligent Systems 5 (7) (2023) 2200459. [3] K. Ebadi, Y. Chang, M. Palieri, A. Stephens, A. Hatteland, E. Heiden, A. Thakur, N. Funabiki, B. Morrell, S. Wood, et al., LAMP: Large-scale autonomous mapping and po-sitioning for exploration of perceptually-degraded subter-ranean environments, IEEE International Conference on Robotics and Automation (ICRA) (2020) 80–86. [4] Y. Chang, N. Hughes, A. Ray, L. Carlone, Hydra-multi: Collaborative online construction of 3d scene graphs with multi-robot teams, IEEE /RSJ International Conference on Intelligent Robots and Systems (IROS) (2023) 10995– 11002. [5] R. Dube, A. Cramariuc, D. Dugas, H. Sommer, M. Dym-czyk, J. Nieto, R. Siegwart, C. Cadena, SegMap: Segment-based mapping and localization using data-driven descriptors, The International Journal of Robotics Research 39 (2-3) (2020) 339–355. [6] S. L. Bowman, N. Atanasov, K. Daniilidis, G. J. Pappas, Probabilistic data association for semantic slam, IEEE in-ternational conference on robotics and automation (ICRA) (2017) 1722–1729. [7] H. Li, G. Zhu, L. Zhang, Y. Jiang, Y. Dang, H. Hou, P. Shen, X. Zhao, S. A. A. Shah, M. Bennamoun, Scene graph generation: A comprehensive survey, Neurocom-puting 566 (2024) 127052. [8] M. Fernandez-Cortizas, H. Bavle, D. Perez-Saura, J. L. Sanchez-Lopez, P. Campoy, H. Voos, Multi S-graphs: an e ffi cient distributed semantic-relational collaborative SLAM, IEEE Robotics and Automation Letters (2024). [9] Q. Gu, Z. Ye, J. Yu, J. Tang, T. Yi, Y. Dong, J. Wang, J. Cui, X. Chen, Y. Wang, MR-COGraphs: Communication-e ffi cient Multi-Robot Open-vocabulary Mapping System via 3D Scene Graphs, IEEE Robotics and Automation Letters (2025). [10] E. Greve, M. Büchner, N. Vödisch, W. Burgard, A. Val-ada, Collaborative dynamic 3d scene graphs for au-tomated driving, IEEE International Conference on Robotics and Automation (ICRA) (2024) 11118–11124. [11] T. Steinke, M. Büchner, N. Vödisch, A. Valada, Collaborative Dynamic 3D Scene Graphs for Open-Vocabulary Urban Scene Understanding, arXiv preprint arXiv:2503.08474 (2025). [12] P.-Y. Lajoie, G. Beltrame, Swarm-slam: Sparse decentral-ized collaborative simultaneous localization and mapping framework for multi-robot systems, IEEE Robotics and Automation Letters 9 (1) (2023). 9[13] X. S. Zhou, S. I. Roumeliotis, Multi-robot SLAM with un-known initial correspondence: The robot rendezvous case, IEEE /RSJ international conference on intelligent robots and systems (2006). [14] S. Zhong, H. Chen, Y. Qi, D. Feng, Z. Chen, J. Wu, W. Wen, M. Liu, Colrio: Lidar-ranging-inertial central-ized state estimation for robotic swarms, IEEE Interna-tional Conference on Robotics and Automation (ICRA) (2024) 3920–3926. [15] R. Dubé, A. Gawel, H. Sommer, J. Nieto, R. Siegwart, C. Cadena, An online multi-robot SLAM system for 3D LiDARs, IEEE /RSJ International Conference on Intelli-gent Robots and Systems (IROS) (2017). [16] H. Dong, J. Yu, Y. Xu, Z. Xu, Z. Shen, J. Tang, Y. Shen, Y. Wang, MR-GMMapping: Communication e ffi cient multi-robot mapping system via Gaussian mixture model, IEEE Robotics and Automation Letters 7 (2) (2022) 3294–3301. [17] J. Johnson, R. Krishna, M. Stark, L.-J. Li, D. Shamma, M. Bernstein, L. Fei-Fei, Image retrieval using scene graphs, Proceedings of the IEEE conference on computer vision and pattern recognition (2015) 3668–3678. [18] A. Rosinol, A. Violette, M. Abate, N. Hughes, Y. Chang, J. Shi, A. Gupta, L. Carlone, Kimera: From SLAM to spa-tial perception with 3D dynamic scene graphs, The Inter-national Journal of Robotics Research 40 (12-14) (2021) 1510–1546. [19] I. Armeni, Z.-Y. He, J. Gwak, A. R. Zamir, M. Fischer, J. Malik, S. Savarese, 3d scene graph: A structure for uni-fied semantics, 3d space, and camera, Proceedings of the IEEE /CVF international conference on computer vision (2019) 5664–5673. [20] N. Hughes, Y. Chang, S. Hu, R. Talak, R. Abdulhai, J. Strader, L. Carlone, Foundations of spatial perception for robotics: Hierarchical representations and real-time systems, The International Journal of Robotics Research 43 (10) (2024) 1457–1505. [21] Y. Tian, Y. Chang, F. H. Arias, C. Nieto-Granda, J. P. How, L. Carlone, Kimera-multi: Robust, distributed, dense metric-semantic slam for multi-robot systems, IEEE Transactions on Robotics 38 (4) (2022). [22] A. Radwan, A. Tourani, H. Bavle, H. Voos, J. L. Sanchez-Lopez, UAV-assisted Visual SLAM Generating Recon-structed 3D Scene Graphs in GPS-denied Environments, International Conference on Unmanned Aircraft Systems (ICUAS) (2024) 1109–1116. [23] Y. Deng, J. Wang, J. Zhao, X. Tian, G. Chen, Y. Yang, Y. Yue, Opengraph: Open-vocabulary hierarchical 3d graph representation in large-scale outdoor environments, IEEE Robotics and Automation Letters (2024). [24] C. Qin, Y. Zhang, Y. Liu, G. Lv, Semantic loop closure de-tection based on graph matching in multi-objects scenes, Journal of Visual Communication and Image Representa-tion 76 (2021) 103072. [25] J. Yu, S. Shen, SemanticLoop: loop closure with 3D se-mantic graph matching, IEEE Robotics and Automation Letters 8 (2) (2022) 568–575. [26] X. Ji, P. Liu, H. Niu, X. Chen, R. Ying, F. Wen, Loop closure detection based on object-level spatial layout and semantic consistency, arXiv preprint arXiv:2304.05146 (2023). [27] S. Lin, J. Wang, M. Xu, H. Zhao, Z. Chen, Topology aware object-level semantic mapping towards more robust loop closure, IEEE Robotics and Automation Letters 6 (4) (2021) 7041–7048. [28] Z. Cao, Q. Zhang, J. Guang, S. Wu, Z. Hu, J. Liu, Se-manticTopoLoop: Semantic Loop Closure With 3D Topo-logical Graph Based on Quadric-Level Object Map, IEEE Robotics and Automation Letters 9 (5) (2024) 4257–4264. [29] F. Dellaert, M. Kaess, Factor Graphs for Robot Percep-tion, Foundations and Trends in Robotics, Vol. 6 (2017). [30] M. Kaess, H. Johannsson, R. Roberts, V. Ila, J. Leonard, F. Dellaert, iSAM2: Incremental smoothing and map-ping with fluid relinearization and incremental variable reordering, International Conference on Robotics and Au-tomation (2011) 3281–3288. [31] T. Shan, B. Englot, D. Meyers, W. Wang, C. Ratti, D. Rus, LIO-SAM: Tightly-coupled lidar inertial odometry via smoothing and mapping, IEEE /RSJ International Confer-ence on Intelligent Robots and Systems (IROS) (2020) 5135–5142. [32] J. Jain, J. Li, M. Chiu, A. Hassani, N. Orlov, H. Shi, One-Former: One Transformer to Rule Universal Image Seg-mentation, CVPR (2023). [33] H. W. Kuhn, The Hungarian method for the assignment problem, Naval research logistics quarterly 2 (1-2) (1955) 83–97. [34] M. Leordeanu, M. Hebert, A spectral technique for cor-respondence problems using pairwise constraints, IEEE International Conference on Computer Vision (ICCV) 2 (2005) 1482–1489. [35] Radu Bogdan Rusu and Steve Cousins, 3D is here: Point Cloud Library (PCL), IEEE International Conference on Robotics and Automation (ICRA) (2011). [36] Y. Zhu, Y. Kong, Y. Jie, S. Xu, H. Cheng, Graco: A multi-modal dataset for ground and aerial cooperative localiza-tion and mapping, IEEE Robotics and Automation Letters 8 (2) (2023) 966–973. 10 [37] Y. Tian, Y. Chang, L. Quang, A. Schang, C. Nieto-Granda, J. P. How, L. Carlone, Resilient and distributed multi-robot visual slam: Datasets, experiments, and lessons learned, IEEE /RSJ International Conference on Intelli-gent Robots and Systems (IROS) (2023) 11027–11034. [38] D. Feng, Y. Qi, S. Zhong, Z. Chen, Q. Chen, H. Chen, J. Wu, J. Ma, S3E: A Multi-Robot Multimodal Dataset for Collaborative SLAM, IEEE Robotics and Automation Letters (2024). [39] J. L. Schonberger, J.-M. Frahm, Structure-from-motion revisited, Proceedings of the IEEE conference on com-puter vision and pattern recognition (2016) 4104–4113. [40] M. Labbé, F. Michaud, RTAB-Map as an open-source li-dar and visual simultaneous localization and mapping li-brary for large-scale and long-term online operation, Jour-nal of field robotics 36 (2) (2019) 416–446. [41] G. Kim, A. Kim, Scan context: Egocentric spatial de-scriptor for place recognition within 3d point cloud map, IEEE /RSJ International Conference on Intelligent Robots and Systems (IROS) (2018) 4802–4809. [42] G. Berton, C. Masone, B. Caputo, Rethinking Visual Geo-Localization for Large-Scale Applications, Proceedings of the IEEE /CVF Conference on Computer Vision and Pat-tern Recognition (CVPR) (2022) 4878–4888. 
+
+Yewei Huang received her master’s degree in surveying engineering and a bachelor’s degree in Geo-Information Systems, both from Tongji University in Shanghai, China in 2016 and 2019, re-spectively. She received her Ph.D. in Me-chanical Engineering from Stevens Insti-tute of Technology, Hoboken, NJ, USA in 2025. She is now a Postdoctoral Associate in the Reality and Robotics Lab, Department of Computer Science at Dart-mouth College, advised by Alberto Quattrini Li. Her research focuses on autonomous decision-making and perception for robots, with a particular emphasis on underwater and coastal environments. 
+
+Tixiao Shan received a Bachelor of Science in Mechanical Engineering and Automation from Qingdao University, Qingdao, China, in 2011, a Master’s De-gree in Mechatronic Engineering from Shanghai University, Shanghai, China, in 2014, and a Ph.D. in Mechanical Engi-neering from Stevens Institute of Tech-nology, Hoboken, NJ, USA, in 2019. He was a Postdoctoral Associate at the Massachusetts Insti-tute of Technology, Cambridge, MA, USA. He is currently a Advanced Computer Scientist with Center for Vision Technolo-gies, SRI International, Princeton, NJ, USA. 
+
+Abhinav Rajvanshi received a Bach-elor of Technology in Mechanical Engi-neering from IIT Roorkee, Uttarakhand, India in 2015 and a Master of Science in Robotics from University of Pennsylva-nia, PA, USA in 2017. He is currently an Advanced Computer Scientist at SRI International, Princeton, NJ, USA where he works with Center for Vision Tech-nologies (CVT) lab. 
+
+Niluthpol Chowdhury Mithun re-ceived his B.S. and M.S. degrees in Elec-trical Engineering from the Bangladesh University of Engineering and Technol-ogy in 2011 and 2014, respectively, and his Ph.D. degree in Electrical and Com-puter Engineering from the University of California, Riverside, CA, USA. He is currently a Senior Computer Scientist at the Center for Vision Technologies, SRI International, NJ, USA. 
+
+Yaxuan Li received a Bachelor of Engineering in Mechanical Engineering from Qiushi Honors College in Tianjin University, China, in 2020, and a Master of Science in Robotics from New York University, NY, USA, in 2023. He is cur-rently a Ph.D. student in the Department of Mechanical Engineering, Stevens In-stitute of Technology, NJ, USA. 11 Brendan Englot received S.B., S.M., and Ph.D. degrees in Mechanical Engi-neering from Massachusetts Institute of Technology, Cambridge, MA, USA, in 2007, 2009, and 2012, respectively. He was a research scientist with United Technologies Research Center, East Hartford, CT, USA, from 2012 to 2014. He is currently the Anson Wood Burchard Endowed Pro-fessor, and Director of the Stevens Institute for Artificial In-telligence (SIAI) at Stevens Institute of Technology, Hoboken, NJ, USA. His research interests include motion planning, lo-calization, and mapping for mobile robots, learning-aided au-tonomous navigation, and marine robotics. He is the recipient of a 2017 National Science Foundation CAREER award and a 2020 ONR Young Investigator Award. 
+
+Han-Pang Chiu received B.B.A. and M.B.A degrees in management informa-tion systems from National Taiwan Uni-versity, Taiwan, in 1999 and 2001, re-spectively, and a PhD degree in computer science from Massachusetts Institute of Technology, Cambridge, MA, USA, in 2009. He is currently a Technical Di-rector with Center for Vision Technolo-gies, SRI International, Princeton, NJ, USA. His research in-terests include multi-modal scene understanding, large-scale geo-spatial reasoning, and grounding foundation models for au-tonomous navigation and human-robot collaboration. 12

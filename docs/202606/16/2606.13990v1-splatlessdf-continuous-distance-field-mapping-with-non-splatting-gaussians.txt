@@ -1,0 +1,345 @@
+Title: SplatlessDF: Continuous Distance Field Mapping with Non-Splatting Gaussians
+
+URL Source: https://arxiv.org/pdf/2606.13990v1
+
+Published Time: Mon, 15 Jun 2026 00:24:21 GMT
+
+Number of Pages: 16
+
+Markdown Content:
+# SplatlessDF: Continuous Distance Field Mapping with Non-Splatting Gaussians 
+
+Monisha Mushtary Uttsha 1, Lan Wu 2, and Teresa Vidal-Calleja 1 
+
+> 1
+
+UTS Robotics Institute, Faculty of Engineering and IT, University of Technology Sydney, Sydney, NSW 2007, Australia 
+
+monishamushtary.uttsha@student.uts.edu.au  
+
+> 2
+
+School of Engineering, University of Western Australia, Perth, WA 6009, Australia 
+
+Abstract. Recent Gaussian splatting (GS) methods have shown that scenes can be represented efficiently with optimisable Gaussians for high-quality reconstruction and rendering. In this paper, building on this prin-ciple, we introduce SplatlessDF , a continuous distance field (DF) map-ping framework that uses anisotropic Gaussian elements from a spatial rather than photometric perspective. SplatlessDF directly parameterises the Gaussians and optimises to recover a differentiable DF, enabling dis-tances and gradients to be queried in the spatial domain for downstream robotic tasks such as navigation. Furthermore, SplatlessDF can be cou-pled with 2D Gaussian splatting (2DGS), providing a unified framework based solely on Gaussian primitives that can learn continuous DF and surface models and supports photometric rendering. We consider two settings: a standalone DF-only formulation and a joint DF–rendering formulation coupled with 2DGS. Experiments show that the standalone formulation provides efficient and accurate distance and gradient queries, while the joint formulation improves rendering geometry and simultane-ously models a continuous DF. These results highlight the potential of GS-style representations not only for surface modelling and rendering but also for mapping representations suited to robotic navigation. 
+
+Keywords: distance field mapping, Gaussian distance fields, Gaussian splatting, robot perception, robot navigation 
+
+## 1 Introduction 
+
+Robotic perception requires scene representations that support downstream geo-metric reasoning in addition to scene reconstruction and visual realism. In many robotic tasks, a useful map must provide quantities such as distance-to-surface, collision costs, and free-space structure in a form that can be queried efficiently for control, planning and navigation. Classical representations such as occupancy grids, signed distance fields (SDFs), and Euclidean distance transforms therefore remain central to robotics, as they expose explicit spatial structure required for reliable geometric reasoning. Recent advances in Gaussian splatting (GS) have established Gaussian-based representations as an efficient and flexible paradigm for scene reconstruction and  
+
+> arXiv:2606.13990v1 [cs.RO] 12 Jun 2026 2M. Uttsha et al.
+
+novel-view synthesis. In particular, 3D Gaussian splatting (3DGS) achieves high-fidelity rendering and real-time view synthesis by optimising anisotropic Gaus-sians directly in 3D space, avoiding the costly volumetric sampling used in neu-ral radiance fields [4]. Subsequent extensions have introduced stronger geomet-ric structure through surfel-like formulations, depth and normal regularisation, and secondary distance field (DF) representations. For example, 2D Gaussian splatting (2DGS) constrains Gaussian primitives to oriented disks to improve geometric consistency [3], while recent hybrid methods such as GS-Octree [6], SuGaR [2], 3DGSR [9], GS-SDF [7], and PINGS [13] combine Gaussian-based rendering with additional geometric representations to improve reconstruction, regularisation, or surface extraction. However, a key gap remains between continuous DF methods and GS-based rendering methods. Existing approaches that recover continuous DFs typically rely on neural implicit [1,12] or voxel-based [11,17] formulations, where the field is learned or constructed independently of a GS-inspired representation. Some of these methods, such as Voxblox [11] and VDB-GPDF [17], can provide geo-metric maps and coloured surface reconstructions, but they are not designed for photometric rendering or novel-view synthesis in the way GS methods are. Con-versely, recent hybrid methods such as PINGS [13] and GS-SDF [7] demonstrate that DFs and Gaussian-based rendering can be optimised jointly, yet their DFs are not parameterised directly by Gaussians. As a result, the representational role of Gaussians remains primarily tied to rendering, rather than to the DF. In this paper, we address this gap by placing the DF at the centre of the representation. We propose SplatlessDF , a continuous DF parameterised directly by anisotropic Gaussian primitives. Rather than using Gaussians as carriers of radiance or opacity, we treat them as continuous geometric elements whose aggregation defines a scalar DF over Euclidean space. Although this follows the Gaussian-based modelling paradigm of GS, the Gaussians are not splatted or rasterised on an image plane. Instead, because a DF is evaluated directly at spatial coordinates, the formulation applies naturally to both 2D and 3D spatial domains. The model is trained using distance supervision derived from a point cloud and produces an accurate, continuously queryable DF suitable for downstream robot navigation. We develop this idea in two formulations. The first is a standalone formu-lation , where SplatlessDF is optimised independently as a DF-only map. This formulation targets the core robotic settings in which the required output is a continuous DF that can be queried for distances and gradients. The second is a joint formulation , where the proposed DF model is coupled with 2DGS [3], a Gaussian-based image renderer. In this case, 2DGS maintains its own separate set of Gaussian primitives, distinct in both parameters and purpose from those of the DF. The two representations are therefore not merged into a single Gaus-sian set; instead, each is optimised with its own task-specific objective, while geometric-consistency losses couple the DF and rendering representations. This joint formulation results in a framework with access to a continuous DF rep-SplatlessDF: Distance Field with Non-Splatting Gaussians 3
+
+resentation for robotic applications, as well as improved rendering capabilities compared to the base 2DGS model. Overall, SplatlessDF provides a Gaussian-primitive formulation for accurate continuous DFs in both standalone and joint settings, supporting downstream navigation while additionally enabling image rendering in the joint formulation. 
+
+## 2 Related Work 
+
+2.1 Continuous Distance Fields for Robotics 
+
+Robotic DF maps are commonly constructed from occupancy or truncated signed distance field (TSDF) representations, with systems such as Voxblox [11] demon-strating their utility for online reconstruction and planning. Learned implicit methods instead parameterise the DF as a continuous function. DeepSDF [14] learns SDFs from sampled signed-distance supervision, while IGR [1] shows that such fields can be learned directly from raw point clouds through geometric reg-ularisation and surface constraints. More recent methods have broadened this landscape to both signed and unsigned settings, including iSDF [12] for on-line scene reconstruction, CAP-UDF [19] for unsigned distance learning, and HotSpot [15] for accurate signed distance optimisation. Gaussian process implicit surfaces (GPISs) provide probabilistic continuous DF representations. Bhoram et al. [5] perform online GPIS mapping with local GP updates from noisy observations. Wu et al. [16] optimise pseudo-input loca-tions for accurate Gaussian process-based distance fields (GPDFs), and VDB-GPDF [17] shows integration of GPDFs with OpenVDB [10], facilitating scalable online mapping. Unlike these neural and GP-based approaches, our method di-rectly parameterises the DF with optimisable Gaussian primitives, preserving continuous distance and gradient queries without neural implicit inference or GP kernel-matrix operations. 
+
+2.2 Geometry-Aware Gaussian Splatting and Distance Fields 
+
+GS represents radiance fields with anisotropic Gaussian primitives and enables efficient differentiable rendering [4]. Geometry-aware variants improve the sur-face structure of Gaussian representations: 2DGS uses oriented planar disks for better surface alignment, depth, and normal estimation [3], while surface-aligned methods improve mesh extraction and geometric consistency [2]. These methods improve rendering-oriented geometry, but do not directly provide a continuous DF for distance queries. GS-Octree [6] uses an octree-based implicit surface to guide Gaussian opti-misation. 3DGSR [9] and GaussianRoom [18] jointly optimise neural SDFs with Gaussian primitives, while GS-SDF [7] adds LiDAR-informed neural SDF con-straints for consistent rendering and reconstruction. PINGS [13] couples a DF and a GS radiance field within a point-based implicit neural map for LiDAR-visual SLAM. The methods typically represent DF by a neural, voxel-based, or 4 M. Uttsha et al. 
+
+point-based secondary model, while reserving Gaussian primitives primarily for rendering; in contrast, we directly use Gaussian primitives as the DF parame-terisation itself and further couple this field with Gaussian-based rendering. 
+
+## 3 Problem Setup and Background 
+
+3.1 Problem Setup 
+
+We seek a continuous geometric representation of a scene that supports continu-ous distance queries suitable for downstream robotic tasks such as planning and navigation. Let P = {pj }Nj=1 ⊂ Rd denote a registered point cloud of surface observations, with d ∈ { 2, 3}. We assume that P provides sufficient coverage of the observed scene geometry, and aim to learn a continuous Euclidean distance field (EDF) Dθ : Rd → R≥0 that maps any query point x ∈ Rd to its distance from the nearest surface. When image rendering capabilities are required, we additionally consider RGB observations I = {(Ik, Π k)}Kk=1 , where Ik denotes an image and Πk its associated camera pose. In this setting, the objective is to learn a continuous EDF while jointly optimising an image-rendering representation of the same scene to attain additional rendering capabilities. 
+
+3.2 Background: 2D Gaussian Splatting 
+
+We briefly review 2DGS [3], which is used later as the rendering backbone in our joint formulation. 2DGS represents a scene as a set of oriented planar Gaussian disks, or equivalently, 2D Gaussian surface primitives, embedded in 3D space. Let ψ denote the learnable parameters of this representation. For the i-th disk, these parameters include its centre ci(ψ) ∈ R3, two local tangent directions 
+
+t1,i (ψ), t 2,i (ψ) ∈ R3, in-plane scales s1,i (ψ), s 2,i (ψ), opacity αi(ψ), and view-dependent appearance coefficients. A local coordinate ( u, v ) on the disk is mapped to 3D by 
+
+pi(u, v ; ψ) = ci(ψ) + u s 1,i (ψ)t1,i (ψ) + v s 2,i (ψ)t2,i (ψ). (1) The contribution of each disk is weighted by a Gaussian kernel in this local tangent plane. Rendering is performed by intersecting each camera ray with the Gaussian disks, evaluating their local Gaussian weights, and compositing their colour contributions using front-to-back alpha blending. Compared with volu-metric 3DGS’s [4] Gaussians, the planar primitives of 2DGS are more closely aligned with surfaces and provide an explicit local surface parameterisation. Given RGB images I, the standard 2DGS objective combines photometric re-construction with its geometry-aware regularisation terms: 
+
+L2DGS (ψ) = Lphoto (ψ) + λdepth Ldepth (ψ) + λnorm Lnorm (ψ), (2) where Lphoto is the RGB reconstruction loss, while Ldepth and Lnorm denote the depth-distortion and normal-consistency regularisers. We retain this render-ing formulation unchanged and introduce additional coupling losses with the proposed Gaussian-based DF in Sec. 4.3. SplatlessDF: Distance Field with Non-Splatting Gaussians 5Gaussian Initialisation with Tree Merging            
+
+> Raw Tree Merged Tree with
+> Initial Gaussians
+> Gaussian DF Model Optimisation
+> Surface
+> Samples
+> Off-surface
+> samples
+> positive
+> x
+> Optimised Gaussian DF Model, Dθ(x)
+> Optimised Gaussians Predicted DF DF Model, Dθ(x)
+> Input
+> Point Cloud,
+> Gaussian Parameters, =
+> { Centre , Rotation , Scale 𝓁 ,
+> Weight , Bias }
+> Distance
+> Supervision
+> Loss,
+
+(a) Standalone Gaussian DF modelling pipeline. 
+
+(b) Joint optimisation pipeline of Gaussian DF and 2DGS. 
+
+Fig. 1: Overview of the proposed pipelines. 
+
+## 4 Methodology 
+
+4.1 Overview 
+
+This section describes the proposed SplatlessDF and its two formulations, illus-trated in Figure 1. In the standalone formulation of Figure 1(a), the input point cloud P is used to build a multi-resolution tree over the scene. Neighbouring cells with similar nearest-surface distances are merged, and each retained region initialises a Gaussian. The resulting Gaussian primitives parameterise a continu-ous DF Dθ (x), which is optimised from P using surface samples with Dθ (x) → 0and off-surface samples with positive nearest-surface distances. This yields an optimised DF that supports continuous distance and gradient queries. In the joint formulation of Figure 1(b), given RGB images I, train a 2DGS renderer with parameters ψ, while P trains a separate set of Gaussians for DF, with parameters θ. The two representations use distinct Gaussian primitives, and each is supervised by its own task-specific objective: L2DGS (ψ) for rendering and 
+
+Ldist (θ) for DF learning. In addition, differentiable centre- and disk-consistency losses jointly update the two representations, encouraging the rendering geom-etry to agree with the zero-distance structure of the DF. The resulting joint objective therefore produces two task-specific but geometrically coupled out-puts: an optimised 2DGS model for rendering and an optimised DF model for distance-related queries. 6 M. Uttsha et al. 
+
+4.2 Euclidean Distance Field with Non-splatting Gaussians 
+
+We model the DF as a continuous function parameterised by trainable anisotropic Gaussians in Euclidean space. Unlike rendering-oriented GS, these Gaussians are not projected, rasterised, or alpha-composited; the field is evaluated directly at each spatial query point. The formulation applies in both 2D and 3D, and is written below for Rd with d ∈ { 2, 3}.Let the model contain M Gaussian primitives. The i-th element is param-eterised by a mean μi ∈ Rd, a rotation Ri ∈ SO (d), a positive local scale vector ℓi ∈ Rd
+
+> +
+
+, and a scalar weight wi ∈ R. Its covariance is given by Σi =
+
+Ri diag( ℓ2 
+
+> i
+
+) R⊤ 
+
+> i
+
+. For a query point x ∈ Rd, the predicted unsigned distance is defined as 
+
+Dθ (x) = softplus 
+
+> M
+
+X
+
+> i=1
+
+wiϕi(x) + b
+
+!
+
+, (3) where 
+
+ϕi(x) = exp 
+
+
+
+− 12 (x − μi)⊤Σ−1 
+
+> i
+
+(x − μi)
+
+
+
+, (4) 
+
+b ∈ R is a learnable bias, and θ = {μi, R i, ℓ i, w i}Mi=1 ∪ { b} denotes the trainable parameters. The softplus activation yields positive Euclidean distance predic-tions that approach zero near the observed surface. Supervision is obtained from discrete distance samples approximated from the observed scene geometry. Let 
+
+Ω ⊂ Rd denote the bounded training domain, defined as the bounding box of the observed point cloud P with a small padding margin. We then sample discrete training locations X = {xm}NX
+
+> m=1
+
+, where xm ∈ Ω, and assign each location its unsigned Euclidean distance to the observed point cloud ˜dm = min q∈P ∥xm −q∥2.This gives the estimated supervision set ˜X = {(xm, ˜dm)}NX
+
+> m=1
+
+.The target distances ˜dm are efficiently computed once using KD-tree nearest-neighbour queries on P and are then reused during optimisation. At iteration t,a minibatch Bt ⊂ ˜X is sampled and the model is optimised using 
+
+Ldist (θ) = 1
+
+|B t|
+
+X 
+
+> (x, ˜d)∈B t
+
+smooth ℓ1
+
+
+
+Dθ (x) − ˜d
+
+
+
+, (5) where smooth ℓ1 is the standard Smooth L1 penalty. Since Eq. (3) defines a differentiable function, spatial gradients are available directly from the learned field: 
+
+∇xDθ (x) = σ
+
+> M
+
+X
+
+> i=1
+
+wiϕi(x) + b
+
+! MX
+
+> i=1
+
+wi∇xϕi(x), (6) with 
+
+∇xϕi(x) = −ϕi(x)Σ−1 
+
+> i
+
+(x − μi), (7) where σ(·) denotes the logistic sigmoid. Thus, although supervision is imposed only at sampled training locations, the learned model remains a continuous DF that can be queried at arbitrary points in Ω. This property is important for robotics, where collision checking, trajectory optimisation, and navigation-cost computation require repeated distance and gradient queries. SplatlessDF: Distance Field with Non-Splatting Gaussians 7
+
+4.3 Joint Optimisation with 2DGS 
+
+We now describe the geometric coupling used in the joint formulation. The DF model and the 2DGS renderer interact through losses applied to reliable 2DGS disks. Since these disks represent local surface elements, their centres and sam-pled disk points should lie near low-distance regions of the learned DF. For these losses, we select a reliable subset of 2DGS disks. Let G = {1, . . . , N ψ }
+
+denote the indices of all 2DGS disks, and let C ⊂ G denote the subset selected for coupling at the current iteration. A disk is considered reliable if it is visible in the current training view and its opacity satisfies αi(ψ) ≥ αmin , where αmin 
+
+is an opacity threshold. For efficiency, we cap the subset size such that |C| ≤ Kc
+
+per iteration. The same subset is used for both losses. 
+
+Centre consistency loss. Let ci(ψ) ∈ R3 denote the centre of a selected 2DGS disk, with i ∈ C . We evaluate the Gaussian-based DF directly at these centres and penalise their predicted distances: 
+
+Lcenter (ψ, θ ) = 1
+
+|C| 
+
+X
+
+> i∈C
+
+Dθ (ci(ψ)) . (8) This term encourages the DF to assign low distance values to reliable 2DGS disk centres, while the gradient through ci(ψ) also encourages those centres to move toward low-distance regions of the learned field. 
+
+Disk consistency loss. Centre consistency only constrains the disk centre and does not directly regularise the local disk shape. Following the idea of shape regularisation in [7], we additionally sample points on the plane of selected 2DGS disks and encourage these points to lie close to the zero-distance set of the learned DF. For the i-th selected disk, let Si(ψ) denote the set of sampled points on the local disk, and let p ∈ S i(ψ) denote one such sampled point. The disk consistency loss is defined as 
+
+Ldisk (ψ, θ ) = 1
+
+Ns
+
+X
+
+> i∈C
+
+X
+
+> p∈S i(ψ)
+
+Dθ (p) , (9) where Ns is the number of sampled points per disk. Since Dθ (·) is non-negative, minimising Eq. (9) encourages the sampled disk points to lie close to the observed surface. Gradients from this term propagate through the sampled points, and according to Eq. (1), influence the disk centre, scale, and tangent frame. The full coupling loss is 
+
+Lcpl (ψ, θ ) = λcenter Lcenter (ψ, θ ) + λdisk Ldisk (ψ, θ ). (10) The overall joint objective is 
+
+Ljoint (ψ, θ ) = L2DGS (ψ) + Ldist (θ) + Lcpl (ψ, θ ), (11) 8 M. Uttsha et al. 
+
+where L2DGS is the rendering objective from Eq. (2) and Ldist is the distance-supervision loss in Eq. (5). Thus, each representation keeps its own task-specific objective, while the coupling terms provide interaction between the 2DGS prim-itives and the Gaussian-based DF model. 
+
+4.4 Gaussian Centre Initialisation for Distance Field Modelling 
+
+For both the formulations, we initialise the set of DF-Gaussians in a geometry-aware manner rather than at random. Given the reference point cloud, P, we first construct a quadtree ( d = 2) or octree ( d = 3) over the scene domain and collect the centres of empty leaf cells. For each empty leaf cell centre cℓ, we compute its unsigned distance to surface dℓ = min q∈P ∥cℓ − q∥2 using KD-tree based nearest-neighbour distance queries on P. Candidate cells that are adjacent in the tree structure and whose centres’ distance values differ by less than a merging threshold τm are merged to form coarser regions in geometrically uniform areas. The final set of retained regions therefore consists of both merged regions and empty leaf cells that were not merged. If erj denotes one such retained region, with centroid ˜ cj and size ˜ sj , we initialise a Gaussian by setting its mean to μj = ˜ cj
+
+and its scale from ˜ sj . This yields a scene-adaptive multi-resolution Gaussian set, with smaller Gaussians in higher distance variation regions and larger ones in homogeneous free-space. This tree-based procedure is used only to provide an informed initialisation of the primitive parameters, which are subsequently tuned through optimisation. 
+
+## 5 Experimental Results 
+
+5.1 Experimental Setup 
+
+Datasets: We evaluate the proposed method in both 2D and 3D settings. For 2D DF evaluation, we use the synthetic Snowflake shape (1 .2 m ×1.2 m) from [15] and the larger Gazebo [5] dataset (20 m × 16 m), which contains LiDAR scans of a simulated environment. For 3D evaluation, we use two RGB-D indoor se-quences: Freiburg 3 long office household from the TUM dataset and Cow&Lady. The TUM sequence provides synchronised RGB-D data and ground-truth (GT) trajectories at 30 Hz with 640 ×480 image resolution. Cow&Lady provides Kinect RGB-D images at 640 ×480 resolution with Vicon-tracked poses, and is challeng-ing due to fast camera motion, large viewpoint changes, and pose misalignment. For Cow&Lady, to avoid biasing the rendering evaluation toward the initial viewpoint, we discard the first 70 near-duplicate frames. 
+
+Benchmarks and Evaluation Setup: Our evaluation is organised around four aspects of performance: continuous DF prediction, rendering quality, sur-face reconstruction, and downstream navigation utility. For DF evaluation, we benchmark the proposed Gaussian DF against HotSpot [15], CAP-UDF [19], and GPDF from [16]. We evaluate all methods in the unsigned setting, comparing SplatlessDF: Distance Field with Non-Splatting Gaussians 9
+
+Euclidean distance-to-surface values. Since HotSpot generates signed distance, we take the absolute value. DF accuracy is reported using root mean square error (RMSE); gradient quality is evaluated using mean cosine similarity for direction and mean absolute error (MAE) of the gradient-norm deviation from the Euclidean-distance condition ∥∇ D∥ = 1 for magnitude. All distance-related quantities are reported in metres (m), unless otherwise specified. These compar-isons include both our standalone (SA) and joint (Joint) formulations. The proposed joint formulation’s rendering quality is assessed by comparing with vanilla 2DGS against GT RGB images, using PSNR, SSIM, LPIPS, and L1 error. For surface reconstruction, we evaluate meshes extracted from all the methods, including vanilla 2DGS, reporting Chamfer-L1 distance. To validate the utility of the proposed Gaussian DFs for robotics, we further evaluate nav-igation on the 3D scenes using covariant Hamiltonian optimisation for motion planning (CHOMP), which requires reliable distance and gradient queries for collision-free trajectory optimisation. We compare against the best-performing benchmark among the evaluated 3D DF methods on safety-aware navigation. All experiments are run on an Intel Xeon Gold 6126 CPU and an NVIDIA Tesla V100 GPU with 32 GB memory. 
+
+5.2 Scene-Aware Gaussian Budget Selection 
+
+The Gaussian budget of our DF representations follows from the multi-resolution tree construction and merging strategy in Section 4.4. By merging neighbouring cells, the method controls the number of retained Gaussians in a geometry-aware manner, rather than fixing the primitive count manually. Table 1 shows that the proposed merged-tree initialisation reduces the num-ber of Gaussians compared with the non-merged raw tree (green shaded columns) while maintaining comparable distance accuracy. When compared with uniform-grid initialisation (grey shaded columns) at matched budgets, it also gives stronger gradient behaviour without degrading distance accuracy, indicating that the gain comes from geometrically meaningful placement of the Gaussians rather than primitive count alone. Across the tested settings, increasing the Gaussian bud-get generally improves distance accuracy and gradient agreement, although the gains become modest beyond an intermediate budget. The underlined budgets correspond to distance-merging thresholds of τm = 0 .05 cm, 0 .5 cm, 1 cm, and 1 cm for Snowflake, Gazebo, TUM, and Cow&Lady, respectively, and are used as defaults in the remaining experiments. 
+
+5.3 Distance Field Accuracy and Gradient Quality 
+
+For our DFs, supervision is estimated at mini-batched query points randomly sampled from a uniform spatial grid. The 2D standalone model uses grids with 0.1 m spacing, 100 query points per iteration, and 15k iterations. In 3D, both formulations use 3D grids with 0 .2 m spacing, 500 query points per iteration, and 30k iterations. 10 M. Uttsha et al. 
+
+Table 1: Effect of Gaussian budget and initialisation strategy on proposed DF mapping. Green-shaded columns report the raw tree initialisation, unshaded columns report the proposed merged-tree initialisation, and underlined budgets denote the selected budgets used in the main experiments. Columns marked †
+
+and shaded grey report uniform-grid initialisation at the same selected budget.                                                                     
+
+> Metric Snowflake Gazebo TUM (SA) Cow&Lady (SA) 200 100 100 †50 15 600 400 400 †200 40 1750 1350 1350 †1050 800 3200 1600 1600 †1000 700 RMSE ↓0.004 0.005 0.005 0.008 0.015 0.016 0.019 0.017 0.030 0.090 0.017 0.020 0.024 0.024 0.026 0.030 0.035 0.036 0.046 0.052 Mean cos. sim. ↑0.96 0.94 0.93 0.86 0.78 0.98 0.97 0.92 0.96 0.96 0.92 0.90 0.85 0.87 0.82 0.88 0.84 0.82 0.82 0.80 MAE( ∥∇ D∥ − 1) ↓0.09 0.09 0.14 0.19 0.29 0.06 0.09 0.13 0.11 0.17 0.04 0.04 0.09 0.05 0.05 0.12 0.14 0.14 0.17 0.18
+> GT HotSpot CAP-UDF GPDF Ours
+
+Fig. 2: Qualitative comparison of 2D DF predictions for the standalone formu-lation of the proposed method against GT, HotSpot, CAP-UDF, and GPDF on the Snowflake (top row) and Gazebo (bottom row) datasets. 
+
+2D distance field and gradient evaluation. Figure 2 and Table 2 compare the standalone formulation against the DF-only methods. Our method achieves the best RMSE on Gazebo (0 .02) and remains close to the strongest benchmark on Snowflake. It also gives the most consistent gradient directions, matching the best mean cosine similarity with GPDF on Snowflake and achieving the highest value on Gazebo (0 .98). While not best in gradient-norm MAE, its values remain comparable to the benchmarks. 
+
+3D distance field and gradient evaluation. Table 3 compares the proposed standalone and joint formulations against the DF-only methods. Ours achieves the best distance accuracy with the standalone model, giving the lowest full-volume RMSE on TUM (0 .020) and Cow&Lady (0 .035). The joint model re-mains close in RMSE and gives the best gradient direction, achieving the highest mean cosine similarity in both datasets. Gradient-norm MAE is also competi-tive, matching GPDF on TUM (0 .04) and giving the lowest value on Cow&Lady with the standalone model (0 .14). Qualitative results in Figure 3 show the same trend, with the proposed formulations closely matching the ground-truth DF across both near-surface and free-space regions. Lastly, we report the training and average per point query times taken across datasets for DF modelling (Table 4). Ours, apart from Snowflake, achieves sig-nificantly lower training time among the methods. Furthermore, our method’s SplatlessDF: Distance Field with Non-Splatting Gaussians 11 
+
+Table 2: 2D DF comparison across methods. Best results are shown in bold.                                
+
+> Metric Snowflake (1 .2 m x 1 .2 m) Gazebo (20 m x 16 m) HotSpot CAP-UDF GPDF Ours HotSpot CAP-UDF GPDF Ours RMSE ↓0.014 0.004 0.008 0.005 1.4 0.04 0.04 0.02
+> Mean cos. sim. of ∇D↑0.94 0.96 0.94 0.94 0.42 0.97 0.93 0.98
+> MAE of ( ∥∇ D∥ − 1) ↓0.12 0.07 0.05 0.08 0.65 0.07 0.08 0.09
+
+Table 3: 3D DF comparison across methods. Best results are shown in bold.                                                          
+
+> Metric TUM (8 .5 m x 6 .8 m x 1 .8 m) Cow&Lady (10 .6 m x 11 .9 m x 3 .4 m) HotSpot CAP-UDF GPDF Standalone Joint HotSpot CAP-UDF GPDF Standalone Joint RMSE slice ↓0.80 0.43 0.04 0.016 0.019 0.90 0.20 0.05 0.03 0.03
+> RMSE full ↓0.96 0.60 0.046 0.020 0.024 1.8 0.30 0.08 0.035 0.042 Mean cos. sim. of ∇D↑0.14 0.87 0.93 0.90 0.96 0.24 0.69 0.82 0.84 0.89
+> MAE( ∥∇ D∥ − 1) ↓0.80 0.84 0.04 0.04 0.04 0.91 0.29 0.16 0.14 0.15
+
+average query time per point scales much more favourably across datasets, par-ticularly in 3D, second only to CAP-UDF. 
+
+5.4 Rendering Performance 
+
+Both vanilla 2DGS and the proposed joint formulation are trained for 30k itera-tions and initialised from the same input point cloud. For rendering, both meth-ods use the same 2DGS’s normal and depth-distortion regularisation weights 
+
+λnorm = 0 .05, and λdepth = 0 .1. For the joint formulation, we set the centre-consistency and disk-consistency losses weighted by 0 .5 each, and use Kc =5000 disks and Ns = 1000 points per disk in each iteration for the coupling loss calculation. Figure 4 shows qualitative novel-view rendering results, and Table 5 reports quantitative metrics over the full train-test image set. Overall, the joint formula-tion improves most rendering metrics over vanilla 2DGS. On TUM, it improves all reported appearance metrics. On Cow&Lady, it improves PSNR by 1 .09 dB and reduces LPIPS and L1 error, while SSIM remains comparable. The qualita-tive results show that the joint formulation preserves the main scene structure and produces renderings that are visually comparable on TUM and improved on Cow&Lady, as highlighted in Figure 4(c). 
+
+5.5 Surface Reconstruction Results 
+
+Figure 5 shows qualitative mesh reconstructions, and Table 6 reports mean Chamfer-L1 distances. For our standalone and joint formulations, meshes are ex-tracted by forming a signed field from the predicted DFs and camera-ray fusion of posed depth frames, followed by marching cubes [8]. The joint formulation can generate depth maps rendered from the jointly optimised 2DGS and use those to obtain a surface mesh similar to vanilla 2DGS’s own mesh reconstruction. However, we use the same DF-based reconstruction for both proposed variants, 12 M. Uttsha et al.      
+
+> GT HotSpot CAP-UDF GPDF Ours (SA) Ours (Joint)
+
+Fig. 3: Qualitative comparison of 3D DF predictions on a slice (z=1.0) of the TUM (top) and Cow&Lady (bottom) dataset. From left to right: GT, HotSpot, CAP-UDF, GPDF, the proposed standalone, and the joint formulations. Table 4: Runtime comparison among DF-only methods across datasets: training time (s) and average query time per point ( μs/point).                                                    
+
+> Method Snowflake Gazebo TUM Cow&Lady Train ↓Query/pt ↓Train ↓Query/pt ↓Train ↓Query/pt ↓Train ↓Query/pt ↓
+> HotSpot 152 0.03 174 0.04 5333 203.4 5251 198.6 CAP-UDF 405 0.07 427 0.08 1166 0.26 1361 0.24
+> GPDF 7.5 1.28 126.5 5.95 624.3 100.88 492.8 89.97 Ours (SA) 32 0.03 74 0.06 151 0.45 182.6 0.52
+
+as well as for GPDF, to ensure direct comparability. Other methods’ meshes are obtained from their publicly released codes. Errors are computed against the provided GT point cloud for Cow&Lady and a GT-depth-fused reference point cloud for TUM. On TUM, the standalone formulation obtains Chamfer-L1 error of 0 .020, close to GPDF (0 .016) and slightly better than the joint variant (0 .023). On Cow&Lady, it achieves 0 .042, improving over the joint variant (0 .055) and out-performing GPDF and 2DGS. Although HotSpot obtains low Chamfer-L1 er-rors, qualitative comparison shows that HotSpot produces oversmooth meshes. 2DGS fails to recover Cow&Lady surfaces reliably, CAP-UDF fails to capture key details, particularly near the lady, and GPDF inflates the objects, losing fine details. In contrast, our methods recover richer geometric detail across both datasets, albeit with some double surfaces near the lady. 
+
+5.6 Downstream Robotic Application: Navigation 
+
+We evaluate the learned DFs in downstream navigation by using them as collision-cost fields for CHOMP [20] on the 3D scenes. We assume a robot with a radius set to r = 0 .20 m and a conservative clearance requirement of 0 .25 m. This clear-ance ensures that CHOMP penalises waypoints such that this safety buffer is maintained from any obstacle along the full path. Since CHOMP leverages dis-tance and gradient information to optimise the trajectory waypoints, accurate SplatlessDF: Distance Field with Non-Splatting Gaussians 13 
+
+(a) GT (b) 2DGS (c) Ours (Joint) 
+
+Fig. 4: Qualitative comparison of rendering results on the TUM (top row) and Cow&Lady (bottom row) dataset. Table 5: Rendering comparison across datasets. Best results are shown in bold.                                  
+
+> Method TUM Cow&Lady PSNR ↑SSIM ↑LPIPS ↓L1 ↓PSNR ↑SSIM ↑LPIPS ↓L1 ↓
+> 2DGS 27.54 0.909 0.174 0.038 18.84 0.638 0.603 0.080 Ours 28.13 0.922 0.160 0.027 19.93 0.633 0.515 0.073
+
+distance and gradient predictions are vital for navigation. We compare against GPDF, the strongest-performing DF benchmark in 3D after ours. The results in Figure 6 show that all three methods yield similar guidance and smooth op-timised trajectories with improved clearance. The predicted gradients push the initial colliding trajectory away from obstacles, ensuring safety-aware navigation on both scenes. This indicates that our proposed DFs are suitable for gradient-based path optimisation. 
+
+## 6 Discussion and Conclusion 
+
+The DF results support anisotropic Gaussian primitives as an effective param-eterisation for continuous DF mapping. In 2D, the standalone model remains competitive on snowflake and shows clearer gains on the larger Gazebo, indi-cating the benefit of tree-guided Gaussian allocation over broader free-space re-gions. In 3D, both variants achieve higher distance and gradient accuracy than the compared methods. The runtime comparison supports this trend, that the proposed frameworks scale favourably on larger datasets. Furthermore, although the proposed standalone method achieves the lowest RMSE, the joint formula-tion improves gradient alignment, with added capability of coupled rendering. 14 M. Uttsha et al.      
+
+> HotSpot CAP-UDF GPDF 2DGS Ours (SA) Ours (Joint)
+
+Fig. 5: Qualitative comparison of mesh reconstruction of the TUM (top row) and Cow&Lady (bottom row) dataset. From left to right: HotSpot, CAP-UDF, GPDF, 2DGS, and Ours with the standalone and joint variants, respectively. Table 6: Surface reconstruction results across methods; best results in bold.                            
+
+> Metric TUM Cow&Lady HotSpot CAP-UDF GPDF 2DGS Standalone Joint HotSpot CAP-UDF GPDF 2DGS Standalone Joint Chamfer-L1 ↓0.021 0.021 0.016 0.41 0.020 0.023 0.032 0.044 0.056 0.48 0.042 0.055
+> Top view Side view
+
+Fig. 6: CHOMP trajectory optimisation on the TUM dataset (top row) and Cow&Lady dataset (bottom row). Gradient arrows indicate directions away from the nearest surface. Ground and ceiling points have been removed for clarity. The rendering results indicate that coupling the DF with 2DGS improves over vanilla 2DGS with higher PSNR and lower reconstruction losses. Qualitatively, the improvement is more visible on Cow&Lady, where the joint formulation better preserves several scene details that vanilla 2DGS fails to capture. SplatlessDF: Distance Field with Non-Splatting Gaussians 15 
+
+The surface reconstruction results show that our methods, while not always best numerically, preserve important scene structures such as furniture legs in TUM and the key objects in Cow&Lady. Some methods obtain lower Chamfer distances through smoother but less detailed reconstructions. The poor result in Cow&Lady from 2DGS highlights the sensitivity of TSDF fusion to rendered-depth quality and image coverage. In contrast, by maintaining an explicit con-tinuous DF, our frameworks can do geometry-driven reconstruction, with the option to use 2DGS-style mesh reconstruction given reliable rendering. The nav-igation experiments further show that both formulations provide distances and gradients coherent enough for CHOMP-based trajectory optimisation, enabling collision avoidance and safer navigation. A limitation of the current formulation is that it predicts unsigned DFs, requiring an additional sign-recovery step for surface extraction with marching cubes. This makes reconstruction quality dependent on the reliability of the recovered sign field, especially in regions with sparse observations, noisy depth, or limited camera-ray coverage. Future work will investigate more robust sign recovery, stronger coupling, and online extensions for robotic mapping. Overall, this work demonstrates that Gaussian primitives can provide contin-uous, differentiable and accurate DFs capable of downstream surface reconstruc-tion and navigation tasks. Additionally, unlike GPDF methods, this formulation facilitates smoother integration with rendering frameworks, suggesting a promis-ing direction for Gaussian-based scene representations that expose both visual appearance and robotics-oriented geometric queries. 
+
+## References         
+
+> 1. Amos Gropp, Lior Yariv, Niv Haim, Matan Atzmon, and Yaron Lipman. Implicit geometric regularization for learning shapes. arXiv preprint arXiv:2002.10099 ,2020. 2. Antoine Gu´ edon and Vincent Lepetit. Sugar: Surface-aligned gaussian splatting for efficient 3d mesh reconstruction and high-quality mesh rendering. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 5354–5363, 2024. 3. Binbin Huang, Zehao Yu, Anpei Chen, Andreas Geiger, and Shenghua Gao. 2d gaussian splatting for geometrically accurate radiance fields. In ACM SIGGRAPH 2024 Conference Papers , pages 1–11, 2024. 4. Bernhard Kerbl, Georgios Kopanas, Thomas Leimk¨ uhler, George Drettakis, et al. 3d gaussian splatting for real-time radiance field rendering. ACM Transaction on Graphics (TOG) , 42(4):139–1, 2023. 5. Bhoram Lee, Clark Zhang, Zonghao Huang, and Daniel D Lee. Online continuous mapping using gaussian process implicit surfaces. In 2019 International Conference on Robotics and Automation (ICRA) , pages 6884–6890. IEEE, 2019. 6. Jiaze Li, Zhengyu Wen, Luo Zhang, Jiangbei Hu, Fei Hou, Zhebin Zhang, and Ying He. Gs-octree: Octree-based 3d gaussian splatting for robust object-level 3d reconstruction under strong lighting. In Computer Graphics Forum , volume 43, page e15206. Wiley Online Library, 2024.
+
+16 M. Uttsha et al. 7. Jianheng Liu, Yunfei Wan, Bowen Wang, Chunran Zheng, Jiarong Lin, and Fu Zhang. Gs-sdf: Lidar-augmented gaussian splatting and neural sdf for geomet-rically consistent rendering and reconstruction. In 2025 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) , pages 19391–19398. IEEE, 2025. 8. William E Lorensen and Harvey E Cline. Marching cubes: A high resolution 3d surface construction algorithm. In Seminal Graphics: Pioneering Efforts that Shaped the Field , pages 347–353. 1998. 9. Xiaoyang Lyu, Yang-Tian Sun, Yi-Hua Huang, Xiuzhe Wu, Ziyi Yang, Yilun Chen, Jiangmiao Pang, and Xiaojuan Qi. 3dgsr: Implicit surface reconstruction with 3d gaussian splatting. ACM Transactions on Graphics (TOG) , 43(6):1–12, 2024. 10. Ken Museth. VDB: High-resolution sparse volumes with dynamic topology. ACM Transactions on Graphics (TOG) , 32(3):1–22, 2013. 11. Helen Oleynikova, Zachary Taylor, Marius Fehr, Roland Siegwart, and Juan Ni-eto. Voxblox: Incremental 3d euclidean signed distance fields for on-board mav planning. In 2017 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) , pages 1366–1373. IEEE, 2017. 12. Joseph Ortiz, Alexander Clegg, Jing Dong, Edgar Sucar, David Novotny, Michael Zollhoefer, and Mustafa Mukadam. isdf: Real-time neural signed distance fields for robot perception. arXiv preprint arXiv:2204.02296 , 2022. 13. Yue Pan, Xingguang Zhong, Liren Jin, Louis Wiesmann, Marija Popovi´ c, Jens Behley, and Cyrill Stachniss. Pings: Gaussian splatting meets distance fields within a point-based implicit neural map. arXiv preprint arXiv:2502.05752 , 2025. 14. Jeong Joon Park, Peter Florence, Julian Straub, Richard Newcombe, and Steven Lovegrove. Deepsdf: Learning continuous signed distance functions for shape rep-resentation. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 165–174, 2019. 15. Zimo Wang, Cheng Wang, Taiki Yoshino, Sirui Tao, Ziyang Fu, and Tzu-Mao Li. Hotspot: Signed distance function optimization with an asymptotically sufficient condition. In Proceedings of the Computer Vision and Pattern Recognition Con-ference , pages 1276–1286, 2025. 16. Lan Wu, Cedric Le Gentil, and Teresa Vidal-Calleja. Pseudo inputs optimisation for efficient gaussian process distance fields. In 2023 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) , pages 7249–7255. IEEE, 2023. 17. Lan Wu, Cedric Le Gentil, and Teresa Vidal-Calleja. Vdb-gpdf: Online gaussian process distance field with vdb structure. IEEE Robotics and Automation Letters ,10(1):374–381, 2024. 18. Haodong Xiang, Xinghui Li, Kai Cheng, Xiansong Lai, Wanting Zhang, Zhichao Liao, Long Zeng, and Xueping Liu. Gaussianroom: Improving 3d gaussian splatting with sdf guidance and monocular cues for indoor scene reconstruction. In 2025 IEEE International Conference on Robotics and Automation (ICRA) , pages 2686– 2693. IEEE, 2025. 19. Junsheng Zhou, Baorui Ma, Shujuan Li, Yu-Shen Liu, Yi Fang, and Zhizhong Han. Cap-udf: Learning unsigned distance functions progressively from raw point clouds with consistency-aware field optimization. IEEE Transactions on Pattern Analysis and Machine Intelligence , 46(12):7475–7492, 2024. 20. Matt Zucker, Nathan Ratliff, Anca D Dragan, Mihail Pivtoraiko, Matthew Klin-gensmith, Christopher M Dellin, J Andrew Bagnell, and Siddhartha S Srinivasa. Chomp: Covariant hamiltonian optimization for motion planning. The Interna-tional Journal of Robotics Research , 32(9-10):1164–1193, 2013.
