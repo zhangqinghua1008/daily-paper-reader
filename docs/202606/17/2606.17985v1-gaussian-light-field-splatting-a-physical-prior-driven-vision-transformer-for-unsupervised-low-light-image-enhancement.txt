@@ -1,0 +1,520 @@
+Title: Gaussian Light Field Splatting: A Physical Prior-Driven Vision Transformer for Unsupervised Low-Light Image Enhancement
+
+URL Source: https://arxiv.org/pdf/2606.17985v1
+
+Published Time: Wed, 17 Jun 2026 01:21:57 GMT
+
+Number of Pages: 14
+
+Markdown Content:
+> IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS FOR VIDEO TECHNOLOGY 1
+
+# Gaussian Light Field Splatting: A Physical Prior-Driven Vision Transformer for Unsupervised Low-Light Image Enhancement 
+
+Yuhan Chen, Wenxuan Yu, Guofa Li, Senior Member, IEEE , Fuchen Li, Kunyang Huang, Yicui Shi, Ying Fang, Wenbo Chu, and Keqiang Li 
+
+Abstract —Existing unsupervised low-light image enhancement methods often encounter local exposure imbalance and color distortion under complex non-uniform illumination. In addi-tion, most Vision Transformers lack an explicit mechanism for modeling the physical priors of illumination degradation. To address these limitations, we propose GLFS, a Gaussian light field splatting-based Vision Transformer that integrates continuous physical illumination modeling from Gaussian splatting into the Transformer architecture. In GLFS, scene illumination is represented by a superposition of anisotropic Gaussian basis functions. Physics-guided biases are introduced into self-attention to adaptively infer a spatial gain field, enabling accurate and uni-form restoration under complex illumination. To reduce color bias and structural degradation during enhancement, a color-vector angular loss and a luminance-edge loss are further developed. These losses enforce hue consistency and improve the structural fidelity of local details. Extensive ablation studies and quantita-tive evaluations show that GLFS provides clear advantages in illumination correction and detail preservation. It achieves state-of-the-art performance and offers a new representation paradigm for low-light image enhancement. 
+
+Index Terms —Low-light image enhancement, Gaussian splat-ting, Vision Transformer. 
+
+I. I NTRODUCTION 
+
+# LOW-LIGHT image enhancement (LLIE) aims to recover clear visual content from images captured under adverse imaging conditions, including low illumination and strong noise. It serves as an essential preprocessing step for many high-level computer vision and pattern recognition tasks [1]– [3]. Deep learning-based LLIE methods have made consid-erable progress in recent years. However, accurately aligned normal-light and low-light image pairs are difficult to collect in real scenes. Supervised methods trained on paired data therefore often suffer from limited generalization in practical deployment. As a result, unsupervised LLIE without paired data has received increasing attention in the vision commu-nity [10], [21]. Although existing unsupervised LLIE methods, including Retinex-inspired unfolding networks [9], [18], implicit neural representations [24], [25], and diffusion models [22], [23], have improved overall image visibility, they remain prone to local exposure imbalance when facing complex non-uniform illumination degradation. Recently, architectures with strong long-range dependency modeling ability, such as state space                      
+
+> This work was supported by the National Natural Science Foundation of China under Grant No. 52272421. ( Corresponding author: Guofa Li. )Yuhan Chen, Wenxuan Yu, Guofa Li, Ying Fang, and Yicui Shi are with the College of Mechanical and Vehicle Engineering, Chongqing University, Chongqing 400044, China (e-mail: 20240701028@stu.cqu.edu.cn; wenxuanyu@cqu.edu.cn; liguofa@cqu.edu.cn; yingfang@stu.cqu.edu.cn; yicuishi@cqu.edu.cn). Fuchen Li is with the Herbert Wertheim College of Engineering, University of Florida, Gainesville, FL, USA (e-mail: fuchen.li@ufl.edu). Kunyang Huang is with the Department of Electrical and Computer Engi-neering, Carnegie Mellon University, Moffett Field, CA 94035, USA (e-mail: kunyangh@andrew.cmu.edu). Wenbo Chu is with the National Innovation Center of Intelligent and Connected Vehicles, Beijing 100089, China (e-mail: chuwenbo@wicv.cn). Keqiang Li is with the School of Vehicle and Mobility, Tsinghua University, Beijing 100084, China (e-mail: likq@tsinghua.edu.cn).
+
+models [55] and Vision Transformers, have been introduced into image restoration. However, most of them still follow a purely data-driven black-box paradigm and lack explicit mod-eling of physical priors for illumination degradation. Without a physical-level illumination modeling mechanism, these models struggle to infer smooth enhancement gains that follow the natural properties of light fields under extremely non-uniform illumination with sharp spatial variations. This limitation often leads to local artifacts and color distortion. Recently, 3D Gaussian Splatting (3DGS) has emerged as a continuous scene representation technique, showing remark-able ability to model geometry and appearance [28], [30], [51]. In particular, 2D Gaussian Splatting (2DGS) provides a high-fidelity mathematical form for reconstructing continuous signals on image planes [49]. Several pioneering studies have introduced 2DGS into low-light image enhancement, where Gaussian basis functions are used to continuously charac-terize the diffusion and attenuation of complex illumina-tion [47], [48]. However, existing methods have not system-atically explored how the continuous representation of 2DGS can be used as an explicit physical bias and embedded into the attention mechanism of backbone architectures such as Transformers. It remains largely unexplored how to bridge conventional network designs with the continuous physical illumination modeling mechanism of Gaussian splatting, and how to integrate this mechanism into Transformers for aphysics-prior-driven paradigm of unsupervised enhancement. To this end, we propose Gaussian Light Field Splatting (GLFS), a Gaussian light field splatting-based Vision Trans-former (ViT) that incorporates the light-field prior of 2DGS into Transformer self-attention for the first time. GLFS com-bines physical illumination constraints with the nonlocal mod-eling ability of Transformers. Specifically, rather than perform-ing unconstrained feature mapping in latent space as in con-ventional ViTs, GLFS represents scene illumination through a multi-scale Gaussian tokenizer as a superposition of anisotropic Gaussian basis functions parameterized by means, covariances, and opacities. In the proposed mechanism, a physical bias derived from Gaussian affinity is explicitly introduced into self-attention computation. This bias guides the network to adaptively infer a continuous and smooth spatial gain field, enabling principled and uniform restoration under complex non-uniform illumination. In addition, to address the persistent color bias and structural degradation in unsupervised enhancement, we impose two physical constraints from the color and gradient spaces. Specif-ically, we propose a color-vector angular loss that constrains the directional consistency between the RGB vectors before and after enhancement. This loss allows the vector magnitude, which corresponds to luminance, to increase substantially while preserving the vector direction, which corresponds to hue. In this way, color distortion caused by the conventional gray-world assumption can be effectively reduced. Meanwhile, a Sobel-based luminance-edge loss is designed to preserve high-frequency gradients on the Y channel, avoiding interference   
+
+> arXiv:2606.17985v1 [cs.CV] 16 Jun 2026 IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS FOR VIDEO TECHNOLOGY 2
+> Fig. 1. Overall architecture of the proposed GLFS. (A) Overall framework. GLFS adopts an encoder-decoder structure, with GS-ViT bottleneck layers embedded with physical priors as the core component. (B) Multi-scale Gaussian tokenizer. The geometric parameters of Gaussian basis functions are inferred from multi-scale features. (C) GS-ViT. An anisotropic Gaussian physical bias is introduced into self-attention to guide long-range feature modeling. (D) Gaussian illumination field. A continuous illumination field is reconstructed by Gaussian splatting, and the resulting gain field is combined with the input image for physics-driven brightness enhancement.
+
+from chromatic components. This loss improves the structural fidelity of local details. The main contributions of this paper are summarized as follows:  
+
+> •
+
+We propose GLFS, a Gaussian light field splatting-based Vision Transformer for unsupervised low-light image enhancement. GLFS explicitly incorporates the light-field prior of 2DGS into Transformer self-attention for the first time, offering a new representation paradigm for this task.  
+
+> •
+
+We design a light-field construction mechanism based on the superposition of Gaussian basis functions. By introducing anisotropic Gaussian biases into self-attention computation, the proposed mechanism enables smooth and accurate inference of spatial gains under complex non-uniform illumination, thereby reducing local exposure imbalance.  
+
+> •
+
+We propose a color-vector angular loss and a luminance-edge loss. Without paired supervision, these losses pre-serve hue consistency during enhancement and substan-tially improve the structural fidelity of local details, lead-ing to higher SSIM performance. II. R ELATED WORK 
+
+This section reviews two topics closely related to this paper. First, we summarize the development of low-light image enhancement (LLIE), ranging from traditional physical priors to deep networks. Second, we discuss recent applications of Gaussian splatting in explicit image representation, which pro-vide the theoretical background for the physics-driven design of GLFS. 
+
+A. Low-Light Image Enhancement 
+
+Low-light image enhancement (LLIE) aims to recover clear visual content and faithful colors from images captured under adverse imaging conditions, such as low illumination and severe noise. It serves as an essential preprocessing step for many high-level computer vision tasks [1], [2]. In recent years, with the development of large-scale benchmarks and evaluation protocols [3], the LLIE paradigm has shifted from traditional physical-prior-based methods toward data-driven deep learning. Early traditional enhancement methods mainly relied on hand-crafted physical constraints for illumination estimation. For example, the classical LIME method [5] estimates the global illumination distribution of a scene by imposing a structure-aware smoothness prior on an initial illumination map within a conventional optimization framework, without using implicit deep feature mapping. However, such methods are prone to severe local noise amplification and color dis-tortion under extremely non-uniform illumination [57]. With the rapid development of deep learning, supervised methods trained on paired normal-light and low-light images quickly emerged and became a dominant branch in LLIE. A represen-tative pioneering method is Retinex-Net [26], which integrates the classical Retinex decomposition theory with data-driven IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS FOR VIDEO TECHNOLOGY 3
+
+convolutional neural networks (CNNs). It enables end-to-end joint learning of illumination and reflectance components and marks an early step toward deep supervised low-light enhancement. Subsequently, numerous CNN architectures were developed to improve feature extraction and reconstruction efficiency in complex scenes. For example, FMR-Net [11] and FRR-NET [12] adopt multi-scale residual feature aggre-gation and structural re-parameterization, respectively, sub-stantially reducing inference latency on mobile devices while preserving reconstruction quality. EFINet [15] introduces an iterative enhancement-and-fusion feedback mechanism, which progressively refines high-frequency textures and structural information in low-light images through multi-level feature propagation. In addition, synthetic paired datasets often cause severe domain shift and limited generalization. To alleviate this issue, R2RNet [27] learns a mapping from real low-light images to real normal-light images. Related paired instance learning methods [16] further explore robust degradation-restoration patterns from challenging real-world low-quality image pairs. Although supervised enhancement methods have achieved substantial performance gains, strictly aligned paired data are extremely difficult to acquire in real-world imaging. This limitation has driven growing interest in unsupervised and zero-shot learning. EnlightenGAN [10] is a representative early attempt that introduced an adversarial learning frame-work based on unpaired data. Retinex-based deep unfolding networks, such as Uretinex-Net [18] with embedded physi-cal equations and the unfolding network with collaborative prior architecture search [9], convert conventional optimization steps into learnable neural layers, improving interpretabil-ity and detail preservation under extremely dark conditions. Other representative methods, including adaptive total varia-tion [13] and zero-reference deep curve estimation methods, such as Zero-DCE [6], [7], its accelerated version [8], and ChebyLighter [14], achieve flexible and efficient illumination correction through carefully designed no-reference physical losses. More recently, latent diffusion models [21]–[23] and implicit neural representations [24], [25] have further improved the visual quality of unsupervised enhancement by using strong generative priors. Meanwhile, autoregressive denoising for real noise distributions [17], [19] and highly compressed lightweight architectures [4], [20] have expanded the practical deployment scope of LLIE methods. However, emerging architectures with strong long-range dependency modeling ability, such as the state space model MambaLLIE [55] and various Vision Transformers, have recently shown promise in image restoration. Most of these models still operate as purely data-driven mappings in abstract high-dimensional latent spaces, with limited explicit repre-sentation of the continuous attenuation and diffusion prop-erties of physical light fields. The lack of physical priors makes them prone to local exposure imbalance when dealing with extreme illumination with sharp spatial variations. This limitation motivates the proposed GLFS architecture. GLFS embeds a continuous Gaussian light-field physical bias into the self-attention mechanism, enabling accurate non-uniform illumination correction in an unsupervised setting. 
+
+B. Gaussian Splatting and Explicit Image Representation 
+
+In recent years, 3DGS has emerged as a powerful explicit representation technique for continuous scenes, reshaping the implicit radiance-field rendering paradigm typified by NeRF [29] and implicit coordinate networks with periodic activation functions [31]. 3DGS [28] explicitly parameter-izes 3D geometry and appearance using a set of anisotropic Gaussian primitives, each endowed with physical attributes such as mean, covariance, color, and opacity. This analytic representation avoids the costly ray casting and dense sam-pling required by multilayer perceptron (MLP)-based implicit neural representations. With real-time rendering speed and high geometric fidelity, it has quickly become an important representation tool in computer vision. To further improve the geometric quality and density of Gaussian reconstruction, several advanced strategies have been developed. For exam-ple, GaussianPro [39] introduces a normal- and depth-guided progressive propagation mechanism, which effectively guides the densification of Gaussian ellipsoids in complex geometric structures and textureless regions, alleviating artifacts and holes in novel view synthesis. Built on this foundation, 3DGS has been extended to a wide range of complex tasks, including high-fidelity modeling of dynamic urban street scenes [32], efficient construction of 4D world models and scenes for autonomous driving [38], [42], [43], real-time self-distilled rendering of large-scale urban scenes [40], [41], and advanced cross-modal 3D content generation [44]. This continuous repre-sentation has also shown strong potential for accurately fitting high-dimensional dynamic signals in generalized multi-view stereo reconstruction [33], [34] and large-span spatiotemporal physical motion trajectory modeling [35]–[37]. With the rapid development of 3D Gaussian methods, anisotropic Gaussian basis functions have also been recognized as powerful tools for fitting two-dimensional continuous signals after dimensional reduction, giving rise to 2DGS [30]. For explicit representation and fast compression of 2D images, GaussianImage [51] and its adaptive dynamic variant, Instant GaussianImage [50], have shown that 2DGS can serve as a compact and continuous alternative for general image parameterization. Unlike conventional discrete pixel grids, 2DGS reconstructs images by directly optimizing the physical attributes of Gaussian primitives through backpropagation. This formulation provides a continuous and interpretable analytic description of local geometric deformation, texture transition, and color variation. More recently, LIG [49] introduced a hierarchical-resolution 2DGS structure, alleviating the memory and efficiency bottlenecks of explicit representation for ultra-high-resolution images. Owing to its continuous, differentiable, and explicit properties, 2DGS has been extended to low-level vision and cross-modal alignment tasks, including sparse-Gaussian dataset distillation [52], compact representation of aligned features in vision-language large models [53], and realistic arbitrary-scale image super-resolution [54]. Beyond image-level representation, Gaussian splatting has also been used to model more abstract sparse perceptual signals. For example, KGS-GCN [56] represents discrete skeleton joints as anisotropic Gaussian distributions driven by instantaneous kinematic cues and builds a probabilistic topology using sta-tistical distances between joint Gaussian distributions. This design alleviates the representation limitations caused by sparse sampling and fixed physical topology in action recognition. These advances suggest that Gaussian splatting has moved beyond geometric rendering and is becoming a task-adaptive tool for continuous prior modeling. At the intersection of illumination estimation, physical degradation modeling, and low-light image processing, the con-tinuous diffusion behavior and differentiable physical form of Gaussian splatting have also shown promise. LL-Gaussian [45] and LLGS [46] introduce Gaussian splatting constraints into sparse 3D scene reconstruction and enhancement under IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS FOR VIDEO TECHNOLOGY 4 
+
+> Fig. 2. Visualization of physical-prior decomposition and enhancement in GLFS. The outputs corresponding to the terms in Eq. (2) are shown. From left to right, the images represent the input, enhanced output, illumination field, gain field, and noise map.
+
+extremely dark environments, demonstrating the robustness of Gaussian primitives in preserving spatial structures under severe illumination degradation and strong noise. Inspired by these efforts, recent studies have begun to introduce 2DGS directly into unsupervised 2D low-light image enhancement. For example, LL-GaussianImage [47] explores an efficient zero-shot enhancement and image reconstruction paradigm based on 2DGS, while LL-GaussianMap [48] exploits the anisotropic attenuation behavior of 2DGS to explicitly fit continuous spatial illumination gain maps in natural images. However, although existing pioneering studies have shown that the spatial attenuation property of Gaussian basis func-tions naturally matches the non-uniform distribution of nat-ural light fields, they usually treat Gaussian representations as independent post-processing fitting tools or isolated gain generators. The connection between Gaussian splatting and the underlying network architecture remains largely unexplored. GLFS addresses this limitation by incorporating the anisotropic light-field prior of 2DGS into the self-attention computation of a Vision Transformer as an explicit physical bias. To the best of our knowledge, this is the first attempt to embed such a Gaussian light-field prior into Transformer attention for unsupervised LLIE. This design preserves the nonlocal modeling ability of Transformers while enabling principled physical inference of complex spatial illumination degradation, establishing a new paradigm for uniform low-light restoration without paired data. III. P ROPOSED METHOD 
+
+Unsupervised low-light image enhancement is essentially a severely ill-posed inverse problem. Without paired supervision, the model must infer a latent clean image from a single low-light observation in accordance with the physical image-formation mechanism. It must also overcome local exposure imbalance, hue shift, and high-frequency detail loss caused by non-uniform illumination with drastic spatial variations. As stated in the Introduction, mainstream ViTs provide strong long-range modeling capability, yet their attention priors are usually composed only of relative positions or learnable biases and are fully decoupled from the physical generation mecha-nism of scene illumination. Retinex-based unfolding methods offer physical interpretability, but their expressive capacity is limited by linear decomposition, making it difficult to char-acterize complex anisotropic light fields. To overcome these limitations, we propose Gaussian Light Field Splatting (GLFS), which formulates low-light enhancement as a physical recon-struction process explicitly driven by a continuous Gaussian light field. This section first presents the overall architecture and mathematical formulation of GLFS in Section III-A. It then describes three physical-prior modules, namely multi-scale Gaussian tokenization in Section III-B, Gaussian splatting self-attention in Section III-C, and Gaussian light-field recon-struction in Section III-D. Finally, the unsupervised training objective is detailed in Section III-E. 
+
+A. Overall Framework 
+
+Fig. 1(A) presents the overall framework of GLFS. GLFS follows an encoder-decoder design, with GS-ViT as the bottle-neck module in which explicit physical priors are embedded. Given a low-light input image Il ∈ R3×H×W , the model learns a mapping G : Il 7 → Ie, where the enhanced output Ie is expected to have natural brightness, faithful color, and clear structure without paired supervision. To explain the physical motivation of GLFS, we first revisit the light-field degradation process in natural imaging. A low-light image can be modeled as a well-exposed image In
+
+modulated by a spatially varying attenuation light field Ld,together with additive noise N :
+
+Il(x) = In(x) ⊙ Ld(x) + N (x), (1) where x ∈ Ω ⊂ R2 denotes the pixel coordinate, and ⊙ denotes pixel-wise multiplication. Accordingly, low-light enhancement can be formulated as an inverse problem that estimates a spatial gain field Γ( x) and a noise compensation term ε(x):
+
+Ie(x) = Il(x) ⊙ Γ( x) + ε(x). (2) The core idea of GLFS is to explicitly represent the latent illumination field L(x), which characterizes the light-field structure and determines the spatial distribution of Γ( x), as a continuous superposition of anisotropic 2D Gaussian basis functions. In this way, the attention computation and decoding process are constrained by the same set of differentiable geometric parameters. Given K Gaussian basis functions, the illumination field is analytically formulated as 
+
+L(x) = 
+
+> K
+
+X
+
+> k=1
+
+αkGk(x; μk, Σ−1 
+
+> k
+
+), (3) where μk ∈ R2 denotes the center of the k-th Gaussian basis function, Σ−1 
+
+> k
+
+∈ R2×2 denotes its inverse anisotropic covariance matrix, and αk ∈ [0 , 1] denotes its opacity. The Gaussian basis function Gk(x; μk, Σ−1 
+
+> k
+
+) is defined as 
+
+Gk(x; μk, Σ−1 
+
+> k
+
+) = exp 
+
+
+
+− 12 (x − μk)⊤Σ−1 
+
+> k
+
+(x − μk)
+
+
+
+. (4) The above formulation inherits the high-fidelity property of 2DGS in continuous field modeling. Each Gaussian basis function can be regarded as a 2D illumination kernel with an adjustable principal direction, spatial extent, and intensity. Through the continuous superposition of multiple illumination kernels, GLFS can describe complex illumination diffusion and attenuation patterns using sparse and differentiable parameters. These parameters further provide the physical bias for the subsequent attention mechanism. The overall inference process of GLFS consists of four main stages. The first stage is feature encoding. The input image is fed into a 7 × 7 convolution layer and three stride-2 downsampling blocks, producing hierarchical features at four different scales: 
+
+{Fl}4 
+
+> l=1
+
+= E(Il). (5) These features encode textures, contours, and global context at different scales. The second stage is Gaussian tokenization. The multi-scale Gaussian tokenizer ΨMGT infers the Gaussian IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS FOR VIDEO TECHNOLOGY 5      
+
+> Fig. 3. Visualization of the Gaussian parameters inferred by the multi-scale Gaussian tokenizer. (A) Panels (a)–(f) show the center offsets (μx, μ y), coarse-grained opacity αc, and inverse-covariance components (a, b, c ), revealing the geometry of the anisotropic illumination field. (B) Panels (a)–(d) illustrate the four-stage evolution of opacity α, from coarse prediction and fine prediction to fusion and refinement, demonstrating the collaboration between global illumination distribution and local detail compensation. (C) A comparison of the opacity smoothing process is presented, showing that abrupt variations among discrete tokens are effectively suppressed, thereby providing continuous geometric guidance for illumination-field reconstruction.
+
+triplets (μ, Σ−1, α ) and the corresponding semantic token tensor T from the two deepest feature levels: 
+
+(μ, Σ−1, α, T ) = Ψ MGT (F4, F 3). (6) Next, the output parameters are fed into the bottleneck stage formed by cascaded GS-ViT blocks. The Gaussian parameters and token tensor are passed through multiple GS-ViT blocks, where nonlocal interactions are performed under explicit Gaussian biases. They are progressively refined into 
+
+(μ′, Σ′− 1, α ′, T ′), enabling joint modeling of physical priors and global context. Finally, GLFS performs illumination-field reconstruction and image decoding. The Gaussian illumination field reconstruction module ΨGIF splats the refined parameters to produce acontinuous intrinsic illumination field L, a spatial gain field 
+
+Γ, and a noise field N :
+
+(L, Γ, N ) = Ψ GIF (T ′, α ′). (7) The final enhanced result is obtained through a gated global residual connection and multi-scale feature fusion in the decoder. The physical interpretability of the whole process is illustrated in Fig. 2, where the input low-light image is decomposed into four physically meaningful visual compo-nents: intrinsic illumination, spatial gain, noise estimation, and the final enhanced output. 
+
+B. Multi-Scale Gaussian Tokenizer 
+
+In standard ViTs, tokenization is usually performed by regular grid partitioning. The resulting tokens carry positional encodings but no explicit physical meaning. Although such tokens can support nonlocal interaction, they cannot directly describe the geometric structure of scene illumination. The fol-lowing attention layers are therefore required to infer physical priors implicitly from data, which becomes a bottleneck under non-uniform illumination. To address this issue, we propose a multi-scale Gaussian tokenizer (MGT), as shown in Fig. 1(B). In MGT, each spatial location is associated with a differentiable 2D Gaussian basis function, so that each token is endowed with explicit geometric meaning. MGT contains a coarse-grained branch and a fine-grained branch, which operate on the two deepest encoder features, F4
+
+and F3, respectively. The two branches are designed to capture physical signals at different scales, corresponding to global light-source distribution and local high-frequency compensa-tion. In each branch, a shared 3 × 3 convolutional backbone is first used to extract spatial context. Two 1 × 1 convolutional layers are then adopted to predict a six-dimensional geometric descriptor tensor and a d-dimensional semantic feature tensor. The six geometric channels correspond to the center offset with two dimensions, the independent elements of the inverse covariance matrix with three dimensions, and the opacity with one dimension. To ensure that the center position μ strictly lies within the normalized pixel-coordinate domain [−1, 1] 2, we start from a fixed normalized grid P and let the network predict a small relative offset δμ. The offset is constrained by the hyperbolic tangent function and scaled according to the feature resolution: 
+
+μ(x) = P (x) + tanh( δμ(x)) · 2min( H′, W ′) , (8) where H′ and W ′ denote the spatial resolution of the coarse-grained feature map. This parameterization anchors each Gaus-sian basis function around its corresponding pixel and avoids the training instability caused by unconstrained center predic-tion. The validity of the anisotropic inverse covariance matrix 
+
+Σ−1 =
+
+a bb c
+
+
+
+is enforced by ensuring its positive definiteness. For the diagonal elements, Softplus activation with a bias of 1 and upper clipping is adopted to guarantee both non-degeneracy and boundedness: 
+
+a(x) = min (softplus( ea(x)) + 1 , a max ) , (9) where c(x) is parameterized in the same way as a(x), using its corresponding raw prediction ec(x), and amax = 200 .The off-diagonal element b is further constrained within the discriminant radius required for positive definiteness: 
+
+b(x) = tanh( eb(x)) · 12
+
+pa(x)c(x). (10) This parameterization has a geometric interpretation similar to the explicit LDL ⊤ decomposition used in 3DGS, while being more suitable for batched computation on dense convolutional outputs. The opacity α is generated by a Sigmoid function with a learnable bias bα:
+
+α(x) = σ(eα(x) + bα), (11) where bα is initialized as a positive value to encourage dense activation in the early training stage, thereby accelerating the geometric convergence of MGT. To characterize both global illumination and local details, MGT produces (μc, Σ−1 
+
+> c
+
+, α c, T c) and (μf , Σ−1 
+
+> f
+
+, α f , T f ) from the coarse-grained and fine-grained branches, respectively. The semantic tokens from the fine-grained branch are downsampled by a stride-2 convolution and aligned with the coarse-grained tokens. A 1 × 1 fusion convolution ϕT is then applied to generate the final Gaussian token feature: 
+
+T = ϕT (Tc ∥ Down 2(Tf )) , (12) where ∥ denotes channel-wise concatenation. The multi-scale opacity fusion is implemented by a 2 → 1 convolution fol-lowed by a Sigmoid function, allowing the global illumination intensity and local-detail opacity to be adaptively weighted: 
+
+α = σ (ϕα(αc ∥ Up( αf ))) . (13) Through this multi-scale collaboration, the coarse-grained opacity αc mainly captures the global light-source distribution, while the fine-grained opacity αf compensates for local details, such as highlights and shadow boundaries. These two compo-nents are integrated into the fused opacity α. Fig. 3 provides an intuitive illustration of this multi-scale collaboration process. 
+
+C. GS-ViT with Gaussian Splatting Attention 
+
+A standard ViT performs long-range modeling through scaled dot-product attention. However, its relative positional IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS FOR VIDEO TECHNOLOGY 6   
+
+> Fig. 4. Hierarchical evolution of anisotropic Gaussian Splatting Self-Attention in GS-ViT. (A) Attention distributions of the central token in four GS-ViT blocks. Shallow layers show diffuse attention, whereas deeper layers gradually form anisotropic structures around light-source centers, which are highly consistent with the α′distribution. (B) Independent responses of different attention heads. Different heads perceive complementary light-field patterns at different scales and orientations through the learnable temperature th.
+
+bias is usually represented by learnable parameters or coor-dinate differences, which has little relation to the physical illumination geometry of the scene. In low-light enhancement, this limitation makes it difficult for pixels illuminated by the same physical light source to establish strong connections based on physical affinity, leading to grain-like artifacts under non-uniform illumination. To address this issue, as shown in Fig. 1(C), we explicitly introduce an anisotropic physical bias driven by Gaussian geometry into the Gaussian Splatting Attention mechanism of the GS-ViT block, so that long-range modeling is guided by the light-field structure. Given an input token sequence T ∈ RB×N ×d, where 
+
+N = H′W ′, we first inject spatial structural cues using a depthwise-convolution-based Conditional Position Encoding (CPE). This design avoids the resolution limitation caused by fixed positional embeddings: 
+
+T ← T + Reshape (DWConv 3×3 (Reshape( T ))) . (14) A standard multi-head linear projection is then used to obtain the query, key, and value tensors: 
+
+[Q, K, V ] = Reshape( T W qkv ) ∈ RB×h×N ×dh , (15) where h denotes the number of heads, and dh = d/h is the dimension of each head. The key design of the attention score lies in integrating the predicted Gaussian geometry into score computation as an anisotropic physical bias. For any token pair (i, j ), their relative offset in the normalized coordinate system is defined as ∆xij = μi − μj . Using the inverse covariance matrix associated with query token i as the metric, the anisotropic Mahalanobis squared distance is computed as 
+
+d2 
+
+> ij
+
+= ai∆x2 
+
+> ij, 1
+
++ 2 bi∆xij, 1∆xij, 2 + ci∆x2
+
+> ij, 2
+
+. (16) This distance preserves the anisotropic property of the Gaus-sian basis function. When Σ−1 
+
+> i
+
+has a large eigenvalue along a certain direction, the distance along that direction is enlarged; otherwise, it is compressed. We then convert this distance into a bounded Gaussian affinity: 
+
+Aij = exp 
+
+
+
+− 12 d2
+
+> ij
+
+
+
+. (17) To allow each attention head to adjust the bias scale flexibly, we assign an independent learnable temperature th to each head. The Softplus function is used to ensure positivity, and clipping is applied to avoid numerical overflow: 
+
+th = min  Softplus( eth), t max 
+
+ , tmax = 2 . (18) The final attention logit is obtained by combining the seman-tic dot-product score with the physical Gaussian bias through a learnable scalar gate β = σ( eβ):
+
+Logit h(i, j ) = Q⊤
+
+> h,i
+
+Kh,j 
+
+√dh
+
++ βt hAij . (19) Softmax is then applied along the j-dimension, and the resulting attention weights are multiplied by V . The outputs of all heads are concatenated and linearly projected back to the d-dimensional space: 
+
+Out = Concat h (Softmax j (Logit h(i, j )) Vh) Wo. (20) This design provides clear physical interpretability. When 
+
+th is large, the physical bias has a stronger effect on the attention distribution, which encourages strong connections between tokens covered by the same light-field region. The gate β allows the model to rely more on semantic similarity at the early training stage and to gradually introduce the physical prior into the attention distribution in later stages. This strategy avoids the optimization difficulty caused by overly rigid constraints. The hierarchical evolution of the attention maps is shown in Fig. 4. The attention distribution in shallow modules is closer to semantic clustering, while deeper modules gradually present anisotropic structures that are consistent with the transparency α distribution and spread outward from the light-source centers. To enable Gaussian geometry and semantic features to evolve jointly, each GS-ViT block is further equipped with a lightweight geometry-refinement branch after the feed-forward layer. This branch takes the current token features as input and predicts a 6-dimensional residual [δμ, δ Σ, δ α]. A learnable gate 
+
+γ = 0 .3 tanh( eγ) is then used to apply a small correction to the Gaussian parameters. The center parameter is refined using the same normalized clipping form as in Section III-B: 
+
+μ′ = clip ( μ + γ · 0.01 tanh( δμ), −1, 1) . (21) For the inverse covariance matrix, the positive-definite pro-jection PD( ·) is applied again after the residual update: 
+
+Σ′− 1 = PD  Σ−1 + γ · 0.005 δΣ
+
+ . (22) The opacity parameter is clipped to the valid probability interval: 
+
+α′ = clip ( α + γ · 0.02 tanh( δα), 0, 1) . (23) The magnitude of each update is controlled within the range of 0.005 to 0.02 . Together with the small tanh output of the learnable gate γ, this design allows the Gaussian geometry to continuously absorb semantic evidence during layer-wise non-local interactions, while keeping each update sufficiently small to maintain the stability of the overall light-field structure. The comparison between the refined α and the initial α is shown in Fig. 3(C). After refinement by the GS-ViT bottleneck, the 
+
+α response becomes sharper around boundaries and smoother within uniformly illuminated regions. 
+
+D. Gaussian Illumination Field 
+
+After GS-ViT bottleneck refinement, the geometric param-eters of each token are aligned with the global semantics. Still, the Gaussian parameters form a discrete and sparse representation. To convert them into a continuous light field that can be fused with decoder features at the pixel level, we design a Gaussian Light Field Reconstruction module (GIF), as shown in Fig. 1(D). GIF contains three parallel prediction heads, each responsible for a specific physical component, and produces the final enhancement map through spatial smoothing and gated residual modulation. IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS FOR VIDEO TECHNOLOGY 7
+
+(i) Intrinsic illumination prediction head ΦL: This head takes the refined token tensor T ′, which has been reshaped into a two-dimensional spatial form, as input. A two-layer convolutional head with 3 × 3 and 1 × 1 kernels, followed by a Sigmoid activation, is used to predict an intrinsic illumination map with a resolution of H′ × W ′:
+
+L(x) = σ (Φ L (T ′(x))) , (24) where L(x) ∈ [0 , 1] physically denotes the normalized lumi-nous flux received at spatial location x. Its distribution is consistent in formulation with the splatted accumulation of Gaussian basis functions described in Section III-A. Low values indicate severely attenuated dark regions, while high values correspond to well-illuminated regions. 
+
+(ii) Noise estimation head ΦN : The noise level in low-light images is usually negatively correlated with local brightness and shows complex spatial dependency. Using the same token tensor as input, this head independently predicts a normalized noise response map: 
+
+N (x) = σ (Φ N (T ′(x))) , (25) where N is used as an auxiliary input for subsequent gain-field estimation and is further constrained by smoothness regularization, which enables explicit modeling of the noise distribution. 
+
+(iii) Gain-field refinement head ΦΓ: The illumination field L,noise field N , and refined opacity α′ are concatenated along the channel dimension to form a three-channel conditional tensor. A two-layer convolutional head followed by Softplus is then used to predict a coarse gain. A bias of 1 is added to shift the output into a physically reasonable amplification range: 
+
+Γlow (x) = 1 + Softplus (Φ Γ (L(x) ∥ N (x) ∥ α′(x))) . (26) To avoid block artifacts caused by abrupt local variations in Gaussian geometry, Γlow is first bilinearly upsampled to the full resolution. It is then smoothed using a fixed 5 × 5
+
+isotropic Gaussian kernel Kσ , where σ = 1 , and the kernel is not learnable. The result is strictly clipped to a physically reasonable amplification range: 
+
+Γ( x) = clip ( Kσ ∗ Up(Γ low )( x), Γmin , Γmax ) . (27) where Γmin = 1 ensures that the gain field does not reduce the input brightness, so the image is enhanced rather than darkened. Γmax = 4 is empirically set to balance visibility improvement and noise amplification. This spatial smoothing and clipping strategy is critical for suppressing token-boundary discontinuities and preventing local overexposure. The final enhanced image is produced through two comple-mentary paths. The first path uses the decoded feature D, which is obtained by multi-scale upsampling and channel attention guided fusion with the encoder features. To inject the estimated gain field, a gain-injection convolution Φinj is used to align and fuse the downsampled gain field with the decoded feature: 
+
+eD = Φ inj (D ∥ Down(Γ)) . (28) The second path is a direct global residual path. A learnable gate ω = σ(ˇ ω) controls the mixing ratio between the generated output and the residual input: 
+
+Ie = (1 − ω) tanh 
+
+
+
+Φout ( eD)
+
+
+
++ ωI l, (29) where Φout denotes the output head composed of reflection padding and a 7 × 7 convolution. The gate ω is initialized with a small Sigmoid response, i.e., σ(−1.5) ≈ 0.18 . This initialization anchors the model to the input image at the early training stage, while the generation path mainly performs local gain adjustment and color correction. As a result, the global structure is well preserved, and the quantitative performance is improved. The physical visualization of the GIF module is shown in Fig. 2. The input low-light image is naturally decomposed into three physically interpretable components, including intrinsic illumination, spatial gain, and noise, and is finally reconstructed into an enhanced image with uniform illumination and faithful color reproduction. 
+
+E. Unsupervised Training Objectives 
+
+Since this work focuses on unpaired real low-light scenes, pixel-level ground truth is unavailable. We therefore design a set of complementary unsupervised objectives to guide the enhanced results from eight aspects: adversarial synthe-sis, cross-domain consistency, perceptual fidelity, structural similarity, exposure control, color fidelity, edge preservation, and physical smoothness. To reduce the weight-tuning burden caused by overly fine-grained sub-losses, several tightly cou-pled terms are merged according to their physical meanings. The final objective consists of eight main losses, which jointly drive the bidirectional training of the generative adversarial network. In the following, GA denotes the darkening generator from the normal-light domain to the low-light domain, GB
+
+denotes the proposed enhancement generator from the low-light domain to the normal-light domain, and DA and DB
+
+denote the corresponding multi-scale discriminators. To align the distributions of the two generated domains with-out paired data, we adopt a least-squares adversarial loss. The multi-scale PatchGAN real/fake constraints in both directions are integrated into a unified adversarial objective: 
+
+Ladv = EIl
+
+h
+
+(DB (GB (Il)) − 1) 2i
+
++ EIn
+
+h
+
+(DA (GA(In)) − 1) 2i
+
+.
+
+(30) To prevent unsupervised training with a purely adversarial objective from suffering from mode collapse and cross-domain structural misalignment, we further impose cycle-consistency and identity-preservation constraints. The cycle-consistency term requires the two transformation paths, darkening followed by enhancement and enhancement followed by darkening, to reconstruct the original images. The identity term requires each generator to preserve the input when it already belongs to the target domain. Since both terms are measured by pixel-level ℓ1 distances and jointly preserve cross-domain semantic consistency, they are combined into a single cross-domain consistency loss: 
+
+Ldc = ∥GB (GA(In)) − In∥1 + ∥GA(GB (Il)) − Il∥1
+
++ η (∥GA(Il) − Il∥1 + ∥GB (In) − In∥1) , (31) where η denotes the relative weight of the identity term. To constrain cycle reconstruction at the semantic level and pre-serve high-level structure and texture consistency, we introduce a multi-layer perceptual loss based on VGG-19. Following the five-slice design {ϕl}5
+
+> l=1
+
+, the ℓ1 distance is computed on the activation of each layer and accumulated in both directions: 
+
+Lper =
+
+> 5
+
+X
+
+> l=1
+
+
+
+∥ϕl(GB (GA(In))) − ϕl(In)∥1
+
++ ∥ϕl(GA(GB (Il))) − ϕl(Il)∥1
+
+
+
+.
+
+(32) Because pixel-level cycle loss may over-smooth high-frequency regions, a structural similarity loss is further imposed on the cycle reconstruction. This loss uses the window-based IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS FOR VIDEO TECHNOLOGY 8  
+
+> Fig. 5. Visual comparison of GLFS with SOTA methods on the LOL dataset.
+> Fig. 6. Visual comparison of GLFS with SOTA methods on the LSRW-HUAWEI dataset.
+
+SSIM metric, which is consistent with human visual percep-tion: 
+
+Lssim = 12 (1 − SSIM ( GB (GA(In)) , I n)) + 12 (1 − SSIM ( GA(GB (Il)) , I l)) .
+
+(33) To address local exposure imbalance, we introduce a unified exposure and spatial consistency objective. In the enhance-ment domain, the squared deviation between the local mean computed by p × p average pooling, where p = 16 , and the target exposure μe = 0 .55 is penalized to encourage uniform and natural brightness. In the darkening domain, μd = 0 .20 is used as the target exposure to maintain a clear luminance sep-aration between the two domains. In addition, four-directional difference consistency is measured after 4× pooling to suppress abrupt transitions introduced by enhancement: 
+
+Lexp = ∥Pp(Ie) − μe∥22 + ζd ∥Pp(Id) − μd∥22
+
++ ζs
+
+X
+
+> r∈R
+
+∥∇ r P4(Ie) − ∇ r P4(Il)∥22 , (34) where Pp(·) denotes p × p average pooling, R = {← , →, ↑, ↓} 
+
+denotes the set of four directional difference operators, and ζd
+
+and ζs are the relative weights of the corresponding terms. The darkened image is normalized as ˆId = ( GA( ˆIn) + 1) /2.Furthermore, to overcome the color distortion introduced by the conventional Gray-World assumption, we propose a color vector angular loss. Specifically, the RGB triplet at each pixel is treated as a three-dimensional vector, and only its direction, namely hue, is constrained, while its magnitude, namely brightness, is left unconstrained. The loss is defined as 
+
+Lcol = 1 − Ex
+
+ ˆIe(x)⊤ ˆIl(x)
+
+ˆIe(x) 2
+
+ˆIl(x) 2
+
++ ϵ
+
+ . (35) This loss allows the vector magnitude to increase freely to improve visibility, while forcing the directional cosine to approach 1. In this way, color deviation is suppressed with-out relying on the Gray-World assumption, which is fully consistent with the objective of strictly preserving hue con-sistency stated in the abstract. To preserve high-frequency details without ground truth, we replace the commonly used differential edge loss with an edge-preservation loss based on the luminance channel Y and the Sobel operator. The RGB image is first converted into the luminance channel by 
+
+Y (I) = 0 .299 R + 0 .587 G + 0 .114 B, (36) which avoids interference from color fluctuation in edge mea-surement. The gradient magnitude is then extracted using 3×3IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS FOR VIDEO TECHNOLOGY 9 
+
+> Fig. 7. Visual comparison of GLFS with SOTA methods on the LSRW-NIKON dataset.
+
+Sobel operators: 
+
+S(I) = 
+
+q
+
+(Sx ∗ Y (I)) 2 + ( Sy ∗ Y (I)) 2 + ϵ. (37) Finally, the edges in the enhancement domain and the cycle-reconstruction domains are matched using bidirectional ℓ1
+
+distances: 
+
+Ledge = ∥S(GB (Il)) − S(Il)∥1
+
++ 12
+
+X
+
+> (R,R ∗)
+
+∥S(R) − S(R∗)∥1 , (38) where the pair (R, R ∗) is instantiated as (rec A, I n) and 
+
+(rec B , I l). This objective penalizes missing edges and sup-presses spurious edges, thereby improving the structural fidelity of the enhanced image. For the physical outputs of the GIF module, three parallel smoothness terms, including TV smoothness of the enhanced image, TV smoothness of the intrinsic illumination field, and TV smoothness of the Gaussian opacity, are combined into a single physical smoothness objective according to their shared role in enforcing spatial continuity of physical quantities: 
+
+Lsmooth = ρ1 TV( Ie) + ρ2 TV( L) + ρ3 TV( α′), (39) where TV( Z) = E[|∂xZ|] + E[|∂y Z|] denotes the mean hori-zontal and vertical variations, and ρ∗ denotes the corresponding weights. This objective imposes continuity constraints on the physical outputs and prevents high-frequency fluctuations in the gain and illumination fields. By combining the above eight main losses, the final training objective of GLFS is formulated as 
+
+Ltotal =λadv Ladv + λdc Ldc + λper Lper 
+
++ λssim Lssim + λexp Lexp + λcol Lcol 
+
++ λedge Ledge + λsmooth Lsmooth .
+
+(40) where the optimal configuration of each weight λ∗ is provided in Section IV. The whole model is trained using the Adam optimizer with automatic mixed precision. In each iteration, the generator is first updated with the discriminator fixed, followed by discriminator updating with the generator fixed. Gradient clipping with a norm of 1.0 is applied to both networks to improve training stability. IV. E XPERIMENTS 
+
+A. Experimental Setup 
+
+Datasets. To systematically evaluate the effectiveness and generalization ability of the proposed GLFS model in unsuper-vised low-light image enhancement, experiments are conducted on two widely used benchmark datasets: LOL and LSRW [26], [27]. LOL is the first publicly available paired dataset specif-ically built for low-light image enhancement, containing low-light and normal-light image pairs from both synthetic and real scenes. LSRW is the first large-scale paired dataset collected in real-world scenarios. It contains two independent subsets captured by a Huawei P40 Pro smartphone and a Nikon D7500 digital single-lens reflex camera, respectively. Since this work follows an unsupervised learning paradigm, the original image pairs are deliberately decoupled during training. Normal-light and low-light images are placed in two separate subdirectories and randomly sampled as unpaired inputs to the network. During testing, the original paired structure is restored to support objective quantitative evaluation with full-reference metrics. All samples are split into training and testing sets at a ratio of 9:1. 
+
+Implementation Details. The whole model is implemented in PyTorch, and both end-to-end training and inference are performed on a single NVIDIA RTX 8000 GPU. During data preprocessing, each original image is first resized to 286 ×286 .A 256 × 256 training patch is then randomly cropped, and random horizontal flipping is applied with a probability of 0.5 to improve robustness to mirror transformations. In the network architecture, the base channel number of the GS-ViT generator is set to 64, and the number of stacked GS-ViT blocks is set to N = 4 .For optimization, the generator and discriminator are opti-mized using the Adam optimizer, with β1 = 0 .5 and β2 =0.999 . The initial learning rate is set to 2 × 10 −4. A linear decay schedule is adopted, where the initial learning rate is kept unchanged for the first 50 epochs and then linearly decayed to zero over the next 50 epochs. The model is trained for 100 epochs in total, with a batch size of 4. To ensure stable optimization of continuous Gaussian covariance parameters and the self-attention mechanism under low-precision compu-tation, PyTorch automatic mixed precision is enabled. Global gradient norm clipping with a threshold of 1.0 is applied to both the generator and the discriminator. The adversarial loss follows the least-squares GAN formulation, and a historical image buffer with a capacity of 50 is maintained to stabilize discriminator training. For the multi-objective joint loss, the weights of all loss terms are carefully tuned based on systematic ablation exper-iments. They are set to λadv = 1 .0, λdc = 10 .0, λper = 5 .0,IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS FOR VIDEO TECHNOLOGY 10 
+
+TABLE I PERFORMANCE COMPARISON ON THE LOL DATASET . R ED AND BLUE INDICATE THE BEST AND SECOND -BEST RESULTS , RESPECTIVELY .
+
+Method SSIM ↑ PSNR ↑ LPIPS ↓ NIQE ↓ LOE ↓ DE ↑ EME ↑ Params (K) ↓ FLOPs (G) ↓
+
+ZeroDCE++ [6] 0.66 18.83 0.24 5.30 23.41 2.08 23.31 10.6 0.33 ZeroDCE [7] 0.65 17.69 0.23 5.30 25.00 1.94 23.43 79.4 5.21 SCI [8] 0.62 17.73 0.23 5.53 5.75 1.92 24.65 0.3 0.0619 RUAS [9] 0.51 15.59 0.26 5.36 0.30 1.36 29.32 1.4 0.2813 EnlightenGAN [10] 0.73 18.32 0.22 3.68 73.97 1.47 3.42 8636 61.01 FMR-NET [11] 0.81 19.74 0.21 3.98 42.28 2.46 4.59 196.8 102.8 LIME [5] 0.56 16.68 0.34 5.51 111.82 2.03 26.45 N/A N/A FRR-NET [12] 0.77 22.26 0.22 5.53 29.68 2.04 5.79 12.21 0.216 UTV-NET [13] 0.84 20.38 0.15 4.20 21.36 2.06 7.80 7745 58.29 ChebyLighter [14] 0.74 17.77 0.17 3.73 56.38 2.28 5.88 73 17.25 EFI-NET [15] 0.69 16.97 0.21 3.93 32.10 1.61 7.93 129.2 9.38 PairLIE [16] 0.76 20.36 0.21 4.07 73.44 1.95 5.96 34.18 22.35 NoiSER [17] 0.67 15.50 0.43 4.07 65.74 2.04 2.86 1.763 8.62 URetinex-NET [18] 0.82 20.12 0.14 3.46 31.17 2.27 5.80 838.3 136.01 ZeroIG [19] 0.54 16.16 0.30 5.97 16.33 2.59 24.63 123.63 118.73 GLFS 0.88 23.09 0.13 3.71 5.44 2.71 27.15 7804 66.82 
+
+TABLE II PERFORMANCE COMPARISON ON THE LSRW-HUAWEI DATASET . R ED AND BLUE INDICATE THE BEST AND SECOND -BEST RESULTS FOR EACH METRIC ,
+
+> RESPECTIVELY
+
+.
+
+Method SSIM ↑ PSNR ↑ LPIPS ↓ NIQE ↓ LOE ↓ DE ↑ EME ↑ Params (K) ↓ FLOPs (G) ↓
+
+ZeroDCE++ [6] 0.57 15.17 0.33 2.59 25.08 2.17 30.23 10.6 0.33 ZeroDCE [7] 0.56 14.66 0.37 2.60 32.68 2.09 30.50 79.4 5.21 SCI [8] 0.53 15.82 0.39 2.77 9.64 1.92 32.32 0.3 0.0619 RUAS [9] 0.47 12.45 0.47 3.10 1.85 1.28 33.61 1.4 0.2813 EnlightenGAN [10] 0.63 17.33 0.40 2.61 69.43 1.65 3.08 8636 61.01 FMR-NET [11] 0.68 18.85 0.43 3.34 40.33 2.41 4.35 196.8 102.8 LIME [5] 0.49 14.26 0.47 3.86 145.58 2.29 35.58 N/A N/A FRR-NET [12] 0.63 17.89 0.42 3.35 24.28 2.33 5.82 12.21 0.216 UTV-NET [13] 0.63 16.80 0.34 2.43 29.71 2.28 8.13 7745 58.29 ChebyLighter [14] 0.63 16.01 0.42 2.25 61.54 2.40 6.34 73 17.25 EFI-NET [15] 0.59 14.27 0.40 2.76 31.49 1.76 8.01 129.2 9.38 PairLIE [16] 0.66 17.22 0.43 3.03 54.29 2.11 5.27 34.18 22.35 NoiSER [17] 0.64 16.29 0.63 3.48 70.14 1.65 1.99 1.763 8.62 URetinex-NET [18] 0.63 17.98 0.39 2.26 26.37 2.48 7.24 838.3 136.01 ZeroIG [19] 0.55 15.49 0.38 3.22 12.05 2.37 31.95 123.63 118.73 GLFS 0.83 19.76 0.31 3.06 7.76 2.42 29.41 7804 66.82 
+
+TABLE III PERFORMANCE COMPARISON ON THE LSRW-NIKON DATASET . R ED AND BLUE INDICATE THE BEST AND SECOND -BEST RESULTS FOR EACH METRIC ,
+
+> RESPECTIVELY
+
+.
+
+Method SSIM ↑ PSNR ↑ LPIPS ↓ NIQE ↓ LOE ↓ DE ↑ EME ↑ Params (K) ↓ FLOPs (G) ↓
+
+ZeroDCE++ [6] 0.64 12.61 0.22 2.52 48.86 1.41 10.84 10.6 0.33 ZeroDCE [7] 0.62 11.99 0.22 2.60 43.25 1.19 10.65 79.4 5.21 SCI [8] 0.55 14.32 0.24 2.59 16.41 1.52 12.91 0.3 0.0619 RUAS [9] 0.45 9.05 0.31 2.57 0.53 1.33 14.20 1.4 0.2813 EnlightenGAN [10] 0.59 12.53 0.33 2.76 118.78 0.26 1.91 8636 61.01 FMR-NET [11] 0.72 14.90 0.22 2.88 16.92 1.55 4.30 196.8 102.8 LIME [5] 0.50 10.22 0.33 3.16 75.07 1.41 13.45 N/A N/A FRR-NET [12] 0.74 14.97 0.20 3.50 20.90 1.23 4.09 12.21 0.216 UTV-NET [13] 0.56 9.61 0.25 2.82 23.44 1.30 6.54 7745 58.29 ChebyLighter [14] 0.71 19.02 0.17 2.56 34.48 1.61 4.58 73 17.25 EFI-NET [15] 0.57 10.29 0.28 2.27 43.52 1.36 6.54 129.2 9.38 PairLIE [16] 0.74 14.75 0.24 3.06 52.24 1.28 4.68 34.18 22.35 NoiSER [17] 0.62 13.60 0.45 3.30 44.04 0.98 2.02 1.763 8.62 URetinex-NET [18] 0.75 16.95 0.15 2.50 21.37 1.51 4.54 838.3 136.01 ZeroIG [19] 0.59 18.77 0.23 3.05 28.68 1.92 10.96 123.63 118.73 GLFS 0.80 19.99 0.14 2.64 14.19 1.74 15.37 7804 66.82 
+
+λssim = 3.0, λexp = 1.0, λcol = 1.0, λedge = 1.0, and 
+
+λsmooth = 1 .0. The internal weights of the merged losses are set to η = 0 .5, ζd = 0 .3, ζs = 1 .0, ρ1 = 0 .005 , ρ2 = 1 .0,and ρ3 = 0 .5. These weight settings allow the Transformer to maintain flexible feature representation while following the physical priors of the Gaussian light field. Meanwhile, the color and structure regularization helps reduce color shifts and structural degradation in unsupervised training. 
+
+Evaluation Metrics. To comprehensively evaluate the enhanced images in terms of pixel fidelity, perceptual quality, and visual naturalness, seven widely used metrics in image restoration and enhancement are adopted, including three full-reference metrics and four no-reference metrics. For datasets with paired ground-truth images (GT), three full-reference metrics are used to measure the consistency between the enhanced image and the reference image: peak signal-to-noise ratio (PSNR), structural similarity index measure (SSIM), and learned perceptual image patch similarity (LPIPS). Specifi-cally, PSNR mainly measures pixel-level fidelity. SSIM eval-uates image similarity from luminance, contrast, and struc-ture. LPIPS measures perceptual similarity by computing the feature-space distance between the enhanced image and the reference image using a deep neural network, where the VGG backbone is adopted in this study. To evaluate image naturalness, contrast, and information content without reference images, especially for unpaired data and real-world deployment, four no-reference metrics are fur-ther introduced: natural image quality evaluator (NIQE), light-ness order error (LOE), discrete entropy (DE), and enhance-ment measure estimation (EME). Specifically, NIQE measures image naturalness by estimating the distance between the enhanced image and the statistical model of natural images. LOE evaluates the preservation of relative lightness order during enhancement. DE measures the amount of information contained in an image, while EME quantifies local contrast variation. This multi-metric evaluation protocol covers objec-tive fidelity, perceptual quality, and visual comfort, providing a comprehensive assessment of enhancement performance in different application scenarios. 
+
+B. Performance Comparison 
+
+To comprehensively evaluate the performance of the pro-posed GLFS, we conduct extensive qualitative and quantita-tive comparisons with recent state-of-the-art low-light image IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS FOR VIDEO TECHNOLOGY 11  
+
+> Fig. 8. Detail comparison of GLFS with SOTA methods on the LSRW-HUAWEI dataset. For each method, the magnified view of the red-box region is shown.
+
+enhancement methods [5]–[19] on the LOL, LSRW-HUAWEI, and LSRW-NIKON datasets. Visual comparisons are shown in Figs. 5–8, and quantitative results are reported in Tables I– III. For quantitative evaluation, PSNR, SSIM, and LPIPS are adopted as full-reference metrics, while NIQE, LOE, DE, and EME are used as no-reference metrics. As shown in Fig. 5, different methods produce visibly different enhancement results for this low-light image. EFI-NET, SCI, RUAS, and ZeroDCE generate overall dark results with insufficient detail recovery. NoiSER produces excessive brightness with noticeable oversaturation. LIME introduces obvious noise and degrades visual quality. EnlightenGAN and PairLIE suffer from haze-like artifacts and blurring. In contrast, GLFS is closer to the ground truth (GT) in brightness enhancement, color restoration, and detail preservation. The enhanced image is natural and clear, achieving the best overall visual quality. As shown in Fig. 6, the input image in the second com-parison group is severely underexposed, and most scene details are barely visible. EFI-NET, SCI, RUAS, ZeroDCE, and ZeroDCE++ provide insufficient enhancement, leaving the results still dark. EnlightenGAN and NoiSER suffer from obvious overexposure, haze-like artifacts, and color distortion. LIME introduces strong noise and degrades visual quality. FMR-NET, FRR-NET, and PairLIE improve brightness but still produce grayish results. In contrast, GLFS achieves natural brightness and color close to the GT. Details of the vehicle, ground, and background are more clearly recovered, leading to the best overall visual quality. As shown in Fig. 7, the input image in the third comparison group has low brightness, and details of the vehicle and ground are unclear. EFI-NET and SCI provide limited brightness improvement, and their results remain dark. EnlightenGAN and ChebyLighter show evident grayish haze. NoiSER and ZeroIG cause overexposure and color oversaturation, while LIME introduces noise and color shifts. FMR-NET, FRR-NET, and UTV-NET achieve relatively stable enhancement, but their detail recovery is still limited. In contrast, GLFS produces moderate brightness and natural color. Vehicle contours and ground textures are more clearly restored, and the overall result is closer to the GT. As shown in Fig. 8, local zoom-in regions are used to further compare the detail recovery ability of different methods. ChebyLighter, FMR-NET, and FRR-NET improve brightness effectively, but their edges are slightly blurred. RUAS, SCI, and ZeroDCE still suffer from underexposure or color shifts.                                  
+
+> TABLE IV ABLATION ANALYSIS OF THE CORE ARCHITECTURE . R ED AND BLUE INDICATE THE BEST AND SECOND -BEST RESULTS FOR EACH METRIC ,
+> RESPECTIVELY .
+> Model Architecture SSIM ↑PSNR ↑LPIPS ↓NIQE ↓
+> Base-CNN 0.77 20.32 0.27 4.92 Base-ViT 0.82 21.09 0.24 4.51 GLFS (Ours) 0.88 23.09 0.13 3.71
+> TABLE V ABLATION RESULTS OF PHYSICAL PRIOR MODELING FOR THE LIGHT FIELD . R ED AND BLUE INDICATE THE BEST AND SECOND -BEST RESULTS FOR EACH METRIC ,RESPECTIVELY .
+> Prior Modeling SSIM ↑PSNR ↑LPIPS ↓NIQE ↓
+> w/o Physical Prior 0.84 21.70 0.21 4.11 Isotropic Gaussians 0.86 22.43 0.18 3.94 Anisotropic Gaussians 0.88 23.09 0.13 3.71
+
+LIME introduces obvious noise, while NoiSER causes over-enhancement. In contrast, GLFS produces clearer vehicle boundaries, leaf textures, and background details with less noise, yielding the result closest to the GT. In summary, GLFS achieves leading subjective visual quality over existing methods in brightness, color, detail recovery, and sharpness. Benefiting from its strong overall enhancement capability, GLFS also shows superior performance in noise suppression and overexposure prevention. As reported in Tables I–III, GLFS achieves the best results in PSNR and SSIM across all three datasets. Although GLFS does not have an advantage in parameter count or floating-point operations, it ranks among the top two methods on most of the remaining metrics. Since GLFS is not designed as a lightweight model and is the first low-light image enhancement framework that integrates the continuous physical illumination modeling mechanism of Gaussian splatting into a Transformer architecture, these results demonstrate its advantages in both image quality and methodological design. GLFS also shows comprehensive superiority over different categories of SOTA methods. 
+
+C. Ablation Study 
+
+To verify the effectiveness and validity of the key com-ponents and loss-function designs in GLFS, we conduct sys-tematic ablation experiments on the LOL dataset. All model variants follow the same training strategy and hyperparameter settings as the full model to ensure fair comparisons. 
+
+Effectiveness of the Core Architecture. To verify the necessity and advantage of integrating 2DGS into the ViT architecture, we design the following baselines for comparison: 1) Base-CNN: a widely used ResNet-9blocks generator is adopted to represent a network with purely local receptive fields; 2) Base-ViT: the standard multi-head self-attention mechanism is used to replace the proposed Gaussian Splatting Attention, and the physical light-field output heads are removed to represent a purely data-driven network with global receptive fields; 3) GLFS (Ours): the complete physical-prior-driven ViT architecture proposed in this work. As shown in Table IV, the pure CNN architecture performs the worst across all metrics. Its limited receptive field makes it prone to light spots and local overexposure under severe spatially non-uniform illumination. Base-ViT improves SSIM to 0.82 by capturing long-range dependencies through global attention. However, its purely data-driven black-box mapping lacks an explicit representation of physical illumination and still fails to fully suppress noise in extremely dark regions. In contrast, GLFS significantly improves PSNR to 23.09 dB and reduces NIQE to 3.71. These results show that the strong non-local perception of the Transformer and the continuous physical IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS FOR VIDEO TECHNOLOGY 12                                                                                      
+
+> TABLE VI ABLATION ANALYSIS OF UNSUPERVISED TRAINING OBJECTIVES . R ED AND BLUE INDICATE THE BEST AND SECOND -BEST RESULTS FOR EACH METRIC ,
+> RESPECTIVELY .
+> Objective Configurations SSIM ↑PSNR ↑LPIPS ↓NIQE ↓
+> w/o Lcol 0.79 21.96 0.22 4.28 w/o Ledge 0.86 22.78 0.21 4.32 w/o Lexp 0.72 21.77 0.26 4.46 w/o Lsmooth 0.85 22.89 0.19 4.05 Full Objectives 0.88 23.09 0.13 3.71
+> TABLE VII ABLATION ANALYSIS WITHOUT MULTI -SCALE GAUSSIAN TOKENIZATION .RED AND BLUE INDICATE THE BEST AND SECOND -BEST RESULTS FOR EACH METRIC ,RESPECTIVELY .
+> Tokenization Strategy SSIM ↑PSNR ↑LPIPS ↓NIQE ↓
+> Single-Scale (116 )0.83 22.76 0.17 4.15 Single-Scale (14)0.86 22.82 0.16 4.01 Multi-Scale (Ours) 0.88 23.09 0.13 3.71
+> TABLE VIII TRADE -OFF ANALYSIS AMONG MODEL COMPLEXITY ,HYPERPARAMETERS ,
+> AND PERFORMANCE . R ED AND BLUE INDICATE THE BEST AND SECOND -BEST RESULTS FOR EACH METRIC ,RESPECTIVELY .
+> Blocks ( N)Heads ( H)Params (M) ↓FLOPs (G) ↓PSNR ↑SSIM ↑
+> 246.45 64.05 18.32 0.72 427.80 66.82 22.93 0.83 447.80 66.82 23.09 0.88 487.80 66.82 23.08 0.88 649.16 69.59 23.29 0.89
+
+light-field representation of 2DGS are highly complemen-tary. The self-attention mechanism with Gaussian affinity bias effectively guides uniform illumination recovery in complex degradation scenarios. 
+
+Impact of Physical Prior Modeling. The core of GLFS lies in using anisotropic Gaussian function superposition to infer the spatial gain field Γ( x). To investigate the effect of the exact form of this physical prior on the enhancement results, we pro-gressively remove the illumination-field modeling components: 1) w/o Physical Prior: Gaussian tokenization and the Gaussian light-field reconstruction module (GIF) are removed, and the network directly regresses an RGB gain map; 2) Isotropic Gaussians: the covariance matrix is restricted to an isotropic form, corresponding to circular Gaussian spots, where only the scale and intensity are adjusted; 3) Anisotropic Gaussians (Ours): the full anisotropic Gaussian representation is used, allowing elliptical spots with arbitrary orientations. As shown in Table V, the experimental results are highly consistent with physical intuition. Removing the physical prior completely gives the network excessive freedom, making it prone to noise amplification under unpaired supervision, with NIQE increasing to 4.11. Isotropic Gaussians provide basic smoothness, but light sources and shadow boundaries in real scenes often show strong directionality, such as oblique shad-ows produced by light passing through a window. Table V con-firms that the full anisotropic Gaussian covariance constraint is critical for fitting complex boundaries, achieving the best SSIM and LPIPS. These results validate the design of decomposing complex illumination fields into a superposition of direction-adaptive Gaussian basis functions. 
+
+Ablation on Unsupervised Training Objectives. Among the eight unified main losses described in Section III-E, the adversarial loss Ladv and the cycle-consistency loss Ldc form the basic training framework. Therefore, we focus on ablating four core constraints designed for key low-light enhancement challenges: 1) w/o Lcol : the color vector angular loss is removed and replaced with the conventional Gray-World loss; 2) w/o Ledge : the edge loss based on the Y channel and Sobel operator is removed and replaced with a simple ℓ1 image-gradient loss; 3) w/o Lexp : the unified exposure and spatial consistency objective is removed; 4) w/o Lsmooth : the TV smoothness objective for physical fields is removed. As shown in Table VI, the experimental results validate the necessity of each loss function. First, removing Lcol 
+
+causes obvious color shifts and decreases PSNR to 21.96. The conventional Gray-World assumption tends to pull warm-tone scenes toward gray tones. In contrast, the proposed color vector angular loss constrains only the cosine angle and removes the restriction on vector magnitude, which meets the requirement of low-light enhancement to improve brightness without chang-ing hue. Second, removing Ledge leads to a clear drop in SSIM to 0.86. Since cycle reconstruction is prone to over-smoothing, 
+
+Ledge , based on Sobel operators and a single Y channel, accurately anchors high-frequency structural information while excluding color interference, making it essential for high-fidelity restoration. Finally, removing Lexp or Lsmooth results in insufficient enhancement strength and degrades metrics such as NIQE. 
+
+Effect of Multi-Scale Gaussian Tokenization. Illumination distribution usually contains globally diffuse components as well as locally sharp highlights or deep shadows. To verify the necessity of MGT in extracting and fusing multi-level features, we compare it with single-scale extraction strategies: 1) Single-Scale (Coarse only): Gaussian ellipsoid parameters are extracted only from low-resolution features at the 116 scale; 2) Single-Scale (Fine only): Gaussian ellipsoid parameters are extracted only from high-resolution features at the 14 scale; 3) Multi-Scale (Ours): Gaussian parameters are jointly extracted and fused across multiple scales. As shown in Table VII, using only the coarse scale captures good global illumination consistency but tends to produce halo artifacts around shadow boundaries. In contrast, using only the fine scale improves edge fidelity, but the global brightness distribution may become discontinuous and patchy. The proposed multi-scale Gaussian tokenization mechanism combines coarse-scale α smoothing with fine-scale geometric detail correction. As a result, the model achieves the best PSNR and SSIM, while also obtaining the best perceptual quality in terms of NIQE, which verifies the effectiveness of this design. 
+
+Sensitivity Analysis of Model Complexity. Considering the constraints on parameter count and floating-point operations in practical deployment, the number of GS-ViT blocks N and the number of attention heads H directly affect both performance and computational cost. We evaluate different combinations with N ∈ { 2, 4, 6} and H ∈ { 2, 4, 8}. Parameter count and floating-point operations are measured at a resolution of 256 ×
+
+256 to identify a suitable configuration. The statistics in Table VIII show that GLFS provides strong scalability in the trade-off between performance and efficiency. When the number of GS-ViT blocks increases from 2 to 4, PSNR and SSIM are substantially improved, indicating that sufficient depth is critical for establishing accurate light-field affinity. However, when the depth is further increased to 6 or the number of heads is increased to 8, the performance gain becomes marginal, with SSIM increasing only from 0.88 to 0.89, while the computational cost rises sharply. These settings may also increase the risk of overfitting on small-scale unpaired data. Considering efficiency and the marginal benefit of performance improvement, we select N = 4 and H = 4 
+
+as the default configuration. This ablation shows that GLFS achieves strong enhancement performance while retaining the potential for lightweight deployment in resource-constrained environments. IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS FOR VIDEO TECHNOLOGY 13 
+
+V. C ONCLUSION 
+
+This paper presents GLFS, a physical prior-driven Vision Transformer for unsupervised low-light image enhancement. By integrating the continuous light-field representation of 2D Gaussian Splatting into the self-attention mechanism, GLFS establishes a new paradigm for modeling complex illumination degradation. Specifically, anisotropic Gaussian basis functions are used to construct physical biases, which guide the network to infer a smooth spatial gain field and effectively address non-uniform exposure restoration. Moreover, the proposed color vector angular constraint and luminance-edge constraint pre-serve hue consistency and improve structural fidelity. Extensive experiments demonstrate that GLFS achieves state-of-the-art performance. These results show that GLFS effectively alle-viates local exposure imbalance and color distortion in unsu-pervised enhancement, while offering a promising perspective for embedding continuous physical priors into low-level vision architectures. REFERENCES [1] C. Li, C. Guo, L. Han, et al., “Low-light image and video enhancement using deep learning: A survey,” IEEE Trans. Pattern Anal. Mach. Intell. ,vol. 44, no. 12, pp. 9396–9416, 2022. [2] Q. Zhao, G. Li, B. He, et al., “Deep learning for low-light vision: A comprehensive survey,” IEEE Trans. Neural Netw. Learn. Syst. , 2025. [3] M. T. Islam, I. Alam, S. S. Woo, S. Anwar, I. H. Lee, and K. Muhammad, “Loli-street: Benchmarking low-light image enhancement and beyond,” in Proc. Asian Conf. Comput. Vis. (ACCV) , 2024, pp. 1250–1267. [4] G. Bai, H. Yan, W. Liu, et al., “Towards lightest low-light image enhancement architecture for mobile devices,” Expert Syst. Appl. , vol. 296, p. 129125, 2026. [5] X. Guo, Y. Li, and H. Ling, “LIME: Low-light image enhancement via illumination map estimation,” IEEE Trans. Image Process. , vol. 26, no. 2, pp. 982–993, 2017. [6] C. Li, C. Guo, and C. C. Loy, “Learning to enhance low-light image via zero-reference deep curve estimation,” IEEE Trans. Pattern Anal. Mach. Intell. , vol. 44, no. 8, pp. 4225–4238, 2022. [7] C. Guo, C. Li, J. Guo, et al., “Zero-reference deep curve estimation for low-light image enhancement,” in Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR) , 2020, pp. 1780–1789. [8] L. Ma, T. Ma, R. Liu, et al., “Toward fast, flexible, and robust low-light image enhancement,” in Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR) , 2022, pp. 5637–5646. [9] R. Liu, L. Ma, J. Zhang, et al., “Retinex-inspired unrolling with coop-erative prior architecture search for low-light image enhancement,” in 
+
+Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR) , 2021, pp. 10561–10570. [10] Y. Jiang, et al., “EnlightenGAN: Deep light enhancement without paired supervision,” IEEE Trans. Image Process. , vol. 30, pp. 2340–2349, 2021. [11] Y. Chen, G. Zhu, X. Wang, et al., “FMR-Net: A fast multi-scale residual network for low-light image enhancement,” Multimedia Syst. , vol. 30, p. 73, 2024. [12] Y. Chen, G. Zhu, X. Wang, et al., “FRR-NET: A fast reparameterized residual network for low-light image enhancement,” Signal Image Video Process. , vol. 18, pp. 4925–4934, 2024. [13] C. Zheng, D. Shi, and W. Shi, “Adaptive unfolding total variation network for low-light image enhancement,” in Proc. IEEE/CVF Int. Conf. Comput. Vis. (ICCV) , 2021, pp. 4439–4448. [14] J. Pan, D. Zhai, Y. Bai, et al., “ChebyLighter: Optimal curve estima-tion for low-light image enhancement,” in Proc. 30th ACM Int. Conf. Multimedia , 2022, pp. 1358–1366. [15] C. Liu, F. Wu, and X. Wang, “EFINet: Restoration for low-light images via enhancement-fusion iterative network,” IEEE Trans. Circuits Syst. Video Technol. , vol. 32, no. 12, pp. 8486–8499, 2022. [16] Z. Fu, Y. Yang, X. Tu, et al., “Learning a simple low-light image enhancer from paired low-light instances,” in Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR) , 2023, pp. 22252–22261. [17] Z. Zhang, et al., “Noise self-regression: A new learning paradigm to enhance low-light images without task-related data,” IEEE Trans. Pattern Anal. Mach. Intell. , vol. 47, no. 2, pp. 1073–1088, 2025. [18] W. Wu, J. Weng, P. Zhang, et al., “Uretinex-net: Retinex-based deep unfolding network for low-light image enhancement,” in Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR) , 2022, pp. 5901–5910. [19] Y. Shi, D. Liu, L. Zhang, et al., “ZERO-IG: Zero-shot illumination-guided joint denoising and adaptive enhancement for low-light images,” in Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR) , 2024, pp. 3015–3024. [20] Y. Chen, Y. Shi, G. Li, et al., “A lightweight real-time low-light enhancement network for embedded automotive vision systems,” 2025, arXiv:2512.02965. [21] H. Jiang, A. Luo, X. Liu, S. Han, and S. Liu, “Lightendiffusion: Unsupervised low-light image enhancement with latent-retinex diffusion models,” in Proc. Eur. Conf. Comput. Vis. (ECCV) , Cham, Switzerland: Springer, 2024, pp. 161–179. [22] Y. Lin, T. Ye, S. Chen, Z. Fu, Y. Wang, W. Chai, et al., “Aglldiff: Guiding diffusion models towards unsupervised training-free real-world low-light image enhancement,” in Proc. AAAI Conf. Artif. Intell. , vol. 39, no. 5, 2025, pp. 5307–5315. [23] Y. Huang, X. Liao, J. Liang, Y. Quan, B. Shi, and Y. Xu, “Zero-shot low-light image enhancement via latent diffusion models,” in Proc. AAAI Conf. Artif. Intell. , vol. 39, no. 4, 2025, pp. 3815–3823. [24] S. Yang, M. Ding, Y. Wu, Z. Li, and J. Zhang, “Implicit neural representation for cooperative low-light image enhancement,” in Proc. IEEE/CVF Int. Conf. Comput. Vis. (ICCV) , 2023, pp. 12918–12927. [25] T. Chobola, Y. Liu, H. Zhang, J. A. Schnabel, and T. Peng, “Fast context-based low-light image enhancement via neural implicit representations,” in Proc. Eur. Conf. Comput. Vis. (ECCV) , Cham, Switzerland: Springer, 2024, pp. 413–430. [26] C. Wei, W. Wang, W. Yang, and J. Liu, “Deep retinex decomposition for low-light enhancement,” 2018, arXiv:1808.04560. [27] J. Hai, Z. Xuan, R. Yang, et al., “R2rnet: Low-light image enhancement via real-low to real-normal network,” J. Vis. Commun. Image Represent. ,vol. 90, p. 103712, 2023. [28] B. Kerbl, G. Kopanas, T. Leimk¨ uhler, and G. Drettakis, “3D Gaussian splatting for real-time radiance field rendering,” ACM Trans. Graph. , vol. 42, no. 4, p. 139, 2023. [29] B. Mildenhall, P. P. Srinivasan, M. Tancik, J. T. Barron, R. Ramamoorthi, and R. Ng, “NeRF: Representing scenes as neural radiance fields for view synthesis,” Commun. ACM , vol. 65, no. 1, pp. 99–106, 2021. [30] B. Huang, Z. Yu, A. Chen, A. Geiger, and S. Gao, “2D Gaussian splatting for geometrically accurate radiance fields,” in Proc. ACM SIGGRAPH Conf. Papers , 2024, pp. 1–11. [31] V. Sitzmann, J. Martel, A. Bergman, D. Lindell, and G. Wetzstein, “Implicit neural representations with periodic activation functions,” in 
+
+Adv. Neural Inf. Process. Syst. , vol. 33, 2020, pp. 7462–7473. [32] Y. Yan, H. Lin, C. Zhou, W. Wang, H. Sun, K. Zhan, et al., “Street gaussians: Modeling dynamic urban scenes with gaussian splatting,” in 
+
+Proc. Eur. Conf. Comput. Vis. (ECCV) , Cham, Switzerland: Springer, 2024, pp. 156–173. [33] A. Hanson, A. Tu, G. Lin, V. Singla, M. Zwicker, and T. Goldstein, “Speedy-splat: Fast 3D Gaussian splatting with sparse pixels and sparse primitives,” in Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR) , 2025, pp. 21537–21546. [34] T. Liu, G. Wang, S. Hu, L. Shen, X. Ye, Y. Zang, et al., “Mvsgaussian: Fast generalizable gaussian splatting reconstruction from multi-view stereo,” in Proc. Eur. Conf. Comput. Vis. (ECCV) , Cham, Switzerland: Springer, 2024, pp. 37–53. [35] Y. Xu, J. Zhang, Y. Chen, D. Wang, L. Yu, and C. He, “PMGS: Reconstruction of projectile motion across large spatiotemporal spans via 3D Gaussian splatting,” 2025, arXiv:2508.02660. [36] Y. Xu, J. Zhang, H. Liu, Y. Chen, Y. Wang, Q. Guo, et al., “PEGS: Physics-event enhanced large spatiotemporal motion reconstruction via 3D Gaussian splatting,” 2025, arXiv:2511.17116. [37] Y. Chen, C. Gu, J. Jiang, X. Zhu, and L. Zhang, “Periodic vibration gaussian: Dynamic urban scene reconstruction and real-time rendering,” 2023, arXiv:2311.18561. [38] X. Zhou, Z. Lin, X. Shan, Y. Wang, D. Sun, and M. H. Yang, “Drivinggaussian: Composite gaussian splatting for surrounding dynamic autonomous driving scenes,” in Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR) , 2024, pp. 21634–21643. [39] K. Cheng, X. Long, K. Yang, Y. Yao, W. Yin, Y. Ma, et al., “Gaussianpro: 3D Gaussian splatting with progressive propagation,” in Proc. Int. Conf. Mach. Learn. (ICML) , 2024. [40] Y. Liu, C. Luo, L. Fan, N. Wang, J. Peng, and Z. Zhang, “Citygaussian: Real-time high-quality large-scale scene rendering with gaussians,” in 
+
+Proc. Eur. Conf. Comput. Vis. (ECCV) , Cham, Switzerland: Springer, 2024, pp. 265–282. [41] J. Fan, W. Li, Y. Han, T. Dai, and Y. Tang, “Momentum-gs: Momentum gaussian self-distillation for high-quality large scene reconstruction,” in 
+
+Proc. IEEE/CVF Int. Conf. Comput. Vis. (ICCV) , 2025, pp. 25250–25260. [42] G. Zhao, C. Ni, X. Wang, Z. Zhu, X. Zhang, Y. Wang, et al., “Drive-dreamer4d: World models are effective data machines for 4D driving scene representation,” in Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR) , 2025, pp. 12015–12026. [43] C. Ni, G. Zhao, X. Wang, Z. Zhu, W. Qin, G. Huang, et al., “Recon-dreamer: Crafting world models for driving scene reconstruction via online restoration,” in Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR) , 2025, pp. 1559–1569. [44] T. Yi, J. Fang, J. Wang, G. Wu, L. Xie, X. Zhang, et al., “Gaussian-dreamer: Fast generation from text to 3D gaussians by bridging 2D and 3D diffusion models,” in Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR) , 2024, pp. 6796–6807. [45] H. Sun, F. Yu, H. Xu, T. Zhang, and C. Zou, “LL-Gaussian: Low-light scene reconstruction and enhancement via gaussian splatting for novel view synthesis,” in Proc. ACM Int. Conf. Multimedia , 2025, pp. 4261– 4270. IEEE TRANSACTIONS ON CIRCUITS AND SYSTEMS FOR VIDEO TECHNOLOGY 14 
+
+[46] H. Wang, J. Huang, L. Yang, T. Deng, G. Zhang, and M. Li, “LLGS: Unsupervised gaussian splatting for image enhancement and reconstruc-tion in pure dark environment,” 2025, arXiv:2503.18640. [47] Y. Chen, W. Yu, G. Li, et al., “LL-GaussianImage: Efficient image representation for zero-shot low-light enhancement with 2D Gaussian splatting,” 2026, arXiv:2601.15772. [48] Y. Chen, Y. Fang, G. Li, et al., “LL-GaussianMap: Zero-shot low-light image enhancement via 2D Gaussian splatting guided gain maps,” 2026, arXiv:2601.15766. [49] L. Zhu, G. Lin, J. Chen, et al., “Large images are gaussians: High-quality large image representation with levels of 2D Gaussian splatting,” in Proc. AAAI Conf. Artif. Intell. , 2025, pp. 10977–10985. [50] Z. Zeng, Y. Wang, T. Guan, et al., “Instant GaussianImage: A generaliz-able and self-adaptive image representation via 2D Gaussian splatting,” in Proc. IEEE/CVF Int. Conf. Comput. Vis. (ICCV) , 2025, pp. 27896– 27905. [51] X. Zhang, X. Ge, T. Xu, et al., “Gaussianimage: 1000 fps image representation and compression by 2D Gaussian splatting,” in Proc. Eur. Conf. Comput. Vis. (ECCV) , Cham, Switzerland: Springer, 2024, pp. 327– 345. [52] C. Jiang, Z. Li, H. Zhao, Q. Shan, S. Wu, and J. Su, “Beyond pixels: Efficient dataset distillation via sparse gaussian representation,” 2025, arXiv:2509.26219. [53] Y. Omri, C. Ding, T. Weissman, and T. Tambe, “Vision-language alignment from compressed image representations using 2D Gaussian splatting,” 2025, arXiv:2509.22615. [54] J. Hu, B. Xia, B. Chen, W. Yang, and L. Zhang, “Gaussiansr: High fidelity 2D Gaussian splatting for arbitrary-scale image super-resolution,” in Proc. AAAI Conf. Artif. Intell. , vol. 39, no. 4, 2025, pp. 3554–3562. [55] J. Weng, Z. Yan, Y. Tai, et al., “Mamballie: Implicit retinex-aware low light enhancement with global-then-local state space,” in Adv. Neural Inf. Process. Syst. , vol. 37, 2024, pp. 27440–27462. [56] Y. Chen, Y. Shi, G. Li, L. Zhang, J. Li, J. Gao, and W. Chu, “KGS-GCN: Enhancing sparse skeleton sensing via kinematics-driven gaus-sian splatting and probabilistic topology for action recognition,” 2026, arXiv:2603.16943. [57] S. Yang, X. Ren, B. Zha, Q. Bao, B. Feng, and Z. Xu, “EFSRNet: Multi-scale exposure normalization and dual-branch aggregation for overexposed face super-resolution,” Knowl.-Based Syst. , p. 115578, 2026. 
+
+Yuhan Chen received his master’s degree in 2024 from the College of Mechanical Engineering at Chongqing University of Technology. He is currently pursuing the Ph.D. degree in College of Mechanical and Vehicle Engineering at Chongqing University, China. His research interests include deep learning, Low-level Vision and Gaussian Splatting. 
+
+Wenxuan Yu received the B.E. degree majoring in Mechanical Design, Manufacturing, and Automation at Chongqing University in 2025. He is currently pursuing the M.E. degree in Mechanical Engineer-ing at Chongqing University, Chongqing, China. His research interests include computer vision, Gaussian Splatting and deep learning. 
+
+Guofa Li received the Ph.D. degree in Mechanical Engineering from Tsinghua University, China, in 2016. He is currently a Professor with Chongqing University, China. His research interests include envi-ronment perception, driver behavior analysis, and smart decision-making based on artificial intelligence technologies in autonomous vehicles and intelligent transportation systems. He serves as the Associate Editor for IEEE Transactions on Intelligent Trans-portation Systems, IEEE Transactions on Affective Computing, and IEEE Sensors Journal. 
+
+Fuchen Li Fuchen Li is currently pursuing the M.S. degree in Electrical and Computer Engineering with the Herbert Wertheim College of Engineering, University of Florida, Gainesville, FL, USA. Prior to his graduate studies, he worked as an image algorithm engineer in the imaging industry, focusing on AI-ISP, HDR imaging, and auto white balance for embedded camera systems. His research interests include low-level vision, computational photography, vision-language models, and edge intelligence. 
+
+Kunyang Huang is currently an masters degree student at Carnegie Mellon University. He previously interned at the Chongqing Institute of the Chinese Academy of Sciences and a research intern at the Changan Automobile Research Institute. His research interests include autonomous driving perception and deep learning methods. 
+
+Yicui Shi received the B.E. degree majoring in Automotive Engineering at Chongqing University in 2025. He is currently pursuing the M.E. degree in Automotive Engineering at Chongqing University, Chongqing, China. His research interests include computer vision, Gaussian Splatting and deep learn-ing. 
+
+Ying Fang received the B.E. degree majoring in Vehicle Engineering at Chongqing University of Technology. He is currently pursuing the M.E. degree in Mechanical Engineering at Chongqing University, Chongqing, China. His research interests include computer vision, Gaussian Splatting and deep learn-ing. 
+
+Wenbo Chu received his B.S. degree majored in Automotive Engineering from Tsinghua University, China, in 2008, and his M.S. degree majored in Auto-motive Engineering from RWTH-Aachen, German and Ph.D. degree majored in Mechanical Engineering from Tsinghua University, China, in 2014. He is currently a research fellow at Western China Science City Innovation Center of Intelligent and Connected Vehicles (Chongqing) Co, Ltd., and National Innova-tion Center of Intelligent and Connected Vehicles. 
+
+Keqiang Li received the B.E. degree from Tsinghua University, Beijing, China, in 1985, and the M.E. and Ph.D. degrees from Chongqing University, Chongqing, China, in 1988 and 1995, respectively. He is currently a Professor with the School of Vehicle and Mobility, Tsinghua University. He is the Chief Scientist of Intelligent and Connected Vehicle Inno-vation Center of China, and the Director of State Key Laboratory of Automotive Safety and Energy of China. His current research interests include intel-ligent connected vehicles, cloud-based control for vehicles, and vehicle dynamics systems.

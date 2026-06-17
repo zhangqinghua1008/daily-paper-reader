@@ -1,0 +1,277 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-17T22:15:28.856641+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 3,
+    "deep_cap": 7,
+    "deep_selected": 3,
+    "quick_candidates": 3,
+    "quick_skim_target": 12,
+    "quick_selected": 3
+  },
+  "deep_dive": [
+    {
+      "id": "2606.17935v1",
+      "source": "arxiv",
+      "title": "MoonSplat: Monocular Online Gaussian Splatting with Sim(3) Global Optimization",
+      "abstract": "Online 3D reconstruction from monocular image sequences is a challenging and ongoing research topic. 3D Gaussian Splatting (3DGS), leveraging its high-quality real-time rendering capability, empowers online 3D reconstruction to represent dense scenes with enhanced expressiveness, and thus holds great promise for a wide range of applications such as robotics and AR/VR. However, existing online 3DGS methods still suffer from some key challenges: fragile camera pose estimation due to the lack of global optimization, and low optimization efficiency in large-scale or long-sequence scenarios. To address these issues, we propose a robust and efficient online voxelized 3DGS reconstruction framework integrated with global $\\text{Sim}(3)$ optimization, which enables reliable camera tracking and efficient global loop closure for both camera poses and voxelized 3DGS. To accelerate the convergence of the voxelized 3DGS, we further introduce a color residual learning strategy, which not only boosts optimization speed but also enhances rendering quality. Extensive experiments on diverse indoor and outdoor datasets demonstrate that our method achieves state-of-the-art performance in both camera pose estimation accuracy and rendering quality, while retaining real-time efficiency. Additionally, we develop and deploy a real-world UAV-based active reconstruction system grounded on our proposed method, validating its robustness and generalizability for practical online 3D reconstruction tasks. Our code and data are available at https://github.com/TrickyGo/MoonSplat.",
+      "authors": [
+        "Guo Pu",
+        "Yixuan Han",
+        "Haofeng Li",
+        "Yao Zhang",
+        "Hui Zhou",
+        "Zhouhui Lian"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-16T13:43:35+00:00",
+      "link": "https://arxiv.org/pdf/2606.17935v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "Monocular online 3D Gaussian splatting reconstruction with global pose optimization for SLAM-like camera tracking and mapping.",
+      "llm_evidence_cn": "单目在线3D高斯溅射重建，通过全局姿态优化实现类似SLAM的相机跟踪与建图。",
+      "llm_evidence": "单目在线3D高斯溅射重建，通过全局姿态优化实现类似SLAM的相机跟踪与建图。",
+      "canonical_evidence": "单目在线3D高斯溅射重建，通过全局姿态优化实现类似SLAM的相机跟踪与建图。",
+      "llm_tldr_en": "Addressing fragile pose estimation and low efficiency in online monocular 3DGS, we propose a voxelized 3DGS framework with global Sim(3) optimization, achieving robust and efficient dense reconstruction for long sequences and large-scale scenes.",
+      "llm_tldr_cn": "针对单目在线三维重建中相机姿态估计脆弱和效率低的问题，提出了一种体素化3D高斯溅射框架，结合全局Sim(3)优化，实现了鲁棒且高效的在线密集重建，在长序列和大场景下表现出色，对机器人和AR/VR应用具有重要意义。",
+      "llm_tldr": "针对单目在线三维重建中相机姿态估计脆弱和效率低的问题，提出了一种体素化3D高斯溅射框架，结合全局Sim(3)优化，实现了鲁棒且高效的在线密集重建，在长序列和大场景下表现出色，对机器人和AR/VR应用具有重要意义。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Monocular 3D Gaussian splatting SLAM system for real time dense mapping",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.17212v1",
+      "source": "arxiv",
+      "title": "Renderable Partial Representations for Dynamic Gaussian Splatting under Incomplete Delivery",
+      "abstract": "Dynamic Gaussian compression is normally optimized for complete files or complete progressive prefixes, but interactive rendering encounters partial representations: some spatiotemporal regions are present, others missing, and late refinements cannot affect the displayed frame. We study dynamic Gaussian representations whose incomplete delivery states remain directly renderable and whose degradation is optimized in image space. Gaussian primitives are organized into independently addressable spatiotemporal clusters with a base level and three refinements; training samples partial dependency graphs, renders many counterfactual states in one GPU batch, and minimizes expected distortion, tail distortion, temporal inconsistency, rate, and prefix regressions. A counterfactual utility layer measures the marginal render contribution of each completion group across valid receiver contexts. The same graph admits a concrete delivery realization with MTU-bounded entropy-coded chunks, deadline-aware scheduling, and receiver-side dependency closure. On held-out views, the finest refinement has negative mean marginal utility in 3/32 D-NeRF bouncingballs, 49/64 HyperNeRF broom2, and 28/64 HyperNeRF chicken clusters; its lower-tail utility is negative in 21/32, 61/64, and 42/64 clusters, respectively. On broom2, render-utility ordering removes both PSNR regressions produced by nominal layer order at matched byte budgets; on chicken, utilities measured on disjoint training cameras improve held-out PSNR by 3.03 dB at the lowest matched budget. These scoped results show why nominal refinement order cannot substitute for render-conditioned utility: the formulation treats network delivery as a distribution over renderable scene states rather than as an external wrapper around a graphics codec.",
+      "authors": [
+        "Faruk Alpay",
+        "Levent Sarioglu",
+        "Yaser Hadri"
+      ],
+      "primary_category": "cs.GR",
+      "categories": [
+        "cs.GR",
+        "cs.NI"
+      ],
+      "published": "2026-06-15T18:51:11+00:00",
+      "link": "https://arxiv.org/pdf/2606.17212v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Dynamic Gaussian splatting optimized for real-time rendering with partial representations.",
+      "llm_evidence_cn": "针对实时渲染优化的动态高斯泼溅部分表示",
+      "llm_evidence": "针对实时渲染优化的动态高斯泼溅部分表示",
+      "canonical_evidence": "针对实时渲染优化的动态高斯泼溅部分表示",
+      "llm_tldr_en": "Studies dynamic Gaussian representations for interactive rendering under incomplete delivery, organizing primitives into spatiotemporal clusters and optimizing for image-space distortion and temporal consistency.",
+      "llm_tldr_cn": "针对动态高斯压缩在交互式渲染中面临的不完整传输问题，研究可渲染的部分表示方法，将高斯基元组织为独立可寻址的时空簇，通过训练采样部分依赖图并批量渲染反事实状态，优化预期失真、时间一致性和码率，确保即使在数据部分缺失时也能直接渲染，实现动态场景的实时高质量显示。",
+      "llm_tldr": "针对动态高斯压缩在交互式渲染中面临的不完整传输问题，研究可渲染的部分表示方法，将高斯基元组织为独立可寻址的时空簇，通过训练采样部分依赖图并批量渲染反事实状态，优化预期失真、时间一致性和码率，确保即使在数据部分缺失时也能直接渲染，实现动态场景的实时高质量显示。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.17340v1",
+      "source": "arxiv",
+      "title": "Geometry-Consistent Endoscopic Representations for Image-Guided Navigation via Structured Foundation Model Adaptation",
+      "abstract": "Accurate vision-based navigation in monocular endoscopy is difficult due to limited depth cues, weak tissue texture, non-rigid deformation, and substantial appearance variation across domains, all of which complicate pose estimation, depth prediction, and image-to-anatomy alignment. Although recent vision foundation models have shown promise, their learned representations often remain insufficiently geometry-consistent, hindering stable feature correspondence and limiting their reliability for downstream navigation tasks. We propose a unified framework for learning geometry-consistent and domain-robust image representations for monocular endoscopy. The framework combines a synthetic data pipeline that provides accurate geometric supervision with Hierarchy-Aware Geometry-Semantic Adaptation, a structured alternative to standard LoRA that inserts low-rank adapters selectively across the transformer hierarchy and couples them with layer-wise training objectives to encourage geometric correspondence in intermediate features and semantic consistency in deeper features. Experiments on public and proprietary datasets show improved geometric and semantic representation quality, leading to better performance on downstream navigation tasks including pose estimation and monocular depth estimation. The learned representations show favorable synthetic-to-real transfer on clinical bronchoscopy and provide a useful initialization for adaptation to sinus endoscopy and colonoscopy under limited supervision. The framework also shows favorable scaling with model size and training data. These results support hierarchy-aware, geometry-guided adaptation as a practical approach for endoscopic representation learning.",
+      "authors": [
+        "Hongchao Shu",
+        "Roger D. Soberanis-Mukul",
+        "Hao Ding",
+        "Morgan Ringel",
+        "Mali Shen",
+        "Saif Iftekar Sayed",
+        "Hedyeh Rafii-Tari",
+        "Mathias Unberath"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-06-15T22:41:28+00:00",
+      "link": "https://arxiv.org/pdf/2606.17340v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Unified representation learning for geometry-consistent depth and pose in endoscopic navigation.",
+      "llm_evidence_cn": "统一表征学习用于内窥镜导航中的几何一致性深度与姿态估计。",
+      "llm_evidence": "统一表征学习用于内窥镜导航中的几何一致性深度与姿态估计。",
+      "canonical_evidence": "统一表征学习用于内窥镜导航中的几何一致性深度与姿态估计。",
+      "llm_tldr_en": "To overcome limited depth cues and appearance variation in monocular endoscopic navigation, we propose a unified framework that learns geometry-consistent and domain-robust representations using synthetic data, improving pose estimation and depth prediction for reliable image-guided surgery.",
+      "llm_tldr_cn": "针对单目内窥镜导航中深度线索缺失和外观变化导致的位姿估计与深度预测困难，提出一个统一框架，通过合成数据管线训练几何一致且领域鲁棒的图像表征，从而稳定特征对应，提升下游导航任务的可靠性，对图像引导手术具有重要意义。",
+      "llm_tldr": "针对单目内窥镜导航中深度线索缺失和外观变化导致的位姿估计与深度预测困难，提出一个统一框架，通过合成数据管线训练几何一致且领域鲁棒的图像表征，从而稳定特征对应，提升下游导航任务的可靠性，对图像引导手术具有重要意义。",
+      "llm_tags": [
+        "query:endo-dgs"
+      ],
+      "matched_query_tag": "query:endo-dgs",
+      "matched_query_text": "depth estimation for endoscopic scenes",
+      "matched_requirement_id": "req-12",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2606.13652v1",
+      "source": "arxiv",
+      "title": "World Tracing: Generative Pixel-Aligned Geometry Beyond the Visible",
+      "abstract": "Image-to-3D methods often trade off faithfulness and completeness: depth estimators are anchored to input pixels but stop at the visible surface, while image-to-3D models generate complete shapes that are often misaligned with the input. We introduce World Tracing, a generative pixel-aligned geometry representation that predicts 3D points aligned with observed pixels while completing geometry beyond the visible surface. For each input pixel, World Tracing predicts an ordered stack of camera-space 3D points, where the first layer represents the visible surface and subsequent layers represent front-to-back intersections with occluded surfaces. We instantiate this representation with a world-tracing diffusion transformer, WT-DiT, which treats multiple geometry layers as separate denoising tokens coupled through factorized and global attention. WT-DiT is trained with pixel-space flow matching and a mixed noise schedule that balances visible-surface reconstruction with occluded-geometry generation. World Tracing achieves strong performance on visible-surface reconstruction and complete geometry generation across object, scene, and dynamic benchmarks, outperforming both depth predictors and image-to-3D generators. It also preserves 2D-to-3D correspondence, enabling text-driven 3D scene editing, geometry-conditioned novel-view video synthesis, and training-free integration with textured-mesh generators.",
+      "authors": [
+        "Hao Zhang",
+        "Mohamed El Banani",
+        "Jen-Hao Cheng",
+        "Paul Zhang",
+        "Yi Hua",
+        "Ben Mildenhall",
+        "Christoph Lassner",
+        "Narendra Ahuja",
+        "Gengshan Yang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.GR"
+      ],
+      "published": "2026-06-11T17:52:48+00:00",
+      "link": "https://arxiv.org/pdf/2606.13652v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Learning-based depth estimation predicting layered geometry, applicable to endoscopic depth estimation",
+      "llm_evidence_cn": "基于学习的深度估计，预测分层几何，可应用于内窥镜深度估计",
+      "llm_evidence": "基于学习的深度估计，预测分层几何，可应用于内窥镜深度估计",
+      "canonical_evidence": "基于学习的深度估计，预测分层几何，可应用于内窥镜深度估计",
+      "llm_tldr_en": "World Tracing predicts per-pixel depth layers for complete geometry, using a diffusion transformer; a valuable learned depth estimation method that could transfer to endoscopic scenes.",
+      "llm_tldr_cn": "针对图像到三维方法在保真度与完整性之间的矛盾，提出世界追踪（World Tracing），一种生成式像素对齐几何表示。对于每个输入像素，预测从相机出发的有序三维点堆栈，涵盖可见面与遮挡面。通过世界追踪扩散变换器WT-DiT实现，能够从单张图像生成完整且对齐的几何结构。该方法在通用深度估计上表现出众，有望迁移至内窥镜场景下的深度预测，提升手术环境理解。",
+      "llm_tldr": "针对图像到三维方法在保真度与完整性之间的矛盾，提出世界追踪（World Tracing），一种生成式像素对齐几何表示。对于每个输入像素，预测从相机出发的有序三维点堆栈，涵盖可见面与遮挡面。通过世界追踪扩散变换器WT-DiT实现，能够从单张图像生成完整且对齐的几何结构。该方法在通用深度估计上表现出众，有望迁移至内窥镜场景下的深度预测，提升手术环境理解。",
+      "llm_tags": [
+        "query:endo-dgs"
+      ],
+      "matched_query_tag": "query:endo-dgs",
+      "matched_query_text": "depth estimation for endoscopic scenes",
+      "matched_requirement_id": "req-12",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.16163v1",
+      "source": "arxiv",
+      "title": "Dehaze-GaussianImage: Zero-Shot Dehazing via Efficient 2D Gaussian Splatting Representation",
+      "abstract": "Existing single image dehazing methods are often constrained by computational redundancy in pixel-level optimization and the lack of physical interpretability in implicit neural networks. These limitations hinder the balance between representation efficiency and reconstruction fidelity. To address these issues, we propose Dehaze-GaussianImage, the first zero-shot framework that introduces 2D Gaussian Splatting (2DGS) into the image dehazing domain to break the traditional pixel-grid processing paradigm. Distinct from static convolutional neural networks (CNNs) or Transformers, our approach models hazy images as continuous and dynamically evolvable anisotropic Gaussian fields. Specifically, we propose a novel reconstruction-decoupling zero-shot learning strategy that embeds the atmospheric scattering model into the Gaussian parameter space. This strategy drives Gaussian primitives to adaptively split, clone, and prune during optimization, achieving geometric-level decoupling of the transmission medium and clear textures. Furthermore, explicit structure-preserving constraints are introduced to suppress artifacts commonly caused by traditional physical priors. Experimental results demonstrate that the proposed method achieves state-of-the-art (SOTA) performance in a fully unsupervised manner with minimal parameters, highlighting the potential of explicit Gaussian representation for low-level vision tasks.",
+      "authors": [
+        "Yuhan Chen",
+        "Wenxuan Yu",
+        "Guofa Li",
+        "Kunyang Huang",
+        "Ying Fang",
+        "Yicui Shi",
+        "Wenbo Chu",
+        "Keqiang Li"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-15T03:25:56+00:00",
+      "link": "https://arxiv.org/pdf/2606.16163v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "2D Gaussian Splatting for image dehazing, transferable to endoscopic smoke/haze removal",
+      "llm_evidence_cn": "二维高斯溅射用于图像去雾，可迁移至内窥镜烟雾/雾霾去除",
+      "llm_evidence": "二维高斯溅射用于图像去雾，可迁移至内窥镜烟雾/雾霾去除",
+      "canonical_evidence": "二维高斯溅射用于图像去雾，可迁移至内窥镜烟雾/雾霾去除",
+      "llm_tldr_en": "Dehaze-GaussianImage introduces 2DGS to dehazing, modeling hazy images as anisotropic Gaussian fields for zero-shot, physically interpretable restoration.",
+      "llm_tldr_cn": "本文首次将二维高斯溅射（2DGS）引入图像去雾领域，打破传统像素网格范式。方法将雾图建模为连续且动态可演化的各向异性高斯场，并提出重建-解耦策略。实验表明，该方法在零样本设置下实现了高效且忠实于物理的去雾效果，避免了计算冗余。该框架有望扩展至内窥镜场景下的烟雾或模糊去除，提升手术视野清晰度。",
+      "llm_tldr": "本文首次将二维高斯溅射（2DGS）引入图像去雾领域，打破传统像素网格范式。方法将雾图建模为连续且动态可演化的各向异性高斯场，并提出重建-解耦策略。实验表明，该方法在零样本设置下实现了高效且忠实于物理的去雾效果，避免了计算冗余。该框架有望扩展至内窥镜场景下的烟雾或模糊去除，提升手术视野清晰度。",
+      "llm_tags": [
+        "query:endo-dgs"
+      ],
+      "matched_query_tag": "query:endo-dgs",
+      "matched_query_text": "endoscopic image enhancement with Gaussian splatting",
+      "matched_requirement_id": "req-11",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.17985v1",
+      "source": "arxiv",
+      "title": "Gaussian Light Field Splatting: A Physical Prior-Driven Vision Transformer for Unsupervised Low-Light Image Enhancement",
+      "abstract": "Existing unsupervised low-light image enhancement methods often encounter local exposure imbalance and color distortion under complex non-uniform illumination. In addition, most Vision Transformers lack an explicit mechanism for modeling the physical priors of illumination degradation. To address these limitations, we propose GLFS, a Gaussian light field splatting-based Vision Transformer that integrates continuous physical illumination modeling from Gaussian splatting into the Transformer architecture. In GLFS, scene illumination is represented by a superposition of anisotropic Gaussian basis functions. Physics-guided biases are introduced into self-attention to adaptively infer a spatial gain field, enabling accurate and uniform restoration under complex illumination. To reduce color bias and structural degradation during enhancement, a color-vector angular loss and a luminance-edge loss are further developed. These losses enforce hue consistency and improve the structural fidelity of local details. Extensive ablation studies and quantitative evaluations show that GLFS provides clear advantages in illumination correction and detail preservation. It achieves state-of-the-art performance and offers a new representation paradigm for low-light image enhancement.",
+      "authors": [
+        "Yuhan Chen",
+        "Wenxuan Yu",
+        "Guofa Li",
+        "Fuchen Li",
+        "Kunyang Huang",
+        "Yicui Shi",
+        "Ying Fang",
+        "Wenbo Chu",
+        "Keqiang Li"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-16T14:37:08+00:00",
+      "link": "https://arxiv.org/pdf/2606.17985v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Anisotropic Gaussian basis for illumination modeling, applicable to low-light endoscopic image enhancement",
+      "llm_evidence_cn": "各向异性高斯基函数用于光照建模，可应用于内窥镜低光图像增强",
+      "llm_evidence": "各向异性高斯基函数用于光照建模，可应用于内窥镜低光图像增强",
+      "canonical_evidence": "各向异性高斯基函数用于光照建模，可应用于内窥镜低光图像增强",
+      "llm_tldr_en": "GLFS integrates continuous illumination modeling via anisotropic Gaussian superposition into a Vision Transformer for unsupervised low-light enhancement, addressing exposure imbalance and color distortion.",
+      "llm_tldr_cn": "针对无监督低光增强中的局部曝光不平衡和颜色失真问题，提出GLFS，将高斯光场溅射的连续光照融入视觉Transformer。通过各向异性高斯基函数表示场景照明，并引入物理引导的偏置到自注意机制，自适应推断空间增益场。实验证明该方法在复杂非均匀光照下能有效改善图像质量，为低光图像增强提供了物理可解释的框架，可望迁移至内窥镜图像增强任务。",
+      "llm_tldr": "针对无监督低光增强中的局部曝光不平衡和颜色失真问题，提出GLFS，将高斯光场溅射的连续光照融入视觉Transformer。通过各向异性高斯基函数表示场景照明，并引入物理引导的偏置到自注意机制，自适应推断空间增益场。实验证明该方法在复杂非均匀光照下能有效改善图像质量，为低光图像增强提供了物理可解释的框架，可望迁移至内窥镜图像增强任务。",
+      "llm_tags": [
+        "query:endo-dgs"
+      ],
+      "matched_query_tag": "query:endo-dgs",
+      "matched_query_text": "endoscopic image enhancement with Gaussian splatting",
+      "matched_requirement_id": "req-11",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}
