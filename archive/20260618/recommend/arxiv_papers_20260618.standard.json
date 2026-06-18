@@ -1,0 +1,142 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-18T22:34:08.271504+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 2,
+    "deep_cap": 7,
+    "deep_selected": 2,
+    "quick_candidates": 1,
+    "quick_skim_target": 12,
+    "quick_selected": 1
+  },
+  "deep_dive": [
+    {
+      "id": "2606.13376v2",
+      "source": "arxiv",
+      "title": "MoVerse: Real-Time Video World Modeling with Panoramic Gaussian Scaffold",
+      "abstract": "We present MoVerse, a real-time video world model that creates an interactively navigable scene from a single narrow-field-of-view image. This setting is challenging because the input observes only a small fraction of the environment, while interactive roaming requires a complete surrounding world, persistent geometry, controllable camera motion, and temporally coherent high-fidelity observations. MoVerse addresses this problem by separating world construction from observation rendering. It first expands the input into a gravity-aligned 360$^\\circ$ panorama with topology-aware diffusion, closing the missing field of view before 3D reasoning. It then lifts the panorama into a persistent 3D Gaussian scaffold using panoramic geometry-aware residual prediction, yielding a dense and directly renderable spatial memory. Finally, a Gaussian-conditioned video renderer translates scaffold renderings along user-specified camera trajectories into photorealistic video. To make this renderer practical for interaction, we train a bidirectional diffusion teacher for high-quality conditional rendering and distill it into a causal autoregressive student for bounded-latency streaming. This design combines the controllability and long-range consistency of explicit 3D representations with the perceptual quality of generative video models. MoVerse supports real-time scene roaming at 8~FPS on a single NVIDIA RTX~4090 GPU, demonstrating a practical path toward single-image world creation with interactive video output.",
+      "authors": [
+        "Yang Zhou",
+        "Ziheng Wang",
+        "Yuqin Lu",
+        "Haofeng Liu",
+        "Jun Liang",
+        "Shengfeng He",
+        "Jing Li"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-11T14:01:02+00:00",
+      "link": "https://arxiv.org/pdf/2606.13376v2",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Uses 3D Gaussian scaffold for real-time rendering from a single image.",
+      "llm_evidence_cn": "使用全景高斯支架从单幅图像进行实时渲染",
+      "llm_evidence": "使用全景高斯支架从单幅图像进行实时渲染",
+      "canonical_evidence": "使用全景高斯支架从单幅图像进行实时渲染",
+      "llm_tldr_en": "MoVerse creates a real-time navigable 3D world from a single narrow-FOV image by first generating a 360° panorama and then lifting it into a persistent 3D Gaussian scaffold for high-fidelity rendering.",
+      "llm_tldr_cn": "MoVerse 解决从单幅窄视场图像创建交互式可导航世界的问题。现有方法难以处理有限观测与完整环境还原之间的矛盾，而 MoVerse 将世界构建与观察渲染分离：首先利用拓扑感知扩散将输入图像扩展为360°全景图，然后通过全景几何感知残差预测将全景图提升为持久的3D高斯支架，实现实时高保真渲染。该方法无需多帧输入，仅凭单张图像即可生成沉浸式漫游体验，在虚拟现实与内容生成领域具有重要应用前景。",
+      "llm_tldr": "MoVerse 解决从单幅窄视场图像创建交互式可导航世界的问题。现有方法难以处理有限观测与完整环境还原之间的矛盾，而 MoVerse 将世界构建与观察渲染分离：首先利用拓扑感知扩散将输入图像扩展为360°全景图，然后通过全景几何感知残差预测将全景图提升为持久的3D高斯支架，实现实时高保真渲染。该方法无需多帧输入，仅凭单张图像即可生成沉浸式漫游体验，在虚拟现实与内容生成领域具有重要应用前景。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.18951v1",
+      "source": "arxiv",
+      "title": "A High-accuracy Event-based Underwater SLAM System",
+      "abstract": "While event cameras offer immense potential for underwater SLAM, existing Time Surface (TS)-based methods prove highly unreliable when deployed underwater. Fluctuating camera velocities severely degrade TS imaging quality, while wide stereo baselines and repetitive underwater textures induce critical matching failures, frequently triggering system failure. To overcome these challenges, we develop the first high-accuracy event-based underwater stereo SLAM system. A structure-aware metric for TS is designed based on structure tensor coherence and gradients to quantitatively evaluate TS structural information density. By decoupling the optimal TS generation into two distinct stages based on system initialization, Bayesian Optimization(BO) first predicts an optimal prior TS sequentially before initialization while we set an asynchronous online local searching method periodically to obtain appropriate TS in real-time during the tracking stage. We use the prior disparity to guarantee precise data association and \"latest-observation-first'' triangulation mechanism to realize stable triangulation. As a benchmark for these solutions and a resource for the community, we also contribute UWE, the first high-quality real-world underwater event dataset containing variable camera motions, complex textures and different trajectory features. Extensive evaluations on public datasets and UWE show the competitive accuracy performance of the proposed SLAM system compared to the state-of-the-art event-based method. The code and data will be open-sourced.",
+      "authors": [
+        "Yifan Peng",
+        "Qihang",
+        "Liu",
+        "Haoying Li",
+        "Yuzhe Li",
+        "Junfeng Wu",
+        "Ziyang Hong"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-06-17T11:34:44+00:00",
+      "link": "https://arxiv.org/pdf/2606.18951v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "High-accuracy event-based underwater stereo SLAM system.",
+      "llm_evidence_cn": "高精度事件驱动水下立体SLAM系统",
+      "llm_evidence": "高精度事件驱动水下立体SLAM系统",
+      "canonical_evidence": "高精度事件驱动水下立体SLAM系统",
+      "llm_tldr_en": "This paper presents the first high-accuracy event-based underwater stereo SLAM system, overcoming TS failure with a structure-aware metric and Bayesian optimization for robust pose tracking and mapping.",
+      "llm_tldr_cn": "本文提出首个高精度事件驱动水下立体SLAM系统，针对水下环境中时间表面方法不可靠的问题，设计结构感知度量与贝叶斯优化生成最优TS，实现鲁棒跟踪与建图。在多样水下场景中验证，系统有效避免失败，显著提升精度和可靠性，为水下自主作业提供新方案。实验对比表明，所提方法在多种水况下均优于现有方案，回环检测等模块进一步确保了全局一致性。",
+      "llm_tldr": "本文提出首个高精度事件驱动水下立体SLAM系统，针对水下环境中时间表面方法不可靠的问题，设计结构感知度量与贝叶斯优化生成最优TS，实现鲁棒跟踪与建图。在多样水下场景中验证，系统有效避免失败，显著提升精度和可靠性，为水下自主作业提供新方案。实验对比表明，所提方法在多种水况下均优于现有方案，回环检测等模块进一步确保了全局一致性。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Visual SLAM methods for camera tracking and mapping",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2606.13509v1",
+      "source": "arxiv",
+      "title": "Measurement-Calibrated Multi-Camera Fusion for Vision-Based Indoor Localization",
+      "abstract": "Indoor vision-based localization systems are affected by detection noise, occlusions, and limited camera coverage, leading to uncertainty at multiple stages of the pipeline. While multi-camera data fusion is widely used to mitigate these issues, it is typically treated as a black-box component and evaluated solely end-to-end, obscuring its mechanistic contributions. To address this gap, this work investigates whether explicitly characterizing single-camera localization errors can be leveraged to calibrate and optimize multi-camera data fusion.   We introduce a measurement-calibrated fusion approach that integrates component-wise error quantification, specifically isolating homography calibration, human detection, and motion tracking. A component-wise evaluation is conducted to quantify error contributions from homography calibration, human detection, and motion tracking.   Experimental results show that data fusion improves localization accuracy compared to single-camera baselines. While measurement-calibrated fusion provides only limited improvement in absolute accuracy over standard fusion, it substantially reduces trajectory variance and improves motion smoothness, which are critical for applications requiring stable and continuous motion estimates. These results highlight the value of explicit error characterization when designing data fusion strategies for vision-based indoor positioning systems.",
+      "authors": [
+        "Mateo Toro Diz",
+        "Jonathan Hoss",
+        "Noah Klarmann"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-06-11T15:56:02+00:00",
+      "link": "https://arxiv.org/pdf/2606.13509v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "indoor localization system that quantifies single-camera errors to improve multi-camera fusion for accurate camera pose tracking",
+      "llm_evidence_cn": "室内定位系统量化单相机误差以改进多相机融合，实现精确相机位姿跟踪",
+      "llm_evidence": "室内定位系统量化单相机误差以改进多相机融合，实现精确相机位姿跟踪",
+      "canonical_evidence": "室内定位系统量化单相机误差以改进多相机融合，实现精确相机位姿跟踪",
+      "llm_tldr_en": "Addresses indoor localization uncertainty by introducing a measurement-calibrated multi-camera fusion approach that isolates and quantifies errors from homography, detection, and tracking, leading to more accurate pose tracking.",
+      "llm_tldr_cn": "针对视觉室内定位中多相机融合的黑箱问题，提出一种测量校准的融合方法，分别量化单应性标定、人体检测和运动跟踪的误差。实验证明该方法优化了多相机数据融合，提升了相机位姿跟踪的准确性。",
+      "llm_tldr": "针对视觉室内定位中多相机融合的黑箱问题，提出一种测量校准的融合方法，分别量化单应性标定、人体检测和运动跟踪的误差。实验证明该方法优化了多相机数据融合，提升了相机位姿跟踪的准确性。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "accurate camera pose tracking",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
