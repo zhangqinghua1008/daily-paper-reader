@@ -1,0 +1,475 @@
+Title: MMD-SLAM: Structure-Enhanced Multi-Meta Gaussian Distribution-Guided Visual SLAM
+
+URL Source: https://arxiv.org/pdf/2606.19874v1
+
+Published Time: Fri, 19 Jun 2026 00:33:33 GMT
+
+Number of Pages: 8
+
+Markdown Content:
+# MMD-SLAM: Structure-Enhanced Multi-Meta Gaussian Distribution-Guided Visual SLAM 
+
+Fan Zhu 1,2, Ziyu Chen 1,2, Peichen Liu 3, Yifan Zhao 2, Zhisong Xu 4,Hui Zhu 1,2, Hongxing Zhou 5, Sixun Liu 6, and Chunmao Jiang 1,∗
+
+Abstract — 3D Gaussian Splatting (3DGS) has significantly boosted novel view synthesis and high-fidelity scene reconstruc-tion, expanding the potential of 3DGS-based Visual Simultane-ous Localization and Mapping (SLAM) methods. However, most existing systems fail to fully exploit the underlying structural information, which limits rendering quality and often leads to inconsistent maps. To address these limitations, we propose MMD-SLAM, a structure-enhanced Visual SLAM framework that leverages the Atlanta World (AW) assumption to guide a Multi-Meta Gaussian representation for photorealistic map-ping. First, we introduce a point–line fusion strategy for pose optimization, where 3D line segments are incorporated to improve tracking robustness and provide additional con-straints for mapping. Second, we design a Multi-Meta Gaussian representation with dominant directions, explicitly encoding structural priors from the AW hypothesis. Finally, we propose a Gaussian evolution strategy that adapts to scene geometry and incorporates structural cues into global optimization. Extensive experiments demonstrate that these innovations enable MMD-SLAM to achieve state-of-the-art performance in both tracking accuracy and mapping quality. e.g., our method achieves a 48.56% reduction in ATE RMSE on ScanNet and a 5.71% improvement in PSNR on Replica, compared with MonoGS. 
+
+I. I NTRODUCTION 
+
+Visual SLAM aims to estimate camera poses while simul-taneously constructing sparse or dense maps of the environ-ment. As a fundamental problem in 3D computer vision, Visual SLAM has been extensively applied in robotics, autonomous driving, and virtual reality (VR) [29]. The traditional Visual SLAM excels at localization, but its limited reconstruction capability falls short for Embodied Artificial Intelligence (Embodied AI). To address this gap, high-fidelity scene reconstruction with new perspective synthesis shows high potential in embodied perception and virtual agent training [20], [33]. Traditional visual SLAM sys-tems primarily focus on camera pose tracking, while the mapping component often relies on sparse representations such as point clouds or voxels. Such low-fidelity maps, which contain holes and lack texture details, are increasingly inadequate for Augmented Reality (AR), VR, and Embodied AI. Consequently, research in Visual SLAM has been shifting        
+
+> *This work was supported by China Postdoctoral Science Foundation under Grant 2025M781668; Anhui Province Key Research and Development Plan under Grant 202423k09020037
+> 1HFIPS, Chinese Academy of Sciences, Hefei, China.
+> 2University of Science and Technology of China, Hefei, China.
+> 3Aarhus University, Aarhus, Denmark.
+> 4University of Tokyo, Tokyo, Japan.
+> 5Beijing University of Chemical Technology, Beijing, China.
+> 6North China Electric Power University, Beijing, China.
+> ∗Corresponding author.
+
+(a) GS-ICP SLAM [9] (b) Ours 
+
+Fig. 1: Comparison of mapping effect. (a) illustrates that traditional Gaussian ellipsoids, which do not conform to the underlying structure, interfere with each other and generate blurred artifacts. (b) demonstrates that the Multi-Meta Gaus-sians used in our method better fit the scene structure after training, exhibiting clear edges. toward photorealistic map reconstruction, which is essential for embodied perception and agent training. The advent of Neural Radiance Fields (NeRF) [23] has introduced a novel approach to scene representation for robotics [21]. Integrating NeRF into the Visual SLAM signif-icantly enhances the system’s high-fidelity reconstruction ca-pabilities. Despite these advances, NeRF-based methods [8], [35] remain limited by over-smoothing and computational inefficiency. 3D Gaussian Splatting (3DGS) [14] is an explicit scene expression method that offers substantial improvements in both training speed and rendering quality. However, most 3DGS-based Visual SLAM methods [9], [11], [13], [15], [22], [24], [34] explore improvements in rendering quality, efficiency, semantics, and robustness, while ignoring the underlying structural information in the scene. With this in mind, MG-SLAM [19] leverages the Manhattan World assumption and extracts line features for scene optimization. However, its lack of effective integration between discrete features and Gaussian primitives constrains its adaptability. Furthermore, the anisotropic ellipsoid of 3DGS makes it difficult to reasonably describe these geometric structures, which limits the mapping quality of 3DGS-based methods. To overcome the above limitations, we proposed MMD-SLAM, a structure-enhanced Multi-Meta Gaussian 
+
+> arXiv:2606.19874v1 [cs.RO] 18 Jun 2026
+
+Distribution-guided Visual SLAM. Inspired by the Atlanta World (AW) assumption [25], which postulates that man-made indoor environments are dominated by multiple lo-cally orthogonal directions, we leverage structural priors to improve both tracking and mapping. Specifically, we extract line segment features while extracting feature points in the tracking part, and jointly constrain pose estimation and perform global bundle adjustment optimization by reproject-ing point features and back-projecting and reprojecting line features. On the other hand, in the mapping part, based on the AW hypothesis, we divide the 3D Gaussian distribution into three categories: points (spheres), lines, and surfaces, and introduce a dominant direction for this Multi-Meta Gaussian, which is very helpful for the accurate descrip-tion of geometric structure. At the same time, we propose an evolutionary strategy for Multi-Meta Gaussian, further dividing the Gaussian primitives into Weak states that can flexibly convert types and Stable states that stably represent geometric structures, improving the multi-scene adaptability of our method. Finally, we propose a structure-enhanced scene optimization method. By combining the shape loss and dominant direction loss of Multi-Meta Gaussian on the basis of color and depth loss, we construct a complete loss function, further improving the overall scene reconstruction quality, as shown in Fig. 1. Overall, the main contributions of our work are as follows: 1) We propose MMD-SLAM, a visual SLAM system that leverages the AW hypothesis to guide Multi-Meta Gaussians, leading to significantly improved pose estimation and photorealistic mapping quality. To our knowledge, this innovation is unique. 2) We propose a structurally enhanced multi-meta rep-resentation. By using the AW hypothesis, a set of Multi-Meta Gaussians with dominant directions was innovatively introduced, which can fully utilize the un-derlying scene structure extracted by the tracking part for mapping. Furthermore, a corresponding optimiza-tion strategy are introduced, significantly improving the mapping performance. 3) Extensive evaluation on both real-world and large-scale synthetic datasets shows that our method achieves state-of-the-art mapping and rendering quality while maintaining competitive tracking accuracy. II. R ELATED WORKS 
+
+A. Classical Dense Visual SLAM 
+
+Over the past decade, extensive work has used visual SLAM for dense scene reconstruction [32]. Traditional re-search uses explicit representations like point clouds, surfels, and Truncated Signed Distance Functions (TSDF) to recon-struct scenes [3]. For example, BundleFusion [6] estimates camera poses in real time from sparse features and uses TSDF for online mapping and map adjustment, achieving globally consistent 3D reconstruction. ElasticFusion [30] uses surfel sets for scene representation and periodically optimizes the map through non-rigid surface deformation. DI-Fusion [12] integrates scene geometry with deep neural networks for incremental reconstruction. These traditional dense SLAM systems primarily focus on tracking and ge-ometric reconstruction, while our approach also considers high-fidelity appearance reconstruction. 
+
+B. Neural Implicit based SLAM 
+
+Following NeRF’s rise [23], integrating neural implicit representations into SLAM has attracted significant attention. iMAP [28] first demonstrated the potential of implicit rep-resentations in SLAM using a single multilayer perceptron (MLP). Subsequently, various works [8], [21], [35] explored novel implicit scene representations. For instance, NICE-SLAM [35] reconstructs large-scale scenes using hierarchical feature grids with pretrained MLPs. HS-SLAM [8] combines hash grids, tri-planes, and one-blob networks into a hybrid encoding scheme. Nevertheless, MLP-based implicit meth-ods often suffer from over-smoothing and catastrophic forget-ting, limiting their ability to capture fine-grained geometric details. 
+
+C. 3D Gaussian Splatting based SLAM 
+
+The recent success of 3D Gaussian Splatting (3DGS) [14] has sparked interest in combining this efficient explicit representation with SLAM systems. Most approaches focus on improving rendering quality [11], [13], [22] and compu-tational efficiency [9], [24], while others investigate seman-tic [17] and robustness [15], [16] enhancements. However, they generally overlook structural regularities in man-made environments, restricting both rendering quality and mapping consistency. MG-SLAM [19] addressed this limitation by incorporating structured line features into pose optimization and map refinement, improving reconstruction quality. Yet, it is constrained by the Manhattan World (MW) assump-tion [18], compromising rendering fidelity and adaptability. In contrast, our method generalizes the MW assumption to the Atlanta World (AW) assumption and introduces a set of multi-modal Gaussian primitives that enhance structural modeling while preserving high-quality appearance recon-struction. III. M ETHOD 
+
+Fig. 2 illustrates the overall pipeline of our approach, which is guided by the Atlanta World (AW) assumption. Sec-tion III-A describes the tracking module, where point–line constraints are incorporated to extract accurate geometric features, construct a sparse map, and perform global op-timization, thereby providing reliable structural constraints for subsequent mapping. In Section III-B, we present the Structure-Enhanced Multi-Meta Gaussian representation as the underlying scene model. By leveraging Gaussian catego-rization and evolution, we enhance scene reconstruction, and further optimize the map using a combination of appearance and geometry-aware loss functions. Fig. 2: Overview. MMD-SLAM consists of two components: Tracking and Mapping. Tracking: First, extracting point and line features from the input RGB-D frame, the camera pose is determined, and a sparse map is constructed. Secondly, the tracking process is optimized by minimizing the reprojection error and backprojection error. Mapping: Using accurate point cloud information to initialize a Weak Gaussian, a set of stable Multi-Meta Gaussian distributions that conform to the AW assumption is obtained, in order to precisely fit the scene. 
+
+A. Tracking of Point & Line Fusion Constraints 1) Geometric primitives and notations: To clearly de-scribe our method, we first introduce the core mathematical notations and geometric primitives. 
+
+Camera: Our system is based on the standard pinhole camera model, with intrinsic matrix K ∈ R3×3 and pose 
+
+(R, t) ∈ SE (3) .
+
+Image: Each 2D image I is associated with a depth map 
+
+D. A 2D point and a line segment in the image are denoted as p = [ μ, ν ]T ∈ R2 and l = ( p, q), respectively. 
+
+3D Space: In the 3D world domain, given a three-dimensional point P ∈ R3×3, we use the projection function 
+
+π : R3 → I to project the three-dimensional point P i to its corresponding two-dimensional point pi. At the same time, there is a back-projection function β : I → R3 that uses the depth map D to back-project the 2D pixels to 3D points in the camera coordinate system. A 3D line segment is composed of a pair of 3D points (P , Q) ∈ R3 × R3 in the map. 
+
+2) Point-based pose optimization: Similar to [2], we extract point features from the 2D image and perform back-projection to optimize the camera pose. For the observation point pi in the key frame It, there is a reprojection error: 
+
+Lp 
+
+> 2D
+
+= ρ
+
+
+
+∥pi − πk (RkP i + tk)∥Σp
+
+> 2D
+
+
+
+(1) where Σp 
+
+> 2D
+
+= α2 
+
+> pi
+
+I2 is the covariance matrix, α2 
+
+> pi
+
+∈ R is the noise variance of feature points extracted at different scales in the Gaussian image pyramid [7], and we denote by I2 the identity matrix of size 2 × 2.For RGB-D cameras, we can use depth information to construct a reprojection error of a 3D point. For point pi in the kth keyframe, we have 
+
+Lp 
+
+> 3D
+
+= ρ
+
+
+
+pi
+
+μi − bf x
+
+> dpi
+
+ −
+
+ πk
+
+
+
+P W 
+
+> fx
+
+(xC −b) 
+
+> zC
+
++ cx
+
+
+
+> Σp
+> 3D
+
+ (2) where, the superscripts W and C denote the world and camera coordinate systems, respectively. The variable d
+
+represents the depth of point pi in image I; fx is the focal length in the x direction; zC is the z-coordinate of point 
+
+P C = RkP W + tk in the camera frame; and cx is the 
+
+x-coordinate of the principal point. 
+
+3) Line segment-based pose optimization: Motivated by [7], we incorporate additional line constraints to enhance the robustness of the system. Line segments are efficiently detected at each level of the image pyramid using the EDLines method [1]. For line matching, we adopt the LBD descriptor [31], where correspondences are evaluated based on the Hamming distance between descriptors. For a 3D line segment L ∈ R3, its projection on the image plane is represented as l = ( p, q). The back-projection of l is given as 
+
+(β(p), β (q)) . The distance between the camera projection of a 3D point P W and the 2D line l is denoted as dl = p×q 
+
+> ∥p×q∥
+
+,where p = [ pT , 1] , q = [ qT , 1] . Therefore, the 2D line segment reprojection error is defined as: 
+
+Ll 
+
+> 2D
+
+= ρ
+
+ dlk · π
+
+
+
+RkP W + tk
+
+
+
+dlk · π
+
+
+
+RkQW + tk
+
+
+
+> Σl
+> 2D
+
+ (3) In addition, we exploit the available depth information to overcome the limitations of purely 2D reprojection errors by introducing constraints in 3D space. In the 3D map, the distance between an endpoint P of a line segment and its Fig. 3: Multi-Meta Gaussian Evolution. The transition from Weak to Stable states is achieved via adaptive type Conversion and density control (Clone, Split, and Merge), a process we term Multi-Meta Gaussian Evolution. Conversion refers to the operation between different types of Gaussians, while densification control is the operation between the same type of Gaussians. corresponding back-projected point is defined as: 
+
+dlP
+
+
+
+β (p) , P W 
+
+= P C − β (p) (4) where P C is obtained from P C = RkP W + tk. This regu-larization term constrains the 3D map endpoints around the centroid of their observed back-projected points, preventing drift during optimization. Furthermore, we measure the perpendicular distance from 
+
+P to its back-projected 3D line segment: L′ = ( β (p) , β (q)) ,which enforces alignment between the geometric direction of the 3D line segment and that of its observed back-projection. This yields a 3D line back-projection error: 
+
+dl
+
+> 3D
+
+
+
+L′, P W 
+
+=
+
+
+
+P C − β (p)
+
+
+
+×
+
+
+
+P C − β (q)
+
+
+
+∥β (p) × β (q)∥ (5) This ensures that the geometric direction of the 3D line seg-ment is aligned with the direction of the currently observed back-projection line segment, from which a back-projection error of the 3D line segment can be obtained: 
+
+Ll 
+
+> 3D
+
+= ρ                  
+
+> dl
+> 3D
+> 
+> L′,PW
+> +ωd lP
+> 
+> β(p),PW
+> dl
+> 3D
+> 
+> L′,QW
+> +ωd lP
+> 
+> β(q),QW
+> Σl
+> 3D
+> 
+
+(6) where ω ∈ [0 , 1] is a scalar weighting factor. 
+
+4) Global BA optimization: Based on the point and line error functions described above, we formulate a global bundle adjustment to minimize the overall objective function as: 
+
+LT = X
+
+> K
+
+ X
+
+> P2D
+
+Lp 
+
+> 2D
+
++X
+
+> P3D
+
+Lp 
+
+> 3D
+
++X
+
+> L2D
+
+Ll 
+
+> 2D
+
++X
+
+> L3D
+
+Ll
+
+> 3D
+
+
+
+(7) where K denotes the set of keyframes, and P and L represent the sets of points and lines extracted from a given keyframe 
+
+k, respectively. The optimization is carried out using the Leven-berg–Marquardt (L-M) algorithm by iteratively solving the augmented normal as: 
+
+ JT Σ−1J + λI ∆θ = −JT Σ−1ε (8)  
+
+> (a) Gaussian Split (b) Gaussian Merge
+
+Fig. 4: Split and Merge. We improved the original Split and added Merge to make the Density Control module more suitable for our system. where the terms ε and Σ correspond to the projection errors and covariance contributions in the global objective, respectively. 
+
+B. Mapping of Structure-Enhanced Multi-Meta Gaussian 1) Multi-Meta Gaussian Distribution Guided by AW As-sumption: For 3D Gaussian primitives G = δN  μW , ΣW ,we largely follow the representation in [14]. Each Gaussian is parameterized by color c derived from spherical harmonics 
+
+SH ∈ R16 , opacity δ ∈ [0 , 1] , mean in world coordinates 
+
+μW , and covariance ΣW ∈ R3×3 decomposed into scale s
+
+and rotation R.To better fit structured 3D scenes, we draw inspiration from the Atlanta World assumption and extend traditional 3DGS [14] by introducing three types of Gaussian prim-itives with distinct geometric modalities: Point Gaussian 
+
+(GP , Sphere Gaussian ), Line Gaussian (GL), and Surface Gaussian (GS ). Furthermore, each primitive is classified into either a Stable or Weak state depending on its reliability. For Weak-state Gaussians, we adopt the unified formulation as: 
+
+G (x) = exp 
+
+
+
+− 12
+
+ x − μW T  ΣW −1  x − μW 
+
+(9) For Stable-state Gaussians, the definitions follow three dif-ferent patterns: Point Gaussian, Line Gaussian, and Surface Gaussian. 
+
+Point Gaussian: Similar to SplaTAM [13], we enforce isotropy on Point Gaussians. Their distribution is expressed as: 
+
+GP (x) = exp − x − μW
+
+2sP
+
+!
+
+(10) Comparing with the Eq. 9, Sable Point Gaussian has fewer learned parameters, which can significantly improve training speed. 
+
+Line Gaussian: We introduce line Gaussians to model structural edges and other linear features in the scene. For each primitive, among the scale parameters sL =sLx , sLy , sLz
+
+, the largest scale is defined as the dominant 
+
+direction, while the other two scales are close to each other and much smaller. Let x denote the dominant direction, then: 
+
+sL = sLdir , sLdir /nL, sLdir /nL (11) 
+
+Surface Gaussian: To represent large planar structures in 3D scenes, we define surface Gaussians. In this case, one axis with the smallest scale is defined as the dominant TABLE I: ATE RMSE (cm) ↓ results on TUM RGB-D [27] and ScanNet [5] datasets. The best results are marked as best score and second best score . The horizontal lines indicate that this method does not support this dataset.                                                                         
+
+> Datasets TUM RGB-D [27] ScanNet [5]
+> Methods fr1/desk fr2/xyz fr3/office Avg. 0000 0059 0106 0169 0207 Avg.
+> SplaTAM [13] 3.34 1.34 5.21 3.30 12.57 10.15 17.78 12.65 7.98 12.23 MonoGS [22] 1.52 1.58 1.65 1.58 15.94 13.03 19.44 10.44 10.46 14.20 RTG-SLAM [24] 1.62 0.39 1.14 1.06 8.11 6.75 9.03 10.24 9.33 8.69 GS-ICP SLAM [9] 3.12 1.94 3.21 2.76 ––––––MG-SLAM [19] ––––5.95 6.41 8.07 7.29 6.14 6.77
+> MMD-SLAM (Ours) 1.55 0.61 1.12 1.09 5.82 6.52 7.85 6.99 6.51 6.74
+
+direction, while the remaining two scales are similar and relatively large. This configuration is analogous to the 2DGS representation introduced in [10], and its scale characteristics can be written as: 
+
+sS = sSdir , sSdir nS , sSdir nS  (12) 
+
+2) Multi-Meta Gaussian Evolution: Fig. 3 illustrates the operations involved in Multi-Meta Gaussian Evolution. We initialize Gaussian primitives at the 3D points P generated during tracking, with all primitives initially assigned to the Weak state. Through iterative updates, these Weak Gaussians gradually adapt to the surrounding 3D scene structure and are progressively classified into different Multi-Meta Gaussians. 
+
+Conversion: To obtain Stable Gaussians, we reclassify all Weak Gaussians every 1000 iterations and generate new Sta-ble Gaussians. To evaluate this process, we introduce a Type Stability Score (TSS). Specifically, during each classification, if a Weak Gaussian GWi retains the same type, its T SS i
+
+increases by 1; otherwise, if a type conversion occurs, T SS i
+
+is reset to 0. When a Gaussian maintains the same type for 
+
+n consecutive classifications, i.e., T SS i = n, it is promoted to the Stable state, after which its geometric type remains unchanged. 
+
+Density Control: Our Clone method largely follows [14], with two additional modifications. First, the cloned Gaussian primitive is assigned the same type as the original one. Second, the cloned Gaussian is initialized in the Weak state. These modifications ensure that our approach remains adaptable to scene structures. Meanwhile, we employ different types of Gaussians for Split and Merge operations to enhance the representation of complex structures, as illustrated in Fig. 4. During the Split process, an oversized Line Gaussian is divided along its dominant vector u, splitting the original Gaussian center 
+
+μW into two centers: 
+
+μW 
+
+> 1
+
+= μW − 12 ϕu, μW 
+
+> 2
+
+= μW + 12 ϕu (13) where ϕ is a scaling factor. The newly generated Gaussians are set to the Weak state, with their scales also controlled by ϕ. Similarly, we split the oversized Surface Gaussian into three Weak state Gaussians. The Gaussian centers are distributed triangularly on a plane orthogonal to the principal direction μWi = μW + ϕvi, i = 1 , 2, 3, where vi denotes the in-plane offset vectors. To reduce computational overhead, we introduce a Merge operation that fuses neighboring Gaussians of the same type with small scales. Specifically, for merged Line Gaussians, the new dominant scale is defined as the sum of the distances between their centers. For Surface Gaussians, the two in-plane scales are set to the average of the pairwise distances among the three centers. All other attributes are assigned as the mean of the merged Gaussians. 
+
+3) Structure-enhanced scene optimization: We introduce a structure-enhanced scene optimization method to optimize the learnable parameters, enabling the Gaussian primitives to fully fit the three-dimensional information. Following 3DGS [14], we project a 3D Gaussian primitive Gi(x) onto the 2D image to obtain G′
+
+> i
+
+(x′). The projected Gaussians are then sorted by depth, and the appearance is rendered using 
+
+α-blending: 
+
+C (x′) = X
+
+> i∈N
+
+ciδiG′ 
+
+> i
+
+(x′)
+
+> i−1
+
+Y
+
+> j=1
+
+(1 − δj G′ 
+
+> i
+
+(x′)) (14) where N is the number of Gaussians corresponding to the pixel. We use the same method to gain the rendering depth: 
+
+D (x′). Broadening this into a single image, and we use L1 loss to optimize: 
+
+Lrgb = C − C GT , Ldepth = D − D GT (15) Meanwhile, we introduce a shape constraint loss Lshape .For a single Gaussian primitive Gk (x) from the set of line or surface Gaussians k ∈ K, the scale components along different directions are sorted as smax ≥ smid ≥ smin . The shape error function is constructed by defining the elongation ratio e = smax /s min and flatness ratio f = smid /s min of the Gaussian basis: 
+
+FL (e, f ) = 1
+
+e +( f − 1) 2 , FS (e, f ) = 1
+
+f +( e − 1) 2 (16) To obtain the shape constraint loss: 
+
+Lshape = 1
+
+K
+
+> K
+
+X
+
+> k=1
+
+ ρLk FL (e, f ) + ρSk FS (e, f ) (17) Additionally, using the AW assumption and 3D line seg-ments extracted from the tracking part, we can guide the direction of the line Gaussian: 
+
+Ldir = 1
+
+H
+
+> H
+
+X
+
+> h=1
+
+ 1 − | uh · ˆtk| (18) TABLE II: Quantitative evaluation of our method compared to SOTA methods on Replica datasets [26]. Colored cells indicate best , second , and third performance. FPS (f/s) represents the operating speed of the entire SLAM system.                                                                                                                                                                                                       
+
+> Methods Metrics Room0 Room1 Room2 Office0 Office1 Office2 Office3 Office4 Avg. FPS ↑
+> SplaTAM [13] PSNR ↑32.82 33.90 35.28 38.08 38.78 31.79 30.15 31.61 34.05 SSIM ↑0.978 0.970 0.984 0.981 0.982 0.965 0.951 0.946 0.970 0.12 LPIPS ↓0.072 0.096 0.070 0.089 0.095 0.098 0.118 0.156 0.099 MonoGS [22] PSNR ↑33.91 35.73 37.12 40.28 41.58 35.86 35.46 34.04 36.75 SSIM ↑0.946 0.957 0.964 0.972 0.976 0.962 0.958 0.941 0.960 1.59 LPIPS ↓0.072 0.077 0.067 0.072 0.092 0.098 0.097 0.102 0.085 RTG-SLAM [24] PSNR ↑30.35 33.68 34.48 39.08 39.21 32.65 32.39 35.57 34.68 SSIM ↑0.960 0.977 0.981 0.989 0.989 0.980 0.981 0.984 0.980 7.14 LPIPS ↓0.156 0.115 0.122 0.082 0.102 0.143 0.138 0.123 0.123 GS-ICP SLAM [9] PSNR ↑32.89 35.38 34.63 40.25 40.48 34.32 34.72 36.89 36.20 SSIM ↑0.943 0.958 0.957 0.976 0.975 0.962 0.957 0.963 0.961 6.85 LPIPS ↓0.075 0.070 0.083 0.046 0.056 0.067 0.061 0.063 0.065 MG-SLAM [19] PSNR ↑34.67 35.52 37.10 40.04 41.38 35.91 34.85 35.75 36.90 SSIM ↑0.976 0.978 0.980 0.987 0.988 0.980 0.977 0.978 0.981 3.76 LPIPS ↓0.070 0.084 0.070 0.076 0.083 0.101 0.095 0.112 0.086
+> MMD-SLAM (Ours)
+> PSNR ↑35.94 38.27 38.81 42.59 41.98 37.51 36.92 38.78 38.85 SSIM ↑0.958 0.971 0.964 0.982 0.983 0.974 0.971 0.968 0.972 3.82 LPIPS ↓0.031 0.028 0.033 0.018 0.044 0.036 0.027 0.042 0.032
+
+(a) SplaTAM (b) RTG-SLAM (c) GS-ICP SLAM (d) Ours (e) GT 
+
+Fig. 5: Rendering results on the Replica dataset [26]. The red arrow highlight the differences between our approach and baselines. For the details of ceiling, floor and window, our method significantly outperforms baselines. where H is the number of line Gaussians, uh is the eigen-vector of the dominant direction, and the reference direction provided by the line segment is ˆtk. Consequently, the total loss of this mapping module is 
+
+LM = Lrgb +λdepth Ldepth +λshape Lshape +λdir Ldir (19) where λdepth λshape , and λdir are the weight parameters. IV. E XPERIMENT 
+
+A. Experiment Setup 1) Datasets: Following [35], we evaluate our method and baselines on three widely used RGB-D datasets. These include the TUM RGB-D dataset [27] for pose evaluation, the larger and more challenging ScanNet dataset [5], and the synthetic Replica dataset for mapping evaluation. The Replica dataset version follows the setup of [35]. The selec-tion of the sequence in the ScanNet dataset follows [19]. 
+
+2) Baselines: To evaluate the tracking and mapping per-formance of our method, we compare against SplaTAM [13], MonoGS [22], RTG-SLAM [24], GS-ICP SLAM [9], and MG-SLAM [19], all of which represent state-of-the-art (SOTA) 3DGS-based SLAM systems. 
+
+3) Metrics: We follow the evaluation protocol in [22]. For pose estimation, we measure the root mean square error (RMSE) of the absolute trajectory error (ATE) across all frames. For photorealistic mapping, we report standard ren-dering quality metrics, including PSNR, SSIM, and LPIPS. We calculated the FPS of the entire system for real-time performance. 
+
+4) Implementation Details: Our method is implemented on an NVIDIA RTX A100 GPU (40 GB) and an AMD EPYC 7542 CPU. Except for the non-open-source MG-SLAM [19], all other baselines are run using their official implementations on the same hardware. To ensure fairness, we report the average results over five runs. For the tracking (a) SplaTAM (b) MonoGS (c) Ours (d) GT 
+
+Fig. 6: Rendering results on the TUM RGB-D dataset [27]. It can be clearly seen that our method can reconstruct a clearer appearance. TABLE III: Ablation study on the key components. 
+
+SOTA results are highlighted. The data is derived from the mean values of eight sequences in the Replica dataset [26].                       
+
+> PLFC MMGE SSO ATE RMSE (cm) ↓PSNR (dB) ↑
+> ✗✗✗0.61 35.92
+> ✓✗✗0.47 37.78
+> ✓✓✗0.47 38.31
+> ✓✓✓0.47 38.85
+
+module, feature extraction parameters follow those used in [4], which is built upon [2]. For ScanNet, the ground-truth (GT) camera poses are obtained using BundleFusion [6]. The weight parameters of the mapping process are λdepth =0.1, λ shape = 0 .2, λ dir = 0 .2.
+
+B. Results Analysis 1) Evaluation on Tracking: As shown in TABLE I, we report comparisons between MMD-SLAM and SOTA baselines on the TUM RGB-D and ScanNet datasets. Our method achieves competitive pose estimation accuracy on both datasets. On the TUM dataset, which contains cluttered structures, [24] performs better by relying solely on point features for localization. In contrast, on the larger ScanNet dataset with abundant line features, our method together with [19] achieves the best results, owing to the similar point–line fusion tracking strategy adopted by both. Overall, when combining the results from both datasets, our method has the best overall positioning performance. This proves the effectiveness of the point-line dual constraint on pose. 
+
+2) Evaluation on Mapping: Since the original image qual-ity of the TUM RGB-D and ScanNet datasets is relatively low, we perform quantitative mapping evaluation only on the Replica dataset. TABLE II reports the mapping results of our method compared with baselines, where MMD-SLAM sig-nificantly outperforms all competitors and has a competitive running speed. Moreover, to better demonstrate reconstruc-tion quality, we conduct qualitative comparisons on the TUM RGB-D and Replica datasets, as shown in Fig. 6 and Fig. 5. In particular, the comparison on the TUM RGB-D dataset (Fig. 6) clearly shows that our method achieves the best rendering quality. Finally, as illustrated in Fig. 5, SplaTAM, which relies entirely on isotropic Gaussians, often produces holes in the map; RTG-SLAM suffers from generally poor  
+
+> (a) w/o MMGE & SSO (b) w MMGE & SSO
+
+Fig. 7: Ablation of MMGE & SSO. The red dashed box highlights the differences between the two methods. Our comprehensive approach has more obvious structure. rendering quality; and GS-ICP SLAM exhibits significant defects in reconstructed floors and ceilings. In contrast, we employed the Multi-Meta Gaussian model guided by the AW hypothesis, fully leveraging the structural information and achieving the best detail restoration. 
+
+3) Ablation Study: In order to demonstrate the role of key components in our system, we provide a comprehensive ablation analysis to demonstrate their importance. 
+
+Point & Line Fusion Constraints (PLFC): The first two rows of TABLE III present the ablation study on the tracking module with respect to Point & Line Fusion Constraints (PLFC). Row 1 corresponds to tracking using only point features, while Row 2 incorporates both point features and line segments. The results show that introducing additional line constraints plays a critical role in pose optimization and contributes to improved mapping quality. 
+
+Multi-Meta Gaussian Evolution (MMGE): To validate the effectiveness of the Multi-Meta Gaussian Evolution (MMGE) component in MMD-SLAM, we train a standard 3DGS model using the same poses. Row 2 reports the map-ping results with single-modal Gaussian primitives, while Row 3 shows the results with our Multi-Meta Gaussian prim-itives under the same poses. This comparison demonstrates the effectiveness of the proposed Multi-Meta Gaussians. 
+
+Structure-Enhanced Scene Optimization (SSO): We combine appearance and geometric losses to design aStructure-Enhanced Scene Optimization (SSO) method. We conduct an ablation by controlling whether geometric losses are included. Row 4 in TABLE III corresponds to our full method, showing that each component contributes critically to the overall performance. Fig. 7 visualizes the effects of the key components of our method. V. C ONCLUSION 
+
+In this work, we presented MMD-SLAM, a novel 3DGS based SLAM framework. Our method leverages point and line features as complementary constraints for robust pose estimation and mapping guidance. Guided by the Atlanta World hypothesis, we construct a set of Multi-Meta Gaus-sian distributions as the underlying scene representation, incorporating Gaussian evolution strategies and structure-enhanced optimization to accurately capture both appear-ance and geometry. Extensive experiments demonstrate that MMD-SLAM achieves SOTA performance. In future work, we plan to extend the applicability of our approach and further enhance its robustness in challenging environments. REFERENCES [1] C. Akinlar and C. Topal, “Edlines: A real-time line segment detector with a false detection control,” Pattern Recognition Letters , vol. 32, no. 13, pp. 1633–1642, 2011. [2] C. Campos, R. Elvira, J. J. G. Rodriguez, J. M. M. Montiel, and J. D. Tardos, “Orb-slam3: An accurate open-source library for visual, visual-inertial, and multimap slam,” IEEE Transactions on Robotics ,vol. 37, no. 6, pp. 1874–1890, 2021. [3] S. Chen, C. Wang, R. Xu, Peixingtian, yukun Song, J. Lin, W. Xu, jingyizhang, L. Guo, and S. Xu, “SAGE: Spatial-visual adaptive graph exploration for efficient visual place recognition,” in The Fourteenth International Conference on Learning Representations , 2026. [4] C.-M. Chung, Y.-C. Tseng, Y.-C. Hsu, X.-Q. Shi, Y.-H. Hua, J.-F. Yeh, W.-C. Chen, Y.-T. Chen, and W. H. Hsu, “Orbeez-slam: A real-time monocular visual slam with orb features and nerf-realized mapping,” in 2023 IEEE International Conference on Robotics and Automation (ICRA) . IEEE, 2023, Conference Proceedings, pp. 9400–9406. [5] A. Dai, A. X. Chang, M. Savva, M. Halber, T. Funkhouser, and M. Nießner, “Scannet: Richly-annotated 3d reconstructions of indoor scenes,” in Proceedings of the IEEE/CVF Conference on Computer Vi-sion and Pattern Recognition (CVPR) , 2017, Conference Proceedings, pp. 5828–5839. [6] A. Dai, M. Nießner, M. Zollh¨ ofer, S. Izadi, and C. Theobalt, “Bundle-fusion: Real-time globally consistent 3d reconstruction using on-the-fly surface reintegration,” ACM Transactions on Graphics , vol. 36, no. 4, p. 1, 2017. [7] L. Freda, “Plvs: A slam system with points, lines, volumetric mapping, and 3d incremental segmentation,” arXiv preprint arXiv:2309.10896 ,2023. [8] Z. Gong, F. Tosi, Y. Zhang, S. Mattoccia, and M. Poggi, “Hs-slam: Hybrid representation with structural supervision for improved dense slam,” in 2025 IEEE International Conference on Robotics and Automation (ICRA) . IEEE, 2025, pp. 8464–8470. [9] S. Ha, J. Yeon, and H. Yu, “Rgbd gs-icp slam,” in Proceedings of the European Conference on Computer Vision (ECCV) . Springer, 2024, pp. 180–197. [10] B. Huang, Z. Yu, A. Chen, A. Geiger, and S. Gao, “2d gaussian splat-ting for geometrically accurate radiance fields,” in ACM SIGGRAPH ,2024, Conference Proceedings, pp. 1–11. [11] H. Huang, L. Li, H. Cheng, and S.-K. Yeung, “Photo-slam: Real-time simultaneous localization and photorealistic mapping for monocular stereo and rgb-d cameras,” in Proceedings of the IEEE/CVF Con-ference on Computer Vision and Pattern Recognition (CVPR) , 2024, Conference Proceedings, pp. 21 584–21 593. [12] J. Huang, S. S. Huang, H. Song, and S. M. Hu, “Di-fusion: Online implicit 3d reconstruction with deep priors,” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , 2021, Conference Proceedings, pp. 8928–8937. [13] N. Keetha, J. Karhade, K. M. Jatavallabhula, G. Yang, S. Scherer, D. Ramanan, and J. Luiten, “Splatam: Splat track & map 3d gaussians for dense rgb-d slam,” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , 2024, Conference Proceedings, pp. 21 357–21 366. [14] B. Kerbl, G. Kopanas, T. Leimk¨ uhler, and G. Drettakis, “3d gaussian splatting for real-time radiance field rendering,” ACM Transactions on Graphics , vol. 42, no. 4, pp. 1–14, 2023. [15] M. Li, W. Chen, N. Cheng, J. Xu, D. Li, and H. Wang, “Garad-slam: 3d gaussian splatting for real-time anti dynamic slam,” in 2025 IEEE International Conference on Robotics and Automation (ICRA) . IEEE, 2025, pp. 11 047–11 053. [16] M. Li, D. Li, S. Hu, K. Wang, Z. Zhao, and H. Wang, “Slam-x: Generalizable dynamic removal for nerf and gaussian splatting slam,” in Proceedings of the 33rd ACM International Conference on Multimedia , 2025, pp. 1132–1140. [17] M. Li, S. Liu, H. Zhou, G. Zhu, N. Cheng, T. Deng, and H. Wang, “Sgs-slam: Semantic gaussian splatting for neural dense slam,” in 
+
+Proceedings of the European Conference on Computer Vision (ECCV) .Springer, 2024, pp. 163–179. [18] B. Liao, Z. Zhao, H. Li, Y. Zhou, Y. Zeng, H. Li, and P. Liu, “Convex relaxation for robust vanishing point estimation in manhattan world,” in Proceedings of the Computer Vision and Pattern Recognition Conference , 2025, pp. 15 823–15 832. [19] S. Liu, T. Deng, H. Zhou, L. Li, H. Wang, D. Wang, and M. Li, “Mg-slam: Structure gaussian splatting slam with manhattan world hy-pothesis,” IEEE Transactions on Automation Science and Engineering ,vol. 22, pp. 17 034–17 049, 2025. [20] Y. Liu, W. Chen, Y. Bai, X. Liang, G. Li, W. Gao, and L. Lin, “Aligning cyber space with physical world: A comprehensive survey on embodied ai,” IEEE/ASME Transactions on Mechatronics , 2025. [21] Y. Mao, X. Yu, Z. Zhang, K. Wang, Y. Wang, R. Xiong, and Y. Liao, “Ngel-slam: Neural implicit representation-based global consistent low-latency slam system,” in 2024 IEEE International Conference on Robotics and Automation (ICRA) . IEEE, 2024, pp. 6952–6958. [22] H. Matsuki, R. Murai, P. H. Kelly, and A. J. Davison, “Gaussian splatting slam,” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , 2024, Conference Proceedings, pp. 18 039–18 048. [23] B. Mildenhall, P. P. Srinivasan, M. Tancik, J. T. Barron, R. Ramamoor-thi, and R. Ng, “Nerf: Representing scenes as neural radiance fields for view synthesis,” Communications of the ACM , vol. 65, no. 1, pp. 99–106, 2022. [24] Z. Peng, T. Shao, Y. Liu, J. Zhou, Y. Yang, J. Wang, and K. Zhou, “Rtg-slam: Real-time 3d reconstruction at scale using gaussian splat-ting,” in ACM SIGGRAPH , 2024, Conference Proceedings, pp. 1–11. [25] G. Schindler and F. Dellaert, “Atlanta world: An expectation max-imization framework for simultaneous low-level edge grouping and camera calibration in complex man-made environments,” in Proceed-ings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) . IEEE, 2004, pp. I–I. [26] J. Straub, T. Whelan, L. Ma, Y. Chen, E. Wijmans, S. Green, J. J. Engel, R. Mur-Artal, C. Ren, and S. Verma, “The replica dataset: A digital replica of indoor spaces,” arXiv preprint arXiv:1906.05797 ,2019. [27] J. Sturm, N. Engelhard, F. Endres, W. Burgard, and D. Cremers, “A benchmark for the evaluation of rgb-d slam systems,” in 2012 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) , 2012, Conference Proceedings, pp. 573–580. [28] E. Sucar, S. K. Liu, J. Ortiz, and A. J. Davison, “Imap: Implicit map-ping and positioning in real-time,” in Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV) , 2021, Confer-ence Proceedings, pp. 6209–6218. [29] C. Wang, S. Chen, Y. Song, R. Xu, Z. Zhang, J. Zhang, H. Yang, Y. Zhang, K. Fu, S. Du, et al. , “Focus on local: Finding reliable discriminative regions for visual place recognition,” in Proceedings of the AAAI Conference on Artificial Intelligence , vol. 39, no. 7, 2025, pp. 7536–7544. [30] T. Whelan, S. Leutenegger, R. F. Salas-Moreno, B. Glocker, and A. J. Davison, “Elasticfusion: Dense slam without a pose graph.” in 
+
+Robotics: Science and Systems (RSS) , vol. 11, no. 3. Rome, 2015. [31] L. Zhang and R. Koch, “An efficient and robust line segment matching approach based on lbd descriptor and pairwise geometric consistency,” 
+
+Journal of visual communication and image representation , vol. 24, no. 7, pp. 794–805, 2013. [32] Z. Zhao, “Balf: Simple and efficient blur aware local feature detector,” in Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision , 2024, pp. 3362–3372. [33] Z. Zhao, H. Yang, B. Liao, Y. Zeng, S. Yan, Y. Gu, P. Liu, Y. Zhou, H. Li, and J. Civera, “Advances in global solvers for 3d vision,” arXiv preprint arXiv:2602.14662 , 2026. [34] F. Zhu, Y. Zhao, Z. Chen, B. Yu, and H. Zhu, “Fgo-slam: Enhancing gaussian slam with globally consistent opacity radiance field,” in 2025 IEEE International Conference on Robotics and Automation (ICRA) .IEEE, 2025, pp. 11 075–11 081. [35] Z. Zhu, S. Peng, V. Larsson, W. Xu, H. Bao, Z. Cui, M. R. Oswald, and M. Pollefeys, “Nice-slam: Neural implicit scalable encoding for slam,” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , 2022, Conference Proceedings, pp. 12 776–12 786.
