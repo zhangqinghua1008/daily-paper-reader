@@ -1,0 +1,189 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-20T21:38:00.724343+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 0,
+    "deep_cap": 7,
+    "deep_selected": 0,
+    "quick_candidates": 4,
+    "quick_skim_target": 12,
+    "quick_selected": 4
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2606.15908v1",
+      "source": "arxiv",
+      "title": "High-Fidelity 4D Hand-Object Capture via Multi-View Spatiotemporal Tracking and Physics-Aware Gaussians",
+      "abstract": "The growing demand for high-fidelity 4D hand-object interaction (HOI) data in embodied AI and spatial computing is currently bottlenecked by the reliance on pre-scanned object templates and physical markers. While recent methods have demonstrated promising results in reconstructing 4D hand-object interaction from videos, they are highly sensitive to initial estimates of hand and object poses. Yet, estimating these poses from images is challenging, in particular under severe occlusion which is inherent in hand-object interaction scenarios. We propose a novel system for the robust and accurate reconstruction of hands and objects from synchronized and calibrated multi-view videos without requiring any templates or markers. Our system consists of two main components with key innovations: (1) a multi-view feed-forward transformer model that aggregates cross-view geometry and temporal cues to provide a reliable, metric-consistent initialization for both poses and dense object geometry, and (2) a hand-object physics-aware Gaussian-based optimization framework to refine the initial estimates, integrating tetrahedral constraints, collision refinement, and appearance decomposition to produce physically plausible and visually accurate reconstruction. Validated on public benchmarks and an extensive internal dataset, our pipeline achieves highly robust, artifact-free reconstruction, providing an efficient foundation for automated 4D asset generation. Our project page are available at https://zyshen021.github.io/HOSTPG/.",
+      "authors": [
+        "Bo Peng",
+        "Xu Chen",
+        "Yi Gu",
+        "Hidenobu Matsuki",
+        "Mingsong Dou",
+        "Jingjing Shen",
+        "Deying Kong",
+        "Juyong Zhang",
+        "Zhengyang Shen"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-14T16:36:49+00:00",
+      "link": "https://arxiv.org/pdf/2606.15908v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "reconstructs 4D hand-object interaction using physics-aware Gaussians",
+      "llm_evidence_cn": "使用物理感知高斯重建4D手物交互",
+      "llm_evidence": "使用物理感知高斯重建4D手物交互",
+      "canonical_evidence": "使用物理感知高斯重建4D手物交互",
+      "llm_tldr_en": "Proposes a multi-view system for robust 4D hand-object reconstruction without templates or markers, using physics-aware Gaussians.",
+      "llm_tldr_cn": "为获取高保真手物交互4D数据，提出一种无需模板和标记的多视角重建系统，结合时空跟踪与物理感知高斯表示，有效处理严重遮挡和初始位姿不准确，实现鲁棒的手和物体形状恢复，为具身AI提供高质量交互数据。",
+      "llm_tldr": "为获取高保真手物交互4D数据，提出一种无需模板和标记的多视角重建系统，结合时空跟踪与物理感知高斯表示，有效处理严重遮挡和初始位姿不准确，实现鲁棒的手和物体形状恢复，为具身AI提供高质量交互数据。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.20424v1",
+      "source": "arxiv",
+      "title": "LIT-GS: LiDAR-Inertial-Thermal Gaussian Splatting for Illumination-Robust Mapping",
+      "abstract": "Gaussian Splatting has enabled real-time neural rendering, yet existing LiDAR-inertial-visual (LIV) Gaussian mapping pipelines remain fragile under illumination changes and texture-deficient scenes due to their reliance on RGB photometric cues. We present LIT-GS, a LiDAR-inertial-thermal Gaussian Splatting framework that injects LiDAR-derived plane geometry as an explicit constraint in both pose/structure refinement and Gaussian optimization. Specifically, we exploit LIV visual map points as confidence-aware cross-modal anchors to establish reliable thermal-LiDAR associations, and incorporate weighted LiDAR point-to-plane residuals into bundle adjustment to jointly refine camera poses and 3D points under weak thermal supervision. Building on the refined structure, we further introduce a LiDAR-plane-regularized differentiable splatting objective that constrains rendered 3D points to align with locally observed planes, mitigating surface thickening and structural drift in low-contrast thermal imagery. Experiments on proprietary sequences and public datasets demonstrate that LIT-GS consistently improves geometric accuracy and rendering quality over state-of-the-art LIV-based Gaussian Splatting baselines, particularly in challenging lighting conditions.",
+      "authors": [
+        "Shikuan Shi",
+        "Chunran Zheng",
+        "Jiaming Xu",
+        "Tianyong Ye",
+        "Tao Yu",
+        "Yukang Cui"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-06-18T16:06:52+00:00",
+      "link": "https://arxiv.org/pdf/2606.20424v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Jointly refines camera poses in a Gaussian Splatting mapping framework.",
+      "llm_evidence_cn": "在高斯泼溅映射框架中联合优化相机位姿",
+      "llm_evidence": "在高斯泼溅映射框架中联合优化相机位姿",
+      "canonical_evidence": "在高斯泼溅映射框架中联合优化相机位姿",
+      "llm_tldr_en": "LIT-GS injects LiDAR plane geometry into Gaussian Splatting for robust camera pose tracking and 3D mapping under challenging illumination.",
+      "llm_tldr_cn": "LIT-GS通过注入激光雷达平面几何约束到高斯泼溅框架中，实现了光照变化场景下鲁棒的相机位姿跟踪与三维建图，有效克服了传统视觉方法对光照的依赖。",
+      "llm_tldr": "LIT-GS通过注入激光雷达平面几何约束到高斯泼溅框架中，实现了光照变化场景下鲁棒的相机位姿跟踪与三维建图，有效克服了传统视觉方法对光照的依赖。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "accurate camera pose tracking",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.17998v1",
+      "source": "arxiv",
+      "title": "AIGS-Net: Compact Illumination Field Modeling via 2D Gaussian Splatting for Fast Low-Light Image Enhancement",
+      "abstract": "Existing low-light image enhancement methods often face a bottleneck between the representation capacity of illumination-field modeling and computational complexity. To address this issue, this paper proposes an Adaptive Illumination Gaussian Splatting Network (AIGS-Net), an ultra-lightweight architecture for fast low-light enhancement. Unlike conventional static priors, AIGS-Net constructs an input-adaptive 2D Gaussian Splatting illumination field. The opacity of Gaussian basis functions is dynamically modulated by relative luminance statistics of the input image, and spatially varying illumination compensation is rendered through ordered alpha compositing. To guide adaptive illumination compensation efficiently, a zero-parameter nonlinear multiscale contextual encoding module is introduced to extract low-frequency structures and local contrast cues without additional convolutional weights. To suppress noise amplification and sensor-induced color bias, AIGS-Net integrates noise-mask estimation, locked single-channel Gamma mapping, cross-channel consistency regularization, and target color-alignment constraints. Experiments on LOL and LSRW benchmarks show that AIGS-Net improves detail recovery and color fidelity while requiring only approximately 40 learnable parameters, achieving an effective trade-off between enhancement quality and extreme inference efficiency.",
+      "authors": [
+        "Yuhan Chen",
+        "Kunyang Huang",
+        "Fuchen Li",
+        "Zhuohan Qin",
+        "Guofa Li",
+        "Wenbo Chu",
+        "Keqiang Li"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-16T14:45:55+00:00",
+      "link": "https://arxiv.org/pdf/2606.17998v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "uses 2D Gaussian Splatting for adaptive illumination field modeling in low-light image enhancement",
+      "llm_evidence_cn": "使用2D高斯溅射进行低光图像增强中的自适应光照场建模",
+      "llm_evidence": "使用2D高斯溅射进行低光图像增强中的自适应光照场建模",
+      "canonical_evidence": "使用2D高斯溅射进行低光图像增强中的自适应光照场建模",
+      "llm_tldr_en": "Proposes an ultra-lightweight network that models illumination via input-adaptive 2D Gaussian splatting, enabling fast low-light enhancement; method can be applied to endoscopic images.",
+      "llm_tldr_cn": "针对低光图像增强中表示能力与计算复杂度的矛盾，提出自适应光照高斯溅射网络AIGS-Net，利用输入相关的2D高斯溅射建模光照场，通过动态调制不透明度实现快速空间变化光照补偿，在保持高质量增强的同时实现极轻量化架构，为内窥镜等实时成像场景提供潜在应用。",
+      "llm_tldr": "针对低光图像增强中表示能力与计算复杂度的矛盾，提出自适应光照高斯溅射网络AIGS-Net，利用输入相关的2D高斯溅射建模光照场，通过动态调制不透明度实现快速空间变化光照补偿，在保持高质量增强的同时实现极轻量化架构，为内窥镜等实时成像场景提供潜在应用。",
+      "llm_tags": [
+        "query:endo-dgs"
+      ],
+      "matched_query_tag": "query:endo-dgs",
+      "matched_query_text": "endoscopic image enhancement with Gaussian splatting",
+      "matched_requirement_id": "req-11",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.20531v1",
+      "source": "arxiv",
+      "title": "VisDom: Sparse Novel View Synthesis with Visible Domain Constraint",
+      "abstract": "Sparse novel view synthesis (NVS) remains challenging due to the ambiguity of recovering 3D geometry from few input views. While NeRF- and Gaussian Splatting (GS)-based methods perform well with dense supervision, they often overfit in sparse settings, producing floating artifacts and inconsistent geometry. Silhouette consistency is commonly used as a regularizer, but it remains insufficient, as silhouette-consistent regions can extend beyond the true object geometry. We introduce VisDom, a learning-free geometric constraint that augments classical carving-based visual hull reconstruction by enforcing a minimum multi-view visibility requirement. Specifically, we define a visible domain as the subset of 3D space observed by at least $K$ views and use it as an additional filtering criterion on top of standard silhouette-based reconstruction. This provides a stronger spatial prior in sparse-view settings. We integrate VisDom into both implicit (NeRF) and explicit (GS) pipelines by restricting volumetric sampling and guiding Gaussian placement during optimization. Experiments on three challenging datasets show consistent improvements in sparse-view NVS, enabling high-quality object-centric reconstruction from as few as four input images. Our method is domain-agnostic, requires only silhouettes, and introduces no learned parameters, making it a simple complement to existing approaches. Applying VisDom on top of GaussianObject further improves performance on Omni3D and MipNeRF360, while matching or surpassing it at 22 $\\times$ lower training cost.",
+      "authors": [
+        "Mariia Gladkova*",
+        "Tarun Yenamandra*",
+        "Edmond Boyer",
+        "Robert Maier",
+        "Tony Tung",
+        "Daniel Cremers"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-18T17:45:37+00:00",
+      "link": "https://arxiv.org/pdf/2606.20531v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Introduces a multi-view visibility constraint for 3D Gaussian Splatting in novel view synthesis.",
+      "llm_evidence_cn": "为3D高斯泼溅新视角合成引入多视图可见性约束",
+      "llm_evidence": "为3D高斯泼溅新视角合成引入多视图可见性约束",
+      "canonical_evidence": "为3D高斯泼溅新视角合成引入多视图可见性约束",
+      "llm_tldr_en": "VisDom proposes a learning-free geometric constraint based on minimum multi-view visibility to regularize 3D Gaussian Splatting, reducing floaters in sparse view synthesis.",
+      "llm_tldr_cn": "VisDom提出基于最小多视图可见性的可见域约束，无需学习即可为高斯泼溅提供几何正则，有效消除稀疏视角下的漂浮伪影。",
+      "llm_tldr": "VisDom提出基于最小多视图可见性的可见域约束，无需学习即可为高斯泼溅提供几何正则，有效消除稀疏视角下的漂浮伪影。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

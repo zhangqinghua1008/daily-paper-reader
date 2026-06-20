@@ -6,38 +6,35 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-06-19
-- 运行时间：2026-06-19 22:06:17 UTC
+- 最新运行日期：2026-06-20
+- 运行时间：2026-06-20 21:40:41 UTC
 - 运行状态：成功
-- 本次总论文数：5
-- 精读区：5
-- 速读区：0
+- 本次总论文数：4
+- 精读区：0
+- 速读区：4
 
 ### 今日简报（AI）
-今日精读两篇高分论文，聚焦生成先验与视觉SLAM的前沿突破。
-FlowObject通过流场调控让生成模型“懂约束”，MMD-SLAM则用多高斯分布构建更鲁棒的空间地图。
-想入门生成式重建或动态场景定位，这三篇值得从“可控生成范式”和“结构感知SLAM”两条脉络深挖。
-- 详情：[/202606/19/README](/202606/19/README)
+今日速读三篇高斯泼溅新作，聚焦4D手物交互捕捉、快速低光增强与多传感器鲁棒建图。  
+值得关注：多视图物理感知高斯泼溅还原高保真手物动画，以及紧凑二维高斯场实现毫秒级低光增强。  
+建议开发者和研究者追踪“多模态融合+可泛化重建”方向，这些技术在AR/VR与机器人应用中落地潜力显著。
+- 详情：[/202606/20/README](/202606/20/README)
 
 ### 精读区论文标签
-1. [FlowObject: Flow Steering for Bridging Generative Priors and Reconstruction Fidelity](/202606/19/2606.19019v1-flowobject-flow-steering-for-bridging-generative-priors-and-reconstruction-fidelity)  
-   标签：评分：9.0/10、query:gs-slam
-   evidence：利用3D高斯泼溅进行高保真可见表面重建并引导生成先验
-2. [MMD-SLAM: Structure-Enhanced Multi-Meta Gaussian Distribution-Guided Visual SLAM](/202606/19/2606.19874v1-mmd-slam-structure-enhanced-multi-meta-gaussian-distribution-guided-visual-slam)  
-   标签：评分：9.0/10、query:gs-slam
-   evidence：使用3D高斯溅射和结构引导的视觉SLAM框架
-3. [High-Fidelity 4D Hand-Object Capture via Multi-View Spatiotemporal Tracking and Physics-Aware Gaussians](/202606/19/2606.15908v2-high-fidelity-4d-hand-object-capture-via-multi-view-spatiotemporal-tracking-and-physics-aware-gaussians)  
-   标签：评分：8.0/10、query:gs-slam
-   evidence：使用物理感知高斯泼溅重建4D手物交互
-4. [Sensor Configuration Matters: A Systematic Evaluation of Multimodal SLAM on Quadruped Robots](/202606/19/2606.19067v1-sensor-configuration-matters-a-systematic-evaluation-of-multimodal-slam-on-quadruped-robots)  
-   标签：评分：8.0/10、query:gs-slam
-   evidence：在四足机器人上评估视觉惯性及激光雷达-视觉惯性SLAM方法
-5. [Hand-4DGS: Feed-Forward 3D Gaussian Splatting for 4D Hand Reconstruction from Egocentric Videos](/202606/19/2606.19156v1-hand-4dgs-feed-forward-3d-gaussian-splatting-for-4d-hand-reconstruction-from-egocentric-videos)  
-   标签：评分：8.0/10、query:gs-slam
-   evidence：利用3D高斯溅射从单目第一人称视频重建动态手部
+- 本次无精读推荐。
 
 ### 速读区论文标签
-- 本次无速读推荐。
+1. [High-Fidelity 4D Hand-Object Capture via Multi-View Spatiotemporal Tracking and Physics-Aware Gaussians](/202606/20/2606.15908v1-high-fidelity-4d-hand-object-capture-via-multi-view-spatiotemporal-tracking-and-physics-aware-gaussians)  
+   标签：评分：7.0/10、query:gs-slam
+   evidence：使用物理感知高斯重建4D手物交互
+2. [AIGS-Net: Compact Illumination Field Modeling via 2D Gaussian Splatting for Fast Low-Light Image Enhancement](/202606/20/2606.17998v1-aigs-net-compact-illumination-field-modeling-via-2d-gaussian-splatting-for-fast-low-light-image-enhancement)  
+   标签：评分：7.0/10、query:endo-dgs
+   evidence：使用2D高斯溅射进行低光图像增强中的自适应光照场建模
+3. [LIT-GS: LiDAR-Inertial-Thermal Gaussian Splatting for Illumination-Robust Mapping](/202606/20/2606.20424v1-lit-gs-lidar-inertial-thermal-gaussian-splatting-for-illumination-robust-mapping)  
+   标签：评分：6.0/10、query:gs-slam
+   evidence：在高斯泼溅映射框架中联合优化相机位姿
+4. [VisDom: Sparse Novel View Synthesis with Visible Domain Constraint](/202606/20/2606.20531v1-visdom-sparse-novel-view-synthesis-with-visible-domain-constraint)  
+   标签：评分：6.0/10、query:gs-slam
+   evidence：为3D高斯泼溅新视角合成引入多视图可见性约束
 
 
 <div class="dpr-home-promo-card">
