@@ -1,0 +1,146 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-21T20:54:14.346231+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 1,
+    "deep_cap": 7,
+    "deep_selected": 1,
+    "quick_candidates": 2,
+    "quick_skim_target": 12,
+    "quick_selected": 2
+  },
+  "deep_dive": [
+    {
+      "id": "2606.17379v1",
+      "source": "arxiv",
+      "title": "MeiBRD: Meta-Learning Intraoperative Biomechanical Residual Deformation",
+      "abstract": "Accurate intraoperative liver registration is challenging due to substantial soft-tissue deformation yet sparse intraoperative measurements. Biomechanical models regularize this ill-posedness with prior knowledge but exhibit persistent prediction bias due to simplifying assumptions, while data-driven learning solutions struggle with data efficiency, generalization, and physical plausibility. We propose a hybrid registration framework that adapts a biomechanical prior using sparse intraoperative correspondences. Rather than learning a full deformation field, we learn a residual deformation function that corrects linear biomechanical predictions, modeled as a graph neural diffusion function with geometry-aware attention over the 3D liver mesh. To enable long-range information transfer of sparse observations, we take a novel perspective of sparse intraoperative measurements as \\textit{context} samples where input-output pairs of the residual deformation function are fully observed, casting the problem into learning-to-learn this residual function from intraoperative context samples with feedforward meta-learners. Experiments on a deformable liver phantom dataset demonstrate improved registration accuracy and generalization compared to rigid, biomechanical, and data-driven baselines, particularly for out-of-distribution geometries and deformations.",
+      "authors": [
+        "Casey Meisenzahl",
+        "Jon Heiselman",
+        "Michael Holtz",
+        "Yubo Ye",
+        "Michael Miga",
+        "Linwei Wang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI",
+        "eess.IV"
+      ],
+      "published": "2026-06-16T00:26:26+00:00",
+      "link": "https://arxiv.org/pdf/2606.17379v1",
+      "tags": [
+        "query:endo-dgs"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "enables intraoperative liver registration for surgical navigation using 3D scene representations",
+      "llm_evidence_cn": "利用3D场景表示实现术中肝脏配准以支持手术导航",
+      "llm_evidence": "利用3D场景表示实现术中肝脏配准以支持手术导航",
+      "canonical_evidence": "利用3D场景表示实现术中肝脏配准以支持手术导航",
+      "llm_tldr_en": "MeiBRD proposes a hybrid registration that meta-learns residual deformation to correct biomechanical model predictions, improving intraoperative liver registration with sparse data.",
+      "llm_tldr_cn": "MeiBRD提出了一种混合配准框架，通过元学习残余形变函数来校正线性生物力学预测，在稀疏术中测量下实现精确的肝脏配准。该方法使用图神经网络和几何感知注意力处理3D网格，提高了数据效率和泛化能力。",
+      "llm_tldr": "MeiBRD提出了一种混合配准框架，通过元学习残余形变函数来校正线性生物力学预测，在稀疏术中测量下实现精确的肝脏配准。该方法使用图神经网络和几何感知注意力处理3D网格，提高了数据效率和泛化能力。",
+      "llm_tags": [
+        "query:endo-dgs"
+      ],
+      "matched_query_tag": "query:endo-dgs",
+      "matched_query_text": "surgical navigation using 3D scene representations",
+      "matched_requirement_id": "req-13",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2606.16159v1",
+      "source": "arxiv",
+      "title": "Continuous Splatting meets Retinex: Continuous Gaussian Splatting and Implicit Reflectance Modeling for Low-Light Image Enhancement",
+      "abstract": "Low-light image enhancement aims to recover clear images from low-illumination observations and is crucial for high-level downstream vision tasks. However, existing methods frequently encounter color distortion and structural artifacts when balancing global smooth illumination adjustment and local high-frequency detail recovery. To address these issues, we propose CGS-Retinex as the first low-light image enhancement framework based on explicit-implicit joint modeling. Our framework deeply integrates continuous Gaussian splatting with Retinex theory. Specifically, we represent the image grid as a continuous parameter field and propose a continuous Gaussian renderer to estimate the spatially continuous global illumination distribution. This approach fundamentally eliminates grid artifacts caused by discrete Gaussian sampling. Furthermore, we introduce an implicit neural representation to model reflectance independently. We leverage shallow high-frequency features to guide the network in accurately reconstructing degraded texture details. Within the Retinex framework, we incorporate physics-inspired brightness consistency constraints and illumination smoothness regularization to enable explicit illumination and implicit reflectance to maintain proper exposure and achieve high-fidelity recovery of high-frequency structures and colors. Extensive experiments demonstrate that CGS-Retinex significantly suppresses dark-region noise and overexposure while achieving exceptional high-frequency structural fidelity and color restoration by precisely decoupling illumination and texture. This work establishes a novel continuous physical representation paradigm for low-light image enhancement.",
+      "authors": [
+        "Yuhan Chen",
+        "Yicui Shi",
+        "Guofa Li",
+        "Wenxuan Yu",
+        "Ying Fang",
+        "Guangrui Bai",
+        "Wenbo Chu",
+        "Keqiang Li"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-15T03:19:28+00:00",
+      "link": "https://arxiv.org/pdf/2606.16159v1",
+      "tags": [
+        "query:endo-dgs"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "proposes continuous Gaussian splatting for low-light enhancement, method transferable to endoscopy",
+      "llm_evidence_cn": "提出连续高斯泼溅用于低光增强，方法可迁移至内窥镜",
+      "llm_evidence": "提出连续高斯泼溅用于低光增强，方法可迁移至内窥镜",
+      "canonical_evidence": "提出连续高斯泼溅用于低光增强，方法可迁移至内窥镜",
+      "llm_tldr_en": "CGS-Retinex combines continuous Gaussian splatting with Retinex theory for low-light enhancement, which could be adapted for endoscopic image enhancement.",
+      "llm_tldr_cn": "CGS-Retinex首次将连续高斯泼溅与Retinex理论结合，通过显式-隐式联合建模实现低光图像增强。该方法将图像网格表示为连续参数场，用连续高斯渲染器估计空间一致性光照，有效抑制色彩失真和结构伪影。虽然未直接针对内窥镜场景，但其高斯泼溅增强技术可为内窥镜图像质量提升提供新的技术路线。",
+      "llm_tldr": "CGS-Retinex首次将连续高斯泼溅与Retinex理论结合，通过显式-隐式联合建模实现低光图像增强。该方法将图像网格表示为连续参数场，用连续高斯渲染器估计空间一致性光照，有效抑制色彩失真和结构伪影。虽然未直接针对内窥镜场景，但其高斯泼溅增强技术可为内窥镜图像质量提升提供新的技术路线。",
+      "llm_tags": [
+        "query:endo-dgs"
+      ],
+      "matched_query_tag": "query:endo-dgs",
+      "matched_query_text": "endoscopic image enhancement with Gaussian splatting",
+      "matched_requirement_id": "req-11",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.18588v1",
+      "source": "arxiv",
+      "title": "Splaxel: Efficient Distributed Training of 3D Gaussian Splatting for Large-scale Scene Reconstruction via Pixel-level Communication",
+      "abstract": "3D Gaussian Splatting (3DGS) enables high-fidelity and real-time 3D scene reconstruction, but scaling training to large-scale scenes requires optimizing hundreds of millions of Gaussians across multiple GPUs. Existing distributed approaches either partition scenes into isolated regions, causing global inconsistency, or rely on global Gaussian-level exchanges, which lead to substantial growth in inter-GPU communication and quickly dominate iteration time.   We propose Splaxel, a communication-efficient distributed 3DGS training framework based on pixel-level local rendering and global composition. Instead of synchronizing Gaussians, each GPU renders its local subset and exchanges only partial pixel values, maintaining mathematical consistency while keeping communication cost stable as the scene size increases. Splaxel further reduces pixel-level redundancy through geometric and transmittance visibility prediction and improves GPU utilization via conflict-free camera-view consolidation. Evaluated on large-scale datasets with up to 120M Gaussians, Splaxel achieves up to 7.6$\\times$ speedup over the state-of-the-art distributed 3DGS framework while preserving high reconstruction quality.",
+      "authors": [
+        "Wenqi Jia",
+        "Zhewen Hu",
+        "Ying Huang",
+        "Yu Gong",
+        "Stavros Kalafatis",
+        "Yuke Wang",
+        "Wei Niu",
+        "Chengming Zhang",
+        "Ang Li",
+        "Sheng Di",
+        "Yuede Ji",
+        "Bo Fang",
+        "Miao Yin"
+      ],
+      "primary_category": "cs.DC",
+      "categories": [
+        "cs.DC",
+        "cs.CV"
+      ],
+      "published": "2026-06-17T01:27:41+00:00",
+      "link": "https://arxiv.org/pdf/2606.18588v1",
+      "tags": [
+        "query:endo-dgs"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "efficient distributed training of 3D Gaussian Splatting for large-scale scene representation",
+      "llm_evidence_cn": "高效分布式3D高斯泼溅训练以实现大规模场景表示",
+      "llm_evidence": "高效分布式3D高斯泼溅训练以实现大规模场景表示",
+      "canonical_evidence": "高效分布式3D高斯泼溅训练以实现大规模场景表示",
+      "llm_tldr_en": "Splaxel introduces a pixel-level communication scheme for distributed 3DGS training, reducing inter-GPU overhead while maintaining global consistency in large-scale reconstruction.",
+      "llm_tldr_cn": "Splaxel提出了一种基于像素级局部渲染和全局合成的分布式3D高斯泼溅训练框架。通过仅交换部分像素而非整个高斯，大幅降低了通信开销，从而实现大规模场景的高效重建并保持全局一致性。",
+      "llm_tldr": "Splaxel提出了一种基于像素级局部渲染和全局合成的分布式3D高斯泼溅训练框架。通过仅交换部分像素而非整个高斯，大幅降低了通信开销，从而实现大规模场景的高效重建并保持全局一致性。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}

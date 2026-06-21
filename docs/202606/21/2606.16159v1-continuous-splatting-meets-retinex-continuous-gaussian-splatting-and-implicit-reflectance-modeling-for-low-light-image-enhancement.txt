@@ -1,0 +1,475 @@
+Title: Continuous Splatting meets Retinex: Continuous Gaussian Splatting and Implicit Reflectance Modeling for Low-Light Image Enhancement
+
+URL Source: https://arxiv.org/pdf/2606.16159v1
+
+Published Time: Tue, 16 Jun 2026 02:05:49 GMT
+
+Number of Pages: 13
+
+Markdown Content:
+> IEEE TRANSACTIONS ON IMAGE PROCESSING, VOL. XX, NO. X, 2026 1
+
+# Continuous Splatting meets Retinex: Continuous Gaussian Splatting and Implicit Reflectance Modeling for Low-Light Image Enhancement 
+
+Yuhan Chen, Yicui Shi, Guofa Li*, Wenxuan Yu, Ying Fang, Guangrui Bai, Wenbo Chu, and Keqiang Li 
+
+Abstract —Low-light image enhancement aims to recover clear images from low-illumination observations and is crucial for high-level downstream vision tasks. However, existing methods frequently encounter color distortion and structural artifacts when balancing global smooth illumination adjustment and local high-frequency detail recovery. To address these issues, we propose CGS-Retinex as the first low-light image enhancement framework based on explicit-implicit joint modeling. Our framework deeply integrates continuous Gaussian splatting with Retinex theory. Specifically, we represent the image grid as a continuous parameter field and propose a contin-uous Gaussian renderer to estimate the spatially continuous global illumination distribution. This approach fundamentally eliminates grid artifacts caused by discrete Gaussian sampling. Furthermore, we introduce an implicit neural representation to model reflectance independently. We leverage shallow high-frequency features to guide the network in accurately reconstructing degraded texture details. Within the Retinex framework, we incorporate physics-inspired brightness consistency constraints and illumination smoothness reg-ularization to enable explicit illumination and implicit reflectance to maintain proper exposure and achieve high-fidelity recovery of high-frequency structures and colors. Extensive experiments demonstrate that CGS-Retinex significantly suppresses dark-region noise and overexposure while achieving exceptional high-frequency structural fidelity and color restoration by precisely decoupling illumination and texture. This work establishes a novel continuous physical representation paradigm for low-light image enhancement. 
+
+Index Terms —Low-Light Image Enhancement, Gaussian Splat-ting, Implicit Reflectance Modeling. 
+
+I. I NTRODUCTION 
+
+# LOW-LIGHT image enhancement (LLIE) is a fundamental and challenging task in computer vision, aiming to restore visual quality from degraded observations with low illumination, low contrast, and complex noise. This task is crucial for down-stream applications such as autonomous driving and all-weather surveillance [1]–[3]. Over the past decades, LLIE techniques have shifted from traditional histogram equalization and Retinex-based models [4], [5] toward the deep learning paradigm. The widespread application of convolutional neural networks (CNNs) [6]–[12], Transformers, and recently emerging diffusion models [13]–[15] has significantly advanced the performance of low-light image enhancement. Specifically, physics-inspired Retinex deep decoupling architectures [16]–[21] provide strong physical                          
+
+> This work was supported by the National Natural Science Foundation of China under Grant No. 52272421. (Corresponding author: Guofa Li). Yuhan Chen, Yicui Shi, Guofa Li, Wenxuan Yu, and Ying Fang are with the College of Mechanical and Vehicle Engineering, Chongqing University, Chongqing 400044, China(e-mail: 20240701028@stu.cqu.edu.cn; yicuishi@cqu.edu.cn; liguofa@cqu.edu.cn; wenxuanyu@cqu.edu.cn; yingfang@stu.cqu.edu.cn). Guangrui Bai is with the School of Engineering Science, University of Science and Technology of China, Hefei 230026, China(e-mail: mubai@mail.ustc.edu). Wenbo Chu is with the National Innovation Center of Intelligent and Connected Vehicles, Beijing 100089, China(e-mail: chuwenbo@wicv.cn). Keqiang Li is with the School of Vehicle and Mobility, Tsinghua University, Beijing 100084, China(e-mail: likq@tsinghua.edu.cn).
+
+interpretability by decomposing an image into illumination and reflectance maps. Despite their significant progress, deep Retinex methods often struggle to balance smooth global illumination adjustment and lo-cal high-frequency detail recovery in complex real-world scenes. Furthermore, traditional pixel-level discrete modeling approaches are highly prone to producing color distortion, local overexposure, and severe structural artifacts under drastic brightness variations [9], [22]. To overcome the limitations of discrete representations, implicit neural representations (INRs) [23] have been introduced to the LLIE task [24], [25], capturing the intrinsic image structure through coordinate-driven continuous mappings. However, INRs suffer from significant spectral bias when modeling highly nonlin-ear high-frequency textures and lack explicit geometric control, making them inadequate for recovering severely degraded low-light details. Concurrently, explicit radiance field modeling techniques rep-resented by 3D Gaussian Splatting (3DGS) [26] have revolution-ized 3D reconstruction and rendering [27]–[30]. This paradigm rapidly expanded to the 2D image domain and evolved into explicit image representation techniques including 2DGS [31] and GaussianImage [32]–[34]. By modeling images as numerous dis-crete Gaussian primitives, these methods demonstrate exceptional representation efficiency in image compression, super-resolution [35], and dataset distillation [36]. Recent studies have explored Gaussian splatting for low-light image enhancement [37], [38]. However, most existing 2DGS schemes rely on a discrete splatting mechanism that generates pixels by querying nearest-neighbor primitives or aggregating discrete points. Such discreteness intro-duces discontinuous grid artifacts into the continuous illumination field, severely compromising the physical prior of illumination smoothness essential to Retinex theory. To resolve the aforementioned trade-offs, we propose CGS-Retinex as the first low-light image enhancement framework based on explicit-implicit joint modeling. We deeply integrate Continuous Gaussian Splatting (CGS) with implicit neural rep-resentation (INR) within the Retinex architecture to establish a novel continuous physical representation paradigm. Specifically, we propose a continuous Gaussian renderer for the illumination field. Unlike traditional discrete primitive sampling, we model Gaussian attributes as a spatially continuous parameter field. By interpolating and blending the Gaussian parameter field over continuous coordinates, we achieve a spatially smoother and more continuous illumination estimation. This approach significantly suppresses the grid discontinuities and artifacts commonly caused by discrete splatting in dense prediction tasks. To model the reflectance, we employ a coordinate-based INR and introduce shallow high-frequency features via skip connections to guide the network in precisely reconstructing degraded edges and textures within a continuous coordinate space. The primary contributions  
+
+> arXiv:2606.16159v1 [cs.CV] 15 Jun 2026 IEEE TRANSACTIONS ON IMAGE PROCESSING, VOL. XX, NO. X, 2026 2
+
+of this work are summarized as follows: 1) We propose CGS-Retinex as the first low-light image enhancement framework based on explicit-implicit joint modeling. By deeply integrating the explicit modeling of 2D Gaussian splatting with the continuous mapping of implicit neural representations under strict Retinex physical constraints, our framework establishes a novel physical representation paradigm to decouple complex illumination adjustment from high-frequency detail recovery. 2) To overcome the grid artifacts frequently caused by the discrete sampling of 2DGS primitives in dense prediction tasks, we propose an artifact-free continuous Gaussian ren-dering mechanism. By lifting the input grid into a spatially continuous parameter field and directly performing bilinear interpolation and distance-based rendering within the con-tinuous domain, this mechanism mathematically guarantees an exceptionally smooth global illumination distribution. 3) We introduce a feature-guided implicit reflectance decod-ing network that leverages a coordinate network to in-dependently model reflectance residuals. By integrating shallow high-frequency features via skip connections, this architecture achieves precise reconstruction of degraded textures and high-fidelity color recovery within a continu-ous coordinate space, thereby significantly enhancing noise suppression in dark regions. II. R ELATED WORK 
+
+Our proposed CGS-Retinex lies at the intersection of explicit-implicit joint modeling and low-level vision tasks, with a particu-lar focus on deeply integrating continuous Gaussian splatting and implicit reflectance modeling for low-light image enhancement. Therefore, we divide the related literature into two main cate-gories. First, we review recent advancements in low-light image enhancement. Second, we summarize the overall development of Gaussian splatting and explicit image representations. 
+
+A. Low-Light Image Enhancement 
+
+Low-light image enhancement (LLIE) aims to restore high-quality visual content from degraded observations characterized by suboptimal illumination, low contrast, and complex noise [1], [2]. To address this highly ill-posed inverse problem, early studies extensively explored Retinex physical priors. For instance, LIME [4] precisely estimates the illumination map using structural priors, and ChebyLighter [5] introduces optimal Chebyshev ap-proximation for curve estimation. Subsequently, Retinex-Net [20] pioneered the deep learning paradigm of decomposing an image into illumination and reflectance layers. Recently, convolutional neural networks (CNNs) have greatly advanced this field. Various multi-scale and residual architectures, such as FMR-Net [7], the re-parameterized residual network FRR-NET [8], the enhanced fusion iterative network EFINet [9], and R2RNet [12] for mapping real low-light observations to normal-light counterparts, signif-icantly improve the signal-to-noise ratio and color fidelity of images. To alleviate the heavy reliance on expensive paired data, unsupervised and zero-shot learning have emerged as mainstream approaches. Zero-DCE [39] and its successor Zero-DCE++ [40] pioneered zero-reference deep curve estimation to transform image enhancement into iterative image-specific curve mapping. EnlightenGAN [41] achieves deep illumination adjustment by leveraging unpaired data and attention mechanisms. Similarly, ZERO-IG [19] explores zero-shot illumination-guided joint de-noising. Furthermore, Fu et al. [10] and Zhang et al. [22] achieve superior denoising and enhancement under extreme conditions without task-related data through simple paired instances and noise autoregressive paradigms. The evolution of network architectures places unprecedented emphasis on lightweight design and physical interpretability. Bai et al. [6] and Chen et al. [11] designed ultra-lightweight real-time enhancement architectures for mobile devices and embedded automotive vision systems, respectively, while Ma et al. [42] proposed a calibration network for fast, flexible, and robust enhancement. Concurrently, by deeply unfolding traditional op-timization algorithms, methods such as RUAS [16], URetinex-Net [18], and adaptive unfolding total variation networks [17] successfully integrate the rigor of physical models with the feature representation capabilities of neural networks. Recently, MambaLLIE [21] has integrated global-local state space models into implicit Retinex perception, empowering the effective modeling of long-range illumination dependencies. Con-currently, diffusion models have demonstrated significant poten-tial in addressing complex degradations by leveraging disruptive generative priors. Specifically, Retinex-driven latent diffusion models such as Lightendiffusion [13], the training-free Aglldiff [14], and zero-shot latent diffusion models [15] have successively broken through the performance ceilings of generative low-light enhancement. Despite the significant progress of discrete pixel-grid methods, their fixed spatial resolutions frequently induce jagged struc-tural artifacts in extremely underexposed regions. To overcome these limitations, implicit neural representations (INRs) [23] have gained attention for modeling images as continuous functional mappings. By taking spatial coordinates as inputs to multilayer perceptrons, INRs enable resolution-independent image repre-sentation. Yang et al. [24] first proposed an INR-based model for synergistic low-light enhancement by integrating continuous coordinate systems with local illumination features. Chobola et al. [25] developed context-based fast neural implicit represen-tations to accelerate the enhancement process. However, pure implicit networks suffer from inherent spectral bias when fitting highly nonlinear high-frequency signals. Moreover, the absence of explicit geometric constraints on local textures leads to color distortion and over-smoothing during the recovery of severely de-graded details. This bottleneck prompts us to investigate whether introducing explicit modeling while retaining the advantages of continuous coordinate mapping can overcome these shortcomings. Accordingly, we incorporate a feature-guided implicit re-flectance decoder into CGS-Retinex. By fusing coordinate-based continuous modeling with shallow high-frequency features, our network accurately reconstructs degraded edges within a con-tinuous coordinate space. This design effectively addresses the inadequacy of pure implicit representations in recovering complex reflectance textures. 
+
+B. Gaussian Splatting and Explicit Image Representation 
+
+Novel view synthesis has undergone a profound paradigm evolution since Neural Radiance Fields (NeRF) [43] pioneered IEEE TRANSACTIONS ON IMAGE PROCESSING, VOL. XX, NO. X, 2026 3
+
+continuous implicit scene modeling via volume rendering. Re-cently, 3D Gaussian Splatting (3DGS) [26] has broken the ren-dering speed bottleneck of implicit representations by leveraging explicit parametric representations based on 3D Gaussian prim-itives and fast tile-based differentiable rasterization. Serving as a cornerstone for large-scale scene reconstruction, 3DGS offers high flexibility due to its explicit nature and achieves remarkable success in dynamic urban scenes and autonomous driving. Street Gaussians [27], DrivingGaussian [29], CityGaussian [30], and Momentum-GS [44] achieve high-fidelity rendering of large-scale urban scenes by integrating dynamic tracking with spatio-temporal decoupling. GaussianPro [45] significantly improves surface reconstruction precision through a progressive propaga-tion strategy. Similarly, Speedy-splat [46] and Mvsgaussian [28] substantially enhance reconstruction generalization and efficiency by leveraging sparse primitive acceleration and multi-view stereo priors. To model physical phenomena and large-span spatio-temporal motions, Projectile Motion Gaussian (PMGS) [47], Physics-Event enhanced Gaussian (PEGS) [48], and Periodic Vibration Gaussian [49] successfully incorporate strict physical laws into the Gaussian parameter field. Moreover, leveraging the powerful generative capabilities of 2D and 3D diffusion models, GaussianDreamer [50], Drive-Dreamer4D [51], and ReconDreamer [52] enable rapid 3D Gaus-sian generation from text or single images and 4D driving scene recovery. For exploring adverse environments, initial studies have integrated 3DGS into low-light 3D reconstruction. Specif-ically, LL-Gaussian [53] and LLGS [54] pioneer joint image enhancement and novel view synthesis in low-light and pitch-dark scenarios. However, these methods rely heavily on multi-view geometric constraints, making them difficult to adapt directly for single-view enhancement. Driven by the success of 3DGS, recent studies have reduced the dimensionality of primitives to achieve pure 2D image repre-sentation. Specifically, 2DGS [31] compresses 3D ellipsoids into flattened 2D splats, thereby eliminating volumetric artifacts from 3D rendering and offering a fresh perspective on image mod-eling. Subsequently, GaussianImage [34] innovatively employs 2D Gaussians for single-image representation, establishing anovel paradigm that represents images through Gaussian splatting primitives. This framework achieves a rendering rate of 1000 FPS and competitive image compression ratios. Building upon these advancements, Instant GaussianImage [33] and LIG [32] further compress gigapixel-level images by employing adaptive primitive splitting and multi-level splatting. Currently, 2DGS-based image representations have moved beyond simple fitting and are extensively applied to various low-level and high-level vision tasks. Notable applications include arbitrary-scale super-resolution (GaussianSR [35]), sparse dataset distillation beyond pixel grids [36], and vision-language model alignment based on compressed Gaussian representations [55]. Given the superior representation efficiency of GaussianImage, recent studies have extended its application to single low-light image enhancement. Specifically, LL-GaussianImage [37] intro-duces an efficient parameterized image representation to achieve zero-shot enhancement via 2D Gaussian splatting. Meanwhile, LL-GaussianMap [38] leverages 2D Gaussian networks to gen-erate spatially variant gain maps, enabling adaptive brightness adjustment for input images. While these pioneering works val-idate the significant potential of 2D explicit Gaussians in LLIE, they still rely on the original discrete splatting mechanism, which renders pixels by aggregating discrete point primitives or querying nearest-neighbor Gaussian attributes. In Retinex decomposition, global illumination must strictly adhere to the physical prior of spatial smoothness. However, this discrete sampling and aggrega-tion mechanism inevitably introduces sharp transitions and grid artifacts into the continuous illumination field. To fundamentally resolve this contradiction, we depart from the traditional discrete splatting paradigm and propose a Con-tinuous Gaussian Splatting (CGS) renderer. Our approach lifts the input grid into a spatially continuous Gaussian parameter field, enabling bilinear interpolation and distance-based radiance rendering directly within the continuous domain. Consequently, this mechanism mathematically guarantees an infinitely smooth transition of attributes at any coordinate. This innovation com-pletely eliminates the grid noise caused by discrete primitives while achieving a seamless physical alignment between Gaussian explicit representation and Retinex illumination smoothing theory. By unifying these two components, our approach establishes a novel continuous physical representation paradigm for low-light image enhancement. III. P ROPOSED METHOD 
+
+In this section, we detail CGS-Retinex, the proposed low-light image enhancement framework based on continuous Gaussian splatting and implicit reflectance modeling. First, as illustrated in Fig. 1, we provide a comprehensive overview of the architecture and introduce our novel Retinex-based decoupling paradigm. Subsequently, we provide an in-depth analysis of the continuous Gaussian parameter prediction head, specifically comparing the design principles of the illumination and feature heads. Next, as our core theoretical innovation, we derive and construct the Continuous Splatting Renderer incorporating a learnable temper-ature coefficient. We then introduce a coordinate-driven implicit neural representation to recover high-frequency textures. Finally, we detail a systematically constructed joint loss function system inspired by physical laws. 
+
+A. Overall Architecture and Continuous Physical Retinex Decou-pling Paradigm 
+
+Classical Retinex theory assumes that an observed image 
+
+I ∈ R3×H×W can be decomposed into the pixel-wise product of an illumination map L and a reflectance map R. However, under extremely dark or non-uniform lighting conditions, traditional discrete grid assumptions often induce blocky artifacts in illumi-nation estimation, while the reflectance suffers from severe color degradation and noise amplification. To fundamentally overcome these limitations, we depart from the traditional perspective of treating images as discrete pixel matrices and establish a Retinex physical representation based on spatially continuous fields. Specifically, given a low-light input image Iin , the CGS-Retinex framework first employs a hierarchical feature encoder 
+
+E incorporating dense residual connections to extract deep con-textual features Fenc and shallow skip features Fskip containing high-frequency spatial details: 
+
+Fskip , Fenc = E(Iin ) (1) IEEE TRANSACTIONS ON IMAGE PROCESSING, VOL. XX, NO. X, 2026 4 
+
+> Fig. 1. Overall architecture of the CGS-Retinex framework. Given a low-light input image, the encoder extracts multi-level features, routing them into parallel illumination and feature branches. Both branches leverage the Continuous Splatting Renderer to respectively generate a spatially continuous illumination distribution and a context feature field. During implicit reconstruction, the CoordinateINR integrates this feature field alongside shallow high-frequency features to accurately predict the reflectance residual. Finally, the Retinex Composition module combines the continuous illumination map and the reflectance residual, deriving the high-fidelity enhanced image under strict physical constraints.
+
+Departing from conventional end-to-end mapping mechanisms that directly regress L and R, we route the deep features Fenc 
+
+into two parallel continuous field parameterization branches: an illumination prediction head Hillu and a feature prediction head Hf eat . These heads generate continuous Gaussian primitive parameter sets, denoted as Θillu and Θf eat , to represent distinct physical properties. Subsequently, the proposed continuous Gaus-sian renderer Rcgs integrates these discrete parameter primitives to formulate continuous spatial field distributions. We formalize the generation of the illumination field Lcgs as follows: 
+
+Lcgs (p) = Rcgs (p | Θillu ), ∀p ∈ Ω (2) where p = ( x, y ) denotes an arbitrary query coordinate within the continuous space Ω. To prevent numerical instability and color bleaching caused by division operations in extremely low-illumination regions, we apply an adaptive truncation mechanism to the illumination map, physically constraining its lower bound to τ = 0 .05 :
+
+L = max( Lcgs , τ ) (3) Upon obtaining the globally smooth illumination L, we directly derive the coarse base reflectance Rbase through the classical Retinex inversion: 
+
+Rbase = Iin /L (4) Unlike existing Retinex-based methods that typically adopt Rbase 
+
+as the final output or employ complex convolutional networks to map the final reflectance R, we introduce a joint explicit-implicit modeling paradigm to refine the physical Retinex decomposition and effectively decouple noise from textures. Specifically, we model the high-frequency texture residual Rres by leveraging a coordinate-driven implicit neural representation ΦIN R condi-tioned on continuous context features Cf eat from the renderer 
+
+Rcgs and shallow skip features Fskip :
+
+Rres (p) = Φ IN R (γ(p), C f eat (p), Fskip (p)) (5) We formulate the final enhanced image Iout by linearly combining the physical reflectance base and the implicit high-frequency residual. To bound the values within the valid color space, we apply a clamping function: 
+
+Iout = Clamp (Rbase + Rres , 0, 1) (6) To verify the physical interpretability of our network, Fig. 2 illustrates the feature decoupling process and local details during forward propagation. Given a low-light input (a), the model first estimates the illumination map (b) and derives the base reflectance map (c). Observing the zoomed-in regions reveals that while (c) successfully restores the global color, it suffers from high-frequency texture blurring due to the extremely low signal-to-noise ratio. Consequently, we introduce the INR module to specifically predict the detail compensation residual (d), precisely extracting the missing structures and edges. The final fused output (e) achieves both high color fidelity and superior clarity, directly validating the effectiveness and mathematical rigor of our strategy. 
+
+B. Attribute-Decoupled Continuous Gaussian Parameter Predic-tion Heads 
+
+To map the input features into the spatial geometry and attribute parameters required for continuous Gaussian splatting, we design IEEE TRANSACTIONS ON IMAGE PROCESSING, VOL. XX, NO. X, 2026 5      
+
+> Fig. 2. Intermediate feature decoupling and local detail visualization of CGS-Retinex. (a) Original low-light input; (b) estimated spatial illumination map L;(c) base reflectance map Rbase ; (d) residual map Rres generated by ΦIN R ; (e) final enhanced output.
+
+the Gaussian Parameter Head. Within the CGS-Retinex frame-work, illumination and texture exhibit fundamentally distinct frequency characteristics. While global illumination manifests as low-frequency gradual transitions across the spatial domain, texture features contain abundant high-frequency local varia-tions. Consequently, we separately instantiate the illumination prediction head Hillu and the feature prediction head Hf eat to accommodate these distinct physical properties. For the input feature tensor Fenc ∈ RC×Hd×Wd , the prediction head first extracts base features via parameter-sharing nonlinear convolutions and subsequently partitions them into geometric and attribute branches. For each grid center (i, j ), the network esti-mates a corresponding Gaussian primitive Gi,j . First, we establish a regular base grid Xbase within the normalized image coordinate system [−1, 1] 2. The prediction network then regresses a minor spatial offset ∆i,j to derive the continuous center coordinate μi,j 
+
+of each Gaussian primitive: 
+
+μi,j = Xbase (i, j ) + 2min( H, W ) tanh(∆ i,j ) (7) The covariance matrix Σ of the Gaussian kernel determines the influence range and anisotropic shape of the Gaussian primitive. To guarantee positive definiteness and facilitate the computation of the Mahalanobis distance, we directly predict the inverse covariance matrix Σ−1. We construct this inverse matrix using the predicted anisotropic scaling factors S = [ sx, s y ]T and the rotation angle θ. To prevent numerical singularities, we map the scaling factors through a Sigmoid activation function σ:
+
+S = 2min( H, W ) σ(∆ S) + ϵ, θ = π tanh(∆ θ) (8) By multiplying the rotation matrix R(θ) and the diagonal scaling matrix D(S), we construct the geometric transformation matrix and subsequently derive the specific components a, b, and 
+
+c of the inverse covariance matrix: 
+
+Σ−1 = ( R(θ)D(S)D(S)T R(θ)T )−1 =
+
+a bb c
+
+
+
+(9) We precisely calculate these matrix elements using the follow-ing expressions: 
+
+a =
+
+ cos θsx
+
+2
+
++
+
+ sin θsy
+
+2
+
+b = − sin θ cos θ
+
+ 1
+
+s2
+
+> x
+
+− 1
+
+s2
+
+> y
+
+
+
+c =
+
+ sin θsx
+
+2
+
++
+
+ cos θsy
+
+2
+
+(10) Furthermore, the network predicts an opacity factor α ∈ (0 , 1) 
+
+and a feature attribute A for each Gaussian primitive. Within the illumination head Hillu , the attribute Aillu ∈ R1 represents the single-channel scalar illumination intensity, where we apply a Softplus activation function to guarantee strict non-negativity. Correspondingly, within the feature head Hf eat , the attribute 
+
+Af eat ∈ R64 denotes a high-dimensional semantic vector. Unlike traditional 3D Gaussian Splatting, our prediction head implicitly binds image priors to the Gaussian parameters. Consequently, this architectural design enables efficient feed-forward inference and generalizes seamlessly to input images of arbitrary resolutions. 
+
+C. Continuous Gaussian Renderer with Learnable Temperature 
+
+Originally developed for novel view synthesis, traditional 3D Gaussian Splatting relies on a point cloud rasterization process that lacks spatial smoothing constraints between adjacent pixels. To address this fundamental limitation, we propose the continuous Gaussian splatting renderer Rcgs . By integrating neighborhood multi-Gaussian blending with an adaptive temperature alpha com-position, this renderer achieves perfectly smooth interpolation at arbitrary spatial coordinates. To evaluate a given continuous query coordinate p = ( xq , y q ),we transcend the limitation of querying a single nearest-neighbor Gaussian primitive. Instead, we project p back into the feature space and deploy an unfold mechanism to extract a local K × K
+
+set of neighborhood Gaussians N (p), where we empirically set 
+
+K = 3 . For the k-th Gaussian primitive Gk = {μk, Σ−1 
+
+> k
+
+, α k, Ak}
+
+within N (p), we first formulate the spatial offset vector dk =[dx k, dy k]T between the query point p and the Gaussian center 
+
+μk:
+
+dk = p − μk (11) Subsequently, we compute the corresponding squared Maha-lanobis distance Dk:
+
+Dk = dTk Σ−1 
+
+> k
+
+dk = akdx 2 
+
+> k
+
++ 2 bkdx kdy k + ckdy 2 
+
+> k
+
+(12) To prevent gradient explosion and control the Gaussian tails, we truncate the distance term at a maximum threshold of λ =10 , formulating the exponential decay weight of the primitive as follows: 
+
+Gk(p) = exp 
+
+
+
+− 12 min( Dk, λ )
+
+
+
+(13) Traditional alpha compositing in 2D grids frequently induces depth discontinuities, yielding hard boundaries within the ren-dered illumination maps. To address this critical flaw, we signifi-cantly restructure the alpha compositing process into a normalized weighting mechanism guided by an opacity prior. Specifically, we define the raw blending weight as the product of the Gaussian decay and the opacity factor: 
+
+wraw,k (p) = Gk(p) · αk (14) To adaptively balance extreme smoothness and sharpness preservation, we incorporate a learnable temperature scalar T .IEEE TRANSACTIONS ON IMAGE PROCESSING, VOL. XX, NO. X, 2026 6
+
+We define this temperature using a Softplus function with a minimal offset to ensure strict positivity and prevent division-by-zero errors during optimization: 
+
+Tadp = ln(1 + exp( T )) + 10 −4 (15) Leveraging this adaptive temperature, we perform Softmax normalization on the blending weights within the local K × K
+
+neighborhood N (p):
+
+wnorm,k (p) = exp( wraw,k (p)/T adp )
+
+P  
+
+> j∈N (p)
+
+exp( wraw,j (p)/T adp ) (16) Finally, we compute the rendered attribute value O(p) at the query coordinate p by integrating the weighted attributes of all neighborhood primitives: 
+
+O(p) = X 
+
+> k∈N (p)
+
+wnorm,k (p) · A k (17) This mechanism fundamentally eliminates the aliasing artifacts inherent to discrete grid interpolation within high-dimensional feature spaces, empowering the network to generate exceptionally smooth and physically coherent illumination fields. As Tadp 
+
+approaches a large value, the illumination converges toward a uniform distribution. Conversely, through iterative backpropaga-tion, the network autonomously discovers the optimal Tadp to preserve essential gradient variations at structural boundaries. 
+
+D. Coordinate-Driven Implicit Neural Reflectance Representa-tion 
+
+Traditional convolutional neural networks frequently over-smooth high-frequency noise within extremely dark regions of low-light images, inevitably causing severe texture loss. To re-construct high-frequency reflectance details with nearly infinite resolution and superior fidelity, we integrate a coordinate-driven implicit neural representation network ΦIN R into the residual path. Utilizing a multi-layer perceptron (MLP) as the primary backbone, this network requires specialized coordinate encoding. To enable the shallow MLP layers to effectively perceive high-frequency spatial variations, we first map the normalized 2D spatial coordinates p into a high-dimensional frequency space using a fixed random Fourier basis B ∈ R2× Dhid  
+
+> 2
+
+:
+
+(pproj = pT B
+
+γ(p) = [sin( pproj ), cos( pproj )] (18) Subsequently, we concatenate the high-frequency coordinate encoding γ(p), the spatially smooth context features Cf eat (p)
+
+from the Gaussian renderer, and the resolution-aligned shallow skip features Fskip (p) along the channel dimension. This com-posite tensor serves as the primary input for the implicit network: 
+
+Γin = Concat (γ(p), C f eat (p), Fskip (p)) (19) Unlike conventional INRs that rely solely on coordinate map-ping and frequently lack awareness of global semantics or il-lumination distributions, our ΦIN R architecture deeply integrates 
+
+Cf eat derived from the continuous Gaussian field. This integration endows the INR with essential spatial geometry and illumination priors, effectively guiding the reconstruction of high-frequency details within a physically consistent context. To perform joint nonlinear decoding of coordinates and high-dimensional features, we reconstruct the texture residual using a four-layer cascaded 1 × 1 convolutional network. To maintain a concise mathematical representation, we denote the mapping of the first three hidden layers as a composite nonlinear function 
+
+Fmlp . Following the hierarchical feature extraction from the input tensor Γin (p), the final layer employs a tanh activation to strictly bound the residual output within the interval [−1, 1] .The complete decoding mapping is formulated as follows: The composite mapping Fmlp (·) = ( ϕ3 ◦ ϕ2 ◦ ϕ1)( ·) encapsulates the nonlinear refinement process of deep features. To ensure the statistical stability of the spatial features, we construct the initial hidden layer ϕ1 using a convolution operation coupled with Group Normalization and GELU activation: 
+
+ϕ1(X) = GELU (GroupNorm (W1 ∗ X + b1)) 
+
+Subsequent refinement layers ϕ2 and ϕ3 bypass normalization, instead adopting a standard joint operator composed of a 1 × 1
+
+convolution and a GELU activation function. Notably, we intentionally avoid downscaling the magnitude of the residual Rres in the final prediction. This architectural choice liberates the INR from the conservative constraints of prior meth-ods, empowering it to autonomously govern the compensation amplitude for both color saturation and high-frequency textures. Consequently, this unconstrained strategy profoundly unlocks the network’s capability to reconstruct high-purity colors and razor-sharp edges within severely degraded dark areas. 
+
+E. Joint Loss Function System Under Physical Constraints 
+
+To simultaneously optimize the spatial smoothness of the con-tinuous Gaussian rendering, the physical validity of the Retinex decoupling, and the perceptual quality of the final image, we formulate a comprehensive joint loss function encompassing six distinct sub-terms. This holistic system strictly governs the network behavior throughout the optimization process. For the subsequent mathematical definitions, let Igt , Iout , and L denote the ground-truth clear image, the final predicted output, and the estimated illumination map, respectively. First, we employ the Charbonnier loss as a fundamental pixel-level constraint to significantly elevate the Peak Signal-to-Noise Ratio (PSNR) and compel the network to focus on challenging high-frequency details. Compared to the standard L2 penalty, the Charbonnier loss effectively mitigates edge blurring: 
+
+Lrec = 1
+
+N
+
+> N
+
+X
+
+> i=1
+
+q
+
+(Iout (i) − Igt (i)) 2 + ϵ2 (20) where ϵ = 10 −3 represents a minimal regularization constant introduced to prevent gradient singularities at the origin. To preserve the fidelity of spatial structures and local contrast, we incorporate a structural similarity (SSIM) loss constraint: 
+
+Lssim = 1 − SSIM (Iout , I gt )= 1 − 2μxμy + C1
+
+μ2 
+
+> x
+
++ μ2 
+
+> y
+
++ C1
+
+· 2σxy + C2
+
+σ2 
+
+> x
+
++ σ2 
+
+> y
+
++ C2
+
+(21) Furthermore, we introduce a perceptual feature loss to align the enhanced results with the human visual system’s perception. By leveraging a pre-trained VGG-16 network, this loss computes the mean squared error between deep feature representations. To ensure consistent feature scales, we perform instance normaliza-tion on the images using a predefined mean μvgg and variance 
+
+σvgg prior to feature extraction: 
+
+
+
+Inorm = I − μvgg 
+
+σvgg 
+
+Lvgg = 1
+
+Mj
+
+∥Φvgg (Iout )j − Φvgg (Igt )j ∥22
+
+(22) IEEE TRANSACTIONS ON IMAGE PROCESSING, VOL. XX, NO. X, 2026 7
+
+According to the physical priors of the Retinex theory, natural illumination distributions inherently exhibit piecewise smooth-ness. To suppress potential local abruptions and high-frequency noise interference, we impose an anisotropic Total Variation (TV) loss on the illumination map L generated by the continuous Gaussian prediction head: 
+
+
+
+∇xL = L:,:,1: ,: − L :,:,:−1,:
+
+∇y L = L:,:,:,1: − L :,:,:,:−1
+
+Ltv = 2 Ch(∇xL)2 + 2 Cw(∇y L)2
+
+(23) where Cw and Ch represent the spatial normalization coefficients. Furthermore, to counteract the severe color shifts that frequently occur during extreme low-light enhancement, we introduce a color consistency loss. By calculating the cosine similarity across pixel channels, this constraint explicitly minimizes the angular distance between the predicted image and the ground truth within the color vector space: 
+
+Lcolor = 1 − 1
+
+N
+
+X
+
+> i
+
+⟨Iout (i), I gt (i)⟩∥Iout (i)∥2 · ∥ Igt (i)∥2
+
+(24) Conventional approaches typically enforce a strict equivalence between the element-wise product of the reconstructed image Iout 
+
+and the illumination map L against the original input image Iin .However, in real-world physical processes, the camera Image Sig-nal Processing (ISP) pipeline applies complex color compression. Enforcing the exact constraint Iout ⊙ L ≈ Iin across all three RGB channels severely impedes the capacity of the network to autonomously restore high-purity and highly saturated colors. To circumvent this limitation, we innovatively propose a physical loss mechanism that imposes the reconstruction consistency constraint exclusively within the grayscale domain. Let Fgray (·) denote the channel-wise mean pooling operation. We mathematically formulate the grayscale intensities Yin and Yrec as follows: 
+
+
+
+Yin = Fgray (Iin ) = 13
+
+X
+
+> c∈{ R,G,B }
+
+Iin,c 
+
+Yrec = Fgray (Iout ⊙ L ) = 13
+
+X
+
+> c∈{ R,G,B }
+
+Iout,c · L 
+
+(25) Employing the Charbonnier penalty, we relax the rigid con-straints on color restoration while strictly maintaining the brightness-based Retinex degradation consistency: 
+
+Lphy = p(Yrec − Yin )2 + ϵ2 (26) Consequently, we formulate the comprehensive optimization objective as a weighted sum of the aforementioned terms: 
+
+Ltotal = λ1Lrec + λ2Lssim + λ3Lvgg 
+
++ λ4Ltv + λ5Lphy + λ6Lcolor 
+
+(27) Based on extensive empirical validation, we assign the following hyperparameter weights: λ1 = 1.0, λ2 = 0.5, λ3 = 0.05 ,
+
+λ4 = 0 .05 , λ5 = 0 .05 , and λ6 = 0 .05 . Synergizing with the dual advantages of continuous Gaussian splatting and implicit residual modeling, this meticulously designed loss system empowers the network to achieve exceptional photometric and structural con-sistency at a minimal computational cost. IV. E XPERIMENTS 
+
+A. Experimental Setup 
+
+Datasets. To evaluate the effectiveness and generalization capabilities of our CGS-Retinex model, we conduct extensive experiments on two benchmark datasets: the LOL dataset [20] and the LSRW dataset [12]. We rigorously partition the data, allocating the samples into training and testing sets at a strict 9:1 ratio. As the pioneering publicly available paired dataset specifi-cally constructed for supervised low-light image enhancement, the LOL dataset comprises synthetically generated low-light images alongside real-world normal-light observations. Furthermore, the LSRW dataset serves as the first large-scale paired image bench-mark captured entirely in real-world scenarios, consisting of two independent subsets captured using a Huawei P40 Pro smartphone and a Nikon D7500 DSLR camera, respectively. 
+
+Implementation Details: We implement the complete archi-tecture of our model using the PyTorch deep learning library and execute all training and evaluation procedures on a sin-gle NVIDIA RTX 3090 GPU. During the training phase, we uniformly crop the input images into patches of size H × W .To significantly enhance spatial translation invariance and scale robustness, we apply comprehensive data augmentation strategies, including random horizontal and vertical flips with a probability of 0.5. Furthermore, we incorporate a dynamic multi-scale train-ing mechanism. With a 30% probability, this mechanism rescales the target images via bilinear interpolation within a scaling factor interval of [Smin , S max ]. Consequently, this dynamic scaling explicitly forces the continuous Gaussian renderer to seamlessly adapt to multi-resolution grids. To optimize all network parameters, we employ the AdamW optimizer with a weight decay of 1e-4 and initialize the base learning rate at 2e-4. For the learning rate decay strategy, we apply a cosine annealing scheduler with warm restarts, configuring the initial period to T0 = 50 and the period multiplier to Tmult =2. Furthermore, to stabilize the optimization of the continuous Gaussian feature space and explicitly prevent gradient explosion, we enforce a gradient clipping threshold of 0.5. We train the entire model end-to-end for 1000 epochs utilizing a batch size of 10. Guided by the multi-objective joint loss constraints, the com-prehensive optimization objective encompasses the reconstruction loss, structural similarity loss, perceptual penalty, Total Varia-tion (TV) illumination smoothing regularization, physics-inspired grayscale consistency constraint, and color similarity loss. Based on extensive empirical validation, we precisely configure the corresponding weight distribution defined in Equation (28) as 
+
+λ1 = 1.0, λ2 = 0.5, λ3 = 0.05 , λ4 = 0.05 , λ5 = 0.05 ,and λ6 = 0 .05 . This meticulously calibrated weight architecture empowers the network to autonomously recover highly saturated colors while strictly preserving the physical consistency between the explicitly modeled illumination distribution and the implicitly represented high-frequency reflectance. 
+
+Evaluation Metrics: To comprehensively assess the image restoration and enhancement performance, we employ seven widely recognized evaluation metrics, comprising three full-reference and four no-reference indicators. For datasets provid-ing paired ground-truth (GT) references, we utilize three full-reference metrics: Peak Signal-to-Noise Ratio (PSNR), Struc-tural Similarity (SSIM), and Learned Perceptual Image Patch Similarity (LPIPS). To evaluate real-world applications lacking ground-truth references, particularly for unpaired data and real-world applications, we incorporate four specialized no-reference metrics: Natural Image Quality Evaluator (NIQE), Lightness Order Error (LOE), Discrete Entropy (DE), and Enhancement IEEE TRANSACTIONS ON IMAGE PROCESSING, VOL. XX, NO. X, 2026 8  
+
+> Fig. 3. Visual comparison of CGS-Retinex and state-of-the-art methods on the LOL dataset.
+> Fig. 4. Visual comparison of CGS-Retinex and state-of-the-art methods on the LSRW-HUAWEI dataset.
+
+Measure of Evaluation (EME). 
+
+B. Comparison with State-of-the-Art Methods 
+
+To rigorously validate the superiority of our CGS Retinex ar-chitecture, we conduct extensive comparative evaluations against recent state-of-the-art low light image enhancement methods [4], [5], [7]–[10], [16]–[19], [22], [39]–[42]. Visual comparison results on the LOL dataset are presented in Fig. 3. In terms of global illumination restoration relative to the ground truth (GT), the highest fidelity is achieved by ChebyLighter, FMR-NET, ZeroIG, and CGS-Retinex. However, the enhanced results of NoiSER are degraded by excessive illu-mination. Conversely, severe illumination deficiency is observed in several algorithms such as RUAS, EFI-NET, LIME, and ZeroDCE. In terms of color restoration, CGS-Retinex achieves competitive performance without exhibiting any color deviation. Conversely, algorithms including FMR-NET, UTV-NET, and En-lightenGAN suffer from global color shifts to varying degrees. Meanwhile, NoiSER and ZeroIG are affected by certain levels of over-saturation. Regarding the overall clarity, the enhanced results of EnlightenGAN, NoiSER, and PairLIE are degraded by visible haziness and blurred details. In contrast, CGS-Retinex demonstrates superior visual quality, which is characterized by realistic colors, appropriate illumination, and sharp structural representations. Visual comparison results on the LSRW-HUAWEI dataset are illustrated in Fig. 4. In terms of illumination restoration and color fidelity, several algorithms such as RUAS, LIME, ZeroDCE, and UTV-NET suffer from suboptimal brightness. Although NoiZER, ZeroIG, ChebyLighter, and URetinex-NET effectively enhance the illumination, these methods are affected by noticeable color deviations. Conversely, CGS-Retinex maintains appropriate brightness while achieving color restoration highly consistent with the ground truth (GT). Regarding the overall clarity, the enhanced results of EnlightenGAN, ZeroDCE, RUAS, and FRR-NET are degraded by varying degrees of haziness and blurring artifacts. In IEEE TRANSACTIONS ON IMAGE PROCESSING, VOL. XX, NO. X, 2026 9
+
+Fig. 5. Visual comparison of CGS-Retinex and state-of-the-art methods on the LSRW-NIKON dataset. 
+
+Fig. 6. Comparison of detailed features between CGS-Retinex and state-of-the-art methods on the LOL dataset. Magnified views of the regions highlighted by red and green boxes are provided for each method. TABLE I QUANTITATIVE COMPARISON ON THE LOL DATASET . T HE BEST , SECOND -BEST , AND THIRD -BEST RESULTS FOR EACH METRIC ARE HIGHLIGHTED IN ORANGE , 
+
+> LIGHT ORANGE
+
+, AND PALE ORANGE RESPECTIVELY . O THER VALUES ARE HIGHLIGHTED IN LIGHTEST ORANGE .Method SSIM ↑ PSNR ↑ LPIPS ↓ NIQE ↓ LOE ↓ DE ↑ EME ↑ Params (KB) ↓ FLOPs (G) ↓
+
+ZeroDCE++ [40] 0.63 15.65 0.31 5.71 27.76 1.90 18.56 10.6 0.33 ZeroDCE [39] 0.63 15.20 0.30 5.66 28.73 1.74 18.54 79.4 5.21 SCI [42] 0.59 14.70 0.31 5.87 9.33 1.86 19.27 0.3 0.0619 RUAS [16] 0.50 12.82 0.34 5.70 0.51 1.42 20.06 1.4 0.2813 EnlightenGAN [41] 0.72 16.74 0.29 4.21 79.08 1.54 3.00 8636 61.01 FMR-NET [7] 0.80 19.04 0.24 4.57 26.36 2.18 3.07 196.8 102.8 LIME [4] 0.52 14.35 0.39 5.50 103.64 1.76 21.19 N/A N/A FRR-NET [8] 0.76 18.18 0.27 5.73 23.52 1.84 3.81 12.21 0.216 UTV-NET [17] 0.75 16.36 0.20 4.31 29.06 1.94 4.76 7745 58.29 ChebyLighter [5] 0.75 18.74 0.20 4.30 31.72 2.06 3.76 73 17.25 EFI-NET [9] 0.67 14.27 0.29 4.33 28.74 1.59 5.40 129.2 9.38 PairLIE [10] 0.76 18.15 0.23 4.05 54.92 1.81 3.84 34.18 22.35 NoiSER [22] 0.70 17.36 0.37 4.34 51.61 2.17 2.47 1.763 8.62 URetinex-NET [18] 0.83 19.93 0.23 4.04 28.76 2.02 3.54 838.3 136.01 ZeroIG [19] 0.51 17.23 0.15 6.34 14.32 2.41 19.52 123.63 118.73 
+
+CGS-Retinex 0.92 22.41 0.11 3.86 5.64 3.07 22.04 1280 62.73 IEEE TRANSACTIONS ON IMAGE PROCESSING, VOL. XX, NO. X, 2026 10                                                                                                                                                                                                                                                                                                                           
+
+> TABLE II QUANTITATIVE COMPARISON ON THE LSRW-HUAWEI DATASET . C OLORS AS DEFINED IN TABLE I. Method SSIM ↑PSNR ↑LPIPS ↓NIQE ↓LOE ↓DE ↑EME ↑Params (KB) ↓FLOPs (G) ↓
+> ZeroDCE++ [40] 0.51 15.14 0.38 3.18 19.29 2.02 18.54 10.6 0.33 ZeroDCE [39] 0.51 14.79 0.36 3.16 20.51 1.94 18.42 79.4 5.21 SCI [42] 0.45 13.69 0.39 3.42 4.86 1.88 19.98 0.3 0.0619 RUAS [16] 0.34 11.46 0.45 3.70 0.85 1.38 20.96 1.4 0.2813 EnlightenGAN [41] 0.58 17.10 0.34 3.24 58.86 1.54 2.33 8636 61.01 FMR-NET [7] 0.64 19.66 0.33 3.86 21.30 2.34 3.23 196.8 102.8 LIME [4] 0.37 13.71 0.49 3.96 109.63 1.95 22.01 N/A N/A FRR-NET [8] 0.58 18.76 0.36 3.60 15.17 2.13 4.45 12.21 0.216 UTV-NET [17] 0.62 17.86 0.25 3.12 19.42 2.29 5.00 7745 58.29 ChebyLighter [5] 0.61 18.74 0.30 2.77 20.97 2.25 4.16 73 17.25 EFI-NET [9] 0.51 13.52 0.37 3.47 22.54 1.69 5.92 129.2 9.38 PairLIE [10] 0.61 18.09 0.32 3.53 47.1 1.97 3.76 34.18 22.35 NoiSER [22] 0.58 16.31 0.49 4.18 37.05 2.03 1.90 1.763 8.62 URetinex-NET [18] 0.62 19.91 0.28 3.07 20.92 2.30 4.66 838.3 136.01 ZeroIG [19] 0.48 17.29 0.40 3.51 9.42 2.45 19.17 123.63 118.73
+> CGS-Retinex 0.87 20.19 0.27 3.06 4.30 2.85 22.71 1280 62.73 TABLE III QUANTITATIVE COMPARISON ON THE LSRW-NIKON DATASET . C OLORS AS DEFINED IN TABLE I. Method SSIM ↑PSNR ↑LPIPS ↓NIQE ↓LOE ↓DE ↑EME ↑Params (KB) ↓FLOPs (G) ↓
+> ZeroDCE++ [40] 0.47 16.16 0.39 3.78 38.61 1.59 13.91 10.6 0.33 ZeroDCE [39] 0.45 15.55 0.38 3.78 32.02 1.43 13.88 79.4 5.21 SCI [42] 0.41 15.82 0.39 3.74 12.81 1.61 15.2 0.3 0.0619 RUAS [16] 0.38 13.02 0.42 3.97 1.62 1.21 16.01 1.4 0.2813 EnlightenGAN [41] 0.46 15.30 0.40 3.54 79.60 0.94 2.55 8636 61.01 FMR-NET [7] 0.75 18.47 0.35 3.91 20.71 1.70 3.31 196.8 102.8 LIME [4] 0.30 14.51 0.51 4.29 90.6 1.55 17.04 N/A N/A FRR-NET [8] 0.52 17.34 0.36 4.45 22.46 1.51 3.51 12.21 0.216 UTV-NET [17] 0.53 15.94 0.32 4.00 21.11 1.55 5.12 7745 58.29 ChebyLighter [5] 0.46 15.68 0.37 3.12 60.95 1.75 4.48 73 17.25 EFI-NET [9] 0.47 15.25 0.36 3.69 25.16 1.43 5.63 129.2 9.38 PairLIE [10] 0.69 18.33 0.36 3.07 44.56 1.49 3.73 34.18 22.35 NoiSER [22] 0.50 15.89 0.53 3.90 35.06 1.26 1.91 1.763 8.62 URetinex-NET [18] 0.70 17.95 0.34 2.98 21.99 1.67 3.95 838.3 136.01 ZeroIG [19] 0.35 15.74 0.46 4.11 19.84 1.86 14.65 123.63 118.73
+> CGS-Retinex 0.82 19.97 0.34 3.04 11.08 1.91 16.52 1280 62.73
+
+contrast, CGS-Retinex demonstrates superior performance char-acterized by sharp structural representations and visually pleasing outcomes. Visual comparison results on the LSRW-NIKON dataset are illustrated in Fig. 5. In terms of global illumination enhancement, the most competitive performance is achieved by ChebyLighter, URetinex-NET, ZeroIG, and CGS-Retinex. However, the en-hanced results of ChebyLighter are affected by visible haziness and blurring artifacts. Meanwhile, ZeroIG is degraded by exces-sive contrast and noticeable color deviations. In contrast, CGS-Retinex demonstrates superior performance, which is character-ized by moderate contrast, appropriate illumination level, and high color fidelity consistent with the ground truth (GT). To further evaluate the superiority of CGS-Retinex in detail restoration, visual comparisons on complex scenes from the LOL dataset are presented in Fig. 6. The upper part of the figure focuses on the restoration of intricate patterns, while the lower part is utilized to verify image sharpness and denoising efficacy. In the upper examples, the results produced by CGS-Retinex achieve the highest consistency with the ground truth (GT) regarding illumination, color fidelity, and texture details. In terms of the lower comparisons, the proposed method demonstrates the most effective noise suppression among all evaluated algorithms, despite a minor discrepancy in saturation compared to the GT. In summary, CGS-Retinex achieves state-of-the-art (SOTA) performance in terms of subjective visual metrics, including illumination, saturation, detail restoration, and clarity. Benefiting from the precise decoupling of illumination and texture, CGS-Retinex also demonstrates superior efficacy in noise suppression and overexposure mitigation. Quantitative results across three benchmarks are summarized in Tables I, II, and III. Although CGS-Retinex is not optimized for parameter efficiency or FLOPs, the highest scores in PSNR and SSIM are achieved by our framework on all evaluated datasets. Regarding the remaining metrics, CGS-Retinex consistently ranks within the top two positions. Since the proposed method is established as a pioneering modeling paradigm rather than a lightweight architecture, it effectively strikes a balance between image quality and methodological innovation. Consequently, a clear competitive advantage is demonstrated by CGS-Retinex compared with existing state-of-the-art (SOTA) methods. 
+
+C. Ablation Study 
+
+To validate the effectiveness of the key components and loss functions in the proposed CGS-Retinex, extensive ablation studies are conducted on the LOL dataset. To ensure a fair comparison, all variants are trained using identical strategies and hyperparameter configurations as the full model. 
+
+Effectiveness of the Illumination-Reflectance Formation Paradigm: In conventional Retinex models, the reflectance map IEEE TRANSACTIONS ON IMAGE PROCESSING, VOL. XX, NO. X, 2026 11                                      
+
+> TABLE IV QUANTITATIVE VALIDATION OF THE ILLUMINATION -REFLECTANCE FORMATION PARADIGM .Formulation Residual Compensation SSIM ↑PSNR ↑
+> Out =F(Iin )×0.74 18.17
+> Out =Iin /L×0.82 18.47
+> Out =Iin /L+Rres ✓0.92 22.41 TABLE V QUANTITATIVE VALIDATION OF THE CONTINUOUS SPLATTING RENDERER AND ADAPTIVE TEMPERATURE .Decoder Type Setting SSIM ↑PSNR ↑
+> Bilinear+Conv N/A 0.76 18.74
+> Rcgs T= 1 .00.81 19.82
+> Rcgs T= 10 .00.79 19.70
+> Rcgs Learnable 0.92 22.41
+
+is typically estimated directly or the physical constraint S = I ·R 
+
+is assumed. A novel formulation is proposed to enable the network to perform fundamental illumination division initially. Subsequently, high-frequency textures and colors are compen-sated via residual representations. As defined in Eq. (6), this process is mathematically simplified as: 
+
+Out = Iin 
+
+L + Rres (28) Three primary variants are compared in this experiment. For the first variant, an encoder-decoder architecture is utilized to directly map low-light inputs to enhanced images without illumination-residual decoupling. In the second variant, only the illumina-tion map L is predicted and the output is strictly defined as 
+
+Out = Iin /L. The third variant corresponds to the proposed CGS-Retinex architecture. Quantitative results for these variants are summarized in Table 4. The lowest performance is yielded by the first variant due to the inability of direct mapping to address severe color attenuation under extreme low-light conditions. Although a physical model is incorporated in the second variant, severe noise amplification is observed in extremely dark regions. By decoupling the base illumination from high-frequency and color residuals, a PSNR improvement of more than 2 dB is achieved by the proposed architecture. Consequently, the superiority of this paradigm in detail preservation and noise suppression is fully validated. 
+
+Continuous Splatting Renderer and Adaptive Temperature: 
+
+As one of the core contributions, a continuous Gaussian splatting renderer Rcgs based on neighborhood blending is proposed. Furthermore, a learnable temperature coefficient is introduced to regulate the sharpness of alpha compositing. To validate the effectiveness of these designs, four specific variants are evaluated. For the first variant, Rcgs is removed and replaced by bilinear upsampling operations and convolutional layers to decode the illumination and features. In the second variant, Rcgs is retained while the learnable temperature is fixed to a standard Softmax distribution ( T = 1 .0). Consequently, excessively smooth blend-ing results are yielded by this configuration. Regarding the third variant, the temperature is rigidly fixed at T = 10 .0 to perform hard alpha compositing. Severe gradient truncation and structural artifacts are frequently induced under this setting. The fourth variant corresponds to the complete CGS-Retinex architecture. As defined in Eq. (15), a Softplus function is utilized by this full model to adaptively learn the distribution parameters.                                     
+
+> TABLE VI QUANTITATIVE VALIDATION OF THE INTERNAL STRUCTURE OF THE COORDINATE INR. Representation γ(p)Fskip (p)SSIM ↑PSNR ↑
+> CNN-based N/A ✓0.82 19.84
+> ΦIN R ×✓0.85 20.93
+> ΦIN R ✓×0.88 21.26
+> ΦIN R ✓✓0.92 22.41 TABLE VII QUANTITATIVE VALIDATION OF THE DISENTANGLEMENT OF PHYSICAL CONSISTENCY AND COLOR LOSS .
+> Lphy Lcolor SSIM ↑PSNR ↑×✓0.76 19.77 RGB Channels ✓0.78 20.94 Grayscale ×0.89 21.78 Grayscale ✓0.92 22.41
+
+Quantitative results are summarized in Table 5. Significant performance gains across all metrics are achieved by replacing conventional convolutional upsampling operations with Rcgs .Furthermore, the diverse sharpness requirements of textures under varying illumination conditions cannot be accommodated by the fixed temperature settings in the second and third variants. By utilizing the proposed learnable temperature mechanism, an optimal balance between noise suppression and edge preservation is adaptively achieved, yielding superior subjective visual quality and objective evaluations. 
+
+Internal Structure of Coordinate INR ΦIN R : To generate high-quality residuals Rres , a coordinate-driven implicit neural representation network denoted as ΦIN R is employed. High-frequency positional encodings γ(p) and skip connections Fskip 
+
+from the encoder are primarily integrated within this module. To validate the effectiveness of this structure, four specific ar-chitectural variants are evaluated. For the first variant, ΦIN R is removed and replaced by a conventional feature-based convolu-tional network to generate the residuals. In the second variant, the high-frequency Fourier basis γ(p) is omitted and raw (x, y )
+
+coordinates are directly utilized as inputs. Regarding the third variant, the concatenation of skip connections Fskip (p) from the first encoder layer is removed. The fourth variant corresponds to the complete ΦIN R configuration. Table 6 demonstrates that the complete ΦIN R configuration yields substantial improvements across all performance metrics. The removal of skip connections Fskip (p) results in the loss of spatially aligned fine-grained contextual features and induces blurred edges. Furthermore, the omission of positional encoding 
+
+γ(p) hinders the restoration of high-frequency details and leads to a significant decline in performance. 
+
+Disentanglement of Physical Consistency and Color Loss: 
+
+Within the loss function design, a physical consistency loss Lphy 
+
+is proposed to constrain grayscale illumination. Simultaneously, higher degrees of freedom for color restoration are granted to the network and hue consistency is maintained via a cosine similarity color loss Lcolor . Ablation results for these two loss components are summarized in Table 7. Consequently, the effectiveness of re-ducing physical constraints to the grayscale domain in conjunction with explicit color vector supervision is successfully validated. IEEE TRANSACTIONS ON IMAGE PROCESSING, VOL. XX, NO. X, 2026 12 
+
+D. Limitations and Future Work 
+
+Although superior enhancement performance and visual fidelity are achieved by CGS-Retinex in low-light scenarios, certain limitations persist. First, higher memory consumption and com-putational overhead are introduced during high-resolution image processing compared with conventional CNNs. This limitation originates from the integration of dense neighborhood aggre-gation within the continuous Gaussian renderer and pixel-wise coordinate-based implicit neural representations. Second, a risk of overfitting is induced by the absence of effective feature priors in extremely dark regions or areas corrupted by severe shot noise. Consequently, noise-induced artifacts or minor texture hallucinations are occasionally generated by the INR module. Future efforts will be directed towards two primary aspects. First, lightweight sparse Gaussian splatting mechanisms and cus-tomized CUDA kernels will be explored to significantly reduce computational complexity, thereby facilitating real-time inference on mobile platforms. Second, the proposed explicit-implicit phys-ical representation paradigm will be extended to video low-light enhancement tasks. By introducing temporal Gaussian con-sistency constraints, enhancement stability and spatio-temporal coherence in dynamic scenes are expected to be further improved. V. C ONCLUSION 
+
+In this paper, a pioneering joint explicit-implicit modeling framework denoted as CGS-Retinex is proposed. By deeply integrating continuous Gaussian splatting with Retinex theory, a novel continuous physical representation paradigm is established for low-light image enhancement. Through the construction of a continuous Gaussian renderer with adaptive temperature reg-ulation, spatial artifacts inherent in traditional discrete grids are fundamentally eliminated. Consequently, smooth and physically accurate global illumination estimation is successfully achieved. Furthermore, with the guidance of shallow high-frequency fea-tures, the implicit neural representation exhibits superior efficacy in compensating for degraded textures and colors within the residual space. Through the integration of physically-inspired illumination consistency constraints, explicit illumination and im-plicit reflectance are effectively decoupled. Extensive experiments demonstrate that an optimal balance among noise suppression in dark regions, overexposure mitigation, and structural detail preser-vation is achieved by CGS-Retinex. This framework establishes a significant theoretical perspective and application paradigm for high-order reconstruction tasks in low-level vision. ACKNOWLEDGEMENT 
+
+During the preparation of this manuscript, the author used Google Gemini (Version 3.1 Pro) for the purposes of improving sentence flow and academic tone. The author has reviewed and edited the output and takes full responsibility for the content of this publication. CR EDI T AUTHORSHIP CONTRIBUTION STATEMENT 
+
+Yuhan Chen: Conceptualization, Methodology, Visualization, Writing - original draft, Writing - review & editing, Resources, Formal analysis, Software, Validation. Yicui Shi: Data curation, Investigation, Software, Writing - review & editing. Guofa Li: 
+
+Methodology, Funding acquisition, Supervision, Resources, Writ-ing - review & editing. Guangrui Bai: Methodology, Writing -review & editing. Wenxuan Yu: Software, Writing - review & editing. Ying Fang: Visualization, Writing - review & editing. 
+
+Wenbo Chu: Resources, Writing - review & editing. Keqiang Li: Resources, Writing - review & editing. REFERENCES [1] C. Li, C. Guo, L. Han, et al. “Low-light image and video enhancement using deep learning: A survey,” IEEE Trans. Pattern Anal. Mach. Intell. , vol. 44, no. 12, pp. 9396–9416, 2022. [2] Q. Zhao, G. Li, B. He, et al. “Deep Learning for Low-Light Vision: A Comprehensive Survey,” IEEE Trans. Neural Netw. Learn. Syst. , 2025. [3] Md. T. Islam et al. “Loli-street: Benchmarking low-light image enhancement and beyond,” in Proc. ACCV , pp. 1250–1267, 2024. [4] X. Guo, Y. Li, and H. Ling. “LIME: low-light image enhancement via illumination map estimation,” IEEE Trans. Image Process. , vol. 26, no. 2, pp. 982–993, 2017. [5] J. Pan et al. “ChebyLighter: optimal curve estimation for low-light image enhancement,” in Proc. ACM MM , pp. 1358–1366, 2022. [6] G. Bai et al. “Towards Lightest Low-Light Image Enhancement Architecture for Mobile Devices,” Expert Syst. Appl. , vol. 296, pp. 129125, 2026. [7] Y. Chen et al. “FMR-Net: a fast multi-scale residual network for low-light image enhancement,” Multimedia Syst. , vol. 30, pp. 73, 2024. [8] Y. Chen et al. “FRR-NET: a fast reparameterized residual network for low-light image enhancement,” Signal, Image Video Process. , vol. 18, pp. 4925– 4934, 2024. [9] C. Liu et al. “EFINet: restoration for low-light images via enhancement-fusion iterative network,” IEEE Trans. Circuits Syst. Video Technol. , vol. 32, no. 12, pp. 8486–8499, 2022. [10] Z. Fu et al. “Learning a simple low-light image enhancer from paired low-light instances,” in Proc. CVPR , pp. 22252–22261, 2023. [11] Y. Chen et al. “A lightweight real-time low-light enhancement network for embedded automotive vision systems,” arXiv preprint arXiv:2512.02965 ,2025. [12] J. Hai et al. “R2rnet: Low-light image enhancement via real-low to real-normal network,” J. Vis. Commun. Image Represent. , vol. 90, 2023. [13] H. Jiang et al. “Lightendiffusion: Unsupervised low-light image enhance-ment with latent-retinex diffusion models,” in Proc. ECCV , pp. 161–179, 2024. [14] Y. Lin et al. “Aglldiff: Guiding diffusion models towards unsupervised training-free real-world low-light image enhancement,” in Proc. AAAI , 2025. [15] Y. Huang et al. “Zero-Shot Low-Light Image Enhancement via Latent Diffusion Models,” in Proc. AAAI , 2025. [16] R. Liu et al. “Retinex-inspired unrolling with cooperative prior architecture search for low-light image enhancement,” in Proc. CVPR , pp. 10561–10570, 2021. [17] C. Zheng, D. Shi, and W. Shi. “Adaptive unfolding total variation network for low-light image enhancement,” in Proc. ICCV , pp. 4439–4448, 2021. [18] W. Wu et al. “Uretinex-net: Retinex-based deep unfolding network for low-light image enhancement,” in Proc. CVPR , pp. 5901–5910, 2022. [19] Y. Shi et al. “ZERO-IG: Zero-shot illumination-guided joint denoising and adaptive enhancement for low-light images,” in Proc. CVPR , pp. 3015–3024, 2024. [20] C. Wei et al. “Deep retinex decomposition for low-light enhancement,” arXiv preprint arXiv:1808.04560 , 2018. [21] J. Weng et al. “Mamballie: Implicit retinex-aware low light enhancement with global-then-local state space,” NeurIPS , vol. 37, pp. 27440–27462, 2024. [22] Z. Zhang et al. “Noise self-regression: a new learning paradigm to enhance low-light images without task-related data,” IEEE Trans. Pattern Anal. Mach. Intell. , vol. 47, no. 2, pp. 1073–1088, 2025. [23] V. Sitzmann et al. “Implicit neural representations with periodic activation functions,” NeurIPS , vol. 33, pp. 7462–7473, 2020. [24] S. Yang et al. “Implicit neural representation for cooperative low-light image enhancement,” in Proc. ICCV , pp. 12918–12927, 2023. [25] T. Chobola et al. “Fast context-based low-light image enhancement via neural implicit representations,” in Proc. ECCV , 2024. [26] B. Kerbl et al. “3D Gaussian splatting for real-time radiance field rendering,” 
+
+ACM Trans. Graph. , vol. 42, no. 4, pp. 139–1, 2023. [27] Y. Yan et al. “Street gaussians: Modeling dynamic urban scenes with gaussian splatting,” in Proc. ECCV , 2024. [28] T. Liu et al. “Mvsgaussian: Fast generalizable gaussian splatting reconstruc-tion from multi-view stereo,” in Proc. ECCV , 2024. [29] X. Zhou et al. “Drivinggaussian: Composite gaussian splatting for surround-ing dynamic autonomous driving scenes,” in Proc. CVPR , 2024. IEEE TRANSACTIONS ON IMAGE PROCESSING, VOL. XX, NO. X, 2026 13 
+
+[30] Y. Liu et al. “Citygaussian: Real-time high-quality large-scale scene render-ing with gaussians,” in Proc. ECCV , 2024. [31] B. Huang et al. “2d gaussian splatting for geometrically accurate radiance fields,” in ACM SIGGRAPH Papers , 2024. [32] L. Zhu et al. “Large Images Are Gaussians: High-Quality Large Image Representation with Levels of 2D Gaussian Splatting,” in Proc. AAAI , 2025. [33] Z. Zeng et al. “Instant GaussianImage: A generalizable and self-adaptive image representation via 2D Gaussian splatting,” in Proc. ICCV , 2025. [34] X. Zhang et al. “Gaussianimage: 1000 fps image representation and com-pression by 2d gaussian splatting,” in Proc. ECCV , 2024. [35] J. Hu et al. “Gaussiansr: High fidelity 2d gaussian splatting for arbitrary-scale image super-resolution,” in Proc. AAAI , 2025. [36] C. Jiang et al. “Beyond Pixels: Efficient Dataset Distillation via Sparse Gaussian Representation,” arXiv preprint arXiv:2509.26219 , 2025. [37] Y. Chen et al. “LL-GaussianImage: Efficient Image Representation for Zero-shot Low-Light Enhancement with 2D Gaussian Splatting,” arXiv preprint arXiv:2601.15772 , 2026. [38] Y. Chen et al. “LL-GaussianMap: Zero-shot Low-Light Image Enhance-ment via 2D Gaussian Splatting Guided Gain Maps,” arXiv preprint arXiv:2601.15766 , 2026. [39] C. Guo et al. “Zero-reference deep curve estimation for low-light image enhancement,” in Proc. CVPR , pp. 1780–1789, 2020. [40] C. Li, C. Guo, and C. C. Loy. “Learning to enhance low-light image via zero-reference deep curve estimation,” IEEE Trans. Pattern Anal. Mach. Intell. , vol. 44, no. 8, pp. 4225–4238, 2022. [41] Y. Jiang et al. “EnlightenGAN: deep light enhancement without paired supervision,” IEEE Trans. Image Process. , vol. 30, pp. 2340–2349, 2021. [42] L. Ma et al. “Toward fast, flexible, and robust low-light image enhancement,” in Proc. CVPR , pp. 5637–5646, 2022. [43] B. Mildenhall et al. “Nerf: Representing scenes as neural radiance fields for view synthesis,” Commun. ACM , vol. 65, no. 1, pp. 99–106, 2021. [44] J. Fan et al. “Momentum-gs: Momentum gaussian self-distillation for high-quality large scene reconstruction,” in Proc. ICCV , 2025. [45] K. Cheng et al. “Gaussianpro: 3d gaussian splatting with progressive propagation,” in Proc. ICML , 2024. [46] A. Hanson et al. “Speedy-splat: Fast 3d gaussian splatting with sparse pixels and sparse primitives,” in Proc. CVPR , 2025. [47] Y. Xu et al. “PMGS: Reconstruction of Projectile Motion across Large Spatiotemporal Spans via 3D Gaussian Splatting,” arXiv preprint arXiv:2508.02660 , 2025. [48] Y. Xu et al. “PEGS: Physics-Event Enhanced Large Spatiotempo-ral Motion Reconstruction via 3D Gaussian Splatting,” arXiv preprint arXiv:2511.17116 , 2025. [49] Y. Chen et al. “Periodic vibration gaussian: Dynamic urban scene recon-struction and real-time rendering,” arXiv preprint arXiv:2311.18561 , 2023. [50] T. Yi et al. “Gaussiandreamer: Fast generation from text to 3d gaussians by bridging 2d and 3d diffusion models,” in Proc. CVPR , 2024. [51] G. Zhao et al. “Drivedreamer4d: World models are effective data machines for 4d driving scene representation,” in Proc. CVPR , 2025. [52] C. Ni et al. “Recondreamer: Crafting world models for driving scene reconstruction via online restoration,” in Proc. CVPR , 2025. [53] H. Sun et al. “LL-Gaussian: Low-Light Scene Reconstruction and Enhance-ment via Gaussian Splatting for Novel View Synthesis,” in Proc. ACM MM ,2025. [54] H. Wang et al. “LLGS: Unsupervised Gaussian Splatting for Image En-hancement and Reconstruction in Pure Dark Environment,” arXiv preprint arXiv:2503.18640 , 2025. [55] Y. Omri et al. “Vision-Language Alignment from Compressed Image Repre-sentations using 2D Gaussian Splatting,” arXiv preprint arXiv:2509.22615 ,2025. Yuhan Chen Yuhan Chen received his master’s degree in 2024 from the College of Mechanical Engineering at Chongqing University of Technology. He is currently pursuing the Ph.D. degree in College of Mechanical and Vehicle Engineering at Chongqing University, China. His research interests include deep learning, Low-level Vision and Gaussian Splatting. 
+
+Yicui Shi Yicui Shi received the B.E. degree majoring in Automotive Engineering at Chongqing University in 2025. He is currently pursuing the M.E. degree in Automotive Engineering at Chongqing University, Chongqing, China. His research interests include com-puter vision, Gaussian Splatting and deep learning. 
+
+Guofa Li Guofa Li received the Ph.D. degree in Me-chanical Engineering from Tsinghua University, China, in 2016. He is currently a Professor with Chongqing University, China. His research interests include envi-ronment perception, driver behavior analysis, and smart decision-making based on artificial intelligence tech-nologies in autonomous vehicles and intelligent trans-portation systems. He serves as the Associate Editor for IEEE Transactions on Intelligent Transportation Sys-tems, IEEE Transactions on Affective Computing, and IEEE Sensors Journal. 
+
+Wenxuan Yu Wenxuan Yu received the B.E. degree majoring in Mechanical Design, Manufacturing, and Automation at Chongqing University in 2025. He is currently pursuing the M.E. degree in Mechanical En-gineering at Chongqing University, Chongqing, China. His research interests include computer vision, Gaussian Splatting and deep learning. 
+
+Ying Fang Ying Fang received the B.E. degree major-ing in Vehicle Engineering at Chongqing University of Technology. He is currently pursuing the M.E. degree in Mechanical Engineering at Chongqing University, Chongqing, China. His research interests include com-puter vision, Gaussian Splatting and deep learning. 
+
+Guangrui Bai Guangrui Bai received the M.S. degree from the School of Engineering Science, University of Science and Technology of China (USTC) in 2023. He is currently pursuing the Ph.D. degree at USTC. His research interests include low-light image enhancement and robotic vision. 
+
+Wenbo Chu Wenbo Chu received his B.S. degree ma-jored in Automotive Engineering from Tsinghua Uni-versity, China, in 2008, and his M.S. degree majored in Automotive Engineering from RWTH-Aachen, German and Ph.D. degree majored in Mechanical Engineering from Tsinghua University, China, in 2014. He is cur-rently a research fellow at Western China Science City Innovation Center of Intelligent and Connected Vehicles (Chongqing) Co, Ltd., and National Innovation Center of Intelligent and Connected Vehicles. 
+
+Keqiang Li Keqiang Li received the B.E. degree from Tsinghua University, Beijing, China, in 1985, and the M.E. and Ph.D. degrees from Chongqing University, Chongqing, China, in 1988 and 1995, respectively. He is currently a Professor with the School of Vehicle and Mobility, Tsinghua University. He is the Chief Scientist of Intelligent and Connected Vehicle Innovation Center of China, and the Director of State Key Laboratory of Automotive Safety and Energy of China. His current research interests include intelligent connected vehicles, cloud-based control for vehicles, and vehicle dynamics systems.

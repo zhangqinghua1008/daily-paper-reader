@@ -1,0 +1,54 @@
+{
+  "label": "2026-06-21",
+  "date": "2026-06-21",
+  "generated_at": "2026-06-21T20:57:06",
+  "count": 3,
+  "papers": [
+    {
+      "paper_id": "202606/21/2606.17379v1-meibrd-meta-learning-intraoperative-biomechanical-residual-deformation",
+      "section": "deep",
+      "title_en": "MeiBRD: Meta-Learning Intraoperative Biomechanical Residual Deformation",
+      "authors": "Casey Meisenzahl, Jon Heiselman, Michael Holtz, Yubo Ye, Michael Miga, Linwei Wang",
+      "date": "2026-06-16",
+      "pdf": "https://arxiv.org/pdf/2606.17379v1",
+      "score": "9.0",
+      "evidence": "利用3D场景表示实现术中肝脏配准以支持手术导航",
+      "tldr": "针对术中肝脏配准中软组织变形大而测量稀疏的挑战，现有生物力学先验模型存在偏差，纯数据驱动方法则数据效率和泛化性不足。MeiBRD混合框架以图神经扩散函数学习残余变形，并将稀疏测点视为上下文样本，通过前馈元学习器实现函数快速自适应，提出一种元学习增强的生物力学残余变形补偿策略，结合图注意力与学习到学习范式。在肝脏仿体上的实验证明，该方法配准精度优于刚体、生物力学和数据驱动基线，尤其在域外几何和变形下优势显著，为术中图像引导提供了有效途径。",
+      "tags": "query:endo-dgs",
+      "abstract_en": "Accurate intraoperative liver registration is challenging due to substantial soft-tissue deformation yet sparse intraoperative measurements. Biomechanical models regularize this ill-posedness with prior knowledge but exhibit persistent prediction bias due to simplifying assumptions, while data-driven learning solutions struggle with data efficiency, generalization, and physical plausibility. We propose a hybrid registration framework that adapts a biomechanical prior using sparse intraoperative correspondences. Rather than learning a full deformation field, we learn a residual deformation function that corrects linear biomechanical predictions, modeled as a graph neural diffusion function with geometry-aware attention over the 3D liver mesh. To enable long-range information transfer of sparse observations, we take a novel perspective of sparse intraoperative measurements as \\textit{context} samples where input-output pairs of the residual deformation function are fully observed, casting the problem into learning-to-learn this residual function from intraoperative context samples with feedforward meta-learners. Experiments on a deformable liver phantom dataset demonstrate improved registration accuracy and generalization compared to rigid, biomechanical, and data-driven baselines, particularly for out-of-distribution geometries and deformations.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202606/21/2606.16159v1-continuous-splatting-meets-retinex-continuous-gaussian-splatting-and-implicit-reflectance-modeling-for-low-light-image-enhancement",
+      "section": "quick",
+      "title_en": "Continuous Splatting meets Retinex: Continuous Gaussian Splatting and Implicit Reflectance Modeling for Low-Light Image Enhancement",
+      "authors": "Yuhan Chen, Yicui Shi, Guofa Li, Wenxuan Yu, Ying Fang, Guangrui Bai, Wenbo Chu, Keqiang Li",
+      "date": "2026-06-15",
+      "pdf": "https://arxiv.org/pdf/2606.16159v1",
+      "score": "7.0",
+      "evidence": "提出连续高斯泼溅用于低光增强，方法可迁移至内窥镜",
+      "tldr": "低光图像增强需兼顾全局照明调整与局部高频细节，现有方法常导致颜色失真和结构伪影。CGS-Retinex首次融合连续高斯泼溅与Retinex理论，利用连续参数场与高斯渲染器估计空间连续照明，消除离散采样造成的网格伪影，并通过隐式神经表示独立建模反射率，辅以亮度一致性约束与照明平滑正则化，实现照明与纹理的精准解耦。实验表明该方法有效抑制暗区噪声和过曝，恢复高频结构与自然色彩。该工作为低光增强开创了连续物理表示的新范式。",
+      "tags": "query:endo-dgs",
+      "abstract_en": "Low-light image enhancement aims to recover clear images from low-illumination observations and is crucial for high-level downstream vision tasks. However, existing methods frequently encounter color distortion and structural artifacts when balancing global smooth illumination adjustment and local high-frequency detail recovery. To address these issues, we propose CGS-Retinex as the first low-light image enhancement framework based on explicit-implicit joint modeling. Our framework deeply integrates continuous Gaussian splatting with Retinex theory. Specifically, we represent the image grid as a continuous parameter field and propose a continuous Gaussian renderer to estimate the spatially continuous global illumination distribution. This approach fundamentally eliminates grid artifacts caused by discrete Gaussian sampling. Furthermore, we introduce an implicit neural representation to model reflectance independently. We leverage shallow high-frequency features to guide the network in accurately reconstructing degraded texture details. Within the Retinex framework, we incorporate physics-inspired brightness consistency constraints and illumination smoothness regularization to enable explicit illumination and implicit reflectance to maintain proper exposure and achieve high-fidelity recovery of high-frequency structures and colors. Extensive experiments demonstrate that CGS-Retinex significantly suppresses dark-region noise and overexposure while achieving exceptional high-frequency structural fidelity and color restoration by precisely decoupling illumination and texture. This work establishes a novel continuous physical representation paradigm for low-light image enhancement.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202606/21/2606.18588v1-splaxel-efficient-distributed-training-of-3d-gaussian-splatting-for-large-scale-scene-reconstruction-via-pixel-level-communication",
+      "section": "quick",
+      "title_en": "Splaxel: Efficient Distributed Training of 3D Gaussian Splatting for Large-scale Scene Reconstruction via Pixel-level Communication",
+      "authors": "Wenqi Jia, Zhewen Hu, Ying Huang, Yu Gong, Stavros Kalafatis, Yuke Wang, Wei Niu, Chengming Zhang, Ang Li, Sheng Di, Yuede Ji, Bo Fang, Miao Yin",
+      "date": "2026-06-17",
+      "pdf": "https://arxiv.org/pdf/2606.18588v1",
+      "score": "7.0",
+      "evidence": "高效分布式3D高斯泼溅训练以实现大规模场景表示",
+      "tldr": "3D高斯泼溅在大规模场景重建中需多GPU训练，但现有方法或造成全局不一致，或高斯同步通信开销剧增。Splaxel提出像素级局部渲染与全局合成，各GPU仅交换部分像素值，避免直接同步高斯，并通过可见性预测和冲突视图合并减少冗余，保持通信稳定。在1.2亿高斯规模下，Splaxel实现7.6倍加速且重建质量无损，为大规模分布式3DGS训练提供了高效方案。",
+      "tags": "query:gs-slam",
+      "abstract_en": "3D Gaussian Splatting (3DGS) enables high-fidelity and real-time 3D scene reconstruction, but scaling training to large-scale scenes requires optimizing hundreds of millions of Gaussians across multiple GPUs. Existing distributed approaches either partition scenes into isolated regions, causing global inconsistency, or rely on global Gaussian-level exchanges, which lead to substantial growth in inter-GPU communication and quickly dominate iteration time.   We propose Splaxel, a communication-efficient distributed 3DGS training framework based on pixel-level local rendering and global composition. Instead of synchronizing Gaussians, each GPU renders its local subset and exchanges only partial pixel values, maintaining mathematical consistency while keeping communication cost stable as the scene size increases. Splaxel further reduces pixel-level redundancy through geometric and transmittance visibility prediction and improves GPU utilization via conflict-free camera-view consolidation. Evaluated on large-scale datasets with up to 120M Gaussians, Splaxel achieves up to 7.6$\\times$ speedup over the state-of-the-art distributed 3DGS framework while preserving high reconstruction quality.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
