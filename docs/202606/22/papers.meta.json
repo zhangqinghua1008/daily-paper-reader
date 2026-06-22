@@ -1,0 +1,24 @@
+{
+  "label": "2026-06-22",
+  "date": "2026-06-22",
+  "generated_at": "2026-06-22T22:07:38",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202606/22/2606.20103v1-geometry-preserving-in-3d-gaussian-splatting-for-lidar-camera-extrinsic-calibration",
+      "section": "deep",
+      "title_en": "Geometry-Preserving in 3D Gaussian Splatting for LiDAR-Camera Extrinsic Calibration",
+      "authors": "Kyoleen Kwak, Daeho Kim, Jeong Woon Lee, Hyoseok Hwang",
+      "date": "2026-06-18",
+      "pdf": "https://arxiv.org/pdf/2606.20103v1",
+      "score": "8.0",
+      "evidence": "使用保留几何的3D高斯溅射进行精确的激光雷达-相机外参标定，是一种相机位姿估计",
+      "tldr": "激光雷达-相机外参标定对多模态感知至关重要，无目标方法虽能避免手动设置，但受限于跨模态特征稀缺。基于3D高斯泼溅的可微几何代理提供了新途径，然而现有方法侧重渲染质量，致使代理几何偏离真实雷达结构。本文提出几何保持框架，通过多视图雷达深度监督与阻断光度梯度，确保高斯代理的度量几何一致性。在公开驾驶数据集上，标定精度一致优于已有目标less方法，为多传感器融合提供了更精准的基础。",
+      "tags": "query:gs-slam",
+      "abstract_en": "Accurate LiDAR-camera calibration is essential for robust multi-modal perception. Targetless approaches avoid manual setup but remain limited by the scarcity of discriminative cross-modal features. Recent methods address this by reconstructing the scene within a differentiable model, enabling extrinsic optimization through dense photometric supervision. Among these, 3D Gaussian Splatting (3DGS) has been widely adopted as a geometric proxy that bridges LiDAR and camera within a single differentiable framework. However, since 3DGS was originally designed for novel view synthesis, existing methods tend to prioritize rendering quality, causing the proxy geometry to drift from the true LiDAR structure. We propose a framework that preserves the metric geometry of the Gaussian proxy by aggregating multi-view LiDAR observations for dense depth supervision and blocking photometric gradients from updating the Gaussian spatial parameters. We validate our method on public driving datasets, where it consistently outperforms existing targetless methods in calibration accuracy.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

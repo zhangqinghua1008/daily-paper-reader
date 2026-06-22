@@ -1,0 +1,56 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-22T22:05:47.594736+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 1,
+    "deep_cap": 7,
+    "deep_selected": 1,
+    "quick_candidates": 0,
+    "quick_skim_target": 12,
+    "quick_selected": 0
+  },
+  "deep_dive": [
+    {
+      "id": "2606.20103v1",
+      "source": "arxiv",
+      "title": "Geometry-Preserving in 3D Gaussian Splatting for LiDAR-Camera Extrinsic Calibration",
+      "abstract": "Accurate LiDAR-camera calibration is essential for robust multi-modal perception. Targetless approaches avoid manual setup but remain limited by the scarcity of discriminative cross-modal features. Recent methods address this by reconstructing the scene within a differentiable model, enabling extrinsic optimization through dense photometric supervision. Among these, 3D Gaussian Splatting (3DGS) has been widely adopted as a geometric proxy that bridges LiDAR and camera within a single differentiable framework. However, since 3DGS was originally designed for novel view synthesis, existing methods tend to prioritize rendering quality, causing the proxy geometry to drift from the true LiDAR structure. We propose a framework that preserves the metric geometry of the Gaussian proxy by aggregating multi-view LiDAR observations for dense depth supervision and blocking photometric gradients from updating the Gaussian spatial parameters. We validate our method on public driving datasets, where it consistently outperforms existing targetless methods in calibration accuracy.",
+      "authors": [
+        "Kyoleen Kwak",
+        "Daeho Kim",
+        "Jeong Woon Lee",
+        "Hyoseok Hwang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-18T11:23:33+00:00",
+      "link": "https://arxiv.org/pdf/2606.20103v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Uses 3D Gaussian Splatting with geometry preservation for accurate LiDAR-camera extrinsic calibration, a form of camera pose estimation",
+      "llm_evidence_cn": "使用保留几何的3D高斯溅射进行精确的激光雷达-相机外参标定，是一种相机位姿估计",
+      "llm_evidence": "使用保留几何的3D高斯溅射进行精确的激光雷达-相机外参标定，是一种相机位姿估计",
+      "canonical_evidence": "使用保留几何的3D高斯溅射进行精确的激光雷达-相机外参标定，是一种相机位姿估计",
+      "llm_tldr_en": "Proposes a framework that preserves LiDAR geometry in 3DGS optimization to achieve accurate extrinsic calibration between LiDAR and camera, preventing geometry drift from rendering-focused optimization.",
+      "llm_tldr_cn": "针对3D高斯溅射用于激光雷达-相机标定时因渲染优化导致几何漂移的问题，提出保持几何的3DGS框架，在优化中引入激光雷达结构约束，联合校准外参。实验证明，该方法在保证渲染质量的同时，有效维护了真实几何，显著提升了标定精度，为多模态感知中的位姿估计提供了可靠保障。",
+      "llm_tldr": "针对3D高斯溅射用于激光雷达-相机标定时因渲染优化导致几何漂移的问题，提出保持几何的3DGS框架，在优化中引入激光雷达结构约束，联合校准外参。实验证明，该方法在保证渲染质量的同时，有效维护了真实几何，显著提升了标定精度，为多模态感知中的位姿估计提供了可靠保障。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "accurate camera pose tracking",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": []
+}
