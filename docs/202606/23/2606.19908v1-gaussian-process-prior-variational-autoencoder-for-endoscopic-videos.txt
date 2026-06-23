@@ -1,0 +1,775 @@
+Title: Gaussian Process Prior Variational Autoencoder for Endoscopic Videos
+
+URL Source: https://arxiv.org/pdf/2606.19908v1
+
+Published Time: Fri, 19 Jun 2026 00:39:59 GMT
+
+Number of Pages: 31
+
+Markdown Content:
+# Gaussian Process Prior Variational Autoencoder for Endoscopic Videos 
+
+Ivan De Boi ∗1, Xinxing Shi 2, Xiaoyu Jiang 2, Tim J.M. Jaspers 3
+
+Francisco Caetano 3, Mauricio A. Álvarez 2, Fons van der Sommen 3, Sam Van der Jeught 1
+
+> 1
+
+Department of Electromechanics, InViLab, University of Antwerp, Antwerp, Belgium 
+
+> 2
+
+Department of Computer Science, University of Manchester, Manchester, United Kingdom 
+
+> 3
+
+Department of Electrical Engineering, Eindhoven University of Technology, Eindhoven, the Netherlands 
+
+# Abstract 
+
+Endoscopic video analysis is essential for gas-trointestinal diagnosis and computer-assisted interventions, but video sequences are routinely degraded by specular reflections, motion arti-facts, and missing frames. These transient cor-ruptions can distract clinicians, reduce image interpretability, and disrupt downstream tasks such as 3D reconstruction and navigation. Effec-tive restoration therefore requires methods that exploit temporal continuity rather than treating frames in isolation. We introduce a Gaussian Process Prior Variational Autoencoder (GP-VAE) framework for endoscopic video restora-tion that replaces the standard factorized latent prior with a temporal Gaussian process prior, enabling interpolation of missing frames with uncertainty-aware reconstruction. The framework combines endoscopy-specific encoders, including a convolutional EndoVAE backbone and pretrained Vision Transformer encoders from GastroNet-5M, with two scalable GP approximations: Hierarchical Prior Approx-imation (HPA) and Sparse Precision Approxi-mation (SPA). Specular reflections are handled using a DUCKNet-based masking pipeline that excludes corrupted pixels from the reconstruc-tion objective. On the C3VDv2 colonoscopy dataset, the best GPVAE variants reduced im-age reconstruction RMSE by 21.9% on average, and by up to 26.1%, relative to matched VAE baselines. Downstream trajectory RMSE was reduced by 12.7% on average across classical vi-sual odometry and a pretrained PoseNet, at an 
+
+> ∗Corresponding author: ivan.deboi@uantwerpen.be
+
+average increase of 27.3% in training time per epoch. Finally, the GP posterior provides per-frame uncertainty estimates that reflect tem-poral support and offer a confidence signal for restored frames. 
+
+Keywords: Variational Autoencoder; Gaus-sian Process; Endoscopy; Medical Imaging 
+
+# 1 Introduction 
+
+Endoscopy is a cornerstone of modern clinical practice, supporting disease diagnosis and mini-mally invasive intervention across a broad range of procedures. It plays a central role in gastroin-testinal (GI) examination (Ren et al., 2025) and laparoscopic and robotic surgery (Fujii et al., 2018). Beyond its immediate clinical use, the in-creasing availability of digital endoscopic video has created important opportunities for com-putational analysis, including lesion detection (Zhang et al., 2024), tissue characterization (Fer-reira and Piechnik, 2020), tracking (Ye et al., 2016), surgical scene understanding, and three-dimensional reconstruction (Shen et al., 2026). Despite its clinical importance, endoscopic imaging remains particularly challenging. The acquisition process is frequently affected by ar-tifacts such as specular reflections, motion blur, defocus, smoke, bubbles, sensor noise, and tran-sient occlusions. These degradations can ob-scure diagnostically relevant structures, distort local appearance, and reduce the reliability of downstream methods such as 3D reconstruc-tion and camera path estimation (Yu et al., 1
+
+> arXiv:2606.19908v1 [cs.CV] 18 Jun 2026
+
+2026). Among them, specular reflections are especially problematic because they induce sat-urated image regions that do not faithfully rep-resent tissue content, thereby rendering parts of the image unusable. Moreover, endoscopic videos may suffer from entirely missing frames due to acquisition in-stability, rapid camera motion, transmission failures, or temporary loss of visibility. Such corruption does not only affect individual im-ages, but also disrupts the temporal continuity on which many subsequent tasks rely. Con-sequently, restoration in an endoscopic video should not be treated solely as a frame-wise en-hancement problem, but rather as a temporally structured inference problem in which both spa-tial corruption and inter-frame dependence are modelled explicitly (Atasoy et al., 2012; Li et al., 2020). Deep generative models provide a natural framework for addressing these problems be-cause they learn a compact latent representa-tion of the high-dimensional images. In par-ticular, variational autoencoders (VAEs) offer a mechanism for encoding observations into a latent space and decoding them back into the image domain. For restoration tasks, this latent representation can be encouraged to cap-ture the underlying anatomical structure of the scene while suppressing nuisance variation asso-ciated with corruption and acquisition artifacts. This makes VAEs attractive for image denois-ing, inpainting, and artifact removal in medi-cal imaging, including endoscopic applications (Diamantis et al., 2022). However, most existing restoration methods based on autoencoding or image-to-image trans-lation treat frames independently and there-fore do not exploit the temporal aspect of a video. Consecutive endoscopic frames are cor-related through camera motion, gradual view-point changes, and persistent anatomical con-tent. Frames that are close in time should therefore correspond to nearby latent represen-tations. Models that ignore this structure dis-card a major source of information, particularly when observations are noisy, masked, or incom-plete. Temporal extensions of VAEs have been investigated in the broader machine learning literature through the use of structured priors over latent variables. Among these, Gaussian process priors variational autoencoders (GP-VAE)(Rasmussen and Williams, 2006; Casale et al., 2018) are particularly appealing because they define smooth stochastic processes over time and naturally support interpolation be-tween observed samples. Imposing a Gaussian process (GP) prior over the latent sequence therefore transforms the latent representation from a collection of independent points into a continuous probabilistic trajectory. Nevertheless, temporally structured latent-variable models have not yet been fully devel-oped for endoscopic restoration in conjunction with encoder-decoder architectures tailored to endoscopic imagery. This is a critical limita-tion, since endoscopic data differ substantially from natural-image and typical machine learn-ing benchmarks. In this work, we propose a temporally structured variational autoencod-ing framework for endoscopic videos in which a Gaussian process prior is imposed over the la-tent variables. The model combines endoscopy-specific visual encoding and decoding with a continuous latent temporal process, thereby en-abling mappings from observed frames to latent trajectories and from latent trajectories back to restored images. By explicitly exploiting tem-poral correlations across neighboring frames, the proposed framework can suppress localized artifacts, infer missing pixel content, and recon-struct corrupted or absent frames. An additional advantage of the proposed for-mulation is its probabilistic nature. Rather than producing only a deterministic reconstruc-tion, the model yields uncertainty estimates associated with the inferred latent states and generated images. Such uncertainty informa-tion is highly relevant in medical image analysis, where reconstruction quality may vary across frames and anatomical regions, and where confi-dence awareness is essential for safe downstream use. Predictive uncertainty can therefore serve as an intrinsic indicator of reconstruction reli-ability, for example by highlighting frames or regions that require clinician review or by in-forming the use of restored data in subsequent processing pipelines. The main contributions of this work are as follows. First, we adapt the VAE framework to a GPVAE setting for endoscopic video by replacing the independent latent prior with 2a temporal Gaussian process prior. This re-quires tailoring the existing GPVAE formula-tion to endoscopic image reconstruction, includ-ing a weighted objective that combines per pixel mean squared error (MSE) term, a Learned Per-ceptual Image Patch Similarity (LPIPS) term, and a Kullback-Leibler (KL) term. Second, we integrate the temporal Gaussian process prior with endoscopy-specific encoder and decoder architectures, allowing the model to exploit domain-specific inductive biases of endoscopic imagery for more accurate and reliable restora-tion. Third, we apply the resulting models to restoration tasks common in endoscopy, includ-ing reconstruction of missing frames and pixels. Finally, the GP posterior over the latent trajec-tory provides an uncertainty estimate for each reconstructed frame. The rest of this article is structured as follows. In Section 3, we describe the proposed methods in detail. Section 4 outlines the experimental setup. Section 5 presents the empirical findings. Section 6 provides a critical analysis of the results, and Section 7 concludes the work and discusses future directions. 
+
+# 2 Related work 
+
+Endoscopic Video Manifolds Early work on endoscopic video manifolds treated an en-tire procedure as a smooth trajectory in a low-dimensional space. Inter-frame similarities were defined using measures robust to blur, specular highlights, and turbid fluid, after which mani-fold learning methods such as Laplacian eigen-maps and Isomap-style embeddings were used to organise video frames (Atasoy et al., 2012). These embeddings supported low-quality frame detection, scene clustering, and targeted biopsy guidance. However, they were non-generative: the learned manifolds could not inpaint pixels or reconstruct missing frames, did not provide probabilistic uncertainty, and were difficult to scale to modern endoscopic datasets. 
+
+VAEs and Generative Models Several studies have used Variational AutoEncoders (VAEs) or related generative models in en-doscopy, usually for frame-level representation learning or image synthesis. An MMD-VAE was used for unsupervised tool-presence detec-tion in surgical endoscopy videos, learning a low-dimensional representation that separates frames with and without tools without manual labels (Li et al., 2020). A shared latent space be-tween optical and virtual colonoscopy was also proposed using a lossy CycleGAN-like model, enabling visualisation of missed mucosal sur-faces (Mathew et al., 2021). VAE-GAN hybrids have been used to synthesise endoscopic im-ages, for example normal mucosa versus ulcers, to augment classification pipelines (He et al., 2016). These approaches demonstrate the use-fulness of compact latent spaces in endoscopy, but they largely treat frames as independent samples and emphasise representation, visuali-sation, or synthetic data generation. More direct endoscopy-specific precedents are provided by VAE-based synthesis methods for wireless capsule endoscopy (WCE). EndoVAE proposed a VAE architecture for generating syn-thetic endoscopic images as an alternative to GAN-based augmentation, motivated by the instability, mode collapse, and data require-ments of adversarial training in small medical datasets (Diamantis et al., 2022). A later mul-tiscale residual VAE framework incorporated multiscale convolutional feature extraction and residual connections to improve realism and diversity under limited-data conditions (Dia-mantis and Iakovidis, 2025). Both works focus on image synthesis for augmentation or dataset substitution. They do not address restoration of corrupted video segments or use predictive uncertainty as a reconstruction-quality signal. A pre-trained Stable Diffusion VAE was used to encode endoscopy frames into a la-tent space, followed by a diffusion-based video generator and spatio-temporal transformer for realistic synthetic endoscopic videos and down-stream 3D reconstruction (Li et al., 2024). Here, the latent space is powerful, but the generative prior is diffusion-based rather than Gaussian-process-based, and the VAE backbone is generic rather than endoscopy-specific. Re-lated latent-space work in GI domains includes glottis segmentation in laryngeal endoscopy, where a single-channel bottleneck was suffi-cient for interpretable segmentation (Dadras and Aichinger, 2024), and a VAE trained on esophageal high-resolution manometry, where a four-dimensional latent space captured physio-3logically meaningful contraction patterns (Kou et al., 2021). Collectively, these studies show that latent representations are useful in GI applications, but leave open the problem of uncertainty-aware restoration of degraded en-doscopic video. 
+
+Endoscopic Foundation Models Large-scale endoscopic foundation models provide strong in-domain encoders and benchmarks. GastroNet-5M contains approximately five mil-lion images from around 500,000 procedures performed between 2012 and 2020 across eight hospitals in the Netherlands, spanning upper and lower GI endoscopy, multiple manufactur-ers, and diverse clinical indications (Jong et al., 2026). Self-supervised pretraining of ResNet and Vision Transformer (ViT) backbones on this dataset using contrastive or DINO-style ob-jectives improves performance over ImageNet-pretrained models across multiple GI classifi-cation and segmentation tasks, often with sub-stantially fewer annotations (Boers et al., 2024). This provides both pretrained encoders and a benchmark ecosystem that new endoscopic video methods should engage with. EndoViT pretrains ViT architectures on Endo700k using a masked autoencoder objec-tive, learning to reconstruct masked patches in endoscopy images and improving down-stream segmentation and recognition compared with ImageNet-pretrained ViTs (Batić et al., 2024). Later work has extended this approach to federated settings (Kirchner et al., 2026). These models remain deterministic represen-tation learners, typically used as discrimina-tive backbones rather than probabilistic latent-variable models. Video-native foundation models have also emerged for endoscopic and surgical video anal-ysis. Endo-FM pretrains a video transformer with masked reconstruction and contrastive ob-jectives on approximately five million frames, achieving strong performance on downstream classification, segmentation, and detection tasks (Wang et al., 2025, 2023; Jaspers et al., 2026). MSN-style masked Siamese approaches (Ass-ran et al., 2022), UniSurg (Shen et al., 2026), and related JEPA-style methods learn strong clip-level representations by predicting masked latent features. In these models, temporal struc-ture is captured implicitly through attention or self-supervised objectives, rather than through an explicit probabilistic prior over the latent trajectory. 
+
+Gaussian Process Prior VAE Gaussian Process Prior Variational Autoencoders (GP-VAEs) (Casale et al., 2018) extend standard VAEs by replacing the factorised Gaussian la-tent prior, with a Gaussian process prior in-dexed by time or other covariates. This allows correlations between latent variables to be mod-elled explicitly and supports principled interpo-lation, imputation, and uncertainty estimation. The original formulation, however, scales as 
+
+O(N 3), which means cubically with the num-ber of observations N . This is impractical for long endoscopic procedures. Recent neighbor-driven GPVAE variants im-prove scalability by replacing the full covari-ance with local approximations (Shi et al., 2025). In the Hierarchical Prior Approxima-tion (HPA), each mini-batch is augmented with nearby points in the GP input space, restrict-ing covariance computations to local subsets. In the Sparse Precision Approximation (SPA), the prior is factorised into low-order condition-als, so each latent variable depends only on a small neighbor set. After an initial nearest-neighbor search, training scales as O(DH 3B)
+
+where D is the latent dimension, H the number of neighbors, and B the batch size. These meth-ods perform competitively against full GPVAE (Casale et al., 2018) and inducing-point SVGP-VAE (Jazbec et al., 2021) baselines on generic temporal and spatial datasets, but have not yet been applied to endoscopic video or combined with endoscopy-specific ViT encoders. 
+
+# 3 Methods 
+
+A Gaussian process (GP) defines a distribu-tion over functions rather than over finite-dimensional parameter vectors (Rasmussen and Williams, 2006). A function f (·) is said to fol-low a GP if any finite collection of function values has a joint Gaussian distribution: 
+
+f (·) ∼ GP (m(·), k (·, ·)), (1) where m(·) is the mean function and k(·, ·) is the covariance function or kernel. For inputs 4X = {x1, . . . , xN }⊤, the corresponding function values 
+
+f = [f (x1), . . . , f (xN )]⊤ (2) are distributed as 
+
+f ∼ N (μ, K), (3) with 
+
+μi = m(xi), Kij = k(xi, xj ). (4) The kernel therefore determines which obser-vations are expected to have similar function values. In this work, the inputs x are the timestamps 
+
+t or equivalently frame numbers of the images. The resulting function values f of the Gaussian process are the points in the latent space Z =
+
+{z1, . . . , zN }⊤. A schematic overview of our model is given in Figure 1. This means that in our setting, instead of assuming independent latent variables z1: T for each timestamp t,
+
+p(z) = 
+
+> T∏
+> t=1
+
+N (zt; 0 , I ), (5) we place a GP prior over each latent dimension 
+
+d across time: 
+
+z(d)1: T ∼ GP (0, k (t, t ′)), d = 1 , . . . , D. (6) Equivalently, for a sequence of T frames, 
+
+z(d) = [z(d)1 , . . . , z (d) 
+
+> T
+> ]⊤
+
+∼ N (0, K), (7) where the entries of K are determined by the covariance function k(t, t ′).This covariance function or kernel specifies how strongly two function values are expected to co-vary. A common choice is the squared-exponential or radial basis function (RBF) ker-nel, which in general is given by: 
+
+kRBF (x, x′) = σ2 
+
+> f
+
+exp 
+
+> (
+
+− ∥x − x′∥2
+
+2l2
+
+> )
+
+, (8) where σ2 
+
+> f
+
+is the signal variance and l is the length-scale. The length-scale controls how quickly correlations decay with temporal dis-tance. A large l produces very smooth la-tent trajectories, while a small l allows the la-tent variables to change more rapidly between frames. Sample paths of a Gaussian process with an RBF kernel are almost surely infinitely differentiable. This kernel is best suited when the underlying function is assumed to be very smooth (Rasmussen and Williams, 2006). Another useful choice is the Cauchy kernel: 
+
+kCauchy (x, x′) = σ2
+
+> f
+> (
+
+1 + ∥x − x′∥2
+
+l2
+
+> )−α
+
+, (9) where l again controls the temporal scale and 
+
+α > 0 controls the heaviness of the kernel tail. Unlike the RBF kernel, it is much less smooth at the origin. While it is still differentiable, it al-lows for more wiggle or local variation compared to the rigid smoothness of RBF. The Cauchy kernel also decays more slowly with distance. This allows distant frames to remain weakly correlated, which can be useful in endoscopy when similar anatomical regions reappear af-ter camera motion or when the video contains long-range temporal dependencies. In a standard Gaussian process regression set-ting, training means learning the kernel hyper-parameters, such as σ2 
+
+> f
+
+, l, and α, from observed data. Suppose we observe noisy targets 
+
+y = f + ϵ, ϵ ∼ N (0, σ 2
+
+> n
+
+I), (10) where σ2 
+
+> n
+
+is the observation-noise variance. The marginal distribution of the observations is 
+
+p(y | x) = N
+
+> (
+
+y; 0, Kθ + σ2
+
+> n
+
+I
+
+> )
+
+, (11) where θ denotes the kernel hyperparameters. These hyperparameters are learned by maxi-mizing the log marginal likelihood: 
+
+log p(y | x, θ ) = − 12 y⊤ (
+
+Kθ + σ2
+
+> n
+
+I
+
+> )−1
+
+y
+
+− 12 log 
+
+> ∣∣∣
+
+Kθ + σ2
+
+> n
+
+I
+
+> ∣∣∣
+
+− T
+
+2 log(2 π).
+
+(12) The first term is a data fit term. The sec-ond term penalizes overly complex covariance structures. The third term is just a scalar value. In this way, Gaussian processes bal-ance data fit and smoothness automatically. Consequently, Occam’s razor (the simplest ex-planation is usually the right one) is embedded within the model, inherently shielding the Gaus-sian process from overfitting (Rasmussen and Ghahramani, 2000). 5In a GPVAE, the Gaussian process is not trained directly on observed pixels. Instead, it acts as a prior over the latent variables inferred by a VAE encoder. Given an endoscopic video sequence y1: T , the encoder defines an approxi-mate posterior: 
+
+qϕ(Z | Y), (13) while the VAE decoder defines the likelihood: 
+
+pψ(Y′ | Z), (14) in which Y′ are the reconstructed images. The GP prior is given by 
+
+pθ(Z) = 
+
+> D∏
+> d=1
+
+N
+
+> (
+
+z(d); 0, Kθ
+
+> )
+
+, (15) where Kθ is computed from the chosen kernel. In general, this model is trained by maximiz-ing the evidence lower bound (ELBO): 
+
+L = Eqϕ(Z|Y) [log pψ(Y | Z)] −KL [ qϕ(Z | Y) ∥ pθ(Z)] .
+
+(16) The reconstruction term encourages the decoder to reproduce the observed frames, while the KL term encourages the latent variables to follow the temporal correlation structure specified by the GP prior. During training, the encoder pa-rameters ϕ, decoder parameters ψ, and kernel hyperparameters θ can be optimised jointly by gradient descent. The practical training objec-tive used in our implementation, including the reconstruction loss and the model-specific KL terms, is detailed in Appendix A. 6Figure 1: An overview of our proposed model. In a classical VAE setting, images Y are encoded by qϕ to latent points Z. A decoder maps those to back to images Y′. Additionally, we put a Gaussian process prior on the latent points, capturing covariances of neighboring frames in a video via their timestamps t.
+
+# 4 Experiments 
+
+4.1 Models 
+
+In this work we compare the classic VAE to the GPVAE extensions for endoscopic videos. We implement the two approximations described in (Shi et al., 2025), namely the Hierarchical Prior Approximation and the Sparse Precision Ap-proximation (see also Section 2). Throughout, we used H = 50 neighbors as a practical trade-off between temporal context and computa-tional cost: increasing H provides a richer local approximation to the GP prior, whereas smaller values reduce memory and runtime but may insufficiently capture smooth frame-to-frame dynamics. The exact KL terms used for the VAE, GPVAE-HPA, and GPVAE-SPA variants, together with the practical differences from (Shi et al., 2025), are given in Appendix A.2. We equip these models with several state-of-the-art encoders to assess how the latent prior interacts with different visual representations. First, we use the convolutional encoder from EndoVAE (Diamantis et al., 2022), which pro-vides an endoscopy-specific autoencoding base-line. In this implementation, the encoder con-sists of a stack of strided convolutional layers with ReLU activations. Starting from the RGB input frame, the spatial resolution is halved at each layer using 4 × 4 convolutions with stride 2 and padding 1, while the number of feature channels is increased from 32 up to a maximum of 256. The resulting feature map is flattened and passed through a fully connected layer that outputs 2dz values, which are split into the posterior mean and log-variance, μϕ(x)
+
+and log σ2
+
+> ϕ
+
+(x).The EndoVAE decoder mirrors this structure. A latent sample z is first projected with a fully connected layer to the bottleneck feature-map shape used by the encoder. The representation is then progressively upsampled using trans-posed convolutions with ReLU activations until the target image resolution is reached. A fi-nal 3 × 3 convolution maps the decoded feature map back to the RGB image space. For all VAE and GPVAE variants, we use this EndoVAE decoder unless stated otherwise, so that differ-ences between model variants mainly reflect the encoder and latent-prior choices. Second, we use an encoder based on a pre-trained ViT from (Boers et al., 2024) as a fea-ture extractor, allowing us to evaluate the effect of foundation-model features in the VAE and GPVAE settings. We also consider a low-rank adaptation strategy, where the same pretrained ViT is further finetuned, providing an alterna-tive to the frozen or directly reused pretrained encoder. We refer to these encoders as Gas-troEnc and GaLoRAEnc respectively. For both 7variants, the input frame is resized to the ViT resolution of 256 × 256 and passed through the pretrained backbone, from which we use the resulting 768-dimensional image representation. This representation is mapped to the latent space by a lightweight multilayer perceptron head consisting of three hidden linear layers with GELU activations and dropout. Specif-ically, the head maps 768 → 1024 → 512 →
+
+512 → 2dz , where dz is the latent dimensional-ity. The final output is split into the approx-imate posterior mean and log-variance, μϕ(x)
+
+and log σ2
+
+> ϕ
+
+(x).Finally, we also compare to the multiscale vector-quantized VAE (MSVQ-VAE) proposed in (Diamantis and Iakovidis, 2025), which uses its own encoder–decoder architecture. In con-trast to the continuous latent space used by the VAE and GPVAE models, MSVQ-VAE represents images through discrete codebook entries. In our implementation, the MSVQ-VAE encoder and decoder use three multiscale downsampling/upsampling stages. The vector quantizer uses a codebook with 256 entries, up-dated with exponential moving average updates using decay 0.99. The encoder output is quan-tized in a 64-dimensional code space, while an additional projection maps the spatial bottle-neck representation to a 256-dimensional latent vector for compatibility with the rest of the latent-space analysis pipeline. We train MSVQ-VAE with the same maxi-mum number of epochs and base learning rate as the other models, namely 500 epochs and an Adam learning rate of 10 −3. Because of the higher memory requirements of the mul-tiscale encoder-decoder and vector-quantized bottleneck, we use a smaller batch size of 8 for MSVQ-VAE. The reconstruction objective uses an MSE weight of 5.0 and an LPIPS weight of 2.0, together with a VQ commitment weight of 0.25. These hyperparameters were selected empirically on endoscopic video reconstructions, prioritising a balance between pixel-level fi-delity, perceptual sharpness, and stable vector-quantized codebook usage. However, we do not combine MSVQ-VAE with the GPVAE prior, because the two mod-els define fundamentally different latent spaces. The GPVAE assumes a continuous latent vari-able with a Gaussian approximate posterior, so that temporal correlations can be imposed through a Gaussian-process prior over the la-tent trajectories. MSVQ-VAE, in contrast, rep-resents each image using discrete codebook in-dices at multiple spatial scales. These discrete quantized latents do not provide the contin-uous Gaussian posterior parameters required by the GPVAE objective, such as μϕ(x) and 
+
+log σ2
+
+> ϕ
+
+(x). As a result, MSVQ-VAE is used as a separate reconstruction baseline rather than as an encoder-decoder backbone for the GPVAE variants. An overview of the models implemented in this work is given in Table 1. 
+
+4.2 Dataset 
+
+We evaluate our models on C3VDv2 (Golhar et al., 2025), a high-definition phantom-based colonoscopy video dataset designed for 3D re-construction and endoscopic scene understand-ing. It includes two colon anatomies, divided into multiple anatomical segments and rendered with several texture/color variants, providing controlled but visually diverse endoscopic video sequences. C3VDv2 provides RGB colonoscopy frames together with rich geometric ground truth, including depth, surface normals, optical flow, occlusion maps, camera poses, coverage maps, and 3D models for the registered videos. The dataset also contains more challenging sce-narios such as fecal debris, mucous pools, blood, lens obstruction, fast camera motion, en-face views, and deformation sequences. These prop-erties make it suitable for evaluating tempo-rally structured generative models on realistic endoscopic video data, while retaining access to frame order and camera-pose information. To ensure computational feasibility during extensive baseline comparisons while still cov-ering a broad range of visual and motion con-ditions, we selected a subset of 9 representa-tive evaluation sequences from the 192 avail-able videos. This subset was chosen to span anatomical locations, camera motions, sequence lengths, and visual artifacts. Specifically, the se-lected sequences include both clean and debris-containing environments across different colon segments, with challenging conditions such as polyps, blood, water on the lens, rapid os-cillatory motion, and low-texture views. An overview of these curated evaluation sequences 8Table 1: Overview of the evaluated VAE models and encoder-decoder combinations. Model Encoder Decoder Summary VAE EndoVAEEnc EndoVAEDec Baseline VAE with encoder and decoder as described in EndoVAE (Diamantis et al., 2022) VAE GastroEnc EndoVAEDec VAE using an encoder with pretrained ViT from (Boers et al., 2024) and decoder from EndoVAE (Diamantis et al., 2022) VAE GaLoRAEnc EndoVAEDec VAE using a low-rank adapted pretrained ViT from (Boers et al., 2024) and decoder from EndoVAE (Diamantis et al., 2022) GPVAE-HPA EndoVAEEnc EndoVAEDec GPVAE with Hierarchical Prior Approximation (Shi et al., 2025), encoder and decoder from EndoVAE (Diamantis et al., 2022) GPVAE-HPA GastroEnc EndoVAEDec GPVAE with Hierarchical Prior Approxima-tion (Shi et al., 2025) using an encoder with pretrained ViT from (Boers et al., 2024) GPVAE-HPA GaLoRAEnc EndoVAEDec GPVAE with Hierarchical Prior Approximation (Shi et al., 2025) using a low-rank adapted pretrained ViT from (Boers et al., 2024) GPVAE-SPA EndoVAEEnc EndoVAEDec GPVAE with Sparse Precision Approximation (Shi et al., 2025), encoder and decoder from EndoVAE (Diamantis et al., 2022) GPVAE-SPA GastroEnc EndoVAEDec GPVAE with Sparse Precision Approximation (Shi et al., 2025) using an encoder with pre-trained ViT from (Boers et al., 2024) GPVAE-SPA GaLoRAEnc EndoVAEDec GPVAE with Sparse Precision Approximation (Shi et al., 2025) using a low-rank adapted pretrained ViT from (Boers et al., 2024) MSVQ-VAE MSVQEnc MSVQDec Multi-scale vector-quantized VAE baseline as described in (Diamantis and Iakovidis, 2025) 9is given in Table 2. A visualisation of frame 50 from each selected sequence is shown in Fig-ure 2. All frames are resized to 336 × 336 , converted to RGB and scaled from 8-bit intensity values to floating-point values ˜xc ∈ [0 , 1] . For the ex-periments reported here, we use the GastroNet channel normalization given in (Boers et al., 2024). Each RGB channel is standardized inde-pendently as 
+
+x′ 
+
+> c
+
+= ˜xc − μc
+
+σc
+
+, (17) where c ∈ { R, G, B } denotes the color chan-nel, with μ = (0 .6404 , 0.3613 , 0.3133) and 
+
+σ = (0 .1898 , 0.1555 , 0.1409) . Using the same normalization for all encoder-decoder variants keeps the CNN-based models and the pretrained GastroNet models on a common input scale, while preserving compatibility with the prepro-cessing used for the pretrained encoder. 
+
+4.3 Hyperparameters 
+
+All models were implemented in PyTorch and trained on a HPC cluster, using NVIDIA A100 GPU nodes. Gaussian-process components were implemented with GPyTorch. Unless stated otherwise, models were trained for a maximum of 500 epochs with mini-batches of 64 frames and early stopping with a patience of 25 epochs. Early stopping was only enabled after the first half of training, so that models were not stopped during the KL warm-up phase. The VAE and GPVAE variants used a latent dimensionality of dz = 256 .The hyperparameter values were chosen as stable default settings based on preliminary ex-periments on a subset of the data. In these initial runs, we prioritized robust convergence across all datasets and model families rather than tuning each configuration independently. The same settings were then kept fixed for the main experiments to ensure that differences be-tween models were not driven by model-specific hyperparameter tuning. For the VAE and GPVAE variants, the objec-tive combines pixel-wise reconstruction, percep-tual reconstruction, and a model-specific KL term. We used weights of 4.0 for MSE, 2.0 for LPIPS, and 1.0 for the KL term. MSE was computed at the full training resolution, while LPIPS was computed with a fixed VGG-based network after resizing images to 256 × 256 . The full objective, including the masked reconstruc-tion loss and the VAE-, HPA-, and SPA-specific KL terms, is given in Appendix A. Optimization was performed with Adam. The encoder head and decoder were trained with an initial learning rate of 10 −3. For Ga-LoRA models, the low-rank adaptation param-eters were trained with a learning rate of 10 −5,rank r = 8 , and scaling factor α = 8 . For GP-VAE models, the GP kernel hyperparameters and likelihood noise were optimized jointly with the neural-network parameters using a learning rate ten times larger than the base learning rate. Gradients were clipped to a maximum norm of 1.0. The learning rate was linearly warmed up from 10% of its initial value to the full value during the first 50 epochs. It was then annealed with a cosine schedule for the remaining epochs, with a minimum learning rate of 10 −5. The KL contribution was also annealed: βt was set to zero for the first 50 epochs and then linearly increased over the next 50 epochs. For the GPVAE variants, we used the Cauchy kernel and H = 50 nearest neighbors, computed in temporal input space using frame indices. For numerical stability, the GP hyperparameters were constrained during optimization. With unscaled frame indices, the lengthscale was con-strained to [1 , 30] frames, the outputscale to 
+
+[0 .5, 10] , and the likelihood noise to [10 −3, 1] .
+
+4.4 Masking Bad Pixels 
+
+Specular reflections can negatively affect VAE training because they introduce bright, satu-rated image regions that are not well explained by the underlying anatomical scene. These high-lights are often caused by the endoscope light source and viewing geometry rather than by stable tissue appearance. As a result, they can dominate pixel-wise reconstruction losses and encourage the model to allocate latent capacity to reproducing transient illumination artifacts instead of modelling the smoother anatomical and temporal structure of the video. This is particularly undesirable for GPVAE models, where the latent trajectory is expected to vary smoothly with frame position. To reduce this effect, we use a binary valid-pixel mask dur-10 Table 2: Overview of the selected C3VDv2 video sequences with tags and comments as provided by (Golhar et al., 2025). Video name Frames Camera speed Debris Tags / comments c1_ascending_t1_v1 282 20 no Zigzag c1_descending_t1_v2 208 20 no Loop; saturation; back to start point c1_descending_t2_v3 617 10 yes Straight and oscillatory motion; blood c1_rectum_t2_v2 366 14 no Zigzag; exploratory motion c1_rectum_t4_v3 457 9 yes Fecal debris; withdrawal with os-cillatory motion c1_transverse2_t1_v2 517 10 no Loop; polyp; inspect the polyp; start and end point is the same c2_cecum_t3_v2 306 30 no Fast; oscillatory motion in explo-ration c2_sigmoid_t2_v2 448 14 no Polyp; first and second half of the video have the same waypoints c2_transverse2_t1_v3 522 20 yes Cleaning polyp with water jet and scope dips into mucous pool which is cleaned with lens cleaning water. ing training and evaluation in all experiments reported below. To identify specular highlights, we use the DUCKNet-based specular segmentation model from the official implementation of (Yu et al., 2026). Their method uses DUCKNet as the first stage of a two-stage endoscopic artifact inpainting pipeline, where DUCKNet localizes specular regions before mask-guided inpaint-ing with LaMa and subsequent diffuse-artifact refinement with StableDelight. We use their re-leased checkpoint as a fixed preprocessing model for generating specular-reflection masks. An ex-ample of a masked frame is given in Figure 2, second column. In our preprocessing pipeline, each frame is padded using reflected borders, resized to 
+
+256 × 256 , normalized using ImageNet statis-tics, and passed through DUCKNet to obtain a single-channel specular probability map. Pix-els with predicted probability above 0.1 are marked as artefacts. Because saturated high-lights may still be missed by the learned model, we additionally mark pixels with grayscale in-tensity above 225 as invalid. This threshold was selected empirically as a conservative high-intensity cutoff on the 8-bit grayscale scale, intended to capture near-saturated highlights missed by DUCKNet while avoiding excessive masking of normal bright mucosal regions. The DUCKNet prediction and intensity-threshold mask are combined, dilated using a 5 × 5 kernel for two iterations, resized back to the original image resolution with nearest-neighbor inter-polation, and cropped to remove the padding. The resulting artefact mask is inverted to ob-tain a valid-pixel mask, where valid anatomical pixels have value 1 and detected specular or overexposed regions have value 0. This mask is stored with the prepared dataset and used during training and evaluation to prevent tran-sient reflection artefacts from dominating the reconstruction objective. In the experiments, the same valid-pixel mask defines the pixel set 
+
+Ω used in the masked reconstruction loss de-scribed in Appendix A.1. 11 Figure 2: Qualitative reconstruction frame 50. From left to right: original frame, masked frame, VAE and GPVAE-HPA reconstruction, and difference between the VAE and GPVAE-HPA (independently scaled per sequence to the 98th percentile for visibility). Both reconstructions use the EndoVAEEnc encoder and EndoVAEDec decoder. 12 5 Results 
+
+5.1 Reconstruction 
+
+In this first experiment we provide the mod-els with all frames in the videos and measure how well the encoder-decoder setup can recon-struct the given images. Pixel-level reconstruc-tion accuracy is measured using masked root mean squared error (RMSE) over the valid-pixel mask. We also report peak signal-to-noise ratio (PSNR), computed from the same denormal-ized images with data range 1.0. Perceptual and structural image quality are assessed us-ing SSIM and FID. SSIM is computed between reconstructed and real frames in denormalized RGB space. We compute an SSIM map per frame and average only over valid mask pix-els. FID is computed with the TorchMetrics Frechet Inception Distance implementation us-ing 2048-dimensional Inception features. Before FID computation, images are clipped to [0 , 1] ,converted to 8-bit RGB, and compared as real versus reconstructed image sets. All metrics are computed after denormaliza-tion, i.e. after multiplying each channel by its standard deviation and adding the correspond-ing mean. This ensures that the reported values are measured in the original RGB image space rather than in the standardized network-input space. RMSE, SSIM, and PSNR are evalu-ated over the valid pixels defined by the mask, whereas FID is computed on the full clipped RGB frames. SSIM should be interpreted with caution because the reconstructions are already extremely close in pixel space, causing the score to saturate near 1 and making meaningful differ-ences between models difficult to resolve. FID should also be treated cautiously because it is computed on a relatively small and domain-specific set of video frames, where Inception features may not reliably reflect perceptual qual-ity in endoscopic imagery. We include them for completeness. The results are given in Table 3. For the GPVAE, we also included the metrics for images recreated purely from their timestamp, instead of from the original image. Those results are given in Table 4. The non-GPVAE models, i.e. VAE and MSVQ-VAE, lack this ability. From the reconstruction tables, the clearest result is that adding the GP prior improves reconstruction quality most strongly when us-ing the EndoVAE encoder-decoder. In the image-encoded setting, GPVAE-HPA with En-doVAEEnc and EndoVAEDec obtains the best RMSE, PSNR, SSIM, and FID, indicating that the temporal prior improves reconstruction even when the image itself is available to the encoder. Across the three matched encoder–decoder groups, selecting the better GPVAE approxima-tion within each group reduced the mean image-encoded RMSE from 0.0024 for the VAE base-lines to 0.0019, corresponding to a relative re-duction of 21.9%. The largest reduction was ob-served for EndoVAEEnc–EndoVAEDec, where GPVAE-HPA reduced RMSE from 0.0023 to 0.0017, a 26.1% improvement. The time-encoded table shows that the GP-VAE models can reconstruct frames from times-tamp alone with only a small loss compared with image-encoded reconstruction. This is important: it suggests that the learned latent trajectory captures meaningful temporal struc-ture in the video, rather than merely acting as a regularizer during image reconstruction. Across GPVAE variants, HPA performs best with the EndoVAE encoder, while SPA is slightly better for the GastroEnc and GaLo-RAEnc variants in several metrics. This sug-gests that the best GP approximation may de-pend on the encoder representation, with no single variant dominating across all backbones. The pretrained GastroNet-based encoders do not clearly outperform the simpler EndoVAE encoder in this reconstruction setting. In fact, EndoVAEEnc combined with GPVAE-HPA gives the strongest overall results, while GastroEnc and GaLoRAEnc generally produce higher RMSE and lower PSNR. This may indi-cate that the pretrained encoders provide use-ful semantic features, but are less optimized for precise pixel-level reconstruction than the dedicated convolutional encoder. Finally, GaLoRAEnc substantially increases training time per epoch, especially for GPVAE models, without producing a corresponding im-provement in reconstruction quality. For this experiment, the extra adaptation cost does not appear justified by the reconstruction metrics. To illustrate this further, we provide a quali-tative comparison in Figure 2. The VAEs with-out a Gaussian process prior tend to yield more 13 Table 3: Image-encoded reconstruction performance averaged across videos. Values are reported as mean ± population standard deviation. RMSE is measured in denormalized image intensity units on the [0 , 1] scale, PSNR in dB, SSIM and FID are unitless, and time is reported as seconds per epoch. The best value in each metric column within each section is shown in bold.                                                                                                                                                                             
+
+> Model Encoder Decoder RMSE [0 ,1] ↓PSNR [dB] ↑SSIM [unitless] ↑FID [unitless] ↓Time/epoch [s] ↓
+> VAE EndoVAEEnc EndoVAEDec 0.0023 ±0.0009 53 .41 ±3.25 0.99994 ±0.00005 0.153 ±0.114 2.62 ±0.80
+> GPVAE_HPA EndoVAEEnc EndoVAEDec 0.0017 ±0.0006 55 .79 ±2.85 0 .99997 ±0.00005 0.080 ±0.100 3.06 ±0.88
+> GPVAE_SPA EndoVAEEnc EndoVAEDec 0.0018 ±0.0007 55 .25 ±3.12 0.99997 ±0.00005 0.090 ±0.098 2.93 ±0.84
+> VAE GastroEnc EndoVAEDec 0.0025 ±0.0010 52 .82 ±3.21 0.99992 ±0.00008 0.167 ±0.125 2.48 ±0.75
+> GPVAE_HPA GastroEnc EndoVAEDec 0.0022 ±0.0009 53 .57 ±3.17 0.99989 ±0.00009 0.136 ±0.110 2.72 ±0.80
+> GPVAE_SPA GastroEnc EndoVAEDec 0.0021 ±0.0008 53 .96 ±3.17 0 .99994 ±0.00005 0.125 ±0.113 2.61 ±0.76
+> VAE GaLoRAEnc EndoVAEDec 0.0025 ±0.0010 52 .70 ±3.19 0.99992 ±0.00008 0.169 ±0.129 9.46 ±2.88
+> GPVAE_HPA GaLoRAEnc EndoVAEDec 0.0021 ±0.0007 54 .15 ±2.75 0.99993 ±0.00005 0.112 ±0.130 12 .99 ±3.89
+> GPVAE_SPA GaLoRAEnc EndoVAEDec 0.0019 ±0.0007 54 .77 ±3.12 0 .99996 ±0.00005 0.111 ±0.107 12 .86 ±3.85
+> MSVQ_VAE MSVQEnc MSVQDec 0.0023 ±0.0011 53 .44 ±3.69 0.99992 ±0.00008 0.133 ±0.113 7.41 ±2.24
+
+Table 4: Time-encoded reconstruction performance averaged across videos. Values are reported as mean ± population standard deviation. RMSE is measured in denormalized image intensity units on the [0 , 1] scale, PSNR in dB, and SSIM and FID are unitless. The best value in each metric column is shown in bold.                                                                                                 
+
+> Model Encoder Decoder RMSE [0 ,1] ↓PSNR [dB] ↑SSIM [unitless] ↑FID [unitless] ↓
+> GPVAE_HPA EndoVAEEnc EndoVAEDec 0.0017 ±0.0006 55 .71 ±2.88 0.99997 ±0.00005 0.081 ±0.099
+> GPVAE_SPA EndoVAEEnc EndoVAEDec 0.0018 ±0.0007 55 .23 ±3.12 0.99997 ±0.00005 0.091 ±0.098
+> GPVAE_HPA GastroEnc EndoVAEDec 0.0023 ±0.0009 53 .53 ±3.18 0.99989 ±0.00009 0.137 ±0.109
+> GPVAE_SPA GastroEnc EndoVAEDec 0.0021 ±0.0009 54 .01 ±3.21 0.99994 ±0.00005 0.124 ±0.114
+> GPVAE_HPA GaLoRAEnc EndoVAEDec 0.0021 ±0.0007 54 .08 ±2.77 0.99993 ±0.00005 0.112 ±0.130
+> GPVAE_SPA GaLoRAEnc EndoVAEDec 0.0019 ±0.0007 54 .79 ±3.16 0.99996 ±0.00005 0.112 ±0.108
+
+blurry images. 
+
+5.2 Missing Frames 
+
+To investigate the frame reconstruction perfor-mance, we compared experiments trained with test fractions of 10%, 20%, 40% and 60%. For every model and encoder/decoder combination, the reported test RMSE values were extracted and averaged across the videos. Three quantities were considered. First, the RMSE was evaluated for all frames in the test set for all available models. Second, the time-encoded test RMSE was evaluated only for the GPVAE models, since this metric is only defined for models with a time-encoded reconstruction capability. Third, for the GPVAE models, we evaluated the Gaussian process posterior un-certainty of the time-encoded frames. This uncertainty was obtained from the per-frame uncertainty, excluding the time points used to train the Gaussian process. The GPVAE models show broadly similar be-havior in the image-encoded and time-encoded RMSE curves. Configurations using the En-doVAE encoder generally remain among the strongest performers, while the relative ranking between encoders depends on the model variant and test fraction. At the 60% test split, most configurations show a clear increase in RMSE, consistent with the expected degradation when fewer frames are available for training. The Gaussian-process posterior uncertainty provides a complementary view of this effect. Since the uncertainty was averaged only over test points, it reflects the model’s confidence at held-out time points rather than at the time points used for GP training. The uncertainty curves show that the GPVAE configurations do not respond uniformly to the test split per-centage: some configurations show increased uncertainty at larger test fractions, while oth-ers remain relatively stable or decrease. This suggests that reconstruction error and posterior uncertainty capture related but distinct aspects of model behavior. Unlike the RMSE, the GP posterior uncer-tainty does not increase monotonically with the test split percentage. This is expected, since the 14 Figure 3: Effect of the test split percentage on reconstruction performance and Gaussian-process uncertainty. The left panel shows the image-encoded test RMSE averaged across datasets for all models and encoder/decoder combinations. The middle panel shows the time-encoded test RMSE for the GPVAE models. The right panel shows the mean Gaussian-process posterior uncertainty on test points for the GPVAE models. posterior uncertainty depends primarily on the temporal location of the held-out points relative to the GP training points and on the learned kernel hyperparameters, rather than directly on the image reconstruction error. Consequently, the GP can remain confident at test points that are well supported by nearby training points, even when reconstruction accuracy decreases due to reduced training data. The Gaussian process posterior uncertainty provides an addi-tional diagnostic beyond reconstruction error alone. 
+
+5.3 Camera Path Reconstruction 
+
+Image reconstruction quality does not neces-sarily translate to downstream tasks such as navigation or 3D reconstruction. In endoscopy, this distinction is particularly important be-cause low texture, specular highlights, blur, and repetitive tubular anatomy can make camera-motion estimation unstable even when individ-ual frames look visually plausible. We therefore complement the image reconstruction evalua-tion with a camera path reconstruction analysis. For each sequence in Table 2 we investigated, the ground-truth camera trajectory is provided. To assess how well reconstructed sequences pre-serve motion information, we estimate camera paths using both a classical visual odometry (VO) pipeline and a deep-learning-based pose estimator PoseNet (Kendall et al., 2015), and compare the resulting trajectories against the ground-truth path. The deep-learning-based PoseNet approach replaces explicit geometric estimation with a learned mapping from image pairs to relative camera motion. The model follows the stan-dard self-supervised monocular pose-estimation design used in depth-and-pose learning. Two RGB frames are concatenated channel-wise and passed through a convolutional pose encoder, which produces a learned feature representation of the pair. A pose decoder then regresses a 6-DoF relative motion parametrization consisting of axis-angle rotation and translation. In our experiments, we use the PoseNet implementa-tion provided by SHADeS (Daher et al., 2025), which was pretrained on endoscopic images. The global trajectory is recovered by recur-sively composing the estimated relative motions. In the monocular case, the resulting trajectory is only determined up to an unknown global scale. Moreover, its quality depends strongly on the availability of stable and distinctive inter-frame motion cues. This makes trajectory estimation particularly sensitive in endoscopy, where specular highlights, low texture, repeated folds, blur, and forward motion can weaken ge-ometric constraints. The two trajectory estimators, VO and PoseNet, probe different aspects of reconstruc-tion quality. Classical VO evaluates whether the reconstructed frames preserve sufficient ge-ometric detail and correspondence structure for feature-based motion recovery. The pre-trained SHADeS PoseNet instead evaluates whether the reconstructed sequence preserves 15 the higher-level temporal cues required by a learned relative-pose model. Agreement be-tween the two suggests that the restored video remains geometrically and temporally coherent, whereas divergence between them can help di-agnose whether failure arises from poor feature geometry, poor learned motion cues, or both. Because monocular trajectory estimation is only defined up to an arbitrary global scale, ro-tation, and translation, the estimated paths can-not be compared directly to the ground-truth trajectory in their raw form. We align each esti-mated trajectory to the ground truth using an in-house implementation of a Procrustes-style similarity alignment based on singular value de-composition (Umeyama, 1991). This alignment removes trivial coordinate-system differences and allows the evaluation to focus on the actual geometric agreement between the trajectory shapes rather than on arbitrary global offsets. After aligning each estimated trajectory to the ground-truth path, we evaluate camera path reconstruction using three complementary met-rics: root mean squared error (RMSE), absolute trajectory error (ATE), and relative pose error (RPE). More details are given in Appendix B. Together, these metrics allow us to distinguish between global trajectory mismatch and local motion inconsistency. Figures 4 and 5 provide qualitative trajec-tory comparisons for the classical visual odome-try and PoseNet-based reconstructions, respec-tively. In each case, the reconstructed trajecto-ries of the selected VAE and GPVAE variants are aligned to the ground-truth path, allow-ing visual assessment of global drift, local de-viations, and overall path fidelity across the different videos. Figure 6 complements these qualitative examples with a quantitative sum-mary, showing the distribution of RMSE, RPE, and ATE across videos for the VAE, GPVAE-HPA, and GPVAE-SPA model families under both trajectory estimation methods. We ex-cluded video c2_transverse_t1_v3 from this analysis, as its trajectory estimates were not meaningful and no valid camera path could be reconstructed, which would otherwise dominate and clutter the visualisation. Table 5 sum-marizes the path reconstruction performance averaged across videos for both classical visual odometry and PoseNet, and shows that the GPVAE variants generally improve trajectory preservation relative to the plain VAE base-line. Averaged across matched encoder–decoder groups and across both trajectory estimators, selecting the better GPVAE approximation re-duced trajectory RMSE by 12.7% relative to the corresponding VAE baselines. Overall, the trajectory-based evaluation sug-gests that incorporating a GP prior improves temporal coherence relative to a plain VAE, leading to lower RMSE, ATE, and RPE on av-erage. This effect is most pronounced for the PoseNet-based trajectory estimation, while the gains for classical visual odometry are smaller and more variable, indicating that GP regular-ization primarily benefits the preservation of temporally consistent motion cues rather than feature-based geometric matching alone. 
+
+5.4 Latent Space 
+
+Figure 7 shows the latent trajectories obtained for all datasets when 20% of the timestamps were held out from GP training. In addition, a contiguous gap of 10 consecutive frames was removed from each dataset to simulate realistic capsule endoscopy behavior, where bursts of missing frames can occur. All removed frames, including both the randomly held-out times-tamps and the gap frames, were assigned to the test set. For each dataset, the left panel shows the VAE latent trajectory obtained by encoding the image frames. The right panel shows the corresponding GPVAE_SPA latent space and compares two representations: latent points ob-tained by encoding the frames with the image encoder, and latent points predicted from the timestamps alone using the GP prior. Training frames are colored by frame index. Held-out image-encoded test frames are shown as circu-lar markers, while held-out time-encoded test frames in the GPVAE_SPA panels are shown as square markers. The square markers are plotted larger than the training markers and on top of the training trajectory to make the test predictions visible. Both models used En-doVAEEnc and EndoVAEDec. The main feature to inspect is the agreement between the image-encoded and time-encoded latent trajectories in the GPVAE_SPA pan-els. When the square markers lie close to the 16 Figure 4: Aligned trajectory reconstructions obtained with classical visual odometry for the selected VAE, GPVAE-HPA, and GPVAE-SPA models across all evaluated videos. In each subplot, the reconstructed trajectories are shown together with the corresponding ground-truth camera path. 17 Figure 5: Aligned trajectory reconstructions obtained with the pretrained PoseNet for the selected VAE, GPVAE-HPA, and GPVAE-SPA models across all evaluated videos. In each subplot, the reconstructed trajectories are shown together with the corresponding ground-truth camera path. 18 Figure 6: Distribution of trajectory reconstruction errors across videos for the VAE, GPVAE-HPA, and GPVAE-SPA model families, evaluated with visual odometry and PoseNet. Lower values are better. Within each family, the spread reflects the different encoder-decoder model combinations. 19 Table 5: Path reconstruction performance averaged across videos, excluding 
+
+c2_transverse2_t1_v3 because its trajectory reconstruction results are severely degraded and would disproportionately skew the summary. Values are reported as mean ± population standard deviation. RMSE, ATE, and RPE are measured in mm. Lower values are better. The best value in each metric column within each encoder block and method section is shown in bold. 
+
+Model Encoder Decoder RMSE [mm] ↓ ATE [mm] ↓ RPE [mm] ↓
+
+Visual Odometry 
+
+VAE EndoVAEEnc EndoVAEDec 6.63 ± 1.90 5.96 ± 1.60 1.08 ± 0.46 
+
+GPVAE_HPA EndoVAEEnc EndoVAEDec 6.86 ± 4.70 6.17 ± 4.20 1.01 ± 0.44 
+
+GPVAE_SPA EndoVAEEnc EndoVAEDec 6.39 ± 3.50 5.69 ± 2.98 1.04 ± 0.47 
+
+VAE GastroEnc EndoVAEDec 8.10 ± 1.83 7.33 ± 1.41 1.18 ± 0.53 
+
+GPVAE_HPA GastroEnc EndoVAEDec 7.64 ± 2.75 6.89 ± 2.26 1.11 ± 0.52 
+
+GPVAE_SPA GastroEnc EndoVAEDec 6.97 ± 2.24 6.29 ± 1.78 1.05 ± 0.48 
+
+VAE GaLoRAEnc EndoVAEDec 9.27 ± 3.25 8.41 ± 3.03 1.18 ± 0.44 
+
+GPVAE_HPA GaLoRAEnc EndoVAEDec 8.06 ± 4.35 7.36 ± 4.11 1.00 ± 0.43 
+
+GPVAE_SPA GaLoRAEnc EndoVAEDec 7.63 ± 4.44 6.79 ± 3.83 0.97 ± 0.44 
+
+MSVQ_VAE MSVQEnc MSVQDec 5.78 ± 1.58 5.17 ± 1.33 1.16 ± 0.48 
+
+PoseNet 
+
+VAE EndoVAEEnc EndoVAEDec 4.24 ± 3.34 3.92 ± 3.12 0.31 ± 0.34 
+
+GPVAE_HPA EndoVAEEnc EndoVAEDec 3.78 ± 3.10 3.42 ± 2.84 0.29 ± 0.30 
+
+GPVAE_SPA EndoVAEEnc EndoVAEDec 3.83 ± 3.13 3.49 ± 2.87 0.32 ± 0.38 
+
+VAE GastroEnc EndoVAEDec 4.46 ± 3.15 4.12 ± 2.92 0.41 ± 0.23 
+
+GPVAE_HPA GastroEnc EndoVAEDec 3.94 ± 2.95 3.62 ± 2.72 0.33 ± 0.17 
+
+GPVAE_SPA GastroEnc EndoVAEDec 3.92 ± 3.08 3.58 ± 2.84 0.35 ± 0.31 
+
+VAE GaLoRAEnc EndoVAEDec 4.51 ± 3.12 4.16 ± 2.87 0.37 ± 0.27 
+
+GPVAE_HPA GaLoRAEnc EndoVAEDec 3.95 ± 2.96 3.60 ± 2.73 0.27 ± 0.26 
+
+GPVAE_SPA GaLoRAEnc EndoVAEDec 3.81 ± 3.08 3.47 ± 2.82 0.27 ± 0.27 
+
+MSVQ_VAE MSVQEnc MSVQDec 4.42 ± 3.48 4.02 ± 3.21 0.34 ± 0.27 
+
+20 image-encoded trajectory, the GP prior pre-dicts a latent state from time alone that is consistent with the visual content of the corre-sponding frame. This illustrates the role of the temporal GP prior in GPVAE_SPA: unlike a standard VAE, where the latent representation is obtained only through the image encoder, GPVAE_SPA provides a second route into the latent space. A timestamp can be mapped to a latent distribution, which can then be decoded into an image. The time-based latent prediction is also ac-companied by the Gaussian process posterior uncertainty. We aggregate this uncertainty by computing the average GP posterior standard deviation across all latent coordinates, result-ing in a single scalar uncertainty value per frame. For the held-out test frames, this scalar is encoded using a green–yellow–red color scale, where green indicates lower uncertainty and red indicates higher uncertainty. The color scale is normalized separately for each dataset us-ing the uncertainty values of that dataset’s held-out points. Therefore, colors should be interpreted within each panel only: red denotes relatively higher uncertainty for that dataset, while green denotes relatively lower uncertainty. The color scale is not shared in absolute value across datasets, so uncertainty colors should not be compared quantitatively between different datasets. The uncertainty pattern provides an impor-tant diagnostic. Randomly held-out test frames are often surrounded by nearby training times-tamps, and many of them therefore have rel-atively low uncertainty. This is expected: al-though their images were not used as GP train-ing targets, their timestamps lie close to ob-served frames, so the GP prior can interpo-late with relatively high confidence. In con-trast, the contiguous gap creates a region of the temporal domain with no observed training frames. The GP uncertainty therefore tends to increase within the gap, especially for points far-ther away from the observed frames at the gap boundaries. This behavior is desirable, because it indicates that the model is less confident when it must infer latent states farther from available temporal support. Thus, Figure 7 should be read as both a trajectory-alignment plot and an uncertainty diagnostic. Good behavior corresponds to time-encoded test points that follow the image-encoded latent trajectory, while also showing increased uncertainty in genuinely unsupported regions such as the centre of a missing-frame gap. These uncertainty estimates can be inter-preted as confidence measures for reconstruc-tions generated from time alone, and may be useful for weighting predictions, flagging uncer-tain reconstructions, or deciding when image-based information is required. 
+
+5.5 Effect of Latent Dimensionality 
+
+To evaluate the influence of the latent dimen-sionality, we trained each model using latent dimensions Dz ∈ { 8, 16 , 32 , 64 , 128 , 256 } and compared the reconstruction error on the train-ing images. The metric used is the root mean squared error (RMSE) between reconstructed and target training images, reported in denor-malized image-intensity space. Overall, increasing the latent dimensional-ity tends to reduce the reconstruction error, although the improvement is not strictly mono-tonic for every dataset and model. The largest gains are generally observed when moving from very small latent spaces, such as 8D or 16D, to intermediate or high-dimensional latent spaces. The 256D setting often yields the lowest average RMSE, particularly for the GPVAE variants. Across models, the GPVAE-based methods generally achieve lower RMSE than the plain VAE, suggesting that the structured latent prior remains beneficial even when reconstruction quality is evaluated directly in image space. The MSVQ-VAE results are more variable and should be interpreted with care. In the current implementation, MSVQ-VAE is not fully in-dependent of the latent-dimensionality setting, because the global latent dimension is also used as the size of the continuous bottleneck before vector quantization. As a result, changing Dz
+
+also changes the learned projection layers in the MSVQ-VAE model. We also measured the average time per epoch for each model and latent dimensionality. This gives an indication of the computational cost associated with increasing the latent space size. The time-per-epoch results show that com-putational cost is driven more strongly by the model architecture and encoder choice than 21 Figure 7: Three-dimensional PCA projections of image- and time-encoded latent trajectories for the VAE and GPVAE_SPA models. Training points are colored by frame index, while held-out test points are colored by relative GP posterior uncertainty within each dataset, from low uncertainty in green to high uncertainty in red. 22 Figure 8: Training-image RMSE as a function of latent dimensionality for each dataset. Each subplot corresponds to one dataset. Colors indicate the model family, while markers indicate the encoder type. Lower values indicate better reconstruction quality. Increasing the latent space dimensionality results in lower RMSE. 23 Figure 9: Time per epoch as a function of latent dimensionality for each dataset. Each subplot corresponds to one dataset. Colors indicate the model family, while markers indicate the encoder type. There is no effect of the latent space dimensionality on training time. 24 by the latent dimensionality itself. The plain VAE is consistently the fastest model family, while the GPVAE variants are slower due to the additional latent prior structure. MSVQ-VAE is generally the slowest, reflecting the cost of the multiscale encoder-decoder and vector-quantization bottleneck. Importantly, increasing the latent dimension-ality from 8D to 256D does not cause a strong systematic increase in time per epoch for most models. This suggests that, in these experi-ments, the dominant computational cost lies in the convolutional/encoder-decoder backbone and image-space losses rather than in the di-mensionality of the latent vector. Therefore, larger latent spaces can improve reconstruction quality with only limited additional per-epoch cost. 
+
+# 6 Discussion 
+
+An important advantage of the GP-based formu-lation is that it provides uncertainty estimates over the latent trajectory and, indirectly, over the reconstructed frames. This uncertainty can serve as an intrinsic indicator of reconstruction reliability, for example by highlighting frames that are weakly supported by neighboring ob-servations or by identifying interpolated frames for which the model is less confident. In this way, uncertainty can help distinguish between reconstructions that are plausible and well sup-ported by the temporal context and those that are more speculative. Such information could be valuable in downstream applications, for instance by downweighting unreliable frames before pose estimation or 3D reconstruction, or by prioritizing uncertain frames for human review in clinically sensitive settings. Although we do not yet exploit this uncertainty explicitly in the present work, it represents an impor-tant advantage of the proposed probabilistic framework and a promising direction for future research. A main limitation of this work is that the experimental validation is performed primarily on synthetic endoscopic video with controlled ground truth. This enables rigorous quan-titative evaluation of reconstruction quality, missing-frame inference, uncertainty, and trajec-tory preservation, but it does not fully capture the variability and complexity of real clinical endoscopy. In practice, real procedures exhibit stronger domain shifts, non-rigid tissue defor-mation, illumination changes, specularities, oc-clusions, blur, and procedure-dependent motion patterns that may affect both the learned la-tent dynamics and the reliability of downstream pose estimation. As a result, although the pro-posed framework shows promising performance on C3VDv2, further validation on real clinical video data will be necessary to assess the ex-tent to which these gains transfer to practical endoscopic applications. In this work, the Gaussian-process prior is indexed by time, implemented here as the frame number. However, the proposed framework is not restricted to temporal inputs alone. In principle, any auxiliary variable that provides meaningful structure over the sequence could be used to define the GP input space. For ex-ample, in wireless capsule endoscopy, external magnetic localization systems can provide po-sition and orientation estimates of the capsule, which could serve as physically grounded co-variates for the latent process (Xu et al., 2022; Kanaan and Suveren, 2025). Likewise, iner-tial measurements or other onboard sensing modalities could be incorporated when avail-able, as sensor fusion has also been explored for capsule localization (Vedaei and Wahid, 2021). Beyond physical sensing, clinically meaningful sequence-level information, such as anatomical segment labels, procedural phase, or inspection context, could also be used to structure the latent trajectory. Such auxiliary inputs may help the model capture temporal dependencies more faithfully and could potentially improve downstream tasks such as camera path recon-struction by providing a latent prior that is better aligned with the underlying acquisition process. 
+
+# 7 Conclusion 
+
+We presented a Gaussian Process Prior Varia-tional Autoencoder framework tailored to the challenges of endoscopic video restoration. By replacing the independent latent prior of a stan-dard VAE with a temporal Gaussian process prior, the model transforms the latent represen-tation from a collection of independent points 25 into a continuous probabilistic trajectory over time. This design enables two complementary capabilities: reconstructing frames from their visual content while exploiting temporal con-text, and inferring plausible latent states, and thus reconstructed frames, from timestamps alone when image observations are absent or heavily corrupted. Experiments on the C3VDv2 colonoscopy dataset demonstrate that the GP prior con-sistently improves reconstruction quality over the plain VAE baseline, with GPVAE-HPA using the EndoVAE encoder achieving the strongest pixel-level performance. Across matched encoder–decoder groups, the best GP-VAE approximation reduced image reconstruc-tion RMSE by 21.9% on average, with a max-imum reduction of 26.1%, relative to the cor-responding VAE baselines. The time-encoded reconstruction results confirm that the learned latent trajectories capture meaningful temporal structure rather than merely acting as a regu-lariser during training. Camera path evaluation using both classical visual odometry and a pre-trained PoseNet shows that GPVAE variants better preserve the temporal motion cues re-quired for downstream geometric tasks, with the most pronounced gains observed under the learned PoseNet estimator. Across both trajec-tory estimators, the best GPVAE approxima-tion reduced trajectory RMSE by 12.7% on aver-age relative to the corresponding VAE baselines. The GP posterior uncertainty provides an addi-tional diagnostic that reflects the degree of tem-poral support available for each reconstructed frame, with uncertainty appropriately increas-ing within contiguous missing-frame gaps and decreasing for frames surrounded by nearby ob-servations. Several directions remain open for future work. Validation on real clinical endoscopic video is a necessary next step to assess the ex-tent to which the gains observed on synthetic data transfer to the variability and complexity of live procedures. The GP input space need not be restricted to frame indices: physically grounded covariates such as magnetic capsule localisation signals, inertial measurements, or anatomical segment labels could provide richer temporal structure and better align the latent prior with the underlying acquisition process. Finally, the uncertainty estimates produced by the GP posterior have not yet been exploited ex-plicitly in downstream tasks. Integrating them as confidence weights for pose estimation, 3D reconstruction, or clinical review represents a promising and practically meaningful direction. 
+
+# Declaration of Competing Inter-est 
+
+The authors declare that they have no known competing financial interests or personal rela-tionships that could have appeared to influence the work reported in this paper. 
+
+# Funding 
+
+Ivan De Boi is funded by the FWO postdoc fellowship 1217125N. 
+
+# A Implementation Details of the Objective 
+
+A.1 Reconstruction Objective 
+
+In (Shi et al., 2025), the reconstruction term is written as the negative log-likelihood of the decoder distribution, with the likelihood chosen according to the observation type: a Bernoulli likelihood for binary image data and a Gaussian likelihood for continuous-valued observations. In our implementation, the decoder outputs an RGB reconstruction directly, and we opti-mize a deterministic reconstruction loss rather than an explicit probabilistic observation likeli-hood. Instead, we train the VAE and GPVAE variants with a weighted reconstruction objec-tive in image space: 
+
+Ltotal = λMSE LMSE +λLPIPS LLPIPS +λKL βtLKL ,
+
+(18) where λMSE = 4 .0, λLPIPS = 2 .0, and λKL =1.0. The weights were chosen empirically. The KL warm-up factor βt is annealed during train-ing. The KL term remains a Gaussian latent-space regularizer. For the standard VAE it is computed against an independent standard nor-mal prior, while for the GPVAE variants it is replaced by the corresponding neighbor-based GP prior term. 26 The pixel-wise term is the mean-squared error between the target frame y and reconstruction 
+
+y′:
+
+LMSE = 1
+
+|Ω|
+
+∑
+
+> p∈Ω
+
+∥∥∥yp − y′
+
+> p
+
+∥∥∥22 , (19) where Ω is the set of pixels included in the loss. The perceptual term is 
+
+LLPIPS = LPIPS( y, y′), (20) computed with a fixed VGG-based LPIPS net-work. LPIPS is evaluated after resizing im-ages to 256 × 256 for computational efficiency, whereas the MSE term is computed at the full training resolution. The KL term LKL varies between the models and is explained in the next section. 
+
+A.2 KL Terms 
+
+For the standard VAE, the encoder outputs a diagonal Gaussian approximate posterior, 
+
+qϕ(zi | yi) = N
+
+(
+
+zi; μϕ(yi), diag( σ2
+
+> ϕ
+
+(yi)) 
+
+)
+
+,
+
+(21) and the prior is the standard normal distribu-tion, 
+
+p(zi) = N (0 , I ). (22) The KL term is therefore computed indepen-dently for each frame and averaged over the mini-batch: 
+
+LVAE KL = 1
+
+B
+
+> B
+
+∑
+
+> i=1
+
+12
+
+> D
+
+∑
+
+> d=1
+
+(
+
+μ2 
+
+> i,d
+
++ σ2 
+
+> i,d
+
+− 1 − log σ2
+
+> i,d
+
+)
+
+,
+
+(23) where B is the batch size and D is the latent dimensionality. In the implementation, the log-variance is clamped to [−10 , 10] for numerical stability. For GPVAE-HPA, the KL term is computed on local neighborhood blocks. For each batch index i, we construct a local set 
+
+Ni = {i} ∪ n(i), (24) where n(i) contains the H nearest neighbors in the GP input space. Thus, the local block size in our implementation is K = H + 1 . For each latent dimension d, the approximate posterior over this local block is 
+
+qϕ(z(d) 
+
+> Ni
+
+| YNi ) = N
+
+(
+
+μ(d) 
+
+> Ni
+
+, diag 
+
+(
+
+(σ(d) 
+
+> Ni
+
+)2)) 
+
+,
+
+(25) while the GP prior over the same block is 
+
+pθ(z(d) 
+
+> Ni
+
+| XNi ) = N
+
+(
+
+0, K θ(XNi , X Ni ) + σ2
+
+> n
+
+I
+
+)
+
+.
+
+(26) The local HPA KL is computed in closed form: 
+
+KL HPA  
+
+> i,d
+
+= 12
+
+[
+
+tr 
+
+(
+
+K−1 
+
+> i
+
+Si,d 
+
+)
+
++ μ⊤
+
+> i,d
+
+K−1 
+
+> i
+
+μi,d 
+
+− log |Si,d | + log |Ki| − K
+
+]
+
+.
+
+(27) where Ki is the local GP covariance matrix and Si,d is the diagonal posterior covariance for latent dimension d on the local block. In the code, this term is averaged over batch elements and latent dimensions, and additionally divided by the local block size: 
+
+LHPA KL = 1
+
+BDK 
+
+> B
+
+∑
+
+> i=1
+> D
+
+∑
+
+> d=1
+
+KL HPA  
+
+> i,d
+
+. (28) For GPVAE-SPA, the GP prior is approxi-mated through local conditional distributions. For each frame i, let n(i) denote its nearest-neighbor set. The GP conditional prior for latent dimension d is 
+
+pθ(z(d) 
+
+> i
+
+| z(d)
+
+> n(i)
+
+) = N
+
+(
+
+α⊤ 
+
+> i
+
+z(d)
+
+> n(i)
+
+, v i
+
+)
+
+, (29) where 
+
+αi = K−1
+
+> n(i)n(i)
+
+Kn(i)i, (30) and 
+
+vi = Kii − Kin (i)K−1
+
+> n(i)n(i)
+
+Kn(i)i. (31) In the implementation, the conditional mean is approximated using the detached encoder means of the neighbors: 
+
+mi,d = α⊤ 
+
+> i
+
+μn(i),d . (32) The KL between the current approximate pos-terior and this local conditional prior is 
+
+KL SPA  
+
+> i,d
+
+= 12
+
+[
+
+log vi
+
+σ2
+
+> i,d
+
++ σ2 
+
+> i,d
+
++ ( μi,d − mi,d )2
+
+vi
+
+− 1
+
+]
+
+.
+
+(33) The implementation averages this term over the batch and latent dimensions, and rescales it by 
+
+N/B :
+
+LSPA KL = NB · 1
+
+BD 
+
+> B
+
+∑
+
+> i=1
+> D
+
+∑
+
+> d=1
+
+KL SPA  
+
+> i,d
+
+. (34) 27 Our implementation follows the neighbor-driven HPA idea of (Shi et al., 2025), but differs in several practical details. First, our notation for the neighborhood size differs slightly: we use H for the number of neighbors excluding the current frame. Second, our HPA implemen-tation rescales the local KL by averaging over the mini-batch and latent dimensions and di-viding by the local block size. This keeps the numerical scale of the KL term stable across batch size, latent dimensionality, and neighbor-hood size, but means that the loss is not exactly the same mini-batch ELBO estimator as in the original formulation. Finally, for efficiency, the encoder means and log-variances for all frames are precomputed once per epoch and treated as fixed when evaluating the local HPA KL term. Our SPA implementation follows the neighbor-driven conditional-prior idea of (Shi et al., 2025), but uses several practical approxi-mations. As for HPA, H denotes the number of neighbors excluding the current frame. For each batch element i, the conditional prior is com-puted for the current frame given its neighbor set n(i). These neighbors are selected as near-est neighbors in the full temporal input space, rather than being restricted to preceding points as in a strictly ordered Vecchia approximation. This choice is appropriate for our interpolation setting, where frames on both sides of a missing observation may provide temporal context. For efficiency, the encoder means for all frames are precomputed once per epoch and treated as fixed when constructing the SPA conditional mean. The current batch posterior parameters remain part of the computational graph, so the SPA KL still regularizes the en-coder output for the current batch. The result-ing KL is averaged over the batch and latent dimensions and rescaled by N/B to approxi-mate a full-sequence contribution. 
+
+# B Path Reconstruction 
+
+B.1 Visual Odometry 
+
+Classical visual odometry estimates camera mo-tion directly from image correspondences be-tween successive or nearby frames. Given two frames Ii and Ij , salient keypoints are first de-tected and matched, for which we rely on ORB features. C3VDv2 provides images of checker-boards, which we used to calibrate the camera. Using the known camera intrinsics encoded in the calibration matrix K, the matched image points are used to estimate the essential ma-trix E, which captures the epipolar geometry between the two calibrated views. For corre-sponding normalized image points xi and xj ,this relation satisfies 
+
+x⊤ 
+
+> j
+
+E x i = 0 . (35) Decomposition of E then yields the relative rotation and translation direction between the two camera views, which together define the relative rigid transform. More details can be found in (Hartley and Zisserman, 2004). 
+
+B.2 Root Mean Squared Error 
+
+The root mean squared error (RMSE) mea-sures the average squared positional deviation between the aligned estimated trajectory and the ground-truth trajectory.: 
+
+RMSE =  
+
+> √√√√
+
+1
+
+N
+
+> N∑
+> t=1
+> ∥∥∥
+
+¯pt − pgt 
+
+> t
+> ∥∥∥22
+
+, (36) where ¯pt is the aligned estimated camera posi-tion at frame t, pgt  
+
+> t
+
+is the corresponding ground-truth position, and N is the number of shared frames. Lower RMSE indicates better overall agreement with the ground-truth path. 
+
+B.3 Absolute Trajectory Error 
+
+The absolute trajectory error (ATE) measures the mean Euclidean distance between aligned estimated positions and the ground truth: 
+
+ATE = 1
+
+N
+
+> N∑
+> t=1
+> ∥∥∥
+
+¯pt − pgt  
+
+> t
+> ∥∥∥2
+
+. (37) While RMSE penalizes larger errors more strongly, ATE provides a more direct measure of the average absolute positional deviation along the trajectory. 
+
+B.4 Relative Pose Error 
+
+The relative pose error (RPE) evaluates how well local frame-to-frame motion is preserved. 28 Defining the frame-to-frame translation incre-ments as 
+
+∆¯ pt = ¯ pt − ¯pt−1, ∆pgt  
+
+> t
+
+= pgt  
+
+> t
+
+− pgt 
+
+> t−1
+
+, (38) the RPE is computed as 
+
+RPE =  
+
+> √√√√
+
+1
+
+N − 1
+
+> N∑
+> t=2
+> ∥∥∥
+
+∆¯ pt − ∆pgt 
+
+> t
+> ∥∥∥22
+
+. (39) This metric is sensitive to local drift and indi-cates how accurately the estimated trajectory reproduces the relative motion between consec-utive frames. 
+
+# References 
+
+Mahmoud Assran, Mathilde Caron, Ishan Misra, Piotr Bojanowski, Florian Bordes, Pascal Vincent, Armand Joulin, Mike Rab-bat, and Nicolas Ballas. Masked Siamese Networks for Label-Efficient Learning. In 
+
+Lecture Notes in Computer Science (includ-ing subseries Lecture Notes in Artificial In-telligence and Lecture Notes in Bioinfor-matics) , volume 13691 LNCS, 2022. doi: 10.1007/978-3-031-19821-2{\_}26. Selen Atasoy, Diana Mateus, Alexander Mein-ing, Guang Zhong Yang, and Nassir Navab. Endoscopic video manifolds for targeted op-tical biopsy. IEEE Transactions on Medical Imaging , 31(3), 2012. ISSN 02780062. doi: 10.1109/TMI.2011.2174252. Dominik Batić, Felix Holm, Ege Özsoy, To-bias Czempiel, and Nassir Navab. EndoViT: pretraining vision transformers on a large col-lection of endoscopic images. International Journal of Computer Assisted Radiology and Surgery , 19(6), 2024. ISSN 18616429. doi: 10.1007/s11548-024-03091-5. Tim G W Boers, Kiki N Fockens, Joost A van der Putten, Tim J M Jaspers, Carolus H J Kusters, Jelmer B Jukema, Martijn R Jong, Maarten R Struyvenberg, Jeroen de Groof, Jacques J Bergman, Peter H N de With, and Fons van der Sommen. Foundation models in gastrointestinal endoscopic AI: Impact of architecture, pre-training approach and data efficiency. 
+
+Medical Image Analysis , 98:103298, 2024. ISSN 1361-8415. doi: https://doi.org/10. 1016/j.media.2024.103298. URL https: //www.sciencedirect.com/science/ article/pii/S1361841524002238 .Francesco Paolo Casale, Adrian V. Dalca, Luca Saglietti, Jennifer Listgarten, and Nicolo Fusi. Gaussian process prior variational autoen-coders. In Advances in Neural Information Processing Systems , volume 2018-December, 2018. Armin A. Dadras and Philipp Aichinger. Deep Learning-Based Detection of Glottis Seg-mentation Failures. Bioengineering , 11(5), 2024. ISSN 23065354. doi: 10.3390/ bioengineering11050443. Rema Daher, Francisco Vasconcelos, and Danail Stoyanov. SHADeS: self-supervised monocu-lar depth estimation through non-Lambertian image decomposition. International Journal of Computer Assisted Radiology and Surgery ,20(6), 2025. ISSN 18616429. doi: 10.1007/ s11548-025-03371-8. Dimitrios E. Diamantis and Dimitris K. Iako-vidis. Multiscale Vector-Quantized Varia-tional Autoencoder for Endoscopic Image Synthesis. 2025. doi: 10.1109/ist66504.2025. 11268400. Dimitrios E. Diamantis, Panagiota Gatoula, and Dimitris K. Iakovidis. EndoVAE: Gen-erating Endoscopic Images with a Varia-tional Autoencoder. In IVMSP 2022 - 2022 IEEE 14th Image, Video, and Multidimen-sional Signal Processing Workshop , 2022. doi: 10.1109/IVMSP54334.2022.9816329. Vanessa M. Ferreira and Stefan K. Piechnik. CMR parametric mapping as a tool for my-ocardial tissue characterization, 2020. ISSN 17385555. Kenko Fujii, Gauthier Gras, Antonino Salerno, and Guang Zhong Yang. Gaze gesture based human robot interaction for laparoscopic surgery. Medical Image Analysis , 44, 2018. ISSN 13618423. doi: 10.1016/j.media.2017. 11.011. Mayank V Golhar, Lucas Sebastian Galeano Fretes, Loren Ayers, Venkata S Akshin-tala, Taylor L Bobrow, and Nicholas J29 Durr. C3VDv2–Colonoscopy 3D video dataset with enhanced realism. arXiv preprint arXiv:2506.24074 , 2025. R. I. Hartley and A Zisserman. Multiple View Geometry in Computer Vision . Cambridge University Press, ISBN: 0521540518, second edition, 2004. Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun. Deep residual learning for im-age recognition. In Proceedings of the IEEE Computer Society Conference on Computer Vision and Pattern Recognition , volume 2016-December, 2016. doi: 10.1109/CVPR.2016. 90. Tim J.M. Jaspers, Ronald L.P.D. de Jong, Yip-ing Li, Carolus H.J. Kusters, Franciscus H.A. Bakker, Romy C. van Jaarsveld, Gino M. Kuiper, Richard van Hillegersberg, Jelle P. Ruurda, Willem M. Brinkman, Josien P.W. Pluim, Peter H.N. de With, Marcel Breeuwer, Yasmina Al Khalil, and Fons van der Som-men. Scaling up self-supervised learning for improved surgical foundation models. Medi-cal Image Analysis , 108, 2026. ISSN 13618423. doi: 10.1016/j.media.2025.103873. Metod Jazbec, Matt Ashman, Vincent For-tuin, Michael Pearce, Stephan Mandt, and Gunnar Rätsch. Scalable Gaussian Pro-cess Variational Autoencoders . In Arindam Banerjee and Kenji Fukumizu, editors, Pro-ceedings of The 24th International Confer-ence on Artificial Intelligence and Statis-tics , volume 130 of Proceedings of Machine Learning Research , pages 3511–3519. PMLR, 3 2021. URL https://proceedings.mlr. press/v130/jazbec21a.html .Martijn R. Jong, Tim G.W. Boers, Kiki N. Fockens, Jelmer B. Jukema, Carolus H.J. Kusters, Tim J.M. Jaspers, Rixta A.H. van Eijck van Heslinga, Floor C. Slooter, Maarten R. Struyvenberg, Raf Bisschops, Joost A. van der Putten, Peter H.N. de With, Fons van der Sommen, Albert J. de Groof, and Jacques J.G.H.M. Bergman. GastroNet-5M: A Multicenter Dataset for Developing Foundation Models in Gastrointestinal En-doscopy. Gastroenterology , 170(1), 2026. ISSN 15280012. doi: 10.1053/j.gastro.2025. 07.030. Muzaffer Kanaan and Memduh Suveren. En-abling Robotic Capsule Endoscopy Through Effective in-Body Capsule Localization. Sur-gical Innovation , 2025. ISSN 15533514. doi: 10.1177/15533506251334690. Alex Kendall, Matthew Grimes, and Roberto Cipolla. PoseNet: A Convolutional Network for Real-Time 6-DOF Camera Relocalization. In 2015 IEEE International Conference on Computer Vision (ICCV) , pages 2938–2946, 2015. doi: 10.1109/ICCV.2015.336. Max Kirchner, Alexander C Jenke, Sebastian Bodenstedt, Fiona R Kolbinger, Oliver L Sal-danha, Jakob N Kather, Martin Wagner, and Stefanie Speidel. Federated EndoViT: Pre-training Vision Transformers via Federated Learning on Endoscopic Image Collections, 2026. URL https://arxiv.org/abs/2504. 16612 .Wenjun Kou, Dustin A. Carlson, Alexan-dra J. Baumann, Erica Donnan, Yuan Luo, John E. Pandolfino, and Mozziyar Etemadi. A deep-learning-based unsupervised model on esophageal manometry using variational au-toencoder. Artificial Intelligence in Medicine ,112, 2021. ISSN 18732860. doi: 10.1016/j. artmed.2020.102006. Chenxin Li, Hengyu Liu, Yifan Liu, Brandon Y. Feng, Wuyang Li, Xinyu Liu, Zhen Chen, Jing Shao, and Yixuan Yuan. Endora: Video Generation Models as Endoscopy Simulators. 2024. doi: 10.1007/978-3-031-72089-5{\_ }22. David Z. Li, Masaru Ishii, Russell H. Taylor, Gregory D. Hager, and Ayushi Sinha. Learn-ing Representations of Endoscopic Videos to Detect Tool Presence Without Supervi-sion. In Lecture Notes in Computer Science (including subseries Lecture Notes in Artifi-cial Intelligence and Lecture Notes in Bioin-formatics) , volume 12445 LNCS, 2020. doi: 10.1007/978-3-030-60946-7{\_}6. Shawn Mathew, Saad Nadeem, and Arie Kaufman. Visualizing missing surfaces in colonoscopy videos using shared latent space representations. In Proceedings - Interna-tional Symposium on Biomedical Imaging ,30 volume 2021-April, 2021. doi: 10.1109/ ISBI48211.2021.9433982. Carl Rasmussen and Zoubin Ghahramani. Occam s Razor. In T Leen, T Diet-terich, and V Tresp, editors, Advances in Neural Information Processing Sys-tems , volume 13. MIT Press, 2000. URL https://proceedings.neurips. cc/paper_files/paper/2000/file/ 0950ca92a4dcf426067cfd2246bb5ff3-Paper. pdf .Carl Edward Rasmussen and C K I Williams. 
+
+Gaussian processes for machine learning , vol-ume 38. 2006. Xinzhen Ren, Wenju Zhou, Naitong Yuan, Fang Li, Yetian Ruan, and Huiyu Zhou. Prompt-based polyp segmentation during endoscopy. 
+
+Medical Image Analysis , 102, 2025. ISSN 13618423. doi: 10.1016/j.media.2025.103510. Wenting Shen, Yaonan Wang, Min Liu, Ji-azheng Wang, and Renjie Ding. UniSurg: A Unified Multitask Framework for Robotic Surgical Scene Understanding. IEEE Trans-actions on Circuits and Systems for Video Technology , 2026. ISSN 1051-8215. doi: 10.1109/tcsvt.2026.3651960. Xinxing Shi, Xiaoyu Jiang, and Mauricio A. Álvarez. Neighbour-Driven Gaussian Pro-cess Variational Autoencoders for Scalable Structured Latent Modelling. In Proceedings of Machine Learning Research , volume 267, 2025. Shinji Umeyama. Least-Squares Estimation of Transformation Parameters Between Two Point Patterns. IEEE Transactions on Pat-tern Analysis and Machine Intelligence , 13(4), 1991. ISSN 01628828. doi: 10.1109/34.88573. Seyed Shahim Vedaei and Khan A. Wahid. A localization method for wireless capsule en-doscopy using side wall cameras and IMU sensor. Scientific Reports , 11(1), 2021. ISSN 20452322. doi: 10.1038/s41598-021-90523-w. Zhao Wang, Chang Liu, Shaoting Zhang, and Qi Dou. Foundation Model for En-doscopy Video Analysis via Large-Scale Self-supervised Pre-train. In Lecture Notes in Computer Science (including subseries Lecture Notes in Artificial Intelligence and Lecture Notes in Bioinformatics) , vol-ume 14228 LNCS, 2023. doi: 10.1007/ 978-3-031-43996-4{\_}10. Zhao Wang, Chang Liu, Lingting Zhu, Tong-tong Wang, Shaoting Zhang, and Qi Dou. Improving Foundation Model for Endoscopy Video Analysis via Representation Learn-ing on Long Sequences. IEEE Journal of Biomedical and Health Informatics , 29(5), 2025. ISSN 21682208. doi: 10.1109/JBHI. 2025.3532311. Y. Xu, R. Chen, P. Zhang, L. Chen, B. Luo, Y. Li, X. Xiao, and W. Dong. A Review of magnetic sensor-based positioning techniques for capsule en-doscopy. In International Archives of the Photogrammetry, Remote Sensing and Spatial Information Sciences - ISPRS Archives , volume 46, 2022. doi: 10.5194/ isprs-archives-XLVI-3-W1-2022-219-2022. Menglong Ye, Stamatia Giannarou, Alexander Meining, and Guang Zhong Yang. Online tracking and retargeting with applications to optical biopsy in gastrointestinal endoscopic examinations. Medical Image Analysis , 30, 2016. ISSN 13618423. doi: 10.1016/j.media. 2015.10.003. Zhangyuan Yu, Chenlin Du, Hongrui Liang, Xi-uqi Zheng, Zeyao Ma, Mingjun Wu, Mingwu Ao, and Qicheng Lao. Endoscopic Artifact Inpainting for Improved Endoscopic Image Segmentation. In Lecture Notes in Com-puter Science , volume 15969 LNCS, 2026. doi: 10.1007/978-3-032-05127-1{\_}19. Yi Zhang, Yiji Mao, Xuanyu Lu, Xingyu Zou, Hao Huang, Xinyang Li, Jiayue Li, and Haix-ian Zhang. From single to universal: tiny lesion detection in medical imaging. Artifi-cial Intelligence Review , 57(8), 2024. ISSN 15737462. doi: 10.1007/s10462-024-10762-x. 31

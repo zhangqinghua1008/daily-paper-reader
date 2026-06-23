@@ -1,0 +1,288 @@
+Title: Spectral GS-SLAM: Observability-Aware, Degeneracy-Robust Tracking for Real-Time 3D Gaussian Splatting SLAM
+
+URL Source: https://arxiv.org/pdf/2606.21258v1
+
+Published Time: Tue, 23 Jun 2026 00:43:58 GMT
+
+Number of Pages: 8
+
+Markdown Content:
+# Spectral GS-SLAM: Observability-Aware, Degeneracy-Robust Tracking for Real-Time 3D Gaussian Splatting SLAM 
+
+Edward Beng Wai Tan 1, Siew-Kei Lam 1, and Dongshuo Zhang ∗,1
+
+Fig. 1. In textureless scenes (left), feature-based methods such as Photo-SLAM lose tracking due to insufficient visual correspondences. In planar, structureless environments (right), GS-ICP SLAM suffers from ill-conditioned optimization caused by dominant surface normals. In contrast, our method maintains stable and accurate trajectories in both scenarios by adaptively compensating under-constrained directions through observability-aware information fusion. 
+
+Abstract — Recent 3DGS-SLAM systems enable real-time op-eration by leveraging conventional feature matching or ICP-based tracking, thereby avoiding the heavy dense photometric optimization used in earlier approaches. However, feature matching remains prone to failure in textureless environments, while ICP-based tracking struggles in structureless or geomet-rically degenerate scenes due to ill-conditioned optimization. To address this issue, we propose Spectral GS-SLAM, an efficient yet robust tracking framework that integrates ICP with complementary feature-based constraints. Our method mitigates numerical instability by adaptively compensating under-constrained directions in degenerate scenarios, without interfering with the shared Gaussian representation used for mapping. We further introduce a Gaussian-aware planarity weighting mechanism that exploits the intrinsic covariance structure of 3D Gaussians to characterize scene geometry and guide information fusion. Extensive evaluations on challenging TUM RGB-D sequences demonstrate that Spectral GS-SLAM achieves real-time performance (40.14 FPS) while maintaining consistent tracking in both structureless and featureless envi-ronments. The proposed method preserves trajectory integrity in degenerate scenes while maintaining competitive perfor-mance in non-adverse conditions. 
+
+I. INTRODUCTION 3D Gaussian Splatting (3DGS) has recently been inte-grated into Simultaneous Localization and Mapping (SLAM) systems, enabling photorealistic mapping with significantly 
+
+> 1
+
+College of Computing and Data Science, Nanyang Technological Uni-versity, Singapore. 
+
+> ∗
+
+Corresponding author. 
+
+higher rendering efficiency than earlier neural represen-tations. While early 3DGS-SLAM frameworks [1], [2] achieved accurate tracking through dense photometric op-timization, their high computational cost limits real-time deployment in robotic applications. To enable real-time performance, recent 3DGS-SLAM systems adopt lightweight tracking modules, such as con-ventional feature matching or Generalized ICP (G-ICP) [3], while performing photometric Gaussian optimization in par-allel. Although computationally efficient, these approaches inherit limitations of their tracking strategies: feature-based methods degrade in textureless environments, whereas ICP-based tracking becomes ill-conditioned in geometrically de-generate scenes. Feature-based tracking methods such as Photo-SLAM [4] rely heavily on reliable detection and matching of ORB fea-tures [5]. However, they degrade significantly in featureless environments where stable keypoint correspondences cannot be established. Consequently, the tracking process becomes weakly constrained, often resulting in rapid drift or complete failure when observing large textureless regions (see Fig. 1, left). Unlike feature-based methods, ICP-based approaches such as GS-ICP SLAM [6] are robust to texture deficiency, as they rely on geometric alignment rather than visual corre-spondences. However, they become unstable in geometrically degenerate scenes, where dominant surface normals induce 
+
+> arXiv:2606.21258v1 [cs.RO] 19 Jun 2026
+
+near-singular covariance structures in the shared Gaussian representation. Under such degeneracy, the resulting Hes-sian matrix becomes severely ill-conditioned, reducing ob-servability along certain motion directions and leading to unreliable pose estimation. To address these challenges, we propose an observability-aware, degeneracy-robust tracking framework that effectively combines the complementary strengths of feature-based and ICP-based methods. Specifically, our system prioritizes ICP-based tracking and performs a spectral analysis of the Hes-sian matrix to identify under-constrained directions. This is guided by a novel “Gaussian-aware” degeneracy detection that exploits the intrinsic covariance of 3D Gaussians to assess geometric reliability. Upon detecting ill-conditioned scenarios, the framework adaptively injects sparse feature-based constraints into the degenerate subspace. This targeted approach stabilizes optimization in either textureless or struc-tureless environments while preserving the integrity of the shared Gaussian primitives. Our contributions are summarized as follows: 1) We propose a Gaussian-aware spectral degeneracy detection mechanism that characterizes geometric ill-conditioning via Hessian eigenvalue analysis and Gaussian normal statistics. 2) We introduce an observability-aware subspace infor-mation fusion strategy that adaptively compensates under-constrained directions using lightweight feature-based priors. 3) Our Spectral GS-SLAM achieves real-time perfor-mance (40.14 FPS) on the challenging TUM RGB-D sequences, while maintaining stable tracking under both featureless and structureless environments, and remaining robust in non-degenerate conditions. II. RELATED WORK 
+
+Radiance Field Representations were first integrated into SLAM systems for the goal of creating photorealistic maps. Initially, neural radiance fields [7] were used [8], [9], but suffered from the slow speed of volumetric rendering. Later works such as [10], [11], [12], though faster, still suffer from slow rendering speed. 
+
+3D Gaussian Splatting (3DGS) [13] was later adopted by SLAM systems for its much faster rendering speed. However, early methods [1], [2], [14] performed dense map-to-frame photometric optimization for pose estimation. The high computational cost meant that these methods were largely unable to run in real-time on most robotic platforms. 
+
+Real-time 3DGS-SLAM systems have recently been in-troduced, and by replacing dense photometric tracking with well-established and lightweight trackers, methods such as Photo-SLAM [4] and GS-ICP SLAM [6] yield real-time performance, but inherit the limitations of their respective tracking algorithms. Feature matching methods like Photo-SLAM (based on ORB-SLAM3 [15]) fail to track in fea-tureless environments, while ICP methods such as GS-ICP SLAM experience geometric degeneracy in structureless environments. 
+
+Robust SLAM systems have been proposed which fuse IMU measurements into the RGB [16], [17] or LiDAR [18] sensors, and have recently been integrated into 3DGS-SLAM pipelines [19], [20], together with the heavy photometric tracker to solve the low texture and motion blur problem. Similarly, works like [21] use aligned LiDAR point clouds with 3DGS maps to overcome the resolution limitation of LiDAR. However, these methods have the limitation of requiring multi-modal sensing. 
+
+LiDAR-based SLAM works have extensively explored the ICP degeneracy problem, where [22] first proposed using eigenvalues to detect degenerate directions. Later works build on this by performing per-correspondence localizability checks [23] and generalize the detection method to algo-rithms such as probabilistic ICP [24]. These works are intended for LiDAR systems without awareness of visual fea-tures, and thus only address LiDAR-specific failure modes. In contrast, our method uses the rich information from a single RGB-D camera (visual features) to provide complementary information to the ICP-based tracker when the geometry fails, without the overhead of additional sensors. III. METHOD Our proposed Spectral GS-SLAM is illustrated in Fig. 2. Similar to GS-ICP SLAM [6], we employ 3D Gaussian primitives Gi = {μi, Σi, ci, α i} to provide a unified repre-sentation for both photorealistic mapping and G-ICP-based tracking. In this formulation, the Gaussian covariance Σi
+
+characterizes the local geometric structure, facilitating prob-abilistic registration. Unlike point-to-point ICP, which minimizes the Euclidean distance between point correspondences, our tracking module performs distribution-to-distribution registration. For each source point in the observation μsi , the corre-spondence search finds the nearest neighbor μtj using the process: 
+
+π(i) = arg min  
+
+> j
+
+∥μsi − μtj ∥2 (1) Hence, the ICP residual is di = μtπ(i) − Tμsi , and its uncertainty Σi = Σtπ(i) + RΣ si R⊤, such that the optimal relative transformation T ∈ SE(3) is found by minimizing the total Mahalanobis distance: 
+
+T∗ = arg min 
+
+> T
+
+X
+
+> i
+
+d⊤ 
+
+> i
+
+Σ−1 
+
+> i
+
+di. (2) This non-linear least squares problem is solved by finding the linearization of the residual di(T ⊕ δξ), using a small pose increment δξ ∈ se (3) in the tangent space: di(δξ) ≈
+
+di(T) + Jiδξ where Ji = ∂di 
+
+> ∂δ ξ
+
+is the Jacobian matrix. Substituting this into the objective function in Eq. (2) and setting the derivative with respect to δξ as zero yields the system’s Hessian matrix: 
+
+H = X
+
+> i
+
+J⊤ 
+
+> i
+
+Σ−1 
+
+> i
+
+Ji ∈ R6×6, (3) which is used to calculate the update step. Fig. 2. System Architecture. Our pipeline consists of two main modules: (1) Degeneracy Detection , which detects if the optimization is ill-conditioned, and (2) Gaussian-Aware Information Fusion , which fuses the ill-conditioned ICP Hessian ( HICP ) with complementary information ( Hprior ) from the feature-based prior, gated by the planarity of the visible Gaussian map. 
+
+A. Problem Formulation 
+
+Although the per-Gaussian covariance parameterization Σ
+
+is directly used by the ICP algorithm as described previously to quantify the spatial uncertainty, we find that during mapping, it is implicitly driven by the mapper towards flat, rank-2 Gaussians, to minimize the L1 norm between the observation and the map over multiple views. Formally, given a surface normal n ∈ R3, the scaling component s⊥ along this normal direction is driven toward a minimal scale value 
+
+ϵ, while the lateral scales s∥,1 and s∥,2 remain significantly larger to maximize surface coverage. This is problematic as it results in a highly anisotropic scaling matrix S =
+
+diag (s∥,1, s ∥,2, ϵ ). The resulting covariance Σ = RSS ⊤R⊤
+
+possesses a highly skewed spectral distribution, where the eigenvalue corresponding to the normal direction, λ⊥ =
+
+ϵ2, is several orders of magnitude smaller than the lateral eigenvalues λ∥,{1,2}. Consequently, the information matrix 
+
+Λ = Σ−1 exhibits a dominant eigenvalue λmax = 1 /ϵ 2
+
+in the direction of n. Although this provides a sharp, well-constrained minimum for point-to-plane distances, the lateral information remains vanishingly small, i.e., v⊤Λv ≈ 0 for any tangent vector v ⊥ n.For planar surfaces roughly perpendicular to the viewing ray, this collapses the noise model Σ in the viewing direction into a small value ϵ by averaging it over multiple views, which is important for strong directional constraints (con-sistent with the increased geometric stability observed with 2DGS [25] as primitives [26]), but renders the optimization ill-posed in geometrically degenerate scenes dominated by a single surface normal. In this case, numerical imbalance ill-conditions the tracking Hessian, creating unreliable and unstable pose estimation. To solve this issue, while maintaining the mapper’s op-timization objective, and the strong directional constraints of ICP under geometrically stable scenes, we detect an information deficit during ICP optimization in Section III-B, then fuse an informative prior with complementary strengths into the under-constrained directions in Section III-C. 
+
+B. Degeneracy Detection 
+
+We first aim to detect whether such a condition has occurred. Following the technique by [22], we perform eigenvalue analysis of the positive semi-definite H,
+
+H = V diag( λ1, ..., λ 6)V⊤, (4) where they identify that a particular eigenvector is ill-constrained if an eigenvalue is less than some heuristic threshold λk < τ . We instead adopt a normalized condition-number metric λmax  
+
+> λk
+
+> τ deg for reliable detection . To deter-mine how much of the prior to fuse, we use an observability measure of the Gaussian normals’ covariance, that utilizes the property of the mapper’s optimization as described pre-viously, to characterize the macroscopic scene geometry. We leverage the existing Gaussian covariance parameteri-zation, such that computing the Gaussian normals becomes an O(1) operation (compared to point-based ICP where this would require a kd-tree search per point), and derive the unit vector ni corresponding to s⊥. Firstly, we compute the joint covariance C of the alpha-weighted Gaussian normals, 
+
+C = 1
+
+PNi=1 αiNX
+
+> i=1
+
+αi(ni − ¯n)( ni − ¯n)⊤ (5) where ¯n is the mean normal. We then perform the eigende-composition C = Q diag( ℓ1, ℓ 2, ℓ 3)Q⊤ with ℓ1 ≤ ℓ2 ≤ ℓ3.The observation planarity is thus defined as 
+
+η ∝ ℓ3
+
+ℓ2 + ϵ . (6) 
+
+C. Gaussian-Aware Information Fusion 
+
+To stabilize the optimization process when there is geo-metric degeneracy, specifically where the lateral information remains small, we use the complementary strengths of visual TABLE I TRACKING PERFORMANCE (ATE RMSE ↓ [CM ]) AND RUNTIME PERFORMANCE (FPS) ON TUM RGB-D N O STRUCTURE /N O TEXTURE SCENES .                                                                             
+
+> BOLD AND UNDERLINE INDICATE THE BEST AND SECOND -BEST RESULTS ,RESPECTIVELY .
+> %tracked No Structure No Texture Method Tracker ATE RMSE (cm) ↓ATE RMSE (cm) ↓FPS BA near near val far far val near near val far far val
+> Not RT  SplaTAM [14] Photometric 100 4.49 3.65 9.49 5.32 2.27 2.81 4.54 4.14 0.54 ✓
+> MonoGS [2] Photometric 100 11.86 5.37 4.10 3.68 26.91 28.74 10.39 18.63 1.89 ✓
+> Real-Time  Photo-SLAM [4] ORB 68.4 2.27 3.31 5.36 3.83 XXXX31.48 ✓
+> GS-ICP SLAM [6] ICP 41.0 194.93 197.65 116.16 143.16 1.55 1.10 6.07 4.53 67.90 –
+> Ours ICP+ORB 100 7.79 9.66 16.85 12.96 1.55 1.09 2.19 3.89 40.14 –
+
+feature-based matching to define a low-cost frame-to-frame prior estimation: 
+
+T∗ 
+
+> prior
+
+= arg min 
+
+> T∈SE(3)
+
+X
+
+> i∈X
+
+ρ
+
+
+
+∥ui − π(T · Pi)∥2
+
+> Σi
+
+
+
+(7) Then, for each degenerate axis k, we perform anisotropic information injection with the prior into the degenerate subspace containing low information Λ:
+
+H = HICP + X
+
+> k∈K
+
+wk ·  v⊤ 
+
+> k
+
+Ωprior vk
+
+ vkv⊤ 
+
+> k
+
+(8) where wk = exp ( −α(1 − η)) ∈ [0 , 1] is a soft gating score to control the relative strength of the prior added. If the planarity ratio is too high, we directly add the entire prior. We have therefore fused compensatory information directly into the ICP optimizer without conflicting with the mapping objective. IV. EXPERIMENTS 
+
+A. Implementation and Experiment Setup 
+
+Datasets and Metrics. We utilize the TUM RGB-D [27] and Replica [28] dataset to evaluate the performance of our method. We evaluate against a variety of sequences with different levels of visual textures, geometry etc. The metric used for trajectory evaluation is the root mean square error (RMSE) absolute trajectory error (ATE). We evaluate map quality using the standard measures of PSNR (dB), LPIPS [29], and SSIM [30]. Lastly, we provide a qualitative visual comparison of the map and trajectory quality. We provide additional visualization of our method in Section IV-D. 
+
+Implementation Details. All of our evaluations were performed on a computer equipped with an i9-13900K CPU and an RTX 4090 GPU. We implemented all the comparisons for GS-ICP SLAM [6], Photo-SLAM [4], MonoGS [2] and SplaTAM [14] using the open-source implementations with the default configurations, unless the results were explicitly provided. For partial or otherwise incomplete runs due to failed initialization (e.g., lack of features) or lost tracking, we denote by “X”. “BA” refers to the presence of Bundle Ad-justment or other forms of window-based pose adjustment. Frame-per-second (FPS) is defined for the entire system, and “% tracked” refers to the number of valid poses predicted along the trajectory not exceeding 1.0m. We empirically fix the hyperparameter τdeg = 200 for all experiments, demonstrating that our method does not require environment-specific tuning. 
+
+B. Tracking Performance Evaluation 
+
+In Table I, we show that our method is the only real-time 3DGS-SLAM capable of robust survival in geometrically and photometrically degenerate scenes. We attain state-of-the-art performance on ‘No Texture’ scenes, whereas other feature-based methods experience tracking failure.  
+
+> Fig. 3. Trajectory plot (top view) of real-time methods for structureless (left) and featureless (right) scenes. GS-ICP SLAM fails to track the structureless case, while Photo-SLAM loses tracking in the featureless case, ours successfully tracks both.
+
+TABLE II TRACKING PERFORMANCE (ATE RMSE ↓ [CM ]) ON REPLICA SCENES . BOLD AND UNDERLINE INDICATE THE BEST AND SECOND -BEST RESULTS , RESPECTIVELY .
+
+Type Method R0 R1 R2 O0 O1 O2 O3 O4 Avg. 
+
+> Not RT
+
+SplaTAM [14] 0.29 0.35 0.28 0.49 0.21 0.31 0.34 0.57 0.36 GS-SLAM [1] 0.48 0.53 0.33 0.52 0.41 0.59 0.46 0.70 0.50 MonoGS [2] 0.48 0.36 0.34 0.44 0.52 0.23 0.16 2.53 0.58 Point-SLAM [11] 0.59 0.51 0.32 0.45 0.46 0.48 0.61 0.87 0.54 
+
+> Real-Time
+
+Photo-SLAM [4] - - - - - - - - 0.60 GS-ICP SLAM* [6] 0.15 0.16 0.11 0.19 0.12 0.16 0.18 0.21 0.16 Ours 0.15 0.16 0.10 0.19 0.12 0.57 0.47 0.19 0.24 
+
+* indicates reproduced results. 
+
+TABLE III TRACKING PERFORMANCE (ATE RMSE ↓ [CM ]) ON STANDARD TUM RGB-D S CENES . BOLD AND UNDERLINE INDICATE THE BEST AND SECOND -BEST RESULTS , RESPECTIVELY .
+
+Type Method fr1/desk fr2/xyz fr3/office Not Real-Time  SplaTAM [14] 3.35 1.24 5.16 MonoGS [2] 1.48 1.45 1.50 GS-SLAM [1] 3.30 1.30 6.60 Point-SLAM [11] 4.34 1.31 3.48 
+
+> Real-Time
+
+Photo-SLAM [4] 2.60 0.35 1.00 
+
+GS-ICP SLAM [6] 3.07 1.79 2.46 
+
+Ours 3.05 1.75 3.82 
+
+Although our method yields a higher tracking error in the ‘No Structure’ scenes compared to feature-based methods like Photo-SLAM, this represents a deliberate trade-off for robustness. ‘No Structure’ scenes exhibit rich photometric gradients but lack geometric constraints, allowing pure visual feature trackers to achieve high local precision. However, aggressively optimizing for these specific conditions creates brittle architectures susceptible to collapse under ambiguous conditions. By applying a consistent spectral regulariza-tion constraint across all environments, we explicitly trade marginal local accuracy for absolute global robustness (see Fig. 3). We provide details of the exact outlier condition for this scene in Section IV-E. Crucially, this resilience requires no environment-specific tuning. As shown in Table II (Replica), we evaluate our sys-tem without adjusting any detection parameters from Table I. Under these synthetic conditions, our algorithm correctly identifies the structural stability, leaving the geometric prior inactive. The marginal error accumulated in specific scenes (e.g., O2, O3) is caused by brief threshold crossing of our degeneracy detection algorithm, since we did not perform scene-specific hyperparameter tuning. Furthermore, in standard real-world environments (see Table III), our method maintains competitive generalization. In such environments with fluctuating geometric stability (e.g., fr3 office), the prior is frequently switched, inducing minor drift. This explicitly confirms our system’s ability to maintain continuous tracking survival in unpredictable conditions. 
+
+Fig. 4. Qualitative Scene Rendering Performance on TUM RGB-D No Structure/No Texture Scenes. Ours produces high fidelity renders, while other works produce color-distorted images due to noisy tracking as indicated in red (MonoGS), or fail to render the scene due to failed tracking (GS-ICP SLAM). TABLE IV EVALUATION OF 3D R ECONSTRUCTION QUALITY ON TUM RGB-D N O
+
+STRUCTURE /N O TEXTURE SCENES . BOLD AND UNDERLINE INDICATE THE BEST AND SECOND -BEST RESULTS , RESPECTIVELY .
+
+Method Metric No Structure No Texture near far near far 
+
+MonoGS [2] PSNR ↑ 20.97 26.59 20.82 21.95 SSIM ↑ 0.811 0.863 0.895 0.902 LPIPS ↓ 0.337 0.220 0.447 0.363 SplaTAM [14] PSNR ↑ 20.71 21.36 26.71 30.70 
+
+SSIM ↑ 0.827 0.903 0.924 0.949 
+
+LPIPS ↓ 0.249 0.124 0.184 0.136 GS-ICP SLAM [6] PSNR ↑ 18.02 18.17 27.97 28.15 SSIM ↑ 0.741 0.750 0.931 0.929 LPIPS ↓ 0.507 0.452 0.135 0.137 
+
+Ours 
+
+PSNR ↑ 22.61 24.62 29.19 30.32 SSIM ↑ 0.768 0.867 0.948 0.942 LPIPS ↓ 0.260 0.163 0.138 0.127 
+
+C. Mapping Performance Evaluation 
+
+We show that our real-time method maintains high map-ping fidelity across all of the methods on the challenging scenes as shown in Table IV. Our method performs compet-itively with other works, including much heavier systems, because our solution explicitly decouples the degeneracy correction of the tracker and the Gaussian primitives for mapping. We provide qualitative examples in Fig. 4, showing that our method represents subtle colors, textures and details well. We omit works where the tracking is unsuccessful (e.g., Photo-SLAM). 
+
+D. Qualitative Evaluation of Degeneracy Detection Mecha-nism 
+
+We provide qualitative visualizations to investigate our degeneracy detection mechanism in both structureless and textureless scenes (see Fig. 5-6). We also analyze a scene without those specific extreme cases (see Fig. 7), which we demonstrated previously can benefit from our method (see Table III), implying that our prior information fusion provides helpful constraints in these non-degenerate cases. “Planarity Score” refers to the ratio η in Section III-B, while the row denoted by “Tracking” is a binary indicator of whether the prior is active based on the eigenvalue measure. For the structureless and textureless scenes, we show that our mechanism stably detects the respective condition over the entire trajectory. Additionally, the planarity score accurately describes the scene’s dominant normal covariance, experimentally supporting our method.  
+
+> Fig. 5. Degeneracy detection visualization on the nostructure near.
+
+In the non-degenerate scene illustrated in Fig. 7, we show that the condition number threshold is repeatedly crossed many times, but the tracker is still able to perform well, and in some scenes outperform the baseline GS-ICP SLAM. This demonstrates that our system is not brittle under more ambiguous or borderline degenerate conditions. We additionally perform a hyperparameter sweep of τdeg 
+
+over a wide range in Fig. 8. In those scenes reliant on the prior (e.g., no structure), ATE increases as the prior is triggered less with higher thresholds. Scenes that do not use   
+
+> Fig. 6. Degeneracy detection visualization on the notexture near.
+> Fig. 7. Degeneracy detection visualization on fr1 desk.
+
+the prior are largely unaffected. In particular, failures occur where the threshold is too high for our mechanism to trigger, not when the threshold is set too low. 
+
+E. Analysis of Dual-Degeneracy Cases 
+
+In this section, we briefly analyze the case where a scene is 
+
+both featureless and structureless. We show in Fig. 9 that near the end of the trajectory, the nostructure far/far val scenes contain both a case of extreme lack of features and near complete planarity despite the data sequence’s test objective. In this specific corner case, the lightweight frame-to-frame prior we used lacks feature correspondences and is thus rejected and set to zero motion (instead of accepting a wrong RANSAC estimate) for robustness. Therefore, our proposed information fusion module correctly locks the pose in place due to an overall lack of constraints from both sources. Fig. 8. Per-sequence ATE vs. degeneracy threshold τdeg , with each sequence normalized to its own ATE at τdeg =200 . 
+
+> Fig. 9. Trajectory plot and visualization on nostructure far scene.
+
+F. Ablation Study 
+
+In this section, we perform various experiments to verify the effectiveness of our method. We list the ablation studies conducted in Table V. The “-” represents subtraction of various components of our method. The first row represents the performance reported for our entire system. “- Soft Gating” refers to the removal of the soft gating mechanism wi, replacing it with binary inclusion of the prior elements. “- Planarity score” refers to the removal of the planarity-based detection, relying only on the eigenvalue-based measure. In this case, the insertion of the prior is equivalent to a hard switch, contingent only on the eigenvalues of each axis and without explicitly considering the scene’s spatial properties. Lastly, we set the minimum scale s⊥ ≈ k · σz (d) where 
+
+σz (d) is the depth noise, to test whether forcing the mapper to not overflatten the Gaussian can improve tracking. We report the results as “Scale” and find that it worsens both; the optimizer competes with the tracker and spawns more Gaussians to compensate, causing the correspondence quality to worsen.                                
+
+> TABLE V ABLATION STUDY OF SYSTEM COMPONENTS : T RACKING
+> PERFORMANCE (ATE RMSE ↓[CM ]) ON TUM RGB-D N O
+> STRUCTURE /N OTEXTURE SCENES .
+> Configuration No Structure No Texture near far near far Ours 7.79 16.85 1.55 2.19
+> - Soft gating 7.91 22.43 1.88 2.52 - Planarity score 18.49 75.78 1.63 2.37 Scale 8.24 22.64 3.58 2.57
+
+We also ablate in Table VI the necessity of our feature-based prior. “Prior only” refers to directly using the prior pose estimate, while for “prior ← CVM”, we replace the prior with a Constant Velocity Model (CVM), showing that this problem cannot be trivially solved with a simple regularizer.                                
+
+> TABLE VI ABLATION STUDY OF PRIOR INJECTION AND REGULARIZATION :TRACKING PERFORMANCE (ATE RMSE ↓[CM ]) ON TUM RGB-D N O
+> STRUCTURE /N OTEXTURE SCENES .
+> Configuration No Structure No Texture near far near far Ours 7.79 16.85 1.55 2.19
+> Prior only 6.77 45.29 103.67 21.18 Prior ←CVM 131.18 55.87 1.68 2.43
+
+These results confirm that each proposed component of our method contributes meaningfully to the results, and our observation-based planarity ratio complements the Hessian eigenvalue analysis in reusing the Gaussian information to improve robustness against spurious prior injection. V. LIMITATIONS In this work, we have investigated and addressed the problem of a scene being either featureless or texture-less. However, as detailed in Section IV-E, in purely dual-degenerate scenarios, our system is able to maintain safe pose lock, but reaches an unobservable state due to afundamental lack of visual or geometric data. Future work may consider incorporating low-cost IMU sensors to provide a motion estimate should tracking through these conditions be required. VI. CONCLUSIONS We propose Spectral GS-SLAM, which addresses the problem of failed tracking and the lack of robustness of existing lightweight 3DGS-SLAM methods in transiently degenerate environments. Ensuring that the SLAM system is robust in such conditions ensures reliable long-term oper-ation. We achieve this while maintaining high map quality and generalization to non-challenging or ambiguous scenes, showing that our proposed fusion strategy does not require environment-specific hyperparameter tuning. Our method demonstrates that we can leverage the strengths of the explicit Gaussian primitives to compute a planarity ratio for scene planarity understanding with negligi-ble overhead, and directly stabilize the tracking optimization with a low-cost visual feature prior, without conflicting with the mapping objective. Overall, these results suggest our system’s potential applicability in diverse real-world environments. REFERENCES [1] C. Yan, D. Qu, D. Xu, B. Zhao, Z. Wang, D. Wang, and X. Li, “GS-SLAM: Dense Visual SLAM with 3D Gaussian Splatting,” 2024, pp. 19 595–19 604. [2] H. Matsuki, R. Murai, P. H. J. Kelly, and A. J. Davison, “Gaussian Splatting SLAM,” in 2024 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) . Seattle, WA, USA: IEEE, Jun. 2024, pp. 18 039–18 048. [3] A. V. Segal, D. H¨ ahnel, and S. Thrun, “Generalized-ICP,” in Robotics: Science and Systems , 2009. [4] H. Huang, L. Li, H. Cheng, and S.-K. Yeung, “Photo-SLAM: Real-time Simultaneous Localization and Photorealistic Mapping for Monocular Stereo and RGB-D Cameras,” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , Jun. 2024, pp. 21 584–21 593. [5] E. Rublee, V. Rabaud, K. Konolige, and G. Bradski, “ORB: An effi-cient alternative to SIFT or SURF,” in 2011 International Conference on Computer Vision , Nov. 2011, pp. 2564–2571, iSSN: 2380-7504. [6] S. Ha, J. Yeon, and H. Yu, “RGBD GS-ICP SLAM,” in Computer Vision – ECCV 2024 , A. Leonardis, E. Ricci, S. Roth, O. Russakovsky, T. Sattler, and G. Varol, Eds., vol. 15094. Cham: Springer Nature Switzerland, 2025, pp. 180–197. [7] B. Mildenhall, P. P. Srinivasan, M. Tancik, J. T. Barron, R. Ramamoor-thi, and R. Ng, “NeRF: Representing Scenes as Neural Radiance Fields for View Synthesis,” in Computer Vision – ECCV 2020 , A. Vedaldi, H. Bischof, T. Brox, and J.-M. Frahm, Eds. Cham: Springer International Publishing, 2020, pp. 405–421. [8] E. Sucar, S. Liu, J. Ortiz, and A. J. Davison, “iMAP: Implicit Mapping and Positioning in Real-Time,” in Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV) , Oct. 2021, pp. 6229–6238. [9] Z. Zhu, S. Peng, V. Larsson, W. Xu, H. Bao, Z. Cui, M. R. Oswald, and M. Pollefeys, “NICE-SLAM: Neural Implicit Scalable Encoding for SLAM,” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , Jun. 2022, pp. 12 786–12 796. [10] C.-M. Chung, Y.-C. Tseng, Y.-C. Hsu, X.-Q. Shi, Y.-H. Hua, J.-F. Yeh, W.-C. Chen, Y.-T. Chen, and W. H. Hsu, “Orbeez-SLAM: A Real-time Monocular Visual SLAM with ORB Features and NeRF-realized Mapping,” in 2023 IEEE International Conference on Robotics and Automation (ICRA) , May 2023, pp. 9400–9406. [11] E. Sandstr¨ om, Y. Li, L. Van Gool, and M. R. Oswald, “Point-SLAM: Dense Neural Point Cloud-based SLAM,” in Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV) ,Oct. 2023, pp. 18 433–18 444. [12] M. M. Johari, C. Carta, and F. Fleuret, “ESLAM: Efficient Dense SLAM System Based on Hybrid Representation of Signed Distance Fields,” in 2023 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , Jun. 2023, pp. 17 408–17 419, iSSN: 2575-7075. [13] B. Kerbl, G. Kopanas, T. Leimkuehler, and G. Drettakis, “3D Gaussian Splatting for Real-Time Radiance Field Rendering,” ACM Trans. Graph. , vol. 42, no. 4, pp. 139:1–139:14, Jul. 2023. [14] N. Keetha, J. Karhade, K. M. Jatavallabhula, G. Yang, S. Scherer, D. Ramanan, and J. Luiten, “SplaTAM: Splat Track & Map 3D Gaussians for Dense RGB-D SLAM,” 2024, pp. 21 357–21 366. [15] C. Campos, R. Elvira, J. J. G. Rodr´ ıguez, J. M. M. Montiel, and J. D. Tard´ os, “ORB-SLAM3: An Accurate Open-Source Library for Visual, Visual–Inertial, and Multimap SLAM,” IEEE Transactions on Robotics , vol. 37, no. 6, pp. 1874–1890, Dec. 2021. [16] S. Leutenegger, S. Lynen, M. Bosse, R. Siegwart, and P. Furgale, “Keyframe-based visual–inertial odometry using nonlinear optimiza-tion,” The International Journal of Robotics Research , vol. 34, no. 3, pp. 314–334, Mar. 2015. [17] T. Qin, P. Li, and S. Shen, “VINS-Mono: A Robust and Versatile Monocular Visual-Inertial State Estimator,” IEEE Transactions on Robotics , vol. 34, no. 4, pp. 1004–1020, Aug. 2018. [18] T. Shan, B. Englot, D. Meyers, W. Wang, C. Ratti, and D. Rus, “LIO-SAM: Tightly-coupled Lidar Inertial Odometry via Smoothing and Mapping,” in 2020 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) . Las Vegas, NV, USA: IEEE, Oct. 2020, pp. 5135–5142. [19] Z. Zhu, W. Zhang, N. Haala, M. Pollefeys, and D. Barath, “VIGS-SLAM: Visual Inertial Gaussian Splatting SLAM,” 2025, version Number: 1. [20] O. Seiskari, J. Ylilammi, V. Kaatrasalo, P. Rantalankila, M. Turku-lainen, J. Kannala, E. Rahtu, and A. Solin, “Gaussian Splatting on the Move: Blur and Rolling Shutter Compensation for Natural Camera Motion,” in Computer Vision – ECCV 2024: 18th European Conference, Milan, Italy, September 29–October 4, 2024, Proceedings, Part LXXI . Berlin, Heidelberg: Springer-Verlag, Nov. 2024, pp. 160– 177. [21] R. Xiao, W. Liu, Y. Chen, and L. Hu, “LiV-GS: LiDAR-Vision Inte-gration for 3D Gaussian Splatting SLAM in Outdoor Environments,” 
+
+IEEE Robotics and Automation Letters , vol. 10, no. 1, pp. 421–428, Jan. 2025. [22] J. Zhang, M. Kaess, and S. Singh, “On degeneracy of optimization-based state estimation problems,” in 2016 IEEE International Confer-ence on Robotics and Automation (ICRA) , May 2016, pp. 809–816. [23] T. Tuna, J. Nubert, Y. Nava, S. Khattak, and M. Hutter, “X-ICP: Localizability-Aware LiDAR Registration for Robust Localization in Extreme Environments,” IEEE Transactions on Robotics , vol. 40, pp. 452–471, 2024. [24] H. Yue, Q. Xu, F. Chen, J. Pan, and W. Chen, “LP-ICP: General Localizability-Aware Point Cloud Registration for Robust Localization in Extreme Unstructured Environments,” 2025, version Number: 3. [25] B. Huang, Z. Yu, A. Chen, A. Geiger, and S. Gao, “2D Gaussian Splatting for Geometrically Accurate Radiance Fields,” in SIGGRAPH 2024 Conference Papers . Association for Computing Machinery, 2024. [26] G. Pak, H. M. Cho, and E. Kim, “G2S-ICP SLAM: Geometry-aware Gaussian Splatting ICP SLAM,” Jul. 2025, arXiv:2507.18344 [cs]. [Online]. Available: http://arxiv.org/abs/2507.18344 [27] J. Sturm, N. Engelhard, F. Endres, W. Burgard, and D. Cremers, “A Benchmark for the Evaluation of RGB-D SLAM Systems,” in Proc. of the International Conference on Intelligent Robot Systems (IROS) ,Oct. 2012. [28] J. Straub, T. Whelan, L. Ma, Y. Chen, E. Wijmans, S. Green, J. J. En-gel, R. Mur-Artal, C. Ren, S. Verma, A. Clarkson, M. Yan, B. Budge, Y. Yan, X. Pan, J. Yon, Y. Zou, K. Leon, N. Carter, J. Briales, T. Gillingham, E. Mueggler, L. Pesqueira, M. Savva, D. Batra, H. M. Strasdat, R. D. Nardi, M. Goesele, S. Lovegrove, and R. Newcombe, “The Replica Dataset: A Digital Replica of Indoor Spaces,” arXiv preprint arXiv:1906.05797 , 2019. [29] R. Zhang, P. Isola, A. A. Efros, E. Shechtman, and O. Wang, “The Unreasonable Effectiveness of Deep Features as a Perceptual Metric,” in Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR) , Jun. 2018. [30] Zhou Wang, A. Bovik, H. Sheikh, and E. Simoncelli, “Image quality assessment: from error visibility to structural similarity,” IEEE Trans-actions on Image Processing , vol. 13, no. 4, pp. 600–612, Apr. 2004.

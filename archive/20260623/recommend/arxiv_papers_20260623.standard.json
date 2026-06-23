@@ -1,0 +1,309 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-23T22:18:21.920388+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 3,
+    "deep_cap": 7,
+    "deep_selected": 3,
+    "quick_candidates": 4,
+    "quick_skim_target": 12,
+    "quick_selected": 4
+  },
+  "deep_dive": [
+    {
+      "id": "2606.21258v1",
+      "source": "arxiv",
+      "title": "Spectral GS-SLAM: Observability-Aware, Degeneracy-Robust Tracking for Real-Time 3D Gaussian Splatting SLAM",
+      "abstract": "Recent 3DGS-SLAM systems enable real-time operation by leveraging conventional feature matching or ICP-based tracking, thereby avoiding the heavy dense photometric optimization used in earlier approaches. However, feature matching remains prone to failure in textureless environments, while ICP-based tracking struggles in structureless or geometrically degenerate scenes due to ill-conditioned optimization. To address this issue, we propose Spectral GS-SLAM, an efficient yet robust tracking framework that integrates ICP with complementary feature-based constraints. Our method mitigates numerical instability by adaptively compensating under-constrained directions in degenerate scenarios, without interfering with the shared Gaussian representation used for mapping. We further introduce a Gaussian-aware planarity weighting mechanism that exploits the intrinsic covariance structure of 3D Gaussians to characterize scene geometry and guide information fusion. Extensive evaluations on challenging TUM RGB-D sequences demonstrate that Spectral GS-SLAM achieves real-time performance (40.14 FPS) while maintaining consistent tracking in both structureless and featureless environments. The proposed method preserves trajectory integrity in degenerate scenes while maintaining competitive performance in non-adverse conditions.",
+      "authors": [
+        "Edward Beng Wai Tan",
+        "Siew-Kei Lam",
+        "Dongshuo Zhang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.CV"
+      ],
+      "published": "2026-06-19T09:33:11+00:00",
+      "link": "https://arxiv.org/pdf/2606.21258v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "Proposes an efficient and robust tracking framework for real-time 3D Gaussian Splatting SLAM, integrating ICP with feature-based constraints to handle degeneracy.",
+      "llm_evidence_cn": "提出一种高效鲁棒的实时3D高斯散射SLAM跟踪框架，集成ICP与基于特征的约束以处理退化场景。",
+      "llm_evidence": "提出一种高效鲁棒的实时3D高斯散射SLAM跟踪框架，集成ICP与基于特征的约束以处理退化场景。",
+      "canonical_evidence": "提出一种高效鲁棒的实时3D高斯散射SLAM跟踪框架，集成ICP与基于特征的约束以处理退化场景。",
+      "llm_tldr_en": "Addresses degeneracy in GS-SLAM tracking by adaptively compensating under-constrained directions using spectral analysis, achieving robust real-time SLAM in textureless and structureless environments.",
+      "llm_tldr_cn": "针对3D高斯散射SLAM在无纹理或无结构场景中跟踪退化的难题，提出Spectral GS-SLAM，通过谱分析自适应补偿欠约束方向，在不影响建图质量的前提下实现鲁棒实时跟踪。该方法在多个退化场景下表现出色，提升了3DGS-SLAM的实用性和可靠性。",
+      "llm_tldr": "针对3D高斯散射SLAM在无纹理或无结构场景中跟踪退化的难题，提出Spectral GS-SLAM，通过谱分析自适应补偿欠约束方向，在不影响建图质量的前提下实现鲁棒实时跟踪。该方法在多个退化场景下表现出色，提升了3DGS-SLAM的实用性和可靠性。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "efficient visual SLAM with 3D Gaussian scene representations",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.22051v1",
+      "source": "arxiv",
+      "title": "GeoFlow-SLAM++: A Robust Multi-Camera Visual-Inertial SLAM System with Relocalization",
+      "abstract": "Monocular and RGB-D visual-inertial SLAM systems remain susceptible to limited field of view, sensor-specific failure modes, and unreliable cross-session relocalization. To address these issues, we present GeoFlow-SLAM++, a tightly coupled multi-camera visual-inertial SLAM system that extends GeoFlow-SLAM from a single RGB-D sensor to a calibrated multi-camera rig with a unified body-centric formulation. Within this multi-camera framework, GeoFlow-SLAM++ supports two interchangeable visual front-ends: a conventional ORB front-end and a neural network feature (NN-Feature) front-end built on SuperPoint and LightGlue. The system unifies tracking, mapping, and relocalization on a shared body state, and combines multi-camera reprojection constraints, IMU pre-integration, cross-view place recognition, and dual-stream optical flow/NN-Feature tracking for robust localization. As an optional extension, the system can further incorporate cross-view-consistent pseudo-depth predictions from RGB images as auxiliary geometric constraints. We evaluate GeoFlow-SLAM++ on EuRoC, OpenLORIS, TUM, Hilti, and a self-collected handheld multi-camera dataset. Results show that the NN-Feature front-end improves robustness in appearance-challenging scenarios, the multi-camera formulation achieves competitive localization accuracy on Hilti, and the unified cross-view relocalization design reaches LiDAR-comparable performance on the handheld dataset.",
+      "authors": [
+        "Wei Fen",
+        "Tingyang Xiao",
+        "Liu Liu",
+        "Xiaolin Zhou",
+        "Zhizhong Su"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-06-20T14:08:23+00:00",
+      "link": "https://arxiv.org/pdf/2606.22051v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Multi-camera visual-inertial SLAM system with tracking, mapping, and relocalization",
+      "llm_evidence_cn": "多相机视觉惯性SLAM系统，具备跟踪、建图和重定位功能",
+      "llm_evidence": "多相机视觉惯性SLAM系统，具备跟踪、建图和重定位功能",
+      "canonical_evidence": "多相机视觉惯性SLAM系统，具备跟踪、建图和重定位功能",
+      "llm_tldr_en": "Proposes a tightly coupled multi-camera visual-inertial SLAM system supporting both ORB and neural feature front-ends for robust tracking and relocalization.",
+      "llm_tldr_cn": "针对单目和RGB-D视觉惯性SLAM系统在视野、传感器失败模式和跨会话重定位方面的局限性，提出了一个紧耦合的多相机视觉惯性SLAM系统GeoFlow-SLAM++，支持ORB和神经网络特征前端的互换使用。该系统通过在统一的身体中心框架下融合多相机重投影约束，增强了跟踪和建图的鲁棒性，并在重定位上取得可靠表现，为多传感器SLAM提供了实用解决方案。",
+      "llm_tldr": "针对单目和RGB-D视觉惯性SLAM系统在视野、传感器失败模式和跨会话重定位方面的局限性，提出了一个紧耦合的多相机视觉惯性SLAM系统GeoFlow-SLAM++，支持ORB和神经网络特征前端的互换使用。该系统通过在统一的身体中心框架下融合多相机重投影约束，增强了跟踪和建图的鲁棒性，并在重定位上取得可靠表现，为多传感器SLAM提供了实用解决方案。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Visual SLAM methods for camera tracking and mapping",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.22091v1",
+      "source": "arxiv",
+      "title": "ACEsplat: Accelerated 3D Gaussian Scene Regression via RGB and Poses Only",
+      "abstract": "Per-scene 3D Gaussian Splatting (3DGS) enables high-fidelity rendering, but practical robotic and AR scene capture pipelines often depend on external geometric initialization (e.g., SfM point clouds or depth estimates), which can be slow and brittle in on-site deployment. We present ACEsplat, a fast per-scene optimization framework that reconstructs 3D Gaussian representations from RGB images and camera poses only, without requiring external 3D priors (e.g., precomputed SfM models or supervised depth maps). ACEsplat uses a two-stage pipeline: (1) a self-supervised scene coordinate regression (SCR) module builds an internal geometry prior within 4--5 minutes; (2) SCR features and coordinate priors are fused by a lightweight Gaussian initialization head, followed by per-scene 3DGS optimization. On static-view rendering, ACEsplat achieves 29.11 dB PSNR on Wayspots with real-time SLAM poses and 33.20 dB on Cambridge Landmarks with SfM-refined poses. On RealEstate10K sparse-view novel view synthesis, it achieves competitive image fidelity under a challenging 2-view setting. ACEsplat completes scene-specific SCR mapping and 3DGS reconstruction within 15--25 minutes on a single GPU, making it a practical RGB+pose-only solution for rapid scene setup in robotics and mixed-reality applications.",
+      "authors": [
+        "Mingkai Liu",
+        "Haohua Que",
+        "Dikai Fan",
+        "Haojia Gao",
+        "Tianle Zhu",
+        "Handong Yao",
+        "Qian Zhang",
+        "Ruopeng Zhang",
+        "Xianliang Huang",
+        "Fei Qiao"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-06-20T15:16:24+00:00",
+      "link": "https://arxiv.org/pdf/2606.22091v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Reconstructs 3D Gaussian scenes from RGB and poses only for real-time rendering, aligning with volumetric scene representation using anisotropic Gaussians.",
+      "llm_evidence_cn": "仅从RGB和位姿重建3D高斯场景用于实时渲染，符合各向异性高斯体素场景表示。",
+      "llm_evidence": "仅从RGB和位姿重建3D高斯场景用于实时渲染，符合各向异性高斯体素场景表示。",
+      "canonical_evidence": "仅从RGB和位姿重建3D高斯场景用于实时渲染，符合各向异性高斯体素场景表示。",
+      "llm_tldr_en": "ACEsplat is a fast per-scene 3D Gaussian optimization method that reconstructs high-fidelity scenes from RGB images and poses only, without external 3D priors, using self-supervised scene coordinate regression for internal geometry initialization.",
+      "llm_tldr_cn": "ACEsplat针对实际部署中3D高斯溅射方法对外部几何初始化依赖的问题，提出一种仅需RGB图像和相机位姿的两阶段快速重建框架。第一阶段通过自监督场景坐标回归在数分钟内生成内部几何先验，第二阶段融合特征与先验进行高效高斯初始化与优化。该方法消除了对SfM或深度图的依赖，实现了高质量且快速的场景回归，对机器人、AR等需要快速建图的视觉SLAM任务具有重要借鉴意义。",
+      "llm_tldr": "ACEsplat针对实际部署中3D高斯溅射方法对外部几何初始化依赖的问题，提出一种仅需RGB图像和相机位姿的两阶段快速重建框架。第一阶段通过自监督场景坐标回归在数分钟内生成内部几何先验，第二阶段融合特征与先验进行高效高斯初始化与优化。该方法消除了对SfM或深度图的依赖，实现了高质量且快速的场景回归，对机器人、AR等需要快速建图的视觉SLAM任务具有重要借鉴意义。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2606.21244v1",
+      "source": "arxiv",
+      "title": "ACE-GS: Acing the Trade-off with Accurate, Compact and Efficient 3D Gaussian Splatting",
+      "abstract": "3D Gaussian Splatting achieves exceptional real-time rendering, but its substantial computational and storage demands hinder widespread deployment. Existing accelerated paradigms often aggressively prune primitives for rapid convergence, causing severe loss of high-frequency details. To address this, we tackle the fundamental problem of achieving both exceptional rendering quality and ultra-fast reconstruction speed. In this paper, we propose ACE-GS, a progressive optimization framework tailored for accurate, compressed, and efficient scene representation. We realize that precise primitive management is the key to breaking this trade-off. Therefore, we first design a momentum consistency-guided densification strategy, strictly constraining primitive growth onto authentic geometric manifolds to avoid computational waste while significantly accelerating convergence. Building upon this efficient initialization, we deploy a statistical sensitivity-driven sparsification mechanism to precisely prune redundant primitives, yielding a further compressed footprint. Finally, to thoroughly compensate for the risk of micro-structure loss caused by the aforementioned strict primitive control, we introduce a cross-dimensional residual frequency compensation scheme that explicitly back-injects high-frequency error energy into primitive attributes, perfectly restoring sharp geometric details. Extensive experiments validate our superiority. While maintaining a highly compact scene representation, our system achieves up to 3.7 times training acceleration against the rapid framework Speedy-Splat. Requiring only 3 to 5 minutes to converge, ACE-GS secures the highest structural similarity and achieves a peak PSNR improvement of up to 0.89 dB over the original 3DGS, establishing a new benchmark for ultra-fast and high-fidelity novel view synthesis.",
+      "authors": [
+        "Jijian Zhao"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-06-19T09:11:13+00:00",
+      "link": "https://arxiv.org/pdf/2606.21244v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "progressive optimization framework for accurate, compact, efficient 3D Gaussian Splatting",
+      "llm_evidence_cn": "精确、紧凑、高效的3D高斯泼溅渐进优化框架",
+      "llm_evidence": "精确、紧凑、高效的3D高斯泼溅渐进优化框架",
+      "canonical_evidence": "精确、紧凑、高效的3D高斯泼溅渐进优化框架",
+      "llm_tldr_en": "ACE-GS proposes a progressive optimization framework for 3D Gaussian Splatting that achieves accurate, compact, and efficient scene representation by momentum consistency-guided densification and precise primitive management, enabling real-time rendering with reduced computational cost.",
+      "llm_tldr_cn": "三维高斯泼溅在实时渲染上表现出色，但其高计算和存储需求限制了部署。现有加速方法常因激进剪枝而损失细节。本文提出ACE-GS，一个渐进优化框架，通过动量一致性引导的致密化策略和精确的基元管理，在保证高渲染质量的同时显著加快重建速度并降低模型复杂度。实验表明该方法在多个数据集上实现了准确、紧凑且高效的场景表示，为资源受限下的实时渲染提供了可行方案。",
+      "llm_tldr": "三维高斯泼溅在实时渲染上表现出色，但其高计算和存储需求限制了部署。现有加速方法常因激进剪枝而损失细节。本文提出ACE-GS，一个渐进优化框架，通过动量一致性引导的致密化策略和精确的基元管理，在保证高渲染质量的同时显著加快重建速度并降低模型复杂度。实验表明该方法在多个数据集上实现了准确、紧凑且高效的场景表示，为资源受限下的实时渲染提供了可行方案。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.18439v1",
+      "source": "arxiv",
+      "title": "RegimeVGGT: Layer-Wise Spatially Preserving Redundancy Removal for Visual Geometry Grounded Transformer",
+      "abstract": "Visual Geometry Grounded Transformer (VGGT) recovers dense 3D scene structure from multi-view images in one forward pass, but quadratic cross-frame attention limits its scalability. Existing training-free accelerators reduce computation uniformly along one axis, missing layer heterogeneity. Our spectral, probing, and causal analyses reveal three regimes: shallow layers lack cross-view structure, middle layers drive cross-view alignment, and deep layers are redundant for dense geometry yet their cross-frame attention remains essential for pose. RegimeVGGT applies layer-wise U-shaped compression along two axes: Saliency-Guided Banded Merging protects geometry- and edge-salient tokens, while Selectively Protected K/V Downsampling preserves cross-frame spatial coverage and the pose-critical path through a phase-shifted spatial grid, a reference-frame anchor, and uncompressed camera/register tokens. Training-free, RegimeVGGT achieves a 6.7x speedup over VGGT* at matched reconstruction quality.",
+      "authors": [
+        "Jinhao You",
+        "Shuo Lyu",
+        "Zhuohang Lyu",
+        "Tanxuan Li",
+        "Zibo Zhao",
+        "Jiaxiang Hu",
+        "Kai Tang",
+        "Yichen Guo"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.RO"
+      ],
+      "published": "2026-06-16T19:41:23+00:00",
+      "link": "https://arxiv.org/pdf/2606.18439v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Improves VGGT, a model that recovers dense 3D structure and camera pose from multi-view images, by compressing redundant attention layers.",
+      "llm_evidence_cn": "通过压缩冗余注意力层改进VGGT模型，该模型从多视图图像恢复稠密3D结构和相机位姿。",
+      "llm_evidence": "通过压缩冗余注意力层改进VGGT模型，该模型从多视图图像恢复稠密3D结构和相机位姿。",
+      "canonical_evidence": "通过压缩冗余注意力层改进VGGT模型，该模型从多视图图像恢复稠密3D结构和相机位姿。",
+      "llm_tldr_en": "Analyzes three regimes in VGGT layers and proposes RegimeVGGT with layer-wise U-shaped compression, accelerating multi-view geometry estimation while preserving pose accuracy.",
+      "llm_tldr_cn": "针对VGGT在多视图3D重建和位姿估计中的计算效率问题，通过分析注意力层的三种机制，提出RegimeVGGT进行逐层U形压缩，在保留位姿精度的同时显著加速了多视图几何推理，为高效学习SLAM系统提供了关键技术部件。",
+      "llm_tldr": "针对VGGT在多视图3D重建和位姿估计中的计算效率问题，通过分析注意力层的三种机制，提出RegimeVGGT进行逐层U形压缩，在保留位姿精度的同时显著加速了多视图几何推理，为高效学习SLAM系统提供了关键技术部件。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "visual SLAM with learned representations",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.19908v1",
+      "source": "arxiv",
+      "title": "Gaussian Process Prior Variational Autoencoder for Endoscopic Videos",
+      "abstract": "Endoscopic video analysis is essential for gastrointestinal diagnosis and computer-assisted interventions, but video sequences are routinely degraded by specular reflections, motion artifacts, and missing frames. These transient corruptions can distract clinicians, reduce image interpretability, and disrupt downstream tasks such as 3D reconstruction and navigation. Effective restoration therefore requires methods that exploit temporal continuity rather than treating frames in isolation. We introduce a Gaussian Process Prior Variational Autoencoder (GPVAE) framework for endoscopic video restoration that replaces the standard factorized latent prior with a temporal Gaussian process prior, enabling interpolation of missing frames with uncertainty-aware reconstruction.   The framework combines endoscopy-specific encoders, including a convolutional EndoVAE backbone and pretrained Vision Transformer encoders from GastroNet-5M, with two scalable GP approximations: Hierarchical Prior Approximation (HPA) and Sparse Precision Approximation (SPA). Specular reflections are handled using a DUCKNet-based masking pipeline that excludes corrupted pixels from the reconstruction objective. On the C3VDv2 colonoscopy dataset, the best GPVAE variants reduced image reconstruction RMSE by 21.9\\% on average, and by up to 26.1\\%, relative to matched VAE baselines. Downstream trajectory RMSE was reduced by 12.7\\% on average across classical visual odometry and a pretrained PoseNet, at an average increase of 27.3\\% in training time per epoch. Finally, the GP posterior provides per-frame uncertainty estimates that reflect temporal support and offer a confidence signal for restored frames.",
+      "authors": [
+        "Ivan De Boi",
+        "Xinxing Shi",
+        "Xiaoyu Jiang",
+        "Tim J. M. Jaspers",
+        "Francisco Caetano",
+        "Mauricio A. Alvarez",
+        "Fons van der Sommen",
+        "Sam Van der Jeught"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-18T08:03:55+00:00",
+      "link": "https://arxiv.org/pdf/2606.19908v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:endo-dgs"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "endoscopic video restoration enabling 3D reconstruction and navigation",
+      "llm_evidence_cn": "内窥镜视频恢复以支持三维重建和导航",
+      "llm_evidence": "内窥镜视频恢复以支持三维重建和导航",
+      "canonical_evidence": "内窥镜视频恢复以支持三维重建和导航",
+      "llm_tldr_en": "Proposes GPVAE for endoscopic video restoration, using a temporal Gaussian process prior to interpolate missing frames and reduce artifacts, aiding downstream 3D reconstruction.",
+      "llm_tldr_cn": "针对内窥镜视频中镜面反射、运动伪影和丢帧等问题，提出GPVAE框架，用时间高斯过程先验替代标准先验，实现帧插值和不确定性感知恢复。实验表明该方法改善了下游三维重建与导航任务的输入质量。",
+      "llm_tldr": "针对内窥镜视频中镜面反射、运动伪影和丢帧等问题，提出GPVAE框架，用时间高斯过程先验替代标准先验，实现帧插值和不确定性感知恢复。实验表明该方法改善了下游三维重建与导航任务的输入质量。",
+      "llm_tags": [
+        "query:endo-dgs:composite"
+      ],
+      "matched_query_tag": "query:endo-dgs:composite",
+      "matched_query_text": "Papers central to 内窥镜领域下的3DGS相关工作及启发点, especially work that connects or combines: 3D Gaussian splatting for endoscopic scene reconstruction; endoscopic image enhancement with Gaussian splatting; depth estimation for endoscopic scenes; surgical navigation using 3D scene representations; real-time rendering for endoscopic video; explicit scene representation for surgical views; Applying 3D Gaussian Splatting for real time novel view synthesis in endoscopy; Gaussian based scene reconstruction from monocular endoscopic video; Differentiable rendering pipelines for surgical endoscopy using Gaussian primitives.",
+      "matched_requirement_id": "req-composite-endo-dgs",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.22856v1",
+      "source": "arxiv",
+      "title": "G-MASt3R-SfM: Graph-based View Pruning and Multi-stage Optimization for Robust SfM",
+      "abstract": "Structure from Motion (SfM) is essential for multi-view 3D reconstruction, however, its accuracy heavily relies on the accuracy of image matching. While the recent correspondence matching method, MASt3R, enables robust matching even under challenging conditions, it tends to generate incorrect correspondences for non-overlapping image pairs. Consequently, existing SfM methods using MASt3R, such as MASt3R-SfM, suffer from significant degradation in pose estimation accuracy as they incorporate these unreliable matches directly into optimization. To address this issue, we propose G-MASt3R-SfM, a novel SfM pipeline that enhances robustness through two key modules. First, the Graph-based View Pruning (GVP) module constructs a scene graph from matching confidence and geometrically prunes outlier views. Second, the Multi-Stage Optimization (MSO) module progressively refines camera parameters by expanding the optimization scope from local consistency to the global consistency. Experiments on the ETH3D dataset demonstrate that our method achieves state-of-the-art accuracy in both camera pose estimation and 3D reconstruction, effectively suppressing noise caused by outliers.",
+      "authors": [
+        "Toshiki Watanabe",
+        "Shintaro Ito",
+        "Natsuki Takama",
+        "Koichi Ito",
+        "Takafumi Aoki"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-22T05:01:08+00:00",
+      "link": "https://arxiv.org/pdf/2606.22856v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Robust SfM pipeline improving multi-view pose estimation, a core component for visual SLAM methods for camera tracking and mapping.",
+      "llm_evidence_cn": "鲁棒SfM流程提升多视图位姿估计，是视觉SLAM相机跟踪与建图的核心组件。",
+      "llm_evidence": "鲁棒SfM流程提升多视图位姿估计，是视觉SLAM相机跟踪与建图的核心组件。",
+      "canonical_evidence": "鲁棒SfM流程提升多视图位姿估计，是视觉SLAM相机跟踪与建图的核心组件。",
+      "llm_tldr_en": "G-MASt3R-SfM enhances robustness of SfM by graph-based pruning of unreliable matches and multi-stage optimization, improving pose estimation for challenging image sets.",
+      "llm_tldr_cn": "针对MASt3R在非重叠视图上产生错误匹配导致SfM位姿估计下降的问题，本文提出G-MASt3R-SfM，通过构建场景图进行视图剪枝以过滤不可靠对应，并采用多阶段优化提高位姿精度。该方法显著提升了恶劣条件下的SfM性能，作为视觉SLAM的基础模块，对相机跟踪与建图任务具有直接支撑价值。",
+      "llm_tldr": "针对MASt3R在非重叠视图上产生错误匹配导致SfM位姿估计下降的问题，本文提出G-MASt3R-SfM，通过构建场景图进行视图剪枝以过滤不可靠对应，并采用多阶段优化提高位姿精度。该方法显著提升了恶劣条件下的SfM性能，作为视觉SLAM的基础模块，对相机跟踪与建图任务具有直接支撑价值。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Visual SLAM methods for camera tracking and mapping",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
