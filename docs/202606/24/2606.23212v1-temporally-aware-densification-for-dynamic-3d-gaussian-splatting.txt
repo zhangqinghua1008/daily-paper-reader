@@ -1,0 +1,695 @@
+Title: Temporally Aware Densification for Dynamic 3D Gaussian Splatting
+
+URL Source: https://arxiv.org/pdf/2606.23212v1
+
+Published Time: Tue, 23 Jun 2026 03:38:11 GMT
+
+Number of Pages: 30
+
+Markdown Content:
+# Temporally Aware Densification for Dynamic 3D Gaussian Splatting 
+
+Vikram Sandu 1 , Mayurdeep Pathak 1 , and Rajiv Soundararajan 1
+
+Indian Institute of Science, Bengaluru, India 
+
+{vikramsandu,mayurdeepp,rajivs}@iisc.ac.in 
+
+Fig. 1: Left) (A) Existing 3DGS densification fails to densify short-lived dynamic Gaussians. (B) VAD with visibility-weighted gradients and TAT with lifespan-aware thresholds enable densification of short-lived dynamic Gaussians. (C) TOW warps temporal coordinates around center t within window λt, boosting deformation capacity and densifying highly dynamic Gaussians. Right) Improvement over the densification baseline as VAD, TAT, and TOW are incrementally incorporated, resulting in sharper and more consistent dynamic reconstructions. VAD and TAT enhance moderately dynamic regions shown in green box, while TOW further improves reconstruction in highly dynamic regions such as the hand (top image) and basketball (bottom image) as shown in red box. 
+
+Abstract. Despite modeling temporal motion, dynamic 3D Gaussian Splatting (3DGS) methods still inherit a static densification strategy ill-suited for dynamic scenes. This neglect of temporal behavior leads to under-reconstructed and blurry dynamic regions, as short-lived Gaussians receive sparse supervision and fail to densify effectively. We propose a 
+
+Visibility-Aware Densification (VAD) framework that integrates tempo-ral visibility into the densification process, ensuring that Gaussians are refined based on their actual temporal presence. A Temporally-Adaptive Thresholding (TAT) mechanism further adjusts each Gaussian’s densifi-cation threshold according to its temporal lifespan, promoting balanced refinement of both static and dynamic regions. Finally, a Temporal Offset Warping (TOW) design enhances deformation capacity around temporal centers, extending the lifespan of highly dynamic Gaussians and facil-itating more effective densification. Our approach achieves substantial improvements in the visual quality of dynamic regions, outperforming existing methods across three dynamic multi-view benchmark datasets. Moreover, the proposed VAD module generalizes across diverse dynamic 3DGS methods, consistently improving dynamic reconstruction as a plug-and-play component. 
+
+Keywords: Novel View Synthesis · Gaussian Splatting · Densification  
+
+> arXiv:2606.23212v1 [cs.CV] 22 Jun 2026 2V. Sandu et al.
+
+## 1 Introduction 
+
+Novel view synthesis (NVS) is a fundamental problem in 3D vision that aims to generate realistic views of a scene from unseen viewpoints by reasoning about its underlying geometry, appearance, and illumination, making it essential to modern 3D vision, graphics, and robotics. Since the advent of Neural Radiance Fields (NeRF) [18], view synthesis has witnessed rapid progress, with numer-ous follow-up works [1, 3, 5, 19, 26, 27, 29] enhancing reconstruction quality and efficiency, yet still constrained by slow rendering. More recently, 3D Gaussian Splatting (3DGS) [9] has emerged as a compelling alternative, enabling real-time rendering while maintaining photorealistic fidelity. Building upon this foundation, several approaches have extended 3DGS to dynamic scenes - by introducing deformation fields [15, 17, 33], modeling Gaussians directly in 4D space [4, 37], or leveraging temporal keyframe interpolation [12]. While these methods differ in how they represent scene dynamics, they all fundamentally rely on the same densification strategy as the original 3DGS, which was primarily designed for static scenes. Densification enhances scene representation by introducing new Gaussians through splitting or cloning existing ones in regions where reconstruc-tion lacks detail. Gaussians are selected for densification when their accumulated positional gradients, averaged over a predefined interval, exceed a fixed threshold. However, we observe that the existing densification strategy overlooks the temporal behavior of Gaussians, making it suboptimal for dynamic 3DGS frame-works and often leading to under-reconstructed or blurry dynamic regions in rendered views. Notably, dynamic Gaussians typically exhibit shorter temporal lifespans to effectively represent complex scene dynamics [36, 39]. Consequently, their visibility, parametrized by the opacity of each Gaussian, is limited to only a few frames. This sparse visibility yields equally sparse supervision and gradient updates during training, which prevents these Gaussians from accumulating the positional gradients required for densification, leaving them permanently under-densified. This motivates a densification strategy that explicitly accounts for temporal visibility. In this work, we propose a visibility-aware densification (VAD) criterion that integrates Gaussian visibility into the densification process by accumulating visibility-weighted positional gradients and normalizing them by total visibility. This ensures that the effective densification signal for each Gaussian is primarily influenced by the frames in which it is actually visible. To further promote the densification of short-lived Gaussians, we introduce a temporally-adaptive thresh-olding (TAT) mechanism that dynamically adjusts each Gaussian’s densification threshold in proportion to its temporal lifespan, facilitating densification of such Gaussians. We further observe that certain Gaussians exhibit extremely short temporal lifespans, typically those representing highly dynamic regions—due to the deformation field’s limited ability to model abrupt or complex motion. This results in near-zero sampling probability of such Gaussians during the densification process. To alleviate this issue, we adopt multiple temporal centers, inspired by [12, 15], and propose a temporal offset warping (TOW) mechanism that allocates greater deformation capacity near each Gaussian’s temporal center. Temporally Aware Densification for Dynamic 3D Gaussian Splatting 3
+
+This design enhances the modeling of complex motion and effectively extends the temporal lifespan of highly dynamic Gaussians, thereby improving densification in such regions. Together, these components establish a unified framework for visibility-driven Gaussian densification in dynamic 3DGS models as shown in Fig 1. The key contributions of our work are summarized below. 1. Visibility-aware densification criterion that incorporates per-frame temporal visibility into the densification process, seamlessly integrating with existing dynamic 3DGS frameworks to improve reconstruction quality in dynamic regions. 2. Temporally-adaptive thresholding mechanism that adjusts the densification gradient threshold based on each Gaussian’s temporal lifespan, enabling effective densification of short-lived Gaussians. 3. Temporal offset warping that allocates greater deformation capacity near temporal centers, enhancing the modeling of complex motions and effectively improving densification in highly dynamic regions. 
+
+## 2 Related Work 
+
+Static 3DGS. Since the introduction of 3DGS [9], numerous extensions have aimed to enhance its rendering quality, generalization, and efficiency across diverse scenarios [7,20,40,42,43]. These works primarily focus on improving static scene representations through better appearance modeling, adaptive Gaussian management, or geometric regularization. 
+
+Dynamic 3DGS. To handle dynamic scenes, several approaches extend 3DGS by incorporating temporal modeling [12,15,17,25,28,33,37,38]. Existing methods can be broadly categorized as: (1) 4D Gaussian representations, and (2) deformable 3D Gaussians. 4D-based methods, such as 4DGS [37] and 4DRotorGS [4], represent spatiotemporal variations directly in a unified 4D space. 4DGS leverages 4D primitives and spherical harmonics to jointly encode view- and time-dependent appearance, whereas 4DRotorGS models frame-wise dynamics through temporally varying Gaussian rotations. Deformable Gaussian methods, on the other hand, maintain a canonical 3D rep-resentation and learn a deformation field to capture motion over time. Examples include 4DGaussians [33], which employs multi-resolution voxel planes for defor-mation; STG [15], which parameterizes trajectories with low-order polynomials; SplineGS [21] uses B-spline instead for motion trajectories and GaussianFlow [17], which uses a dual deformation field combining polynomial and Fourier represen-tations. Deformable-3DGS [38] and SWinGS [25] adopt MLP-based temporal deformation for motion modeling. More recently, Ex-4DGS [12] employs keyframe interpolation for dynamic modeling. Other approaches, such as Swift4D [34] and LongVolCap [35], focus on improving computational efficiency and scalability for long-term dynamic reconstruction. 
+
+Densification. A substantial amount of work has been done on densification of 3D Gaussians for static scenarios. Kim et al. [10] introduce additional color 4 V. Sandu et al. 
+
+gradients into the densification process to achieve more efficient scene modeling. PGD-GS [8] progressively adjusts the densification threshold to improve recon-struction in sparse input settings. Revising Densification [23] proposes error-based densification, which distributes pixel-level errors to individual Gaussians and decides densification accordingly. Pixel-GS [42] weighs positional gradients by pixel coverage area to achieve better reconstruction in regions with poor initial-ization. Grubert et al. [6] employ exponential scheduling of a predefined gradient threshold for faster convergence and improved densification in complex regions. HDA-GS [31] classifies Gaussians into multiple categories based on their size and applies different densification strategies to each. More recently, AD-GS [22] presents a regulated densification process that alternates between high and low densification phases to improve reconstruction under sparse-view settings. However, only a limited number of works have addressed densification in dynamic 3DGS. SaRO-GS [36] identifies the issue of short-lived Gaussians and introduces an adaptive optimization scheme that moderates each Gaussian’s learning rate and densification threshold based on a temporally integrated state function to improve reconstruction in dynamic regions. STG [15] employs guided sampling by introducing Gaussians in regions with high reconstruction error to enhance scene reconstruction. More recently, Anchored-4DGS [14] guides densification in dynamic regions by adapting the scaling threshold according to each Gaussian’s temporal coverage to optimize anchors for efficient storage. While these methods offer improvements, they do not fully address the fundamental mismatch between static densification strategies and dynamic scene requirements. The core issue of temporal visibility bias in gradient accumulation remains unexamined, and existing solutions lack a unified framework that jointly optimizes densification criteria, threshold adaptation, and deformation capacity allocation. In contrast, our work provides a comprehensive analysis of densification challenges in dynamic settings and proposes a detailed solution along with a generalized VAD module that can be seamlessly integrated into any existing dynamic 3DGS framework to improve dynamic reconstruction. 
+
+## 3 Preliminaries 
+
+3D Gaussian Splatting (3DGS) represents a scene as a set of Gaussian primitives 
+
+G = {Gi}, where each primitive  Gi is parameterized by  θi = ( μi, Σ i, σ i, f i). Here, 
+
+μi ∈ R3 denotes the 3D position,  Σi ∈ R3×3 the covariance,  σi ∈ [0 , 1]  the opacity, and  fi the spherical harmonics coefficients (or color feature vector). The covariance  Σi is further decomposed as 
+
+Σi = RiSiS⊤ 
+
+> i
+
+R⊤ 
+
+> i
+
+,
+
+where  Ri represents the rotation and  Si ∈ R3×3 is a diagonal scale matrix. This decomposition ensures that  Σi remains positive semi-definite, allowing for stable and smooth optimization during training. Temporally Aware Densification for Dynamic 3D Gaussian Splatting 5
+
+For rendering, the Gaussians are first sorted in front-to-back order, and the final color at pixel p in camera plane π is computed as 
+
+fp = X
+
+> i∈G p
+
+ϕ(fi, dπ ) α2Di
+
+Y
+
+> j∈G p,j<i
+
+ 1 − α2Dj
+
+ , (1) where Gp is the set of Gaussians influencing pixel p, and 
+
+α2Di = σi Gπi (p), (2) with Gπi (p) denoting the value of the 2D Gaussian function at pixel p, derived from its 3D mean μi and covariance Σi under camera projection. The function 
+
+ϕ(fi, dπ ) maps the spherical harmonics coefficients fi of Gaussian i to an RGB color along the viewing direction dπ .       
+
+> Fig. 2: Overview of our proposed densi-fication framework. (A) Temporal Offset Warping adaptively warps the input time around each Gaussian’s temporal center, stretching regions near the center and com-pressing those farther away. (B) We accumu-late the visibility weighted gradient signal for the Ndensification frames. (C) We dy-namically adjust the densification threshold based on temporal scale ψaveraged over the Ndensification frames. (D) A Gaussian is densified when its visibility-weighted gra-dient accumulation exceeds the temporally adaptive threshold.
+
+Densification is a key mechanism in 3DGS that introduces new Gaussians in under-reconstructed regions, typ-ically by splitting or cloning exist-ing ones. Regions requiring densifica-tion are identified using the screen-space positional gradient, defined as 
+
+gi = ||∇ μ2Di L|| 2, where L denotes the photometric reconstruction loss and 
+
+μ2Di is the 2D projection of μi. Densifi-cation is performed at regular intervals of N iterations based on the accumu-lated gradient signal. Specifically, a Gaussian Gi is eligible for densifica-tion if 
+
+1
+
+N
+
+> N
+
+X
+
+> n=1
+
+g(n) 
+
+> i
+
+> τ pos , (3) where N is set to 100 iterations and 
+
+τpos to 0.0002 in the 3DGS implemen-tation. 
+
+## 4 Method 
+
+We propose a framework that consists of three critical components designed to enhance the densification process in dynamic 3DGS models as shown in Fig 2, thus improving reconstruction fidelity in dynamic regions: (i) VAD, (ii) TAT, and 
+
+(iii) TOW. The first two components, VAD and TAT, reformulate the existing 3DGS densification strategy by incorporating temporal variations, while the third component, TOW, indirectly facilitates densification by improving deformation modeling, allowing for longer temporal lifespan of Gaussians and supervision from more frames. We first describe the deformation model on which we impose our densification ideas. 6 V. Sandu et al. 
+
+4.1 Deformation Model 
+
+We model the temporal evolution of each Gaussian through a Fourier-based deformation for motion, a temporal radial basis function (RBF) for opacity, and polynomial functions for rotation and scale, while view- and time-dependent color variations are represented using spherical harmonics. 
+
+Temporal RBF for Opacity. We employ a temporal radial basis function, similar to [15], to model time-dependent opacity. The opacity at time t is defined as 
+
+σi(t) = σsi e−ψi(t−ti)2
+
+, (4) where σsi denotes the time-independent spatial opacity, and ti and ψi represent the temporal center and temporal scale of the Gaussian, corresponding to the time instant of maximum visibility and its effective temporal lifespan, respectively. This formulation naturally provides the temporal lifespan of each Gaussian, which is later utilized in Section 4.3 for temporally adaptive thresholding. 
+
+Fourier-based Motion. Inspired by [17], for each Gaussian Gi, the Gaussian mean at time t is defined as 
+
+μi(t) = μi +
+
+> K
+
+X 
+
+> f=1
+
+
+
+M(c) 
+
+> i,f
+
+cos( ∆t i,f ) + M(s) 
+
+> i,f
+
+sin( ∆t i,f )
+
+
+
+, (5) where the phase term ∆t i,f is given by 
+
+∆t i,f = 2 πf (t − ti) + ϕi.
+
+Here, μi denotes the canonical Gaussian mean. The Fourier coefficients Mi,f 
+
+model motion as a sum of smooth periodic oscillations, while the phase offsets 
+
+ϕi introduce beneficial asymmetry around each Gaussian’s temporal center ti,enabling the modeling of complex, non-uniform motion. All parameters μi, Mi,f ,and ϕi are learnable. We set K = 4 in our experiments. 
+
+Polynomial Rotation and Scale. We parameterize rotation using quaternions and employ a polynomial formulation, following prior works [2, 15], to represent time-dependent rotation and scale. The quaternion and scale at time t are defined as 
+
+qi(t) = 
+
+> Nq
+
+X
+
+> k=0
+
+cik (t − ti)k, si(t) = 
+
+> Ns
+
+X
+
+> k=0
+
+dik (t − ti)k, (6) where cik and dik are learnable coefficients, and Nq and Ns are set to 1 in our implementation. We use low-degree polynomials for rotation and scale as they typically exhibit smoother temporal variations compared to positional motion. Each Gaussian Gi is associated with a temporal center ti, which is fixed at initialization. We initialize Gaussians across multiple temporal centers similar to [15, 36], offering two key benefits: (i) richer temporal coverage during initial-ization, and (ii) deformation learning that is localized and more stable, as it is Temporally Aware Densification for Dynamic 3D Gaussian Splatting 7
+
+performed relative to each Gaussian’s own temporal center. A similar concept is adopted in [12], where it is referred to as keyframe interpolation. We initialize the temporal centers uniformly, with the spacing empirically set to 20 frames in our implementation. 
+
+4.2 Visibility-Aware Densification 
+
+We first identify a key limitation in the existing densification strategy (Eq. 3), and subsequently introduce a temporal visibility–aware formulation that promotes the densification of short-lived dynamic Gaussians. Consider a Gaussian Gi that is visible in a subset M ⊂ T , where T is the entire set of frames. The cardinality of M, |M| = M . Also |T | = T . Typically, 
+
+M ≪ T , corresponding to a short-lived dynamic Gaussian within the total video duration of T frames. Let N ⊂ T correspond to set of N frames considered for densification. As a result, Gi contributes sparsely in N . Let gi(t) be the gradient signal of frame t. The consolidated densification gradient signal ¯gi under the standard formulation can be decomposed as 
+
+¯gi = 1
+
+N
+
+X
+
+> t∈M∩N
+
+gi(t) + 1
+
+N
+
+X
+
+> t∈M c∩N
+
+gi(t). (7) Here, the first term contributes weakly, as the limited number of visible frames is penalized by the large denominator, while the second term vanishes since 
+
+gi(t) is zero for frames where Gi is not visible. Consequently, dynamic Gaussians receive disproportionately low gradient signals that rarely exceed the densification threshold τpos , thereby suppressing their densification. This imbalance becomes more pronounced as the total video duration T increases. To address this issue, we propose a simple yet effective densification strategy that reweights the gradient signal by the temporal visibility of each Gaussian. The consolidated gradient signal for densification is reformulated as 
+
+¯gi =
+
+P 
+
+> t∈N
+
+σi(t) gi(t)
+
+P 
+
+> t∈N
+
+σi(t) , (8) where σi(t) denotes the opacity of Gaussian Gi in frame t. Note that if a Gaussian remains completely visible or opaque across all frames (i.e., σi(t) = 1 for all t,corresponding to the static case), our densification strategy naturally reduces to the original 3DGS formulation defined in Eq. 3. 
+
+4.3 Temporally Adaptive Thresholding 
+
+Even after applying visibility-aware densification, we observe that certain short-lived dynamic Gaussians struggle to exceed the fixed densification threshold τpos ,originally tuned for static scenes in 3DGS. To address this, we introduce a temporally adaptive thresholding strategy that modulates the densification threshold according to each Gaussian’s normalized 8 V. Sandu et al. 
+
+temporal lifespan ψ ∈ [0 , 1] . Specifically, we redefine the threshold for a Gaussian 
+
+Gi as 
+
+τ i 
+
+> pos
+
+= τpos ·
+
+ 11 + β(1 − ¯ψi)
+
+α
+
+, (9) where τpos denotes the base threshold, and ¯ψi = 1
+
+> N
+
+P 
+
+> n∈N
+
+ψ(n) 
+
+> i
+
+represents the average temporal scale of Gaussian Gi over the set of frames considered for densification. Note that ψ(n) 
+
+> i
+
+corresponds to the temporal scale of the Gaussian when the nth frame is sampled. This adaptive relaxation of the threshold for short-lived Gaussians (small ψi), promotes more frequent densification, while maintaining a stricter criterion for long-lived (large ψi) ones. The hyperparameters 
+
+α and β control the curvature and sensitivity of this temporal modulation. We choose this function with sub-linear decay to achieve more aggressive decay close to life-span 1 and slower decay close to life-span 0. Thus, other polynomial or exponential functions with appropriate parameters may also be used instead. Since ψi is a learnable parameter updated at every iteration, we use its averaged form ¯ψi to determine the effective temporal lifespan. In practice, we set β = 0 .3 to provide moderate threshold relaxation and α = 1 .0 for linear scaling, empirically balancing densification quality and stability. Notably, for Gaussians with full temporal lifespan ( ψi = 1 ), the adaptive threshold simplifies to τ i 
+
+> pos
+
+= τpos , recovering the standard static 3DGS behavior. Incorporating both the visibility-aware densification and temporally adaptive thresholding, our final densification criterion for a Gaussian Gi is expressed as 
+
+P 
+
+> t∈N
+
+σi(t) gi(t)
+
+P 
+
+> t∈N
+
+σi(t) > τ pos ·
+
+ 11 + β(1 − ¯ψi)
+
+α
+
+(10) Here, the left-hand side aggregates visibility-weighted gradients, while the right-hand side relaxes the threshold for short-lived Gaussians, together facilitating their effective densification. 
+
+4.4 Temporal Offset Warping 
+
+Despite our visibility-aware and temporally adaptive densification strategy, we observe that certain Gaussians, particularly those corresponding to highly dy-namic regions, remain under-densified. This issue arises from the limited capacity of the deformation field to model complex or rapid motion. Consequently, these Gaussians exhibit extremely low temporal scales ( ψi), which substantially reduces their sampling probability among the frames considered for densification. The core limitation is that a standard Fourier basis, with its globally-uniform frequencies, allocates modeling capacity uniformly across time. This is inefficient for dynamic scenes where motion complexity is non-uniform, often requiring high-frequency modeling near a Gaussian’s peak activity and only low-frequency modeling elsewhere. To address this, we introduce Temporal Offset Warping (TOW), a simple input warping scheme that enables a fixed set of Fourier basis functions to achieve Temporally Aware Densification for Dynamic 3D Gaussian Splatting 9
+
+adaptive frequency allocation . By non-linearly warping the input offset, we concentrate the model’s capacity to represent high-frequency details near each Gaussian’s temporal center while representing motion at lower frequencies farther away. The warped time t′ is defined as: 
+
+t′ = ti + W(t − ti; λt, ρ t), (11) where λt ∈ (0 , 1) denotes the normalized focus window size (as a fraction of the total temporal range T ), and ρt ∈ (0 , 1) represents the fraction of temporal capacity allocated within the focus window. The piecewise-linear warping function 
+
+W is formulated as: 
+
+W(∆t ) = 
+
+
+
+snear · ∆t, |∆t | ≤ λt 
+
+> 2
+
+,sfar · ∆t, otherwise ,
+
+(12) where ∆t = t − ti, and the near- and far-region scaling factors are defined as: 
+
+snear = ρt
+
+λt
+
+, sfar = 1 − ρt
+
+1 − λt
+
+. (13) This formulation guarantees that exactly a fraction ρt of the total temporal deformation capacity is allocated within the focus window.               
+
+> Fig. 3: Temporal Offset Warping (TOW). Top: Warping function W(∆t )
+> vs. time. Uniform mapping has constant unit slope ( s= 1 ), whereas TOW applies a piecewise-linear reparameterization with slope snear >1inside the focus window and
+> sfar <1outside, expanding near-center off-sets and compressing distant ones while pre-serving the total temporal span. Bottom:
+> Signals generated under uniform and warped temporal offsets. TOW enables finer tempo-ral variation within the focus window while enforcing smoother evolution in distant re-gions.
+
+Adaptive Frequency Interpreta-tion. The key insight is that warping the input time effectively retunes the frequencies of the Fourier basis rela-tive to physical time. The derivative of the warp function, dW/d (∆t ), de-fines the local frequency scaling fac-tor. Within the focus window ( |∆t | ≤ 
+
+λt/2), the scaling factor snear > 1
+
+stretches the input, causing the fixed Fourier frequencies to represent higher effective frequencies in physical time, enabling the modeling of complex, rapid motion. Outside the window, 
+
+sfar < 1 compresses the input, caus-ing the same basis functions to repre-sent lower effective frequencies, suit-able for smoother motion as shown in Fig. 3. Unlike adding Fourier coef-ficients, which increases the parame-ter count and amplifies high-frequency noise, TOW achieves adaptive resolu-tion without new parameters. This warped time t′ replaces t in our deformation model (Equations 4, 5, and 6). The enhanced deformation capa-bility, particularly the ability to model high-frequency motion near ti, prevents 10 V. Sandu et al. 
+
+the collapse of temporal scales to extremely low values. This enables Gaussians in highly dynamic regions to maintain a longer effective temporal lifespan, thereby increasing their sampling probability during densification and leading to superior reconstruction. In practice, for a sequence of T frames, we set λt = 50  
+
+> T
+
+and 
+
+ρt = 0 .75 , thereby concentrating 75% of the temporal modeling capacity within the 50 -frame neighborhood around ti.
+
+## 5 Experiments 
+
+We utilize three benchmark multiview datasets for our experiments: Neural 3D Video (N3DV) [13] dataset comprises six indoor scenes captured by 17–21 time synchronized cameras recorded at 2704 × 2028 resolution, each featuring intricate motion confined to a small region of the frame. We use the central camera for evaluation. Interdigital [24] consists of five indoor scenes captured by a 4 × 4 camera rig at 2048 × 1088 resolution. In contrast to Neural 3D Video, these sequences exhibit long-range motion and abrupt object appearances and disappearances. We use the camera in the second row and the second column for evaluation. VRU Basketball [34] features two real-world basketball scenes captured with 34 cameras at 1920 × 1080 resolution. The scenes include fast human and ball movements, making them highly challenging for accurately modeling complex non-rigid motion and interactions. We evaluate on the camera at the center. For all experiments, we use videos downsampled to half of their original resolution. 
+
+Setup. Two experimental setups are commonly used across dynamic 3D Gaussian Splatting methods. Approaches such as [12,15] train on shorter temporal segments (e.g., 50 frames) and report results aggregated over the full 300-frame sequence. In contrast, most methods like [33, 34, 36, 37] train a single model over all 300 frames. We adopt the latter setting, as densification challenges become more pronounced when training on longer continuous sequences due to sparser temporal sampling, whereas short-segment training increases total training time and can introduce flicker at segment boundaries. For completeness, we further benchmark our method against the short-segment training configuration in the supplementary. 
+
+5.1 Implementation Details & Evaluation Metrics 
+
+Please refer to the supplementary for detailed discussions on benchmarking protocols and hyperparameter settings. All our method specific hyperparameters are kept fixed across all datasets and scenes. These datasets span a wide range of motion regimes, including localized rapid motion (N3DV), mixed slow and fast motion (Interdigital), and high-speed real-world sports motion (VRU). For evaluation, we report PSNR and SSIM [32] to measure overall rendering quality. However, since dynamic regions typically occupy small portions of the frame, global metrics may obscure improvements in motion areas. To specifically evaluate dynamic reconstruction quality, we introduce Masked PSNR (M-PSNR) Temporally Aware Densification for Dynamic 3D Gaussian Splatting 11 
+
+Table 1: Quantitative comparisons on the Neural 3D Video (N3DV) dataset. 
+
+We report PSNR, M-PSNR, M-SSIM, LPIPS, rendering speed (FPS), Train Time (TT) in minutes, and Model Size in MB, measured on NVIDIA A4000 16GB GPU. (†)
+
+indicates results obtained from official pretrained models released by the respective authors. Our model significantly improves reconstruction quality in dynamic regions, as reflected by the Masked metrics (M-PSNR and M-SSIM). Notably, our method achieves the highest FPS since it avoids heavy components like MLP decoders and multi-planar voxels used by other methods.         
+
+> Method PSNR ↑M-PSNR ↑M-SSIM ↑LPIPS ↓FPS ↑TT ↓Size ↓
+> 4DGaussian [33]
+
+31.21 22.67 0.784 0.071 61 50 42 MB  
+
+> STG [15]
+
+31.40 22.61 0.792 0.069 93 120 62 MB   
+
+> Ex4DGS †[12]
+
+31.45 23.40 0.814 0.078 29 144 213 MB   
+
+> SaroGS †[36]
+
+32.08 23.62 0.821 0.064 39 189 310 MB   
+
+> Swift4D †[34]
+
+32.12 23.74 0.835 0.061 53 41 147 MB  
+
+> Ours
+
+32.42 24.68 0.863 0.059 146 62 204 MB 
+
+and Masked SSIM (M-SSIM), computed exclusively within dynamic regions identified using RAFT optical flow [30] between frames separated by 5 timesteps. Additionally, we report LPIPS [41] to assess perceptual image quality. 
+
+5.2 Results 
+
+Table 2: Quantitative comparison on the Interdigital dataset. We report PSNR, Masked PSNR (M-PSNR), Masked SSIM (M-SSIM), and LPIPS ↓. Red and Orange highlight the best and second-best results, respectively.                             
+
+> Method PSNR ↑M-PSNR ↑M-SSIM ↑LPIPS ↓
+> 4DGaussian [33] 26.74 18.09 0.520 0.173 STG [15] 33.45 27.14 0.860 0.060 Ex4DGS [12] 32.44 26.15 0.844 0.070 Swift4D [34] 31.62 23.01 0.741 0.072 Ours 34.14 28.87 0.901 0.044
+
+We compare against 4DGaussian [33], Ex4DGS [12], STG [15], Swift4D [34], and SaroGS [36]. Tab. 1 and Tab. 2 re-port averaged results across all scenes for the N3DV and Interdigital datasets. SaroGS does not report results on In-terdigital in their paper. We encoun-tered CUDA runtime errors while at-tempting to run this model on Inter-digital. Our method consistently out-performs all other methods across all datasets, particularly in dynamic re-gions. We observe that Swift4D and 4DGS perform relatively well when motion is localized to small regions, as in N3DV, whereas Ex4DGS and STG achieve better results in scenarios with slower, large-scale motion, such as the Interdigital dataset. As shown in Table 1, our training time (TT) is comparable to 4DGaussian and Swift4D, while the resulting model size remains competitive with the top three performing methods. Please see the supplementary for VRU Basketball benchmark and more details on scene-wise comparisons on all datasets. We present qualitative results in Figures 4, 5, and 6. Notably, 4DGaussian and Swift4D exhibit noticeable loss of detail in regions with rapid or complex 12 V. Sandu et al.     
+
+> Ours 4DGaussian Swift4D Ours Ground truth
+
+Fig. 4: Qualitative comparison on Neural 3D Video [13]. Scene: i) cook spinach ii) sear steak iii) cut roasted beef    
+
+> STG Ex4DGS Ours Ground truth
+
+Fig. 5: Qualitative results on the Interdigital Dataset [24]. Scenes shown top to bottom: i) Birthday , ii) Train : Note that our method preserves finer details in the moving train region.     
+
+> Ours Swift4D STG Ours Ground truth
+
+Fig. 6: Qualitative comparison on VRU Basketball [34]. Scenes top to bottom: i) DG ,ii) GZ Temporally Aware Densification for Dynamic 3D Gaussian Splatting 13 
+
+motion. Ex4DGS and STG exhibit blurring artifacts in dynamic regions when trained on longer continuous sequence. Our videos in the supplementary indicate the superior reconstruction of dynamic regions without any flicker artifacts. 
+
+5.3 Ablations Ablation study of the proposed components: Table 3 analyzes the contri-bution of our three core components: VAD, TAT, and TOW. Each component provides consistent gains across both Interdigital and N3DV datasets, with the full model achieving the highest PSNR, M-PSNR, and M-SSIM. 
+
+Generalization of VAD: Table 4 and Figure 7 demonstrate that integrating the proposed VAD consistently improves reconstruction especially in dynamic regions across multiple dynamic 3DGS baselines on both Interdigital and N3DV datasets showing its plug-and-play capability. We observe larger improvements in dynamic regions for methods such as [15] and ours that employ multiple anchors, which are more likely to have short-lived Gaussians and thus VAD be-comes important. Additionally, TAT can be naturally extended to methods that model temporal opacity using Gaussian RBFs, such as [15]. TOW, however, is in-tuitively designed for approaches that rely on a Fourier basis for motion modeling. 
+
+Table 3: Ablation study showing the im-pact of VAD, TAT, and TOW on model performance across the Interdigital and 
+
+N3DV datasets. “baseline” refers to train-ing with our deformation model only.                                             
+
+> VAD TAT TOW PSNR M-PSNR M-SSIM LPIPS Interdigital
+> baseline 32.80 24.75 0.793 0.065
+> ✓33.59 27.32 0.869 0.049
+> ✓✓33.65 27.51 0.873 0.048
+> ✓✓✓34.14 28.87 0.901 0.044 Neural 3D Video
+> baseline 31.98 21.96 0.781 0.066
+> ✓32.14 23.40 0.832 0.062
+> ✓✓32.17 23.62 0.837 0.061
+> ✓✓✓32.42 24.68 0.863 0.059
+
+Table 4: Ablation of the VAD module. 
+
+The dynamic metrices M-PSNR and M-SSIM show substantial gains over existing dynamic 3DGS baselines.                                                      
+
+> Dataset Method PSNR ↑M-PSNR ↑M-SSIM ↑LPIPS ↓
+> Interdigital STG [15] 33.45 27.14 0.860 0.060
+> +VAD 33.67 27.91 0.884 0.057
+> Ex4DGS [12] 32.44 26.15 0.844 0.070
+> +VAD 32.51 26.42 0.853 0.066
+> Swift4D [34] 31.62 23.01 0.741 0.072
+> +VAD 31.79 23.31 0.762 0.070
+> Neural 3D Video STG [15] 31.40 22.61 0.792 0.069
+> +VAD 31.71 24.01 0.842 0.065
+> Ex4DGS [12] 31.45 23.40 0.814 0.078
+> +VAD 31.62 23.79 0.830 0.076
+> Swift4D [34] 32.12 23.74 0.835 0.061
+> +VAD 32.21 24.04 0.846 0.061
+
+Temporally Aware Densification vs. Threshold Reduction: To validate the effectiveness of our method, we compare it with a baseline that simply reduces the densification threshold τpos . As illustrated in Fig. 8, lower thresholds lead to a rapid increase in model size but small performance gain. Our method, on the other hand, achieves higher Masked PSNR at a better model size. 
+
+Handling Occlusion: Our method is robust to occlusions due to both its temporal initialization and temporally aware densification strategy. By initializing 14 V. Sandu et al.     
+
+> Fig. 7: Generalization of the pro-posed VAD module across diverse baselines.
+> Fig. 8: Ablation on densification effi-ciency. (Scene: Painter)
+
+Gaussians across multiple temporal centers, we ensure broader temporal coverage, increasing the likelihood that occluded objects are captured during initialization. Furthermore, VAD, TAT, and TOW jointly help densify Gaussians that are visible for only a few frames due to occlusion or late entry, which would otherwise receive insufficient gradients because of limited visibility. Fig 9 illustrates a scenario in which an object re-emerges after occlusion. We also present such cases in the supplementary videos, notably in the Painter (sudden object appearance) and Train scenes. Additional ablations on the VRU dataset, choice of hyperparameters, and impact of TOW on life spans of Gaussians are provided in the supplementary material. 
+
+## 6 Conclusion  
+
+> Fig. 9: Occlusion and reappearance. Train scene. Baseline uses only deforma-tion model, while ours better preserves occluded objects upon reappearance.
+
+We revisit the densification strategy in dynamic 3DGS and identify its limita-tions when modeling fast complex mo-tion. To address this, we propose a de-formation formulation complemented by our three key contributions. Together, these modules significantly improve re-construction in dynamic regions, and VAD module can generalize to other models. 
+
+Limitations and Future Work. Although effective, our method has not yet been tested on longer video sequences spanning several minutes; evaluating how well our method scales to such durations is an important next step. Additionally, our current focus is multiview capture, and exploring our approach to monocular or sparse-view settings remains a practical next step. We also plan to explore applying TAT and TOW as plug-and-play modules with minimal modifications to other baseline architectures. Temporally Aware Densification for Dynamic 3D Gaussian Splatting 15 
+
+## Acknowledgements 
+
+This work is supported in part by a grant from Anusandhan National Research Foundation, India under grant number ANRF/ARG/2025/002993/ENS and the Kotak IISc AI ML Center. 
+
+## References 
+
+1. Barron, J.T., Mildenhall, B., Tancik, M., Hedman, P., Martin-Brualla, R., Srinivasan, P.P.: Mip-nerf: A multiscale representation for anti-aliasing neural radiance fields. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR). pp. 5855–5864 (2021) 2. Bond, A., Wang, J.H., Mai, L., Erdem, E., Erdem, A.: Gaussianvideo: Efficient video representation via hierarchical gaussian splatting. arXiv preprint arXiv:2501.04782 (2025) 3. Chen, A., Xu, Z., Geiger, A., Yu, J., Su, H.: Tensorf: Tensorial radiance fields. In: Proceedings of the European Conference on Computer Vision (ECCV) (2022) 4. Duan, Y., Wei, F., Dai, Q., He, Y., Chen, W., Chen, B.: 4D-Rotor Gaussian Splatting: Towards Efficient Novel View Synthesis for Dynamic Scenes. In: Proceedings of the ACM Special Interest Group on Computer Graphics and Interactive Techniques (SIGGRAPH) (July 2024) 5. Fridovich-Keil, S., Yu, A., Tancik, M., Chen, Q., Recht, B., Kanazawa, A.: Plenox-els: Radiance fields without neural networks. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) (2022) 6. Grubert, G., Barthel, F., Hilsmann, A., Eisert, P.: Improving adaptive density control for 3d gaussian splatting. In: Proceedings of the 20th International Joint Conference on Computer Vision, Imaging and Computer Graphics Theory and Applications. pp. 610–621. SCITEPRESS - Science and Technology Publications (2025). https://doi.org/10.5220/0013308500003912 , http://dx.doi.org/10. 5220/0013308500003912 
+
+7. Huang, B., Yu, Z., Chen, A., Geiger, A., Gao, S.: 2d gaussian splatting for geomet-rically accurate radiance fields. In: Proceedings of the ACM Special Interest Group on Computer Graphics and Interactive Techniques (SIGGRAPH). Association for Computing Machinery (2024). https://doi.org/10.1145/3641519.3657428 
+
+8. Huang, H., Zhang, Z., Wu, G., Wang, R.: Pgdgs: Improving few-shot 3d gaussian splatting with progressive gaussian densification. In: ICASSP 2025 - 2025 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP). pp. 1–5 (2025). https://doi.org/10.1109/ICASSP49660.2025.10889028 
+
+9. Kerbl, B., Kopanas, G., Leimkühler, T., Drettakis, G.: 3D Gaussian Splatting for Real-Time Radiance Field Rendering. ACM Transactions on Graphics (TOG) 42 (4) (July 2023) 10. Kim, S., Lee, K., Lee, Y.: Color-cued efficient densification method for 3d gaussian splatting. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition Workshops (CVPRW). pp. 775–783 (June 2024) 11. Kingma, D.P.: Adam: A method for stochastic optimization. arXiv preprint arXiv:1412.6980 (2014) 12. Lee, J., Won, C., Jung, H., Bae, I., Jeon, H.G.: Fully explicit dynamic guassian splatting. In: Proceedings of the Neural Information Processing Systems (2024) 16 V. Sandu et al. 13. Li, T., Slavcheva, M., Zollhoefer, M., Green, S., Lassner, C., Kim, C., Schmidt, T., Lovegrove, S., Goesele, M., Newcombe, R., et al.: Neural 3D video synthesis from multi-view video. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR). pp. 5521–5531 (2022) 14. Li, Y., Pang, B., Chen, Y., Wang, G.: Anchored 4d gaussian splatting for dynamic novel view synthesis. In: Proceedings of the ACM Special Interest Group on Com-puter Graphics and Interactive Techniques - Asia (SIGGRAPH-Asia). Association for Computing Machinery, New York, NY, USA (2025). https://doi.org/10. 1145/3757377.3763898 , https://doi.org/10.1145/3757377.3763898 
+
+15. Li, Z., Chen, Z., Li, Z., Xu, Y.: Spacetime gaussian feature splatting for real-time dynamic view synthesis. Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) (2024) 16. Li, Z., Niklaus, S., Snavely, N., Wang, O.: Neural scene flow fields for space-time view synthesis of dynamic scenes. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) (2021) 17. Lin, Y., Dai, Z., Zhu, S., Yao, Y.: Gaussian-flow: 4d reconstruction with dynamic 3d gaussian particle. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR). pp. 21136–21145 (2024) 18. Mildenhall, B., Srinivasan, P.P., Tancik, M., Barron, J.T., Ramamoorthi, R., Ng, R.: Nerf: Representing scenes as neural radiance fields for view synthesis. In: Proceedings of the European Conference on Computer Vision (ECCV) (2020) 19. Müller, T., Evans, A., Schied, C., Keller, A.: Instant neural graphics primitives with a multiresolution hash encoding. ACM Transactions on Graphics (TOG) 
+
+41 (4), 102:1–102:15 (Jul 2022). https://doi.org/10.1145/3528223.3530127 ,
+
+https://doi.org/10.1145/3528223.3530127 
+
+20. Park, H., Ryu, G., Kim, W.: Dropgaussian: Structural regularization for sparse-view gaussian splatting. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) (2025) 21. Park, J., Bui, M.Q.V., Bello, J.L.G., Moon, J., Oh, J., Kim, M.: Splinegs: Robust motion-adaptive spline for real-time dynamic 3d gaussians from monocular video. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR). pp. 26866–26875 (June 2025) 22. Patle, G., Girgaonkar, N., Somraj, N., Soundararajan, R.: AD-GS: Alternating Densification for Sparse-Input 3D Gaussian Splatting. In: Proceedings of the ACM Special Interest Group on Computer Graphics and Interactive Techniques - Asia (SIGGRAPH-Asia) (2025). https://doi.org/10.1145/3757377.3763993 
+
+23. Rota Bulò, S., Porzi, L., Kontschieder, P.: Revising densification in gaussian splatting. In: Proceedings of the European Conference on Computer Vision (ECCV) (2024) 24. Sabater, N., Boisson, G., Vandame, B., Kerbiriou, P., Babon, F., Hog, M., Langlois, T., Gendrot, R., Bureller, O., Schubert, A., Allie, V.: Dataset and pipeline for multi-view light-field video. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition Workshops (CVPRW) (2017) 25. Shaw, R., Nazarczuk, M., Song, J., Moreau, A., Catley-Chandar, S., Dhamo, H., Pérez-Pellitero, E.: Swings: sliding windows for dynamic 3d gaussian splatting. In: Proceedings of the European Conference on Computer Vision (ECCV). pp. 37–54. Springer (2024) 26. Somraj, N., Karanayil, A., Soundararajan, R.: SimpleNeRF: Regularizing sparse in-put neural radiance fields with simpler solutions. In: Proceedings of the ACM Special Interest Group on Computer Graphics and Interactive Techniques -Asia (SIGGRAPH-Asia) (December 2023). https://doi.org/10.1145/3610548. 3618188 Temporally Aware Densification for Dynamic 3D Gaussian Splatting 17 27. Somraj, N., Soundararajan, R.: ViP-NeRF: Visibility prior for sparse input neural radiance fields. In: Proceedings of the ACM Special Interest Group on Computer Graphics and Interactive Techniques (SIGGRAPH) (August 2023). https://doi. org/10.1145/3588432.3591539 
+
+28. Stearns, C., Harley, A.W., Uy, M., Dubost, F., Tombari, F., Wetzstein, G., Guibas, L.: Dynamic gaussian marbles for novel view synthesis of casual monocular videos. In: Proceedings of the ACM Special Interest Group on Computer Graphics and Interactive Techniques - Asia (SIGGRAPH-Asia). pp. 1–11 (2024) 29. Sun, C., Sun, M., Chen, H.: Direct voxel grid optimization: Super-fast convergence for radiance fields reconstruction. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) (2022) 30. Teed, Z., Deng, J.Y.: Raft: Recurrent all-pairs field transforms for optical flow. Proceedings of the European Conference on Computer Vision (ECCV) (2020) 31. Wang, Z., Wu, G., Wang, Z., Xiao, L., Liu, R., Wu, J., Wang, R.: Hda-gs: Hi-erarchical density-controlled for anisotropic 3d gaussian splatting. In: ICASSP 2025 - 2025 IEEE International Conference on Acoustics, Speech and Signal Pro-cessing (ICASSP). pp. 1–5 (2025). https://doi.org/10.1109/ICASSP49660.2025. 10887967 
+
+32. Wang, Z., Bovik, A., Sheikh, H., Simoncelli, E.: Image quality assessment: from error visibility to structural similarity. IEEE Transactions on Image Processing 
+
+13 (4), 600–612 (2004). https://doi.org/10.1109/TIP.2003.819861 
+
+33. Wu, G., Yi, T., Fang, J., Xie, L., Zhang, X., Wei, W., Liu, W., Tian, Q., Wang, X.: 4d gaussian splatting for real-time dynamic scene rendering. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR). pp. 20310–20320 (June 2024) 34. Wu, J., Peng, R., Wang, Z., Xiao, L., Tang, L., Yan, J., Xiong, K., Wang, R.: Swift4d: Adaptive divide-and-conquer gaussian splatting for compact and efficient reconstruction of dynamic scene. In: Proceedings of the International Conference on Learning Representations (ICLR) (2025) 35. Xu, Z., Xu, Y., Yu, Z., Peng, S., Sun, J., Bao, H., Zhou, X.: Representing long volumetric video with temporal gaussian hierarchy. ACM Transactions on Graphics (TOG) 43 (6) (November 2024) 36. Yan, J., Peng, R., Tang, L., Wang, R.: 4d gaussian splatting with scale-aware residual field and adaptive optimization for real-time rendering of temporally complex dynamic scenes. In: ACM Multimedia 2024 (2024) 37. Yang, Z., Yang, H., Pan, Z., Zhang, L.: Real-time photorealistic dynamic scene representation and rendering with 4d gaussian splatting. In: Proceedings of the International Conference on Learning Representations (ICLR) (2024) 38. Yang, Z., Gao, X., Zhou, W., Jiao, S., Zhang, Y., Jin, X.: Deformable 3d gaussians for high-fidelity monocular dynamic scene reconstruction. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) (2024) 39. Yuan, Y., Shen, Q., Yang, X., Wang, X.: 1000+ fps 4d gaussian splatting for dynamic scene rendering (2025), https://arxiv.org/abs/2503.16422 
+
+40. Zhang, J., Li, J., Yu, X., Huang, L., Gu, L., Zheng, J., Bai, X.: Cor-gs: Sparse-view 3d gaussian splatting via co-regularization. In: Proceedings of the European Conference on Computer Vision (ECCV) (2024) 41. Zhang, R., Isola, P., Efros, A.A., Shechtman, E., Wang, O.: The unreasonable effec-tiveness of deep features as a perceptual metric. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) (2018) 18 V. Sandu et al. 42. Zhang, Z., Hu, W., Lao, Y., He, T., Zhao, H.: Pixel-gs: Density control with pixel-aware gradient for 3d gaussian splatting. In: Proceedings of the European Conference on Computer Vision (ECCV) (2024) 43. Zhu, Z., Fan, Z., Jiang, Y., Wang, Z.: Fsgs: Real-time few-shot view synthesis using gaussian splatting. In: Proceedings of the European Conference on Computer Vision (ECCV) (2024) Temporally Aware Densification for Dynamic 3D Gaussian Splatting 19 
+
+## Supplementary Material 
+
+The contents of this supplement include 1. Implementation details 2. VRU Results 3. More Ablations 4. Qualitative Comparisons 5. Video comparisons 6. Scene-wise quantitative comparisons. 
+
+## 7 Implementation Details 
+
+We implement our framework in PyTorch, building upon the 3DGS codebase and its differentiable rasterization pipeline. All experiments are conducted on a single NVIDIA A4000 16GB GPU. We employ the Adam optimizer [11] with an initial learning rate of 2.6 × 10 −4 for Gaussian mean parameters, applying exponential decay to a final rate of 2.6 × 10 −6. Training proceeds for 40K iterations, with densification applied every 200 iterations up to iteration 17k. We use a batch size of 1 for all experiments, and retain the default 3DGS parameters for all other optimization settings. 
+
+Benchmarking Protocols. We evaluate the competing methods on the Neural 3D Video [13], Interdigital [24], and VRU [34] datasets. 
+
+Neural 3D Video. For Ex4DGS [12], SaroGS [36], and Swift4D [34], we use the official pretrained models released by the respective authors. For 4DGaussian [33], we train and evaluate the model using the default configuration recommended in the paper. Since STG [15] is designed for 50-frame sequences, we adapt it to the full 300-frame sequence by proportionally scaling the densification count (6 ×)and training for 40k iterations; matching our setup for a fair comparison. As also noted in Ex4DGS [12], STG exhibits performance degradation when trained on longer sequences. 
+
+Interdigital. For STG and Ex4DGS, we train and evaluate on the full 300-frame sequence using the authors’ default configurations, scaling the densification count proportionally and training for 40k iterations. Since 4DGaussian and Swift4D do not report results on this dataset, we train these methods for 40k iterations using their default multiview configuration. 
+
+VRU. All benchmarked methods are trained and evaluated on the full 250-frame sequence using the default multiview configuration provided by the respective authors, for 40k iterations. 
+
+Hyperparameters. All method-specific hyperparameters are kept fixed across all datasets and scenes. Table 5 summarizes the hyperparameters used in our method. 20 V. Sandu et al. 
+
+Table 5: Hyperparameter Table. In TOW, T denotes the total number of frames in the video (i.e., the video duration). 
+
+Dataset VAD TAT TOW 
+
+N3DV, Interdigital, VRU None α = 1 .0, β = 0 .3 λt = 50  
+
+> T
+
+, ρ t = 0 .75 
+
+Table 6: Quantitative comparison on the VRU dataset. We report PSNR, Masked PSNR (M-PSNR), Masked SSIM (M-SSIM), and LPIPS ↓.Method PSNR ↑ M-PSNR ↑ M-SSIM ↑ LPIPS ↓            
+
+> STG [15] 26.03 21.33 0.736 0.127 Swift4D [34] 25.72 19.52 0.705 0.129
+> Ours 28.28 25.39 0.881 0.090
+
+Table 7: Ablation study showing the im-pact of VAD, TAT, and TOW on model performance on the VRU dataset. “base-line” refers to training with our deformation model only.                          
+
+> VAD TAT TOW PSNR M-PSNR M-SSIM LPIPS VRU Basketball
+> baseline 26.75 21.03 0.737 0.134
+> ✓27.63 23.24 0.828 0.105
+> ✓✓27.71 23.45 0.835 0.104
+> ✓✓✓28.28 25.39 0.881 0.090
+
+## 8 VRU Results 
+
+We benchmark our method on the VRU dataset against STG and Swift4D, as shown in Table 6. Competing methods struggle to preserve fine details in highly dynamic regions, while our approach retains these details to a good extent as shown in Figure 6 in the main paper. 
+
+## 9 More Ablations 
+
+Ablation of the proposed components on VRU Dataset: Table 7 presents the ablation results on VRU, demonstrating the contribution of each core com-ponent, exhibiting trends consistent with those observed in Table 4 in the main paper. 
+
+Ablation on TOW hyperparameters: Figure 10 shows that TOW remains stable under moderate variations of its hyperparameters, with optimal recon-struction achieved when the temporal capacity is set near 75% (or ρ = 0 .75 )and the focus window size around 100 frames (or λ = 100 /T ). Beyond these ranges, performance gradually degrades, indicating that excessively narrow or overly diffuse temporal influence weakens the effectiveness of temporal offset warping. In our method, we adopt ρ = 0 .75 and λ = 50 /T , which lie in the stable, high-performance region of this sweep. For ease of interpretation, ρ is reported as a percentage and λ in number of frames in Figure 10. 
+
+Impact of TOW on Gaussian’s lifespan: We represent a Gaussian’s lifespan using its temporal scale, a normalized value in [0 , 1] indicating how much of the sequence it stays active ( 1 means it spans the full 300 frames). In Figure 11, we show the average temporal scale across all Gaussians for the sear steak and flame Temporally Aware Densification for Dynamic 3D Gaussian Splatting 21            
+
+> Fig. 10: TOW hyperparameter sen-sitivity on the Painter scene. Mod-erate temporal capacity ( ρ) and focus-window sizes ( λ) yield the best Masked PSNR, while extreme settings degrade per-formance. For ease of interpretation, ρis reported as a percentage and λin num-ber of frames. Our model adopts ρ= 75%
+> and λ= 50 , positioned near the optimal region.
+> Fig. 11: Impact of TOW on Gaus-sian lifespan and Model performance.
+> TOW increases the temporal lifespan of Gaussians, allowing them to remain active over longer motion ranges. This extended lifespan enables more effective densifica-tion in highly dynamic regions, ultimately yielding higher Masked-PSNR as shown in both sear steak and flame steak scenes.
+
+steak scenes. With TOW, Gaussians live longer and accumulate more stable gradients, leading to frequent densification and better performance especially in highly dynamic regions. 
+
+Comparison with 50-frame segment training setup: A few works such as STG and Ex4DGS adopt a short-segment protocol, training separate models on 50-frame chunks and aggregating results over the full 300-frame sequence. For completeness, we benchmark our method against this setting as shown in Table 8. However, such segmented training is suboptimal for dynamic scenes, as it increases overall training time, model overhead and often introduces temporal inconsistencies or flicker at segment boundaries due to the lack of long-range temporal coupling. 
+
+Impact of each Component on Training Time and Model Size: We analyze how each of our three proposed components contributes to training time and model overhead. Since all three components promote densification in dynamic regions, they naturally introduce additional Gaussians which increases the final model size. This increase in Gaussian count correspondingly raises training time, as more primitives must be processed during the differentiable rendering pass at each iteration. Table 9 provides a detailed breakdown of how each component incrementally affects model size and training time on the Neural 3D Video dataset. 
+
+Sudden Appearance/Occlusion: Figure 12 illustrates a scenario where an object initially outside the camera view suddenly enters the field of view. We compare our method with STG [15] on this challenging case. Such objects typically correspond to short-lived Gaussians due to their limited temporal visibility. Our 22 V. Sandu et al.                                                        
+
+> Table 8: Short-segment (50-frame) training comparison on Interdigital and N3DV datasets. We report PSNR, Masked PSNR (M-PSNR), Masked SSIM (M-SSIM), LPIPS ↓, and Training Time (TT, in hours:minutes) on an NVIDIA A4000 16GB GPU. Red and Orange denote the best and second-best results.
+> Method PSNR ↑M-PSNR ↑M-SSIM ↑LPIPS ↓TT ↓
+> Interdigital
+> STG [15] 33.80 28.81 0.898 0.044 7:19 Ex4DGS [12] 33.64 28.63 0.897 0.052 9:42
+> Ours-50 34.36 29.18 0.911 0.042 4:27
+> Neural 3D Video
+> STG [15] 32.05 25.11 0.870 0.062 7:51 Ex4DGS [12] 32.01 25.01 0.871 0.064 7:19
+> Ours-50 32.51 26.03 0.889 0.057 5:17
+> Table 9: Impact of each component on training time and model size. Results are averaged across all scenes in the Neural 3D Video dataset.
+> Configuration Model Size (MB) Training Time (min)
+> Baseline (deformation only) 155 49 mins + VAD 182 55 mins + VAD + TAT 189 57 mins + VAD + TAT + TOW (Full) 204 62 mins
+
+method effectively handles these situations by enabling proper densification of these short-lived Gaussians, leading to better reconstruction quality. 
+
+Impact of TOW on static Gaussians: For static Gaussians, the model naturally learns near-zero deformation coefficients in Eqs. (4)–(6) of the main paper, including the Fourier motion coefficients Mi,f . The Gaussian parameters become effectively time-invariant, e.g., μi(t) ≈ μi in Eq. (4), regardless of the warped temporal coordinate induced by TOW. Thus, TOW has negligible impact on static Gaussians and does not introduce artifacts or flicker in static regions, as also observed in the supplementary videos. To validate, we decompose the scene into Gaussians with zero and non-zero deformation coefficients in Figure 13. 
+
+Runtime Analysis: The total rendering time consists of preprocessing time for deforming Gaussians and rasterization time. We observe that preprocessing typically dominates the runtime. Methods such as 4DGaussian, Swift4D, and STG employ computationally heavy HexPlane and/or MLP-based deformation fields, leading to high preprocessing overhead. In contrast, our method uses lightweight Fourier- and polynomial-based deformations, substantially reducing preprocessing time. As a result, despite using more Gaussians, our method achieves significantly Temporally Aware Densification for Dynamic 3D Gaussian Splatting 23 
+
+Fig. 12: Sudden Appearance. Interdigital Painter scene. STG produces blurry artifacts when objects abruptly enter the camera view, whereas our method preserves finer details in these dynamic regions. 
+
+Fig. 13: Visualization of Gaussians with zero and non-zero deformation coefficients. Gaussians with Mi,f = 0 predominantly correspond to static regions. 24 V. Sandu et al. 
+
+higher FPS. Table 10 provides a runtime breakdown on a 16 GB Nvidia A4000 GPU.                
+
+> Table 10: Runtime breakdown on the Sear Steak scene from N3DV.
+> Method # Gaussians Preprocess (s) Rasterize (s) FPS ↑
+> 4DGaussian ∼1.1M 0.0150 0.0002 66
+> Ours ∼4.5M 0.0030 0.0040 143
+
+Experiments on the Panoptic Sports Dataset: We compare our method against the baseline on the Basketball and Football scenes in Fig. 14.  
+
+> Fig. 14: Qualitative comparison on the Panoptic Sports dataset. Our method better reconstructs fast-moving objects shown in red boxes and improves the overall PSNR.
+
+Hyperparameter Analysis of TAT and TOW: We present a hyperparameter analysis of the TOW and TAT modules in Table 11 on the Interdigital dataset. 
+
+## 10 Qualitative Comparisons 
+
+We present additional qualitative results on the Interdigital and N3DV datasets. Figure 15 shows scene-wise qualitative comparisons on the Interdigital dataset, highlighting zoomed-in crops of dynamic regions indicated by the green boxes. Figure 16 shows qualitative results on the cut-roasted-beef , flame-salmon , and 
+
+flame-steak scenes from the N3DV dataset for the 4DGaussian and SaroGS [36] methods. Furthermore, Figure 17 illustrates the impact of each of the three proposed components on dynamic scene reconstruction in the Interdigital dataset. Temporally Aware Densification for Dynamic 3D Gaussian Splatting 25    
+
+> STG Ex4DGS Ours Ground truth
+
+Fig. 15: More qualitative results on the Interdigital Dataset [24]. Scenes top to bottom: i) Painter , ii) Train , iii) Theater . Please note the zoom-in crop of the dynamic regions shown in green box.     
+
+> Ours 4DGaussian SaroGS Ours Ground truth
+
+Fig. 16: More qualitative comparison on Neural 3D Video [13]. Scene: i) cut roasted beef ii) flame salmon iii) flame steak 26 V. Sandu et al. 
+
+TOW Hyperparameters Temporal capacity ρ (λ = 0 .15 ) Focus window size λ (ρ = 0 .75 )
+
+ρ/λ 0.25 0.50 0.75 1.00 0.25 0.33 0.42 0.50 M-PSNR 28.5 28.7 28.9 28.6 28.9 29.0 28.7 28.4 
+
+Sensitivity parameter β (TAT) 
+
+β 0.1 0.3 0.5 0.7 0.9 M-PSNR 28.6 28.9 29.1 28.8 28.8 
+
+Table 11: The performance with hyperparameters is stable. Our configurations are highlighted in light blue.      
+
+> Full Baseline VAD VAD + TAT Full Ground truth
+
+Fig. 17: Qualitative ablation from the baseline to the full model with the addition of VAD, TAT, and TOW. Each component improves reconstruction in dynamic regions. Scenes shown top to bottom: i) Painter , ii) Theater .
+
+## 11 Video Comparisons 
+
+We present video comparisons across the Interdigital [24], Neural 3D Video [16], and VRU Basketball [34] datasets for all evaluated methods. On Interdigital, we compare our approach with Swift4D on the Train scene and with STG on Painter. For Neural 3D Video, we benchmark against SaroGS on flame-salmon, 4DGaussian on sear-steak, and Swift4D on flame-steak. For VRU Basketball, we compare our method with STG on the DG scene. We additionally include visualizations that highlight how the proposed Visibility-Aware Densification (VAD) module generalizes when integrated into other baselines. All videos are encoded using the H.264 codec, with YUV420p as the pixel format, and a frame rate of 30 FPS. Temporally Aware Densification for Dynamic 3D Gaussian Splatting 27 
+
+## 12 Scene-wise Quantitative Comparisons 
+
+This section reports scene-wise metrics—PSNR, SSIM [32], M-PSNR, M-SSIM, LPIPS [41] for all methods across all datasets. We observe that our method consistently achieves better performance across most scenes on all 3 datasets as shown in Table 12, Table 13, and Table 14. 28 V. Sandu et al. 
+
+> Table 12: Per-scene quantitative comparisons on the Interdigital Dataset [24]. All models are trained and evaluated for 300 frames.
+
+Method Average Birthday Painter Remy Theater Train 
+
+PSNR ↑
+
+4DGaussian 26.74 22.96 30.09 32.48 23.40 24.79 STG 33.45 31.88 36.78 36.12 30.98 31.54 Swift4D 31.63 29.28 34.33 35.67 29.06 29.79 Ex-4DGS 32.45 29.56 35.86 35.57 30.88 30.35 Ours 34.14 32.07 37.90 36.73 31.36 32.66 
+
+M-PSNR ↑
+
+4DGaussian 18.09 17.50 19.62 24.30 15.53 13.50 STG 27.14 26.60 30.24 28.75 24.07 26.04 Swift4D 23.01 22.92 23.60 29.08 21.50 17.93 Ex-4DGS 26.15 24.54 28.03 29.04 25.06 24.09 Ours 28.87 26.99 32.72 29.96 26.79 27.88 
+
+SSIM ↑
+
+4DGaussian 0.833 0.763 0.893 0.905 0.795 0.810 STG 0.938 0.944 0.962 0.942 0.906 0.937 Swift4D 0.930 0.925 0.951 0.941 0.897 0.935 Ex-4DGS 0.930 0.924 0.956 0.943 0.909 0.918 Ours 0.946 0.947 0.967 0.954 0.917 0.948 
+
+M-SSIM ↑
+
+4DGaussian 0.520 0.569 0.563 0.685 0.472 0.311 STG 0.860 0.916 0.901 0.833 0.787 0.877 Swift4D 0.741 0.838 0.720 0.845 0.718 0.586 Ex-4DGS 0.844 0.868 0.860 0.849 0.826 0.818 Ours 0.901 0.923 0.930 0.892 0.850 0.900 
+
+LPIPS Alex ↓
+
+4DGaussian 0.173 0.209 0.134 0.168 0.189 0.163 STG 0.060 0.026 0.043 0.094 0.090 0.029 Swift4D 0.072 0.048 0.073 0.096 0.106 0.038 Ex-4DGS 0.070 0.052 0.059 0.084 0.087 0.066 Ours 0.044 0.024 0.037 0.068 0.070 0.021 Temporally Aware Densification for Dynamic 3D Gaussian Splatting 29 
+
+Table 13: Per-scene quantitative comparisons on the Neural 3D Video Dataset [13]. All models are trained and evaluated for 300 frames. 
+
+Method Avg. Coffee Martini Cook Spinach Cut Roasted Beef Flame Salmon Flame Steak Sear Steak 
+
+PSNR ↑
+
+4DGaussian 31.21 28.52 32.15 32.36 29.01 32.73 32.60 STG 31.40 27.65 32.50 33.20 28.17 33.19 33.79 SaroGS 32.08 28.86 33.12 33.83 29.06 33.78 33.80 Swift4D 32.12 29.29 32.89 33.58 29.62 33.51 33.83 Ex-4DGS 31.45 27.67 32.87 33.08 28.24 33.13 33.74 Ours 32.42 29.30 33.61 33.99 29.70 34.04 33.89 
+
+M-PSNR ↑
+
+4DGaussian 22.66 22.46 23.51 25.29 19.44 22.35 22.95 STG 22.61 22.10 22.54 25.31 18.50 22.18 25.06 SaroGS 23.62 23.80 24.30 26.89 19.32 23.10 24.31 Swift4D 23.74 23.54 23.09 26.45 21.03 22.19 26.24 Ex-4DGS 23.41 21.15 23.70 26.59 19.65 23.01 26.39 Ours 24.68 23.67 24.60 27.64 21.36 23.50 27.31 
+
+SSIM ↑
+
+4DGaussian 0.942 0.920 0.946 0.951 0.924 0.957 0.954 STG 0.948 0.918 0.956 0.958 0.923 0.964 0.966 SaroGS 0.950 0.926 0.958 0.959 0.926 0.964 0.964 Swift4D 0.944 0.917 0.950 0.953 0.922 0.958 0.960 Ex-4DGS 0.939 0.902 0.951 0.953 0.932 0.958 0.958 Ours 0.955 0.930 0.962 0.964 0.932 0.968 0.969 
+
+M-SSIM ↑
+
+4DGaussian 0.784 0.803 0.783 0.833 0.768 0.789 0.722 STG 0.792 0.814 0.767 0.825 0.732 0.786 0.825 SaroGS 0.821 0.861 0.819 0.874 0.765 0.809 0.794 Swift4D 0.836 0.871 0.788 0.878 0.834 0.802 0.842 Ex-4DGS 0.815 0.761 0.817 0.876 0.740 0.823 0.857 Ours 0.863 0.867 0.838 0.902 0.824 0.849 0.895 
+
+LPIPS Alex ↓
+
+4DGaussian 0.071 0.085 0.071 0.070 0.083 0.061 0.054 STG 0.069 0.085 0.068 0.068 0.084 0.057 0.052 SaroGS 0.064 0.078 0.059 0.059 0.075 0.053 0.055 Swift4D 0.061 0.075 0.056 0.059 0.077 0.047 0.052 Ex-4DGS 0.079 0.111 0.071 0.069 0.098 0.062 0.061 Ours 0.059 0.076 0.054 0.055 0.074 0.047 0.048 30 V. Sandu et al. 
+
+Table 14: Per-scene quantitative comparisons on the VRU dataset. All models are trained and evaluated for 250 frames. 
+
+Method Avg. DG GZ 
+
+PSNR ↑
+
+STG 26.03 26.46 25.61 Swift4D 25.72 26.51 24.94 Ours 28.28 28.13 28.44 
+
+M-PSNR ↑
+
+STG 21.33 22.23 20.43 Swift4D 19.52 21.42 17.63 Ours 25.39 25.30 25.48 
+
+SSIM ↑
+
+STG 0.897 0.883 0.911 Swift4D 0.892 0.884 0.900 Ours 0.921 0.905 0.937 
+
+M-SSIM ↑
+
+STG 0.736 0.757 0.714 Swift4D 0.705 0.764 0.645 Ours 0.881 0.875 0.886 
+
+LPIPS Alex ↓
+
+STG 0.129 0.097 0.160 Swift4D 0.127 0.121 0.134 Ours 0.090 0.090 0.090

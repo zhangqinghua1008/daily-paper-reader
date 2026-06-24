@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-06-23T22:18:21.921287+00:00",
-  "updated_date": "20260623",
+  "generated_at": "2026-06-24T21:55:14.830595+00:00",
+  "updated_date": "20260624",
   "carryover_days": 9,
   "tag_states": {
     "GS-SLAM": {
-      "updated_date": "20260623",
+      "updated_date": "20260624",
       "carryover_days": 9,
       "items": []
     },
     "endo-dgs": {
-      "updated_date": "20260623",
+      "updated_date": "20260624",
       "carryover_days": 9,
       "items": []
     }

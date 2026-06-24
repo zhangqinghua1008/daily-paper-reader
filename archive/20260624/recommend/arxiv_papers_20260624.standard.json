@@ -1,0 +1,181 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-24T21:55:14.829833+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 2,
+    "deep_cap": 7,
+    "deep_selected": 2,
+    "quick_candidates": 2,
+    "quick_skim_target": 12,
+    "quick_selected": 2
+  },
+  "deep_dive": [
+    {
+      "id": "2606.24767v1",
+      "source": "arxiv",
+      "title": "Compact Object-Level Representations with Open-Vocabulary Understanding for Indoor Visual Relocalization",
+      "abstract": "Indoor visual relocalization plays a critical role in emerging spatial and embodied AI applications. However, prior research was predominantly devoted to low-level vision schemes, struggling to perceive scene semantics and compositions, which limits both interpretability and applicability. In this paper, we explore the issue of how to organize rich object information in a scene, including semantics, layout, and geometry, into a structured map representation, thereby utilizing object units exclusively to drive the camera relocalization task. To this end, we propose OpenReLoc, a camera relocalization system designed to provide scene understanding and accurate pose estimation capabilities. Leveraging recent foundation models, we first introduce a multi-modal mechanism to integrate open-vocabulary semantic knowledge for effective 2D-3D object matching. Additionally, we design object-oriented reference frames as position priors, paired with a reference frame selection strategy based on the Distance-IoU (DIOU), enabling extension to scalable scenes. Moreover, to ensure stable and accurate pose optimization, we also propose a dual-path 2D Iterative Closest Pixel loss guided by object shape. Experimental results demonstrate that OpenReLoc achieves superior relocalization recall and accuracy across various datasets. Our source code will be released upon acceptance.",
+      "authors": [
+        "Zhaopeng Cui",
+        "Jiarui Hu",
+        "Jingbo Liu",
+        "Boming Zhao",
+        "Xiyue Guo",
+        "Boyin Feng",
+        "Haocheng Peng",
+        "Yujun Shen",
+        "Hujun Bao",
+        "Guofeng Zhang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.RO"
+      ],
+      "published": "2026-06-23T16:27:04+00:00",
+      "link": "https://arxiv.org/pdf/2606.24767v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Proposes OpenReLoc for indoor visual relocalization with accurate camera pose estimation",
+      "llm_evidence_cn": "提出OpenReLoc系统，用于室内视觉重定位，提供精确的相机位姿估计",
+      "llm_evidence": "提出OpenReLoc系统，用于室内视觉重定位，提供精确的相机位姿估计",
+      "canonical_evidence": "提出OpenReLoc系统，用于室内视觉重定位，提供精确的相机位姿估计",
+      "llm_tldr_en": "OpenReLoc addresses indoor visual relocalization by organizing scene semantics, layout, and geometry into object-level representations, leveraging foundation models for accurate 6-DoF pose estimation.",
+      "llm_tldr_cn": "室内视觉重定位在空间计算和具身AI中至关重要，但以往方法多依赖低层视觉特征，缺乏场景语义理解。本文提出OpenReLoc，通过将物体语义、布局和几何信息组织成结构化地图表示，并利用基础模型实现场景理解和精确的六自由度相机位姿估计。该方法仅使用物体单元驱动重定位，提升了解释性和适用性。实验表明其在室内环境重定位中实现了高精度位姿恢复，为语义感知的视觉定位提供了新思路。",
+      "llm_tldr": "室内视觉重定位在空间计算和具身AI中至关重要，但以往方法多依赖低层视觉特征，缺乏场景语义理解。本文提出OpenReLoc，通过将物体语义、布局和几何信息组织成结构化地图表示，并利用基础模型实现场景理解和精确的六自由度相机位姿估计。该方法仅使用物体单元驱动重定位，提升了解释性和适用性。实验表明其在室内环境重定位中实现了高精度位姿恢复，为语义感知的视觉定位提供了新思路。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "accurate camera pose tracking",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.24796v1",
+      "source": "arxiv",
+      "title": "Pocket-SLAM: Rendering-Area-Aware Pruning for Memory-Efficient 3DGS-SLAM",
+      "abstract": "3D Gaussian Splatting (3DGS) has garnered significant attention in Simultaneous Localization and Mapping (SLAM) due to its advances in capturing fine-grained geometry features and synthesizing novel views. For SLAM in large-scale scenes, such as autonomous driving, 3DGS-SLAM faces a critical limitation: memory consumption increases continuously over time as Gaussian points accumulate, leading to poor memory efficiency and limiting its applicability. In this work, we propose a rendering-area-aware pruning strategy that selectively removes Gaussians based on their contribution to the effective rendering area, rather than solely relying on Gaussian-level heuristics such as opacity or gradient magnitude. This perspective directly targets the sources of memory redundancy, effectively reducing the peak memory footprint of 3DGS-SLAM during runtime. Evaluations on the EuRoC and KITTI datasets demonstrate that our method consistently outperforms existing pruning approaches in large-scale outdoor scenes, achieving over 60% memory reduction and more than 2 times FPS improvement while preserving localization and mapping accuracy. These results highlight rendering-area-aware pruning as a promising direction for scaling 3DGS-SLAM to real-world autonomous driving scenarios. Our code is publicly available at https://github.com/UMN-ZhaoLab/Pocket-SLAM.git.",
+      "authors": [
+        "Leshu Li",
+        "Jie Peng",
+        "Yang Zhao"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-23T16:48:58+00:00",
+      "link": "https://arxiv.org/pdf/2606.24796v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "proposes memory-efficient pruning for 3DGS-SLAM, directly matching monocular 3DGS-SLAM system requirement",
+      "llm_evidence_cn": "提出面向内存高效的3DGS-SLAM剪枝，直接匹配单目3DGS-SLAM系统需求",
+      "llm_evidence": "提出面向内存高效的3DGS-SLAM剪枝，直接匹配单目3DGS-SLAM系统需求",
+      "canonical_evidence": "提出面向内存高效的3DGS-SLAM剪枝，直接匹配单目3DGS-SLAM系统需求",
+      "llm_tldr_en": "Pocket-SLAM introduces rendering-area-aware pruning to reduce memory consumption in 3DGS-SLAM for large-scale scenes, maintaining mapping quality.",
+      "llm_tldr_cn": "Pocket-SLAM针对三维高斯泼溅SLAM在大场景中内存持续增长的问题，提出基于渲染区域感知的剪枝策略，根据高斯对有效渲染区域的贡献选择性删除，而非传统的不透明度或梯度启发式。实验表明，该方法在保持建图质量的同时显著降低内存占用，使3DGS-SLAM可扩展至大规模场景，如自动驾驶。",
+      "llm_tldr": "Pocket-SLAM针对三维高斯泼溅SLAM在大场景中内存持续增长的问题，提出基于渲染区域感知的剪枝策略，根据高斯对有效渲染区域的贡献选择性删除，而非传统的不透明度或梯度启发式。实验表明，该方法在保持建图质量的同时显著降低内存占用，使3DGS-SLAM可扩展至大规模场景，如自动驾驶。",
+      "llm_tags": [
+        "query:gs-slam:composite"
+      ],
+      "matched_query_tag": "query:gs-slam:composite",
+      "matched_query_text": "Papers central to 单目3DGS-SLAM系统相关论文,一定要是SLAM系统。, especially work that connects or combines: volumetric scene representation using anisotropic Gaussians for real-time rendering; Visual SLAM methods for camera tracking and mapping; accurate camera pose tracking; visual SLAM with learned representations; RGB-D SLAM based on 3D Gaussian Splatting; simultaneous localization and mapping using a single camera; efficient visual SLAM with 3D Gaussian scene representations; Monocular 3D Gaussian splatting SLAM system for real time dense mapping; Monocular SLAM system that leverages 3D Gaussian Splatting for scene representation and camera tracking.",
+      "matched_requirement_id": "req-composite-gs-slam",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2606.23212v1",
+      "source": "arxiv",
+      "title": "Temporally Aware Densification for Dynamic 3D Gaussian Splatting",
+      "abstract": "Despite modeling temporal motion, dynamic 3D Gaussian Splatting (3DGS) methods still inherit a static densification strategy that is ill-suited for dynamic scenes. This neglect of temporal behavior leads to under-reconstructed and blurry dynamic regions, as short-lived Gaussians receive sparse supervision and fail to densify effectively. We propose a Visibility-Aware Densification (VAD) framework that integrates temporal visibility into the densification process, ensuring that Gaussians are refined based on their actual temporal presence. A Temporally-Adaptive Thresholding (TAT) mechanism further adjusts each Gaussian's densification threshold according to its temporal lifespan, promoting balanced refinement of both static and dynamic regions. Finally, a Temporal Offset Warping (TOW) design enhances deformation capacity around temporal centers, extending the lifespan of highly dynamic Gaussians and facilitating more effective densification. Our approach achieves substantial improvements in the visual quality of dynamic regions, outperforming existing methods across three dynamic multi-view benchmark datasets. Moreover, the proposed VAD module generalizes across diverse dynamic 3DGS methods, consistently improving dynamic reconstruction as a plug-and-play component.",
+      "authors": [
+        "Vikram Sandu",
+        "Mayurdeep Pathak",
+        "Rajiv Soundararajan"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-22T11:55:21+00:00",
+      "link": "https://arxiv.org/pdf/2606.23212v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "improves densification for dynamic 3DGS, enhancing volumetric scene representation for real-time rendering",
+      "llm_evidence_cn": "改进动态3DGS的致密化，增强用于实时渲染的体素场景表示",
+      "llm_evidence": "改进动态3DGS的致密化，增强用于实时渲染的体素场景表示",
+      "canonical_evidence": "改进动态3DGS的致密化，增强用于实时渲染的体素场景表示",
+      "llm_tldr_en": "Temporally Aware Densification integrates temporal visibility into 3DGS densification, addressing under-reconstruction in dynamic regions for better rendering.",
+      "llm_tldr_cn": "针对动态三维高斯泼溅（3DGS）方法中静态致密化策略不适应动态场景的问题，提出了可见性感知致密化框架。该方法通过引入时间可见性指导和自适应阈值机制，根据高斯生命周期调整致密化，从而平衡静态与动态区域的细化。实验表明，在动态场景渲染中减少了模糊和欠重建，提升了动态3DGS的渲染质量。",
+      "llm_tldr": "针对动态三维高斯泼溅（3DGS）方法中静态致密化策略不适应动态场景的问题，提出了可见性感知致密化框架。该方法通过引入时间可见性指导和自适应阈值机制，根据高斯生命周期调整致密化，从而平衡静态与动态区域的细化。实验表明，在动态场景渲染中减少了模糊和欠重建，提升了动态3DGS的渲染质量。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.22197v1",
+      "source": "arxiv",
+      "title": "Multi4D: High-Fidelity Dynamic Gaussian Splatting via Multi-Level Competitive Allocation",
+      "abstract": "Dynamic 3D Gaussian splatting faces a fundamental tension between motion consistency and visual fidelity. Deformation-based approaches preserve temporal correspondence but suffer from motion over-factorization, oversmoothing high-frequency dynamics. In contrast, 4D-primitive methods capture fine visual details yet incur temporal overparameterization, breaking object identity and leading to severe storage overhead. To resolve this, we introduce Multi4D, a framework for high-fidelity dynamic Gaussian Splatting based on multi-level competitive allocation. Instead of a monolithic representation, we distribute modeling capacity across three structured levels: static structure, persistent dynamic geometry, and transient appearance primitives. Through shared rasterization and residual-driven optimization, these levels dynamically compete to explain photometric error, enabling adaptive specialization without pre-assigned decomposition. This allocation preserves long-term motion consistency while capturing fine dynamic detail, achieving state-of-the-art rendering quality and real-time performance with significantly fewer dynamic primitives. Furthermore, because our representation explicitly tracks compact persistent Gaussians over time, semantic features can be embedded afterward, enabling Multi4D to achieve state-of-the-art 4D segmentation accuracy with an order-of-magnitude speedup. Project page: https://batfacewayne.github.io/Multi4D.io/",
+      "authors": [
+        "Rui Wang",
+        "Quentin Lohmeyer",
+        "Siyu Tang",
+        "Mirko Meboldt"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-20T19:11:26+00:00",
+      "link": "https://arxiv.org/pdf/2606.22197v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "multi-level competitive allocation for dynamic 3D Gaussian splatting, improving volumetric scene representation",
+      "llm_evidence_cn": "多层级竞争分配用于动态3D高斯泼溅，改进体场景表示",
+      "llm_evidence": "多层级竞争分配用于动态3D高斯泼溅，改进体场景表示",
+      "canonical_evidence": "多层级竞争分配用于动态3D高斯泼溅，改进体场景表示",
+      "llm_tldr_en": "Multi4D resolves tension in dynamic Gaussian splatting by allocating modeling capacity across static, persistent dynamic, and transient primitives, achieving high-fidelity dynamic scene reconstruction.",
+      "llm_tldr_cn": "该论文解决动态3D高斯泼溅中运动一致性与视觉保真度的权衡问题，提出多层级竞争分配框架。方法将建模容量分布在静态结构、持久动态几何和瞬态外观三个层次，既保持物体身份又避免运动过度平滑。实验表明该方法在动态场景重建中保持高保真度，同时有效控制存储开销，推动动态高斯泼溅的实际应用。",
+      "llm_tldr": "该论文解决动态3D高斯泼溅中运动一致性与视觉保真度的权衡问题，提出多层级竞争分配框架。方法将建模容量分布在静态结构、持久动态几何和瞬态外观三个层次，既保持物体身份又避免运动过度平滑。实验表明该方法在动态场景重建中保持高保真度，同时有效控制存储开销，推动动态高斯泼溅的实际应用。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
