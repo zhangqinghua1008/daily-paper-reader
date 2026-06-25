@@ -1,0 +1,366 @@
+Title: DSP-SLAM++: A Unified Framework for Multi-Class, High-Fidelity Object SLAM in the Wild
+
+URL Source: https://arxiv.org/pdf/2606.25953v1
+
+Published Time: Thu, 25 Jun 2026 01:10:17 GMT
+
+Number of Pages: 9
+
+Markdown Content:
+# DSP-SLAM++: A Unified Framework for Multi-Class, High-Fidelity Object SLAM in the Wild 
+
+Ahmad Kourani 1, Ghina Daoud 1, Daniel Asmar 2, and Imad Elhajj 3
+
+Abstract — Existing object-aware SLAM systems force atrade-off between real-time performance, multi-class support, and the generation of high-fidelity, semantically coherent object models. To address this trade-off, we present DSP-SLAM++, which extends the DSP-SLAM framework with an asyn-chronous mapping pipeline for real-time performance and dedi-cated sensor fusion adaptations for a monocular fisheye-LiDAR suite. Experiments demonstrate that our system generates fine-grained, geometrically-complete shapes for multiple object classes while eliminating severe mapping thread bottlenecks by reducing maximum object processing latency by up to 70% compared to the state-of-the-art baseline, enabling robust, real-time performance on a challenging 25 Hz multi-class datasets. This work makes high-fidelity, multi-class object SLAM more practical for real-world applications like autonomous driving and robotic manipulation by enabling its use on platforms with common fisheye-LiDAR sensor setups. The open-source code is available at: [github.com/AUBVRL/DSP-SLAMpp]. 
+
+Index Terms — Object-SLAM, Deep Shape Priors, Multi-Class Reconstruction, Asynchronous LiDAR-Camera Fusion, Fisheye SLAM. 
+
+I. I NTRODUCTION 
+
+For autonomous vehicles to navigate safely in complex on-road environments, their perception systems must achieve a deep, object-level understanding of their surroundings. To this end, the field of Simultaneous Localization and Mapping (SLAM) has progressed from simple geometric maps to the frontier of object-aware SLAM, which models individual objects as persistent, semantic entities. A key challenge in current methods lies in their reliance on simplified primitives, such as cubic boxes [1], [2] or quadrics [3], [4], to represent objects. While computationally efficient, these low-fidelity representations fail to capture the precise geometry of real-world items, which hinders the ability to accurately forecast object motion and plan safe, nuanced maneuvers during close-proximity interactions. Consequently, a clear need ex-ists for richer map representations capable of modeling complex object shapes with high fidelity. To address the need for high-fidelity shapes, systems like DSP-SLAM [5] leverage category-specific deep shape priors to reconstruct detailed 3D meshes from partial observations.  
+
+> *This work was supported by the DIDMOS-XR project.
+> 1Ahmad Kourani and Ghina Daoud are with the Vision and Robotics Lab (VRL), American University of Beirut (AUB), Beirut, Lebanon
+
+{ahk42, gad08}@mail.aub.edu                 
+
+> 2Daniel Asmar is with the Department of Mechanical Engineer-ing, MSFEA, American University of Beirut (AUB), Beirut, Lebanon
+
+da20@aub.edu.lb 
+
+> 3Imad Elhajj is with the Department of Electrical and Computer Engi-neering, MSFEA, American University of Beirut (AUB), Beirut, Lebanon
+
+ie05@aub.edu.lb 
+
+Fig. 1: DSP-SLAM++ generates consistent object-aware maps rich with multi-class objects of detailed shapes in real time. Reconstructed map from our in-house dataset. However, its heavy computational cost and restrictive im-plementation limited its applicability to a single class of objects and narrow sensor suites. A more recent paradigm attempts to solve the speed and visual quality problem using explicit representations like 3D Gaussian Splatting, but lacks a coherent, instance-level understanding of objects [6]. This leaves a critical gap for a unified system that combines geometric detail with real-time speed and semantic coherence required for robust, object-level autonomy. To address the challenges of object-aware SLAM, we present DSP-SLAM++ (Fig. 1), a unified framework de-signed for the complexities of real-world automotive se-tups. Our system builds upon the implicit shape represen-tations of DSP-SLAM but redesigns its architecture for real-time, multi-class performance through a novel asynchronous pipeline and a dedicated sensor fusion module. This approach allows our system to generate high-fidelity, multi-class object maps while running at 25 Hz without performance or stability degradation compared to the state-of-the-art baseline. The main contributions of this work are: 1) The development of a real-time SLAM system that reconstructs multiple classes of objects with high ge-ometric fidelity, providing richer, more semantically diverse maps for downstream robotics or tasks like motion forecasting and planning. 2) A novel asynchronous processing pipeline that resolves the computational bottlenecks of prior implicit methods, enabling robust real-time performance regardless of the number of objects being modeled. 3) A complete sensor fusion and compensation pipeline     
+
+> arXiv:2606.25953v1 [cs.RO] 24 Jun 2026 Tracking
+> RGB- L Depth
+> Module
+> Keyframe? MC object detection
+> & association Map objects
+> Insert objects
+> Joint
+> map- objects
+> optimization
+> MC object
+> asynchronous
+> reconstruction
+> Detection
+> complete?
+> Worker Thread Mapping Thread
+> Y
+> Tracking Thread
+> YMap w ith
+> Multi- Class
+> Objects
+> Camera Stream
+> LiDAR Stream
+
+Fig. 2: DSP-SLAM++ system overview. MC stands for Multi-Class. that enables the use of a challenging but practical monocular fisheye and LiDAR sensor suite, making high-fidelity object SLAM more accessible to common automotive platforms by leveraging stock camera instal-lations found in high-end vehicles. 4) The release of our open-source implementation to the community to foster further research and development. II. R ELATED WORK 
+
+A. Multi-Class Object Reconstruction 
+
+Object representation in SLAM traditionally forces atrade-off between geometric fidelity and computational ef-ficiency. Approaches utilizing learned implicit shape pri-ors, such as DSP-SLAM [5], achieve detailed 3D mesh reconstructions but suffer from high computational costs and single-class restrictions. Conversely, modeling objects with lightweight geometric primitives—such as cuboids [1], [2] or ellipsoids [4], [7]—ensures real-time, multi-class scalability but sacrifices the precise shape details required for complex tasks. A recent paradigm shift has emerged with 3D Gaussian Splatting (3DGS) [8], which models the environment as a collection of explicit primitives, enabling high-fidelity, photo-realistic rendering in real-time. While advanced sys-tems can augment individual Gaussians with semantic labels [6], they fundamentally lack a coherent, instance-level un-derstanding of objects, representing them as a collection of points rather than as distinct geometric entities. 
+
+B. Sensor Fusion and Compensation for Automotive SLAM 
+
+Transitioning advanced SLAM algorithms to real-world automotive platforms introduces challenges related to practi-cal sensor configurations. The narrow Field-of-View (FoV) of traditional pinhole cameras creates unacceptable blind spots, leading to a trend of adopting wide-angle fisheye cameras in modern datasets and vehicles [9]–[11]. In response, state-of-the-art geometric SLAM frameworks like ORB-SLAM3 have incorporated unified camera models to handle the high distortion inherent in these lenses [12], highlighting a key limitation in prior object-aware systems that lack native fisheye support. Another significant challenge is the inherent scale ambigu-ity of monocular visual SLAM. While stereo cameras can re-solve this issue, they add cost, complexity, and redundancy to systems already equipped with a LiDAR sensor [13]. Conse-quently, LiDAR-assisted visual SLAM has been explored to provide metric scale. Some methods fuse LiDAR depth with feature tracks and semantic priors [14], [15], though often at a high computational cost on GPUs. Others are tailored to specific hardware setups [16]. In contrast, lightweight, CPU-based alternatives like RGB-L [17] directly leverage LiDAR point clouds to recover scale and improve accuracy, offering a practical approach for real-world deployment. In summary, the literature reveals a two-fold challenge for practical deployment of object-aware SLAM in the wild. The field of object representation is fragmented by trade-offs between geometric accuracy, performance, and seman-tic coherence. Furthermore, real-world automotive platforms introduce significant sensor fusion and compensation com-plexities. A robust solution must therefore unify these com-peting representational goals while mastering the challenges of asynchronous, wide-angle sensors. Motivated by these challenges, our work proposes a system that integrates the expressive power of deep implicit models into a real-time, multi-class architecture. III. S YSTEM OVERVIEW 
+
+The overall architecture of our proposed DSP-SLAM++ is illustrated in Figure 2. It is a unified framework that takes monocular fisheye images and LiDAR scans as input, and produces a globally consistent trajectory, alongside a map of high-fidelity, multi-class object reconstructions. The system operates through several parallel threads: a front-end for tracking and sensor fusion, an object detection and association module, and a back-end for asynchronous reconstruction and global optimization. The front-end thread leverages a lightweight RGB-L mod-ule to generate a dense depth map from the aligned LiDAR data, providing a metric scale to the monocular SLAM pipeline. These components, detailed in Sec. VI, allow the ORB-SLAM3 backbone to estimate robust camera poses using its native fisheye camera support. In parallel, an object detection module identifies and associates objects from the sensor data (Sec. IV). Data for newly observed objects Algorithm 1 Multi-Class Object Reconstruction Pipeline  
+
+> 1:
+
+procedure PROCESS KEYFRAME OBJECTS (image, li-dar_scan) 
+
+▷ Stage 1: Per-Frame Candidate Generation  
+
+> 2:
+
+(D2D, D3D) ← (Det 2D(image ), Det 3D(velo ))  
+
+> 3:
+
+Dvalid ← GlobalGreedyAssignment (D2D, D3D)
+
+▷ Stage 2: Class-Aware Map Association  
+
+> 4:
+
+unassociated_candidates ← D valid  
+
+> 5:
+
+for all object m ∈ GlobalMap do  
+
+> 6:
+
+d∗ ← FindBestMatch (m, unassociated_candidates ) 
+
+> 7:
+
+if d∗ is not null then  
+
+> 8:
+
+AssociateObservation( m, d∗) 
+
+> 9:
+
+unassociated_candidates.remove( d∗) 
+
+> 10:
+
+end if  
+
+> 11:
+
+end for 
+
+▷ Initialize new objects from remaining candidates  
+
+> 12:
+
+for all candidate d ∈ unassociated_candidates do  
+
+> 13:
+
+mnew ← InitializeNewObject (d) 
+
+> 14:
+
+TriggerReconstruction( mnew ) 
+
+> 15:
+
+GlobalMap.add( mnew ) 
+
+> 16:
+
+end for  
+
+> 17:
+
+end procedure 
+
+is dispatched to our asynchronous reconstruction back-end, which uses a thread pool and category-specific DeepSDF networks to generate detailed 3D meshes without blocking the main tracking thread (Sec. V). Finally, the estimated camera and objects poses, and sparse map points are jointly refined to maintain global map consistency. IV. M ULTI -C LASS DETECTION & R ECONSTRUCTION 
+
+Our multi-class object reconstruction pipeline, illustrated in Algorithm 1, produces semantically meaningful landmarks that are jointly optimized with the camera trajectory and map points. The workflow consists of three sequential stages: ob-ject detection and initialization, multi-class data association, and class-specific shape reconstruction. 
+
+A. Object Candidate Generation 
+
+The first stage of our pipeline generates object candi-dates at each keyframe in a similar manner as the baseline DSP-SLAM. We perform 2D object detection using YOLO [18], where each detected instance d2D, j in D2D with j ∈{1, ..., n2D} provides a segmentation mask M2D, j and a class label c2D, j (Line 2). In parallel, 3D detections are obtained via PointPillars [19], with each instance d3D, j of D3D with 
+
+i ∈ { 1, ..., n3D} providing a class-labeled 3D bounding box 
+
+b3D,i. We filter the raw 2D and 3D detections using class-specific confidence thresholds ( τc,2D, τc,3D). The baseline DSP-SLAM’s approach to 2D-3D matching, which exhaustively projects every 3D instance onto every 2D mask, becomes inefficient and prone to wrong associations when extended to multiple object classes. To address this limitation, we introduce a robust global greedy bipartite matching strategy designed for the complexities of multi-class scenarios (Line 3). Our process first establishes a direct semantic link between detections through a class-consistent projection strategy, and finally, a disambiguation method resolves assignment ambiguities common in complex scenes with nested segmentation masks. This approach ensures a reliable one-to-one matching between 2D and 3D detections. The assignment process begins by establishing class-consistency between the sets D2D and D3D. Let P3D,i be the ith 3D detection’s point cloud projected onto the image plane; we define the association score |P 3D,i ∩ M 2D, j| as the ratio of projected points that fall within the mask boundaries to the total number of points. In the case of a fisheye lens, masks are rectified prior to projection to ensure geometric consistency. We construct a global pairwise score matrix, 
+
+S ∈ Zn3D×n2D , that connects all 3D instances to all 2D masks, while only evaluated for candidate pairs belonging to the same class and invalidated for the rest: 
+
+Si, j =
+
+(
+
+|P 3D,i ∩ M 2D, j| if c3D,i = c2D, j,
+
+−1 otherwise. (1) Assignment ambiguity could happen when a single 3D detec-tion is projected onto multiple tangent masks. To resolve this issue, we employ a global greedy bipartite matching strategy. We iteratively identify the candidate pair (i∗, j∗) that yields the highest inlier score in the entire matrix: 
+
+(i∗, j∗) = arg max  
+
+> i,j
+
+Si, j (2) This maximum score is then validated against a class-specific point-ratio threshold. If a match is successful, the 3D candidate d3D,i∗ is assigned to the 2D mask d2D, j∗ , while simultaneously invalidating the corresponding row i∗ and column j∗ in S:
+
+Si∗, j = −1 ∀ j ∈ [1, n2D], Si, j∗ = −1 ∀i ∈ [1, n3D] (3) This solution enforces a mutually exclusive, one-to-one map-ping of the 3D detections and masks. The greedy selection process is repeated iteratively until all valid scores Si, j > 0are exhausted. Our proposed approach improves the robustness and com-putational efficiency of the 2D-3D association by resolving assignment ambiguities in a single unified step, yielding a set of validated 2D-3D object pairs for the subsequent map association and reconstruction stages. 
+
+B. Class-Aware Map Association 
+
+To track objects across frames, new detections must be associated with existing map landmarks. The baseline DSP-SLAM uses a uniform distance threshold, which ignores se-mantic scale diversity and causes association errors (Fig. 3(b-c-d)). To resolve this, we introduce a class-conditioned association, defining a unique matching radius r c for each class c based on its average ground-plane footprint diagonal: rc = pl2 
+
+> c
+
++ w2 
+
+> c
+
+, where lc and wc are the length and width. The process iterates through currently tracked objects M
+
+and validated keyframe detections D(k) 
+
+> valid
+
+(Line 5). For each map object m ∈ M of class c, we identify the closest candidate detection d∗ 
+
+> c
+
+of the same class (Line 6). Association a) medium object b) medium object       
+
+> c) large object d) small object
+> New object creation Existing map object
+> Association to existing objects
+> RR' <R
+> RR
+
+Fig. 3: Map objects association for different search radii. a) appropriate search radius (correct association), b) Small search radius (missing association), c) large objects (missing association) d) small objects (wrong association). is confirmed if their ground-plane distance, ∥pm − pd∗ 
+
+> c
+
+∥2, is less than r c (Lines 8, 9). To handle reappearing objects, we perform a second global association against all map objects before creating a new instance. This prevents duplicates when objects are re-detected after tracking loss or during loop closures. Finally, any unassociated detection in D(k) 
+
+> valid
+
+is instantiated as a new landmark (Lines 12, 13, Fig. 3(a)). This geometry-aware strategy improves robustness by reducing failed associations for large objects and preventing false matches in crowded scenes (Fig. 3(c-d)). 
+
+C. Class-Specific Shape Reconstruction 
+
+Our shape reconstruction builds upon DeepSDF [20], a learned, continuous representation of a signed distance function (SDF) conditioned on a latent shape code z. The baseline DSP-SLAM [5] uses, but not strictly bound to, DeepSDF to optimize an object’s pose and shape from its observed point cloud and 2D mask. However, naively extending this by training a single, monolithic decoder for multiple object classes can lead to cross-class interference and overfitting. To mitigate this risk, we use a modular multi-decoder approach, maintaining a set of independent, pre-trained DeepSDF decoders, {Gc}c∈C , one for each supported object class. At runtime, when an object with semantic label c is associated, the system dynamically selects the corresponding decoder Gc. The subsequent optimization of the object’s pose, Tco , and shape code, zc, then proceeds as defined in the baseline (Lines 14, 15). By initializing and constraining this optimization to the correct class-specific manifold via 
+
+Gc, the process converges faster and yields a more represen-tative geometry. This modular design makes our framework inherently extensible; new object classes can be supported by adding a pre-trained decoder without retraining the entire network. While synthetic priors introduce a synthetic-to-real System   
+
+> System Thread Pool
+> a) Synchronous Reconstruction b) Asynchronous Reconstruction
+> Keyframe
+> Regular frames
+> Reconstruction tasks
+> Other keyframe tasks
+> Detection tasks
+
+Fig. 4: (a) Synchronous reconstruction, (b) Asynchronous reconstruction. gap, our network-agnostic design allows seamless integration of future domain-adapted models. V. A SYNCHRONOUS BACK -E ND FOR REAL -T IME 
+
+PERFORMANCE 
+
+Prior implicit methods like DSP-SLAM are limited by keyframe processing bottlenecks, restricting the system to approximately 10–15 fps for stable performance. This la-tency stems from synchronously executing computationally intensive detection and reconstruction tasks within the main tracking and mapping threads. This concentrated load at each keyframe stalls all other SLAM operations (Fig. 4(a)). While manageable in single-class scenarios at low frame rates, this approach fails when handling multiple object classes, as multi-class reconstruction is inherently demanding. Faster detectors can reduce tracking latency, but faster shape de-coders [21], [22] do not resolve the fundamental problem of concentrated load. Inspired by multi-threaded frame-works for real-time data processing [23], we introduce an Asynchronous Reconstruction (AR) pipeline that decouples object reconstruction from the time-critical mapping thread, distributing the workload across multiple frames (Fig. 4(b)). Our asynchronous workflow is summarized in Algorithm 2 and managed by a two-worker thread pool, a thread-safe task queue, and a results queue. The local mapping thread acts as the producer (Line 2). When an object reconstruction is required, instead of waiting for the final mesh, it creates a placeholder initialized with the 3D bounding box detection. It then packages the necessary reconstruction data ( e.g. , point cloud, 2D mask, and current pose) into a task T and pushes it to the task queue (Lines 4–6), instantly freeing the thread. The worker threads act as consumers (Line 13): available threads retrieve tasks, perform the computationally expensive DeepSDF optimization and mesh extraction, and place the result R (e.g. , optimized latent code, pose, and 3D mesh) into the results queue (Lines 15–17). The local mapping thread periodically checks for available results (Line 8), dequeuing and integrating them into the global map (Lines 9, 10) to update the object mesh. Detection is prioritized over reconstruction; task processing pauses when new detections are required. This approach not only ensures that the back-end mapping is never blocked by heavy reconstruction tasks, but also makes object insertion into the map instantaneous through these bounding box placeholders. Consequently, this pre-serves the real-time capability of the system and provides im-mediate spatial awareness for downstream planning, avoiding Algorithm 2 Asynchronous Reconstruction Pipeline  
+
+> 1:
+
+shared data: TaskQueue , ResultQueue  
+
+> 2:
+
+procedure LOCAL MAPPING (keyframe)  
+
+> 3:
+
+Process(keyframe)  
+
+> 4:
+
+if reconstruction_needed(keyframe) then  
+
+> 5:
+
+T ← CreateTask(keyframe)  
+
+> 6:
+
+TaskQueue .push( T ) ▷ Add task to queue  
+
+> 7:
+
+end if 
+
+▷ Process any completed results without blocking  
+
+> 8:
+
+while not ResultQueue .empty() do  
+
+> 9:
+
+R ← ResultQueue .pop ()  
+
+> 10:
+
+UpdateMap( R) 
+
+> 11:
+
+end while  
+
+> 12:
+
+end procedure  
+
+> 13:
+
+procedure WORKER ▷ Runs in a parallel thread pool  
+
+> 14:
+
+while True do  
+
+> 15:
+
+T ← TaskQueue .pop () ▷ Blocks until a task is available  
+
+> 16:
+
+R ← ReconstructShape (T ) 
+
+> 17:
+
+ResultQueue .push( R) 
+
+> 18:
+
+end while  
+
+> 19:
+
+end procedure (a) 3D Point Cloud Distortion 2D Feature Recti fi cation (Ours) (b) 
+
+Fig. 5: Fisheye-LiDAR depth association. (a) Distorting dense 3D LiDAR points into the raw fisheye space. (b) Our approach: rectifying sparse 2D visual features to a virtual pinhole space to minimize computational overhead. Transparent green dots represent LiDAR measurements, and solid squares represent SLAM features. the risks associated with reconstruction delays even when modeling numerous complex objects. VI. F ISHEYE -L IDAR D EPTH INTEGRATION 
+
+The front-end of our system processes raw data from a fisheye camera and a LiDAR sensor into a metric-scale stream suitable for the main SLAM pipeline. We build upon the ORB-SLAM3 backbone to leverage its mature support for wide-angle fisheye camera models. However, using a monocular fisheye camera introduces the inherent challenge of scale ambiguity. To provide the monocular system with metric depth, we adapt the lightweight RGB-L method, which extracts depth from sparse LiDAR measurements. The primary challenge is the severe distortion of the fisheye lens, as the standard RGB-L projection logic assumes a pinhole camera model. Instead of performing a computationally expensive full-image rectification, we leverage the native fisheye support in ORB-SLAM3 to associate LiDAR depth with the camera observations. This presents two possible projection strategies (illustrated in Fig. 5): rectifying the extracted 2D visual fea-tures into an ideal pinhole space, or distorting the projected 3D LiDAR points into the raw fisheye image space. We adopt the feature rectification approach due to its superior computational efficiency and its compatibility with the underlying ORB-SLAM3 codebase. Because the number of extracted visual features is significantly smaller than the dense set of LiDAR points falling within the camera’s field of view, transforming this sparse feature set minimizes pro-cessing overhead compared to applying a complex distortion model to the entire point cloud. Specifically, for each feature point extracted from the distorted image, the system uses the Kannala-Brandt model to compute its corresponding undistorted coordinate. The LiDAR point cloud is then pro-jected into this virtual pinhole space, allowing the system to accurately associate metric depth with each feature’s rectified position. VII. E XPERIMENTS & R ESULTS 
+
+A. Experimental Setup 
+
+We evaluate our system on an in-house dataset 1 collected by a vehicle navigating dense urban environments. This dataset is designed to be challenging, featuring scenarios with closely parked cars, motorcycles, and large buses that cause significant occlusion. Our data collection vehicle is equipped with four fisheye cameras, a 32-line LiDAR sensor, and a GNSS/INS unit to establish ground truth; however, our experiments utilize only the front-facing camera and the LiDAR stream. To benchmark against prior work, we utilize the KITTI dataset. To demonstrate our system’s versatility across dif-ferent camera models, we also evaluate on the nuScenes [24] (pinhole) and CBNU [25] (fisheye) datasets. Our DSP-SLAM++ is compared against the original DSP-SLAM [5] only on the KITTI dataset, as the baseline lacks native fisheye camera support and cannot process our custom dataset. We specifically restrict our baseline comparison to DSP-SLAM, rather than primitive-based methods like CubeSLAM [1], to directly evaluate our architectural and multi-class improve-ments within high-fidelity implicit shape reconstruction. Our system is evaluated on four object categories: cars, buses, motorcycles, and pedestrians. The front-end employs YOLO11x-seg and PointPillars as the 2D and 3D detectors, respectively. The reconstruction back-end utilizes a category-specific DeepSDF model for each class. Requiring only 
+
+∼7 MB of VRAM per model, this multi-decoder architecture is highly scalable. Furthermore, since objects are recon-structed sequentially, inference memory allocation remains independent of the total supported classes. These models are 
+
+> 1Dataset details will be provided upon paper acceptance.
+
+TABLE I: Tracking Accuracy: ATE Trans [m] / ATE Rot [ ◦]                                        
+
+> Dataset Seq. Sensor DSP-SLAM DSP-SLAM++
+> (Baseline) (w/o objects) (w/ objects) KITTI 07 Stereo 0.83 / 0.94 0.81 / 0.92 0.86 / 1.02 07 Mono XXX07 RGB-L X0.85 / 0.96 0.90 / 1.01 nuScenes 127 Mono XXX127 RGB-L X0.85 / 0.84 0.93 / 0.77 152 RGB-L X1.92 / 1.10 1.66 / 1.78 916 RGB-L X1.44 / 4.70 1.49 / 4.87 Custom (Ours) 01 RGB-L X1.61 / 4.00 1.25 / 4.10
+> X: Indicates tracking failure, cluttered objects, or incompatibility. (a) DSP-SLAM, mono DSP-SLAM++, RGBL (b)
+
+Fig. 6: Impact of RGB-L integration on scale consistency. (a) Baseline DSP-SLAM (monocular) exhibits scale drift and erroneous object placement. (b) Our DSP-SLAM++ maintains metric scale for accurate trajectory and stable object mapping for monocular sensors. trained on 3D assets from ShapeNet [26] and other online sources, which were preprocessed to ensure a consistent canonical orientation. All experiments were conducted on a machine with an Intel Core Ultra 9 275HX CPU and an NVIDIA GeForce RTX 5080 GPU. We structure our evaluation as follows: first, we assess tracking accuracy and scale consistency against baseline methods. Next, we evaluate the quality of our multi-class 3D object reconstruction within static scenes. We then analyze the computational efficiency and real-time capabilities of our asynchronous architecture, concluding with ablation studies that isolate the impact of specific sensor modalities and system versatility. 
+
+B. Tracking Accuracy and Scale Consistency 
+
+The baseline DSP-SLAM relies on stereo sensors for metric depth; strictly monocular setups introduce scale am-biguity, causing tracking drift and erroneous object place-ment (Fig. 6). We evaluate our RGB-L module against the stereo configuration on the KITTI dataset, demonstrating our LiDAR-assisted approach maintains scale consistency. As shown in Table I, our system achieves comparable Absolute Trajectory Error (ATE), reported as mean and standard deviation across five independent runs. Furthermore, while the baseline fails on non-stereo datasets like nuScenes, our system leverages LiDAR depth inference to enable robust tracking, with full statistical results detailed in Table I. 
+
+Fig. 7: Generated multi-class 3D object map with overlaid trajectories and illustrated detections for nuScenes dataset (scene-0916). 
+
+C. Multi-Class 3D Object Reconstruction 
+
+We qualitatively evaluate our framework on our in-house dataset and nuScenes to demonstrate its capacity for building rich, semantically aware maps. As illustrated in Fig. 7, the system generates a large-scale map with the estimated tra-jectory overlaid, confirming that diverse object classes–cars, buses, motorcycles, and pedestrians–are accurately anchored in metric space. This multi-class representation provides a significantly richer world model for downstream tasks compared to single-class baselines. The system demonstrates robust shape reconstruction for voluminous, rigid bodies such as cars and buses. Further-more, the class-aware association pipeline effectively handles cluttered environments, successfully disambiguating closely spaced instances, such as parked motorcycles (Fig. 1). How-ever, we acknowledge visual limitations when generating thin or articulated objects, specifically pedestrians. Because our system-level approach leverages existing shape priors, reconstruction fidelity for these challenging classes depends heavily on the observed LiDAR point cloud density and the pre-trained model quality. Consequently, for distant or heavily occluded instances where only sparse points are captured, the resulting meshes may lack fine detail or appear incomplete. 
+
+D. Computational Efficiency and Asynchronous Performance 
+
+We evaluate the computational efficiency of our Asyn-chronous Reconstruction (AR) pipeline against the baseline Synchronous Reconstruction (SR) approach. In SR, shape optimization is coupled with the local mapping thread, cre-ating a severe bottleneck when processing multiple objects. We measure this delay using Keyframe Bundle Adjustment (BA) Latency, which quantifies the number of regular frames processed by the tracking thread while the mapping thread remains locked. This latency introduces a twofold problem: it forces the system to skip Local Bundle Adjustment (LBA) to catch up, and it forces the tracking thread to continue operating ( e.g ., processing 5 frames) against raw, unrefined map points triangulated from initial poses. Tracking against these unoptimized points compounds trajectory errors. Our AR pipeline resolves this by decoupling the computationally expensive shape optimization, ensuring immediate LBA ex-ecution and robust tracking against a continuously refined map. TABLE II: Computational Efficiency (RGB-L Mode): Synchronous (SR) vs. Asynchronous (AR) Reconstruction. SC is for Single-Class, and MC is for Multi-Class Detection and Reconstruction.                                                                                              
+
+> Dataset Pipeline Detect. Latency Object Latency Max Obj. Latency KF BA Latency Map Objects System FPS Mean ±Std [ms] Mean ±Std [ms] [ms] Mean ±Std [frames] [count] [Hz]
+> KITTI-SC SR 82 ±6106 ±81 520 1.5 ±0.8 96 27.3 AR (Ours) 86 ±10 78 ±47 483 1.3 ±0.5 108 23.5 Custom-SC SR 84 ±11 57 ±74 554 1.9 ±1.3 16 25.5
+> AR (Ours) 81 ±822 ±23 146 1.2 ±0.5 27 27.4
+> Custom-MC SR 90 ±11 82 ±81 566 2.5 ±1.5 43 25.1
+> AR (Ours) 90 ±11 26 ±25 147 1.2 ±0.5 71 25.4
+
+The comparative performance results across the KITTI and our custom datasets, averaged over five independent runs, are detailed in Table II. Under the SR paradigm in the custom Multi-Class (MC) scenario, the system exhibits massive map-ping latency peaks (> 500 ms), causing the mapping thread to lag behind the tracking thread by a maximum of 15 frames. This severe desynchronization triggers frequent LBA skip-ping and forces prolonged tracking against unrefined map points. Conversely, our AR pipeline effectively distributes the computational load, cutting the mean map latency to one-third and reducing the maximum Keyframe BA latency to just 3 frames. By isolating the heavy object reconstruction backend (while maintaining a consistent detection latency of 90 ms), our architecture successfully minimizes tracking against raw points and prevents LBA skipping, enabling robust, real-time multi-class object SLAM. 
+
+E. Sensor Modality and Versatility 
+
+To evaluate the versatility of our framework across sen-sor modalities, we demonstrate its performance on datasets featuring wide-angle fisheye cameras, specifically our custom and CBNU datasets. Map and trajectory tracking across these datasets are illustrated in Fig. 9. While standard pinhole cameras suffer from a limited field-of-view in dense urban environments, fisheye sensors capture broader context at the cost of severe lens distortion. Our system seamlessly integrates the fisheye camera model within the tracking and mapping threads, ensuring objects are robustly detected and accurately anchored in the 3D map. A critical challenge in integrating LiDAR depth with fisheye imagery is accurately associating 3D point clouds with 2D instance masks. Direct projection using standard pinhole assumptions fails under high distortion, causing se-vere misalignment between physical geometry and semantic boundaries. To resolve this, our system performs explicit mask rectification to ensure correct projection of the point cloud onto the image plane. As shown in Fig. 8, this is crucial; without rectification, background depth points are erroneously assigned to foreground masks, causing corrupted shape initializations or missed associations. Successful de-ployment on the CBNU dataset validates that explicitly handling distortion allows the framework to generalize across diverse multi-sensor automotive setups. 
+
+Fig. 8: Mask rectification effect on confirmed detections and reconstruction. Furthermore, mask rectification must be lightweight to maintain efficiency across different lens types and avoid introducing latency to the main tracking thread. Instead of rectifying the entire image grid, our approach extracts the contour of each predicted mask. We then apply the fisheye rectification model strictly to this dense set of perimeter points. Finally, the fully rectified mask is reconstructed by rendering the undistorted boundary as a filled polygon, maintaining precise shape consistency comparable to com-putationally expensive pixel-by-pixel rectification. VIII. C ONCLUSION 
+
+In this paper, we presented DSP-SLAM++, a frame-work that successfully addresses the trade-offs in object-aware SLAM by enabling real-time, multi-class, high-fidelity reconstruction on practical automotive sensor suites. Our system achieves this goal through three key contributions: multi-class detection, class-aware association, and a modular multi-decoder architecture for class-specific reconstruction, a novel asynchronous pipeline to resolve performance bot-tlenecks, and a fusion front-end for fisheye-LiDAR data. Our experiments validate this approach, demonstrating a significant reduction in object reconstruction induced latency while maintaining high tracking accuracy compared to the state-of-the-art. This work makes high-fidelity object SLAM a more practical and accessible tool for real-world robotics applications like autonomous driving. While our system performs robustly, specific limitations present clear avenues for future research. Reconstruction (a) KITTI-07 (mono-pinhole-RGB-L) (b) nuScenes-0127 (mono-pinhole-RGB-L) (c) CBNU-01 (mono-fisheye-RGB-L) (d) Custom-01 (mono-fisheye-RGB-L) Fig. 9: Qualitative results across four diverse datasets. Top: 3D map reconstruction with object landmarks. Bottom: Estimated trajectories versus ground truth. quality depends heavily on input point cloud density, re-sulting in degraded performance when handling sparse ob-servations from occluded or distant objects. Additionally, system performance remains tightly coupled to the reliability of upstream detectors. Future work will address these issues by fusing SLAM-generated map points with LiDAR data to improve sparse reconstructions, integrating object tracking and motion forecasting to handle dynamic environments, and exploring methods to relax the LiDAR dependency to broaden the system’s applicability. ACKNOWLEDGMENT This work is supported by the XXX project, (grant number XXX-XXXX). REFERENCES [1] S. Yang and S. Scherer, “Cubeslam: Monocular 3-d object slam,” IEEE Transactions on Robotics , vol. 35, p. 925–938, Aug. 2019. [2] Y. Wu, Y. Zhang, D. Zhu, Y. Feng, S. Coleman, and D. Kerr in EAO-SLAM: Monocular Semi-Dense Object SLAM Based on Ensemble Data Association , pp. 4966–4973, 10 2020. [3] L. Nicholson, M. Milford, and N. Sünderhauf, “Quadricslam: Dual quadrics from object detections as landmarks in object-oriented slam,” 
+
+IEEE Robotics and Automation Letters , vol. 4, no. 1, pp. 1–8, 2019. [4] R. Tian, Y. Zhang, Y. Feng, L. Yang, Z. Cao, S. Coleman, and D. Kerr, “Accurate and robust object slam with 3d quadric landmark reconstruction in outdoors,” IEEE Robotics and Automation Letters ,vol. 7, no. 2, pp. 1534–1541, 2022. [5] J. Wang, M. Rünz, and L. Agapito, “Dsp-slam: Object oriented slam with deep shape priors,” in 2021 International Conference on 3D Vision (3DV) , pp. 1362–1371, IEEE, 2021. [6] S. Zhu, R. Qin, G. Wang, J. Liu, and H. Wang, “Semgauss-slam: Dense semantic gaussian splatting slam,” arXiv preprint arXiv:2403.07494 ,2024. [7] M. Pan, J. Li, Y. Zhang, Y. Yang, and Y. Yue, “Mcoo-slam: A multi-camera omnidirectional object slam system,” arXiv preprint arXiv:2506.15402 , 2025. [8] T. Wu, Y.-J. Yuan, L.-X. Zhang, J. Yang, Y.-P. Cao, L.-Q. Yan, and L. Gao, “Recent advances in 3d gaussian splatting,” Computational Visual Media , vol. 10, no. 4, pp. 613–642, 2024. [9] S. Yogamani, C. Hughes, J. Horgan, G. Sistu, P. Varley, D. O’Dea, M. Uricár, S. Milz, M. Simon, K. Amende, et al. , “Woodscape: A multi-task, multi-camera fisheye dataset for autonomous driving,” in 
+
+Proceedings of the IEEE/CVF International Conference on Computer Vision , pp. 9308–9318, 2019. [10] Y. Liao, J. Xie, and A. Geiger, “Kitti-360: A novel dataset and benchmarks for urban scene understanding in 2d and 3d,” IEEE Transactions on Pattern Analysis and Machine Intelligence , vol. 45, no. 3, pp. 3292–3310, 2022. [11] Y. Yang, M. Pan, D. Tang, T. Wang, Y. Yue, T. Liu, and M. Fu, “Mcov-slam: A multicamera omnidirectional visual slam system,” 
+
+IEEE/ASME Transactions on Mechatronics , vol. 29, no. 5, pp. 3556– 3567, 2024. [12] C. Campos, R. Elvira, J. J. G. Rodríguez, J. M. Montiel, and J. D. Tardós, “Orb-slam3: An accurate open-source library for visual, visual–inertial, and multimap slam,” IEEE transactions on robotics ,vol. 37, no. 6, pp. 1874–1890, 2021. [13] C. Badue, R. Guidolini, R. V. Carneiro, P. Azevedo, V. B. Cardoso, A. Forechi, L. Jesus, R. Berriel, T. M. Paixao, F. Mutz, et al. , “Self-driving cars: A survey,” Expert systems with applications , vol. 165, p. 113816, 2021. [14] J. Gräter, A. Wilczynski, and M. Lauer, “LIMO: lidar-monocular visual odometry,” CoRR , vol. abs/1807.07524, 2018. [15] X. Wang, J. Shang, H. Luo, Z. Wang, and L. Zhang, “Visual odometry with lidar depth enhancement,” in 2024 5th International Conference on Computer Vision, Image and Deep Learning (CVIDL) , pp. 75–79, 2024. [16] Y. Zhu, C. Zheng, C. Yuan, X. Huang, and X. Hong, “Camvox: A low-cost and accurate lidar-assisted visual SLAM system,” CoRR ,vol. abs/2011.11357, 2020. [17] F. Sauerbeck, B. Obermeier, M. Rudolph, and J. Betz, “Rgb-l: Enhanc-ing indirect visual slam using lidar-based dense depth maps,” 2022. [18] G. Jocher and J. Qiu, “Ultralytics yolo11,” 2024. Accessed: 2026-02-21. [19] A. H. Lang, S. Vora, H. Caesar, L. Zhou, J. Yang, and O. Beijbom, “Pointpillars: Fast encoders for object detection from point clouds,” in Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pp. 12697–12705, 2019. [20] J. J. Park, P. Florence, J. Straub, R. Newcombe, and S. Lovegrove, “Deepsdf: Learning continuous signed distance functions for shape representation,” in Proceedings of the IEEE/CVF conference on com-puter vision and pattern recognition , pp. 165–174, 2019. [21] V. Sitzmann, E. Chan, R. Tucker, N. Snavely, and G. Wetzstein, “Metasdf: Meta-learning signed distance functions,” Advances in Neu-ral Information Processing Systems , vol. 33, pp. 10136–10147, 2020. [22] G. Chou, I. Chugunov, and F. Heide, “Gensdf: Two-stage learning of generalizable signed distance functions,” Advances in Neural Informa-tion Processing Systems , vol. 35, pp. 24905–24919, 2022. [23] D. Lawrence, A. Boehnlein, N. Brei, and D. Romanov, “Jana2: Multithreaded event reconstruction,” Journal of Physics: Conference Series , vol. 1525, p. 012032, 04 2020. [24] H. Caesar, V. Bankiti, A. H. Lang, S. Vora, V. E. Liong, Q. Xu, A. Krishnan, Y. Pan, G. Baldan, and O. Beijbom, “nuscenes: A multimodal dataset for autonomous driving,” in Proceedings of the IEEE/CVF conference on computer vision and pattern recognition ,pp. 11621–11631, 2020. [25] Z. Javed and G.-W. Kim, “PanoVILD: A challenging panoramic vision, inertial and LiDAR dataset for simultaneous localization and mapping,” The Journal of Supercomputing , vol. 78, pp. 8247–8267, Apr 2022. [26] A. X. Chang, T. Funkhouser, L. Guibas, P. Hanrahan, Q. Huang, Z. Li, S. Savarese, M. Savva, S. Song, H. Su, J. Xiao, L. Yi, and F. Yu, “ShapeNet: An Information-Rich 3D Model Repository,” Tech. Rep. arXiv:1512.03012 [cs.GR], Stanford University — Princeton University — Toyota Technological Institute at Chicago, 2015.

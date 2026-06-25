@@ -1,0 +1,192 @@
+Title: Gastroendoscopy View Synthesis: A New Real Dataset and Evaluation
+
+URL Source: https://arxiv.org/pdf/2606.25427v1
+
+Published Time: Thu, 25 Jun 2026 00:36:17 GMT
+
+Number of Pages: 7
+
+Markdown Content:
+# Gastroendoscopy View Synthesis: A New Real Dataset and Evaluation 
+
+Masaki Minai ∗, Yusuke Monno ∗, Sho Suzuki †, and Masatoshi Okutomi ∗
+
+Abstract —Novel view synthesis (NVS) is an active research topic in computer vision, owing to the success of neural radiance field (NeRF) and 3D Gaussian splatting (3DGS) methods. While NVS opens the door to potential applications in gastroendoscopy, such as extending the field of view of endoscopic images and enabling digital twins for 3D archiving and endoscopist ma-nipulation training, the dataset is insufficient to evaluate NVS for gastroendoscopy. In this paper, we present the first real gastroscopy dataset for NVS, namely the GastroNVS dataset, which contains a set of gastroscopic images, camera poses, and a point cloud for real gastroendoscopy inspection. To assess the suitability of the GastroNVS dataset, we evaluate several 3DGS methods and discuss the challenges for future development. The dataset is available on request from our project page. 
+
+Index Terms —Gastroendoscopy, novel view synthesis, structure from motion, 3D Gaussian splatting, dataset. 
+
+I. I NTRODUCTION 
+
+Novel view synthesis (NVS) is the task of synthesizing arbi-trary viewpoint images from real captured images of the scene. NVS is actively studied, especially after the development of neural radiance field (NeRF) [1] and 3D Gaussian splatting (3DGS) [2] methods, demonstrating remarkable performance in the computer vision field. NVS also has potential appli-cations in endoscopy, such as extending the field of view of endoscopic images and enabling digital twins for 3D archiving and endoscopist manipulation training. Some studies have addressed NVS for colonoscopy [3]–[7] and gastroendoscopy [8], [9] by applying NeRF-based [3], [4], [8], [9] or 3DGS-based [5]–[7] methods. However, endoscopy datasets are still lacking for NVS. Table I summarizes pub-licly available endoscopy datasets applied to the evaluation of NVS in the past literature. The SCARED dataset [10] records porcine cavity and is originally designed for stereo depth estimation with ground-truth (GT) depth maps. The EndoNeRF dataset [11] records surgical scenes of human prostate. Each scene is captured from a fixed viewpoint over time and is aimed at addressing surgical tool occlusion removal rather than performing NVS from arbitrary viewpoints. The EndoMapper dataset [12] records colonoscopy data with the 
+
+This study was supported by AMED under Grant Numbers JP24hma922022 and JP25hma322042. It was also supported by JSPS KAKENHI under Grant Numbers JP24K15772 and JP26K03332. 
+
+∗M. Minai, Y. Monno, and M. Okutomi are with the Depart-ment of Systems and Control Engineering, School of Engineering, In-stitute of Science Tokyo, Meguro-ku, Tokyo 152-8550, Japan (email: 
+
+{mminai,ymonno,mxo }@ok.sc.e.titech.ac.jp). 
+
+†S. Suzuki is with the Department of Gastroenterology, International University of Health and Welfare Ichikawa Hospital, Ichikawa-shi, Chiba 272-0827, Japan. 
+
+estimated camera poses, and the reconstructed point cloud by structure from motion (SfM) [13]. The C3VD dataset [14] records phantom colon images, which are registered to the GT 3D model of the phantom, providing GT depth and normal maps. While this dataset is applied to evaluating NVS, the viewpoint change is relatively small for each scene. As far as we know, there is no existing public gastroendoscopy dataset for NVS with a large viewpoint change. In this paper, we introduce GastroNVS, the first real gas-troendoscopy dataset for NVS. The dataset contains gastroen-doscopic image sequences along with their estimated camera poses and the reconstructed 3D point cloud by SfM. The dataset was collected during a real gastroendoscopy inspection, which captures the gastric surfaces of real patients with gastric lesions and includes relatively large viewpoint changes that occurred in the real situation. Thus, it provides an evaluation platform for in-the-wild environments. Using the GastroNVS dataset, we evaluate several 3DGS methods to assess the suitability of the dataset for NVS and highlight the challenges revealed by the experiments. The dataset is available on request from our project page 1.II. D ATASET CONSTRUCTION 
+
+A. Ethics 
+
+This study was conducted in accordance with the Dec-laration of Helsinki. The Institutional Review Board at In-ternational University of Health and Welfare approved the study protocol and the data collection (Approval No. 25-CI-005). Informed consent was obtained from patients before collecting endoscopic images. This study was also approved by the Research Ethics Committee of Institute of Science Tokyo (Approval No. 2025197) to process the collected data. 
+
+B. Data Acquisition 
+
+We used endoscopic video recordings from five subjects. By following the observation in [15], the indigo carmine blue dye, which is widely used in chromoendoscopic examinations, was sprayed onto the gastric surfaces in advance of the recordings to enhance the visibility of the gastric structures and facilitate robust feature extraction and matching in SfM. The endoscopic systems and scope types used are summarized in the top part of Table II, where the examinations were conducted using Fujifilm monocular endoscopic systems, specifically ELUXEO 7000, ELUXEO 8000, or LASEREO 7000, along with Fujifilm scopes as listed in the table. All video recordings were obtained at the frame rate of 30 fps. 
+
+> 1
+
+Project page: http://www.ok.sc.e.titech.ac.jp/res/GastroNVS/ 
+
+> arXiv:2606.25427v1 [cs.CV] 24 Jun 2026
+
+TABLE I: Comparison of endoscopic datasets for NVS.                                  
+
+> Dataset Year Organ Viewpoint change Camera pose GT depth map GT normal map SfM point cloud Total scenes SCARED [10] 2021 Porcine stomach Large ✓✓9EndoNeRF [11] 2022 Human prostate Fixed ✓6EndoMapper [12] 2022 Human colon Large ✓✓96 C3VD [14] 2023 Phantom colon Small ✓✓✓20 GastroNVS (Ours) 2026 Human stomach Large ✓✓5
+
+TABLE II: Data acquisition settings and SfM reconstruction results for each sequence.                                                 
+
+> Sequence
+> ABCDE
+> Data acquisition
+> Date 06/08/2024 16/08/2024 06/08/2025 27/05/2025 05/08/2025 System ELUXEO7000 ELUXEO7000 ELUXEO8000 LASEREO7000 ELUXEO8000 Scope EG-760Z EG-740N EG-860Z EG-L580RD7 EG-760Z
+> Frame extraction
+> # of frames 518 433 366 257 432 Lesion ✓✓✓✓
+> SfM reconstruction
+> # of reconstructed frames 516 433 366 257 430 # of reconstructed 3D points 82,145 68,176 67,109 51,031 45,035 Mean reprojection error 1.07384 1.36415 1.09455 1.07221 1.09844 Image size after undistortion 1120 ×1128 1254 ×1248 1101 ×1069 1218 ×1247 1153 ×1153
+
+C. Frame Extraction 
+
+From the captured videos, we extracted subsequences of approximately 10–20 seconds per subject that capture wide regions of the stomach. Scenes without excessive surface de-formation were selected, although some sequences still include subtle surface deformations. Then, we decomposed the video into individual image frames and removed frames that could potentially degrade the quality of subsequent reconstructions. For example, the frames in which the blue dye was spread to the wide regions of the image and the frames in which the camera was positioned extremely close to the gastric surface were excluded. Then, we cropped the original video frame as shown in Fig. 1(a) to remove the black regions, resulting in a uniform resolution of 881 × 881 for all sequences. As shown in the middle part of Table II, the number of extracted frames ranged from 257 to 518, with four sequences containing gastric lesions. No occlusion by the endoscope was present in the field of view in all the sequences. Some representative frames from each sequence are shown in the top part of Fig. 2. 
+
+D. SfM 
+
+Using each image sequence described in the previous section, we performed SfM using a common software, COLMAP [13]. Specifically, the extraction of the SIFT fea-tures [16] from each image is firstly performed, followed by matching these features across images by exhaustive matching. Then, the camera poses and the 3D point cloud were estimated through triangulation and global bundle adjustment. Simul-taneously, the intrinsic camera parameters of the endoscope 881×881 
+
+(a) Original image 
+
+(b) Undistorted image 
+
+1120 × 1128 
+
+Fig. 1: (a) The cropping of the original image to input to SfM and (b) the cropping of the undistorted image after the undistortion. were estimated using the radial fisheye camera model, which is suitable for the endoscope with a wide viewing angle. This model represents lens distortion using second- and fourth-order radial terms. Since NeRF and 3DGS methods are typically designed under the assumption of pinhole camera representations, we converted the original fisheye camera representation into an equivalent pinhole camera representation by compensating for lens distortion based on the intrinsic camera parameters estimated in SfM. This undistortion process outputs distortion-free images, whose sizes are decided so as to exclude the black regions, as shown in Fig. 1(b). Sequence A  Sequence C  Sequence D  Sequence E Sequence B Fig. 2: Examples of the input images to SfM and the reconstructed 3D point cloud for each sequence. 
+
+E. Dataset Summary 
+
+The resulting point cloud of each sequence is shown in the bottom part of Fig. 2. The quantitative results of SfM are reported in the bottom part of Table II. For three of the sequences, the camera poses were successfully reconstructed for all frames. For the remaining two sequences, a small number of camera poses were missing. This was due to failures in feature matching, which were primarily caused by motion blur from rapid camera movement. Importantly, the number of reconstructed 3D points was on the order of several tens of thousands for every sequence, and the overall shapes of gastric surfaces are sufficiently represented in the reconstructed point clouds, suggesting that subsequent NVS methods can be carried out in a meaningful manner. The mean reprojection errors, defined as the average errors in the pixel unit between image feature points and their reprojections from the reconstructed 3D points, range from 1.07221 to 1.36415. This indicates that the scenes were reconstructed with sufficient accuracy. The set of the pinhole images, the camera poses, the camera’s intrinsic parameters, and the point cloud are used as the inputs for subsequent NVS methods. For an effective evaluation of NVS methods, we prepared two types of train/test data splits for each sequence, both with a ratio of 7:1.  
+
+> •
+
+Split-Reg : A data split where test views are sampled at regular intervals (one test view every eight frames), resulting in uniformly distributed test views throughout the sequence.  
+
+> •
+
+Split-Con : A data split where test views are sampled in a consecutive segment of the sequence, resulting in relatively large viewpoint differences between training and test views. The first split, Split-Reg , allows the model to be trained Split-Con on Sequence B  
+
+> Test views
+> Test views
+> Split-Con on Sequence C
+
+Fig. 3: Test views of Split-Con on Sequence B and C. on images covering the entire sequence, and therefore, it is expected to yield high-quality NVS results. However, because the test views are spatially and temporally close to the training views, Split-Reg makes it difficult to evaluate the model’s performance for really “novel” views. Thus, the second split, 
+
+Split-Con , as shown in Fig. 3, is designed to evaluate the NVS performance for the viewpoints that are farther from the training views. Although this setting generally leads to lower NVS quality, Split-Con enables a more meaningful evaluation for potential applications. III. C OMPARISON OF 3DGS-B ASED METHODS 
+
+To assess whether the dataset is suitable for NVS and to discuss the challenges of NVS for gastroendoscopy, we ap-plied several 3DGS-based methods for comparisons, because the 3DGS-based methods achieve real-time rendering, while NeRF-based methods do not. TABLE III: Properties of the compared 3DGS-based methods.         
+
+> Methods Depth supervision Depth/Normal consistency Flattening Gaussians SDF representation 3DGS 3DGS+depth ✓
+> 2DGS ✓✓
+> PGSR ✓✓
+> GSDF ✓✓
+
+A. Compared Methods 
+
+Although the source code of some 3DGS-based meth-ods for endoscopy is publicly available [5], [6], [17]–[20], they are designed for the fixed viewpoint of the EndoNeRF dataset [17]–[20] or heavily rely on RNN-SLAM [21] for the initial reconstruction [5], [6]. Thus, these methods are difficult to meaningfully evaluate and compare for our dataset. Instead, we selected general 3DGS-based methods frequently compared in the past computer vision literature, as summarized in Table III. Specifically, we focused on smooth and textureless surfaces typical to stomach and selected the methods applying some ge-ometric constraints, as well as the original 3DGS method [2]. The method termed 3DGS+depth extends the original 3DGS method [2] by incorporating an inverse depth map estimated by Depth Anything V2 [22] to compute a depth supervision loss during the optimization. By explicitly constraining the surface using the depth map, this approach improves geometric consistency. This method was implemented by the authors of 3DGS on their GitHub repository and released at the publication of Hierarchical 3DGS [23]. 2DGS [24] aims to improve surface representation quality by flattening Gaussians into disk representations. It further adopts a normal consis-tency term to ensure alignment between the geometries defined by depths and normals rendered from Gaussians. PGSR [25] also flattens Gaussians and applies single-view and multi-view regularization using depth and normal renderings to enhance geometric consistency. Finally, GSDF [26] explicitly models surfaces by jointly learning a signed distance field (SDF) representation [27] together with the 3D Gaussian representation while enforcing depth and normal consistency between them. All methods were evaluated using their default settings. The methods other than GSDF were trained for 30,000 iterations, while GSDF was trained for 45,000 iterations because it first optimizes the Gaussian representation for 15,000 iterations to establish the coarse geometry and then incorporates the SDF representation for the remaining 30,000 iterations. The 3D Gaussians in all methods were initialized with the same filtered point cloud obtained after PGSR’s preprocessing step [25] that removes SfM points with large reprojection errors or low observation counts. 
+
+B. Results 1) Split-Reg: Table IV shows the quantitative comparison. We can see that the methods that explicitly optimize geometry, i.e., 3DGS+depth and GSDF, consistently achieve better met-rics, with minor variations across sequences. In contrast, 2DGS and PGSR, which flatten Gaussians, produce consistently lower scores than the other methods across all metrics. The visual comparisons, shown in Fig. 4, are consistent with the quantitative results reported in the table. In particular, although 2DGS produces reasonable reconstructions in some scenes, it frequently generates flattened Gaussians at inconsistent and erroneous locations, which locally obstruct the view. Similarly, PGSR often exhibits noisy reconstructions, as observed in Sequences A, B, and E, where surfaces are generated at locations that deviate from the true underlying geometry. These limitations can be attributed to the fact that, unlike the other methods, these two methods adopt flat Gaussian representations, which are insufficient to model the curved structures of the gastric surfaces as well as subtle surface deformations. In contrast, 3DGS yields reconstructions in which the overall surface structure is recognizable, despite minor artifacts such as blurred regions in the background of Sequence B and the presence of dark floating artifacts in Sequence E. This indicates that 3DGS exhibits limited capability of learning accurate geometry. On the other hand, both 3DGS+depth and GSDF effectively suppress the floating artifacts and blur observed in 3DGS, as 3DGS+depth lever-ages depth maps and GSDF employs an SDF-based surface representation to encourage the optimization of Gaussians to align with the underlying geometry. Also, these two methods achieve consistently high-quality renderings that preserve fine details. 
+
+2) Split-Con: Table V shows the quantitative comparison. Since the rendered results are generated from viewpoints that are distant from the training views, the overall eval-uation scores are substantially lower than those of Split-Reg , as expected. Unlike the results observed in Split-Reg ,GSDF achieves the best performance across all evaluation metrics. Similarly to the results of Split-Reg , 2DGS and PGSR consistently exhibit inferior performance. From the visual comparisons shown in Fig. 5, the performance differences among the compared methods become more obvious than in that of Split-Reg . 3DGS, 2DGS, and PGSR exhibit prominent artifacts, and in many views, even the coarse structure cannot be reliably perceived. In contrast, although minor blur and floating artifacts remain, 3DGS+depth and GSDF achieve robust renderings even from viewpoints far from the training views. From the results on Sequence E, a phenomenon specific to endoscopic sequences can be observed, namely that the rendered outputs exhibit significant brightness differences compared to the ground truth. As can be observed from the original images shown in Fig. 2, this issue arises from inter-view illumination inconsistencies caused by variations in the lighting direction and intensity. In turn, they lead to degraded reconstruction quality. To address this challenge, it would be desirable to develop methods that explicitly account for illumination variations, like the very recent CollaGS [7]. 
+
+3) Video results: In our project page, we provide a supple-mentary video showing the rendering results (trained using the train views of Split-Reg ) along a shared camera trajectory that TABLE IV: Quantitative comparison on Split-Reg . Higher is better for PSNR and SSIM, while lower is better for LPIPS. 
+
+A (65 test views) 
+
+Method PSNR SSIM LPIPS 3DGS 27.08 0.734 0.463 3DGS+depth 27.06 0.733 0.461 2DGS 25.52 0.714 0.500 PGSR 25.72 0.717 0.480 GSDF 27.17 0.736 0.443 B (55 test views) 
+
+Method PSNR SSIM LPIPS 3DGS 26.87 0.834 0.424 3DGS+depth 26.78 0.836 0.418 
+
+2DGS 24.96 0.816 0.463 PGSR 24.82 0.814 0.447 GSDF 25.76 0.824 0.422 
+
+C (46 test images) 
+
+Method PSNR SSIM LPIPS 3DGS 21.87 0.654 0.402 3DGS+depth 21.97 0.659 0.397 2DGS 21.28 0.636 0.444 PGSR 21.55 0.640 0.420 GSDF 22.22 0.650 0.391 D (33 test images) 
+
+Method PSNR SSIM LPIPS 3DGS 27.55 0.854 0.331 3DGS+depth 27.24 0.854 0.326 
+
+2DGS 25.49 0.834 0.372 PGSR 26.16 0.841 0.354 GSDF 26.83 0.847 0.334 
+
+E (54 test images) 
+
+Method PSNR SSIM LPIPS 3DGS 25.42 0.717 0.464 3DGS+depth 25.60 0.719 0.458 2DGS 24.05 0.697 0.499 PGSR 24.28 0.695 0.483 GSDF 25.84 0.718 0.441 Average of A–E 
+
+Method PSNR SSIM LPIPS 3DGS 25.74 0.759 0.417 3DGS+depth 25.73 0.760 0.412 2DGS 24.26 0.739 0.456 PGSR 24.51 0.741 0.437 GSDF 25.56 0.755 0.406 GT  3DGS  3DGS+depth  2DGS  PGSR 
+
+Sequence A 
+
+Sequence B 
+
+Sequence C 
+
+Sequence D 
+
+Sequence E 
+
+## 修正後 
+
+GSDF 
+
+Fig. 4: Visual comparisons for the test views of Split-Reg .is different from both the training and the test views. The video results demonstrate the current performance of each method for user-interactive NVS. IV. C ONCLUSION 
+
+In this paper, we presented GastroNVS, the first gastroen-doscopic dataset specifically designed for NVS inside the stomach. The dataset consists of real gastroendoscopic image sequences which covers wide regions of the stomach under realistic clinical conditions, accompanied by SfM results that sufficiently represent the structures. From the experimental results of some representative 3DGS-based methods on two types of train/test split, we observed that the methods explicitly TABLE V: Quantitative comparison on Split-Con . Higher is better for PSNR and SSIM, while lower is better for LPIPS. 
+
+A (65 test views) 
+
+Method PSNR SSIM LPIPS 3DGS 18.16 0.610 0.572 3DGS+depth 18.66 0.612 0.567 2DGS 16.84 0.597 0.603 PGSR 17.39 0.598 0.587 GSDF 19.84 0.619 0.544 B (55 test views) 
+
+Method PSNR SSIM LPIPS 3DGS 17.38 0.662 0.516 3DGS+depth 19.62 0.659 0.484 2DGS 16.90 0.644 0.545 PGSR 17.39 0.639 0.527 GSDF 19.71 0.670 0.465 C (46 test images) 
+
+Method PSNR SSIM LPIPS 3DGS 16.69 0.450 0.533 3DGS+depth 16.71 0.449 0.531 2DGS 16.67 0.467 0.548 PGSR 16.53 0.450 0.547 GSDF 17.62 0.476 0.504 D (33 test images) 
+
+Method PSNR SSIM LPIPS 3DGS 18.40 0.694 0.466 3DGS+depth 20.10 0.714 0.419 
+
+2DGS 17.29 0.688 0.524 PGSR 17.28 0.684 0.520 GSDF 20.48 0.718 0.421 
+
+E (54 test images) 
+
+Method PSNR SSIM LPIPS 3DGS 19.32 0.640 0.541 3DGS+depth 21.03 0.652 0.521 2DGS 18.40 0.624 0.570 PGSR 19.02 0.622 0.565 GSDF 20.92 0.642 0.498 Average of A–E 
+
+Method PSNR SSIM LPIPS 3DGS 17.99 0.611 0.526 3DGS+depth 19.22 0.617 0.504 2DGS 17.22 0.604 0.558 PGSR 17.52 0.599 0.549 GSDF 19.71 0.625 0.486 GT  3DGS  3DGS+depth  2DGS  PGSR 
+
+Sequence A 
+
+Sequence B 
+
+Sequence C 
+
+Sequence D 
+
+Sequence E 
+
+GSDF 
+
+Fig. 5: Visual comparison for the test view of Split-Con .learning surface geometry are more effective for NVS in the gastroendoscopic scene. Moreover, the results revealed an endoscopy-specific challenge caused by inter-view illu-mination inconsistency, which leads to significant brightness discrepancies and degraded reconstruction quality in a certain sequence. We believe that GastroNVS is a valuable dataset for gastroendoscopic NVS, with the potential to facilitate the de-velopment of techniques that may support clinical navigation and diagnosis in the future. REFERENCES [1] B. Mildenhall, P. P. Srinivasan, M. Tancik, J. T. Barron, R. Ramamoorthi, and R. Ng, “NeRF: Representing scenes as neural radiance fields for view synthesis,” in Proc. of European Conference on Computer Vision (ECCV) , 2020, pp. 405–421. [2] B. Kerbl, G. Kopanas, T. Leimk¨ uhler, and G. Drettakis, “3D Gaussian splatting for real-time radiance field rendering.” ACM Trans. Graph. ,vol. 42, no. 4, pp. 139–1–14, 2023. [3] Y. Shi, B. Lu, J.-W. Liu, M. Li, S. Y. Yeo, and M. Z. Shou, “ColonNeRF: High-fidelity neural reconstruction of long colonoscopy,” Neurocomput-ing , vol. 657, pp. 131 445–1–15, 2025. [4] D. Psychogyios, F. Vasconcelos, and D. Stoyanov, “Realistic endoscopic illumination modeling for nerf-based data generation,” in Proc. of International Conference on Medical Image Computing and Computer-Assisted Intervention (MICCAI) , 2023, pp. 535–544. [5] S. Bonilla, S. Zhang, D. Psychogyios, D. Stoyanov, F. Vasconcelos, and S. Bano, “Gaussian pancakes: Geometrically-regularized 3D gaussian splatting for realistic endoscopic reconstruction,” in Proc. of Interna-tional Conference on Medical Image Computing and Computer-Assisted Intervention (MICCAI) , 2024, pp. 274–283. [6] J. Kaleta, W. Smolak-Dy˙ zewska, D. Malarz, D. Dall’Alba, P. Ko-rzeniowski, and P. Spurek, “PR-ENDO: Physically based relightable gaussian splatting for endoscopy,” in Proc. of International Confer-ence on Medical Image Computing and Computer-Assisted Intervention (MICCAI) , 2025, pp. 391–401. [7] H. Wang, Y. Zhou, H. Zhao, R. Wang, Q. Hu, X. Zhang, Q. Li, and Z. Wang, “Moving light adaptive colonoscopy reconstruction via illumination-attenuation-aware 3D Gaussian splatting,” arXiv preprint arXiv:2510.18739 , 2025. [8] Z. Jiang, Y. Monno, M. Okutomi, S. Suzuki, and K. Miki, “Neural radiance fields for novel view synthesis in monocular gastroscopy,” in 
+
+Proc. of Annual International Conference of the IEEE Engineering in Medicine and Biology Society (EMBC) , 2024, pp. 1–5. [9] Z.-Y. Lu, R.-H. Shiue, M.-L. Han, K.-C. Yen, and H. Chen, “Texturing endoscopic 3D stomach via neural radiance field under uneven lighting,” in Proc. of IEEE International Conference on Image Processing (ICIP) ,2025, pp. 385–390. [10] M. Allan, J. Mcleod, C. Wang, J. C. Rosenthal, Z. Hu, N. Gard, P. Eisert, K. X. Fu, T. Zeffiro, W. Xia et al. , “Stereo correspon-dence and reconstruction of endoscopic data challenge,” arXiv preprint arXiv:2101.01133 , 2021. [11] Y. Wang, Y. Long, S. H. Fan, and Q. Dou, “Neural rendering for stereo 3d reconstruction of deformable tissues in robotic surgery,” in Proc. of International conference on medical image computing and computer-assisted intervention (MICCAI) , 2022, pp. 431–441. [12] P. Azagra, C. Sostres, ´A. Ferr´ andez, L. Riazuelo, C. Tomasini, O. L. Barbed, J. Morlana, D. Recasens, V. M. Batlle, J. J. G´ omez-Rodr´ ıguez 
+
+et al. , “EndoMapper dataset of complete calibrated endoscopy proce-dures,” Scientific Data , vol. 10, no. 1, pp. 671–1–16, 2023. [13] J. L. Schonberger and J.-M. Frahm, “Structure-from-motion revisited,” in 
+
+Proc. of IEEE Conference on Computer Vision and Pattern Recognition (CVPR) , 2016, pp. 4104–4113. [14] T. L. Bobrow, M. Golhar, R. Vijayan, V. S. Akshintala, J. R. Garcia, and N. J. Durr, “Colonoscopy 3D video dataset with paired depth from 2D-3D registration,” Medical Image Analysis , vol. 90, pp. 102 956–1–11, 2023. [15] A. R. Widya, Y. Monno, M. Okutomi, S. Suzuki, T. Gotoda, and K. Miki, “Whole stomach 3D reconstruction and frame localization from monoc-ular endoscope video,” IEEE Journal of Translational Engineering in Health and Medicine , vol. 7, pp. 1–10, 2019. [16] D. G. Lowe, “Distinctive image features from scale-invariant keypoints,” 
+
+International Journal of Computer Vision , vol. 60, no. 2, pp. 91–110, 2004. [17] L. Zhu, Z. Wang, J. Cui, Z. Jin, G. Lin, and L. Yu, “EndoGS: Deformable endoscopic tissues reconstruction with Gaussian splatting,” in Proc. of International Conference on Medical Image Computing and Computer-Assisted Intervention (MICCAI) , 2024, pp. 135–145. [18] Y. Liu, C. Li, C. Yang, and Y. Yuan, “EndoGaussian: Real-time Gaussian splatting for dynamic endoscopic scene reconstruction,” arXiv preprint arXiv:2401.12561 , 2024. [19] Y. Huang, B. Cui, L. Bai, Z. Guo, M. Xu, M. Islam, and H. Ren, “Endo-4DGS: Endoscopic monocular scene reconstruction with 4D Gaussian splatting,” in Proc. of International Conference on Medical Image Computing and Computer-Assisted Intervention (MICCAI) , 2024, pp. 197–207. [20] H. Zhao, X. Zhao, L. Zhu, W. Zheng, and Y. Xu, “HFGS: 4D Gaussian splatting with emphasis on spatial and temporal high-frequency compo-nents for endoscopic scene reconstruction,” in Proc. of British Machine Vision Conference (BMVC) , 2024, pp. 39–1–13. [21] R. Ma, R. Wang, Y. Zhang, S. Pizer, S. K. McGill, J. Rosenman, and J.-M. Frahm, “RNNSLAM: Reconstructing the 3D colon to visualize missing regions during a colonoscopy,” Medical Image Analysis , vol. 72, pp. 102 100–1–15, 2021. [22] L. Yang, B. Kang, Z. Huang, Z. Zhao, X. Xu, J. Feng, and H. Zhao, “Depth anything v2,” in Proc. of Advances in Neural Information Processing Systems (NeurIPS) , 2024, pp. 21 875–21 911. [23] B. Kerbl, A. Meuleman, G. Kopanas, M. Wimmer, A. Lanvin, and G. Drettakis, “A hierarchical 3D gaussian representation for real-time rendering of very large datasets,” ACM Transactions on Graphics ,vol. 43, no. 4, pp. 1–15, 2024. [24] B. Huang, Z. Yu, A. Chen, A. Geiger, and S. Gao, “2D Gaussian splatting for geometrically accurate radiance fields,” in Proc. of ACM SIGGRAPH , 2024, pp. 1–11. [25] D. Chen, H. Li, W. Ye, Y. Wang, W. Xie, S. Zhai, N. Wang, H. Liu, H. Bao, and G. Zhang, “PGSR: Planar-based Gaussian splatting for efficient and high-fidelity surface reconstruction,” IEEE Transactions on Visualization and Computer Graphics , no. 9, pp. 6100–6111, 2024. [26] M. Yu, T. Lu, L. Xu, L. Jiang, Y. Xiangli, and B. Dai, “GSDF: 3DGS meets SDF for improved neural rendering and reconstruction,” vol. 37, 2024, pp. 129 507–129 530. [27] P. Wang, L. Liu, Y. Liu, C. Theobalt, T. Komura, and W. Wang, “NeuS: Learning neural implicit surfaces by volume rendering for multi-view reconstruction,” in Proc. of Advances in Neural Information Processing Systems (NeurIPS) , 2021, pp. 27 171–27 183.

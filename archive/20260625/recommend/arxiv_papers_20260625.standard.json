@@ -1,0 +1,256 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-25T22:21:20.913774+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 4,
+    "deep_cap": 7,
+    "deep_selected": 4,
+    "quick_candidates": 2,
+    "quick_skim_target": 12,
+    "quick_selected": 2
+  },
+  "deep_dive": [
+    {
+      "id": "2606.21898v1",
+      "source": "arxiv",
+      "title": "Mesh2GS: White-Box 3DGS Construction via Plenoptic Sampling",
+      "abstract": "3D Gaussian Splatting (3DGS) has emerged as a promising method for high-quality, real-time 3D reconstruction. To associate 3DGS with mesh representations, existing methods primarily focus on 3DGS-to-mesh reconstruction from multi-view images. In contrast, the problem of converting a mesh into 3DGS has received comparatively less attention. Instead of relying on heuristic strategies that bind 3D Gaussians to the mesh, we propose a novel white-box 3DGS construction framework, termed Mesh2GS, which generates 3DGS directly from mesh geometry based on plenoptic sampling theory, achieving Nyquist-level performance for high-quality global illumination rendering. Firstly, we propose a plenoptic sampling guided 3DGS construction strategy that theoretically derives the minimum sampling rate of the sampled views and the distribution of 3D Gaussians. Second, we propose a novel 3DGS update procedure with albedo--shading decomposition for efficient global-illumination capture. Finally, we introduce a neural illumination enhancement module to handle non-Lambertian effects. Experimental results demonstrate that our method surpasses state-of-the-art baselines and is practically effective for both real-time shared rendering and non-Lambertian effects capturing specular highlights. The project code will be released upon acceptance.",
+      "authors": [
+        "Haoran Zhu",
+        "Youcheng Cai",
+        "Huangsheng Du",
+        "Jingyang Meng",
+        "Ligang Liu"
+      ],
+      "primary_category": "cs.GR",
+      "categories": [
+        "cs.GR",
+        "cs.CV"
+      ],
+      "published": "2026-06-20T06:30:32+00:00",
+      "link": "https://arxiv.org/pdf/2606.21898v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Converts meshes to 3DGS using plenoptic sampling for real-time rendering",
+      "llm_evidence_cn": "基于全光采样理论将网格转换为3DGS实现实时渲染",
+      "llm_evidence": "基于全光采样理论将网格转换为3DGS实现实时渲染",
+      "canonical_evidence": "基于全光采样理论将网格转换为3DGS实现实时渲染",
+      "llm_tldr_en": "Mesh2GS proposes a white-box 3DGS construction framework from mesh geometry using plenoptic sampling, achieving Nyquist-level rendering quality.",
+      "llm_tldr_cn": "针对网格到3DGS转换问题，提出基于全光采样理论的白盒框架Mesh2GS，从网格几何直接推导高斯泼溅表示，实现奈奎斯特级全局光照渲染，为3DGS构建提供了理论指导的精确方法。",
+      "llm_tldr": "针对网格到3DGS转换问题，提出基于全光采样理论的白盒框架Mesh2GS，从网格几何直接推导高斯泼溅表示，实现奈奎斯特级全局光照渲染，为3DGS构建提供了理论指导的精确方法。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.24796v1",
+      "source": "arxiv",
+      "title": "Pocket-SLAM: Rendering-Area-Aware Pruning for Memory-Efficient 3DGS-SLAM",
+      "abstract": "3D Gaussian Splatting (3DGS) has garnered significant attention in Simultaneous Localization and Mapping (SLAM) due to its advances in capturing fine-grained geometry features and synthesizing novel views. For SLAM in large-scale scenes, such as autonomous driving, 3DGS-SLAM faces a critical limitation: memory consumption increases continuously over time as Gaussian points accumulate, leading to poor memory efficiency and limiting its applicability. In this work, we propose a rendering-area-aware pruning strategy that selectively removes Gaussians based on their contribution to the effective rendering area, rather than solely relying on Gaussian-level heuristics such as opacity or gradient magnitude. This perspective directly targets the sources of memory redundancy, effectively reducing the peak memory footprint of 3DGS-SLAM during runtime. Evaluations on the EuRoC and KITTI datasets demonstrate that our method consistently outperforms existing pruning approaches in large-scale outdoor scenes, achieving over 60% memory reduction and more than 2 times FPS improvement while preserving localization and mapping accuracy. These results highlight rendering-area-aware pruning as a promising direction for scaling 3DGS-SLAM to real-world autonomous driving scenarios. Our code is publicly available at https://github.com/UMN-ZhaoLab/Pocket-SLAM.git.",
+      "authors": [
+        "Leshu Li",
+        "Jie Peng",
+        "Yang Zhao"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-23T16:48:58+00:00",
+      "link": "https://arxiv.org/pdf/2606.24796v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Rendering-area-aware pruning for memory-efficient 3DGS-based SLAM",
+      "llm_evidence_cn": "基于渲染区域感知剪枝实现内存高效3DGS-SLAM",
+      "llm_evidence": "基于渲染区域感知剪枝实现内存高效3DGS-SLAM",
+      "canonical_evidence": "基于渲染区域感知剪枝实现内存高效3DGS-SLAM",
+      "llm_tldr_en": "Pocket-SLAM proposes a rendering-area-aware pruning strategy for 3D Gaussian Splatting SLAM that removes Gaussians with minimal rendering contribution, significantly reducing memory growth without sacrificing quality, enabling large-scale SLAM applications.",
+      "llm_tldr_cn": "针对3DGS-SLAM中高斯点无限增长导致内存爆炸的难题，Pocket-SLAM提出渲染区域感知的剪枝策略，根据高斯对有效渲染面积的贡献度选择移除，而非依赖不透明度或梯度等底层启发式。该方法在不损失建图精度和渲染质量的前提下大幅降低内存占用，使3DGS-SLAM可扩展至自动驾驶等大场景任务。",
+      "llm_tldr": "针对3DGS-SLAM中高斯点无限增长导致内存爆炸的难题，Pocket-SLAM提出渲染区域感知的剪枝策略，根据高斯对有效渲染面积的贡献度选择移除，而非依赖不透明度或梯度等底层启发式。该方法在不损失建图精度和渲染质量的前提下大幅降低内存占用，使3DGS-SLAM可扩展至自动驾驶等大场景任务。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "efficient visual SLAM with 3D Gaussian scene representations",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.25427v1",
+      "source": "arxiv",
+      "title": "Gastroendoscopy View Synthesis: A New Real Dataset and Evaluation",
+      "abstract": "Novel view synthesis (NVS) is an active research topic in computer vision, owing to the success of neural radiance field (NeRF) and 3D Gaussian splatting (3DGS) methods. While NVS opens the door to potential applications in gastroendoscopy, such as extending the field of view of endoscopic images and enabling digital twins for 3D archiving and endoscopist manipulation training, the dataset is insufficient to evaluate NVS for gastroendoscopy. In this paper, we present the first real gastroscopy dataset for NVS, namely the GastroNVS dataset, which contains a set of gastroscopic images, camera poses, and a point cloud for real gastroendoscopy inspection. To assess the suitability of the GastroNVS dataset, we evaluate several 3DGS methods and discuss the challenges for future development. The dataset is available on request from our project page.",
+      "authors": [
+        "Masaki Minai",
+        "Yusuke Monno",
+        "Masatoshi Okutomi",
+        "Sho Suzuki"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-24T05:36:49+00:00",
+      "link": "https://arxiv.org/pdf/2606.25427v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:endo-dgs"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "First real gastroscopy dataset for novel view synthesis with 3DGS evaluation",
+      "llm_evidence_cn": "首个面向胃镜新视角合成的真实数据集并评估3DGS方法",
+      "llm_evidence": "首个面向胃镜新视角合成的真实数据集并评估3DGS方法",
+      "canonical_evidence": "首个面向胃镜新视角合成的真实数据集并评估3DGS方法",
+      "llm_tldr_en": "The GastroNVS dataset provides real gastroscopic images, poses, and point clouds for evaluating novel view synthesis via 3DGS, highlighting challenges and enabling future endoscopic 3D reconstruction research.",
+      "llm_tldr_cn": "针对胃镜新视角合成缺乏真实评测数据的问题，发布首个真实胃镜图像数据集GastroNVS，包含内镜图像、相机位姿和点云。用多种3D高斯泼溅方法进行基准测试，揭示当前技术在内镜场景下的挑战，为内镜三维重建与新视角合成提供实验平台。",
+      "llm_tldr": "针对胃镜新视角合成缺乏真实评测数据的问题，发布首个真实胃镜图像数据集GastroNVS，包含内镜图像、相机位姿和点云。用多种3D高斯泼溅方法进行基准测试，揭示当前技术在内镜场景下的挑战，为内镜三维重建与新视角合成提供实验平台。",
+      "llm_tags": [
+        "query:endo-dgs"
+      ],
+      "matched_query_tag": "query:endo-dgs",
+      "matched_query_text": "3D Gaussian splatting for endoscopic scene reconstruction",
+      "matched_requirement_id": "req-10",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.25953v1",
+      "source": "arxiv",
+      "title": "DSP-SLAM++: A Unified Framework for Multi-Class, High-Fidelity Object SLAM in the Wild",
+      "abstract": "Existing object-aware SLAM systems force a trade-off between real-time performance, multi-class support, and the generation of high-fidelity, semantically coherent object models. To address this trade-off, we present DSP-SLAM++, which extends the DSP-SLAM framework with an asynchronous mapping pipeline for real-time performance and dedicated sensor fusion adaptations for a monocular fisheye-LiDAR suite. Experiments demonstrate that our system generates fine-grained, geometrically-complete shapes for multiple object classes while eliminating severe mapping thread bottlenecks by reducing maximum object processing latency by up to 70\\% compared to the state-of-the-art baseline, enabling robust, real-time performance on a challenging 25 Hz multi-class datasets. This work makes high-fidelity, multi-class object SLAM more practical for real-world applications like autonomous driving and robotic manipulation by enabling its use on platforms with common fisheye-LiDAR sensor setups. The open-source code is available at: [github.com/AUBVRL/DSP-SLAMpp].",
+      "authors": [
+        "Ahmad Kourani",
+        "Ghina Daoud",
+        "Daniel Asmar",
+        "Imad Elhajj"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.CV"
+      ],
+      "published": "2026-06-24T15:27:23+00:00",
+      "link": "https://arxiv.org/pdf/2606.25953v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Object-aware SLAM with real-time performance, camera tracking, and high-fidelity object reconstruction",
+      "llm_evidence_cn": "物体感知SLAM，实时性能，相机跟踪与高保真物体重建",
+      "llm_evidence": "物体感知SLAM，实时性能，相机跟踪与高保真物体重建",
+      "canonical_evidence": "物体感知SLAM，实时性能，相机跟踪与高保真物体重建",
+      "llm_tldr_en": "Extends DSP-SLAM for real-time multi-class object SLAM with a monocular fisheye-LiDAR suite, achieving geometrically complete shape reconstruction and reduced latency.",
+      "llm_tldr_cn": "针对现有物体感知SLAM难以兼顾实时性、多类别支持与高保真语义模型的问题，提出DSP-SLAM++，采用异步建图流水线和传感器融合，实现多类物体精细重建，降低建图延迟70%。",
+      "llm_tldr": "针对现有物体感知SLAM难以兼顾实时性、多类别支持与高保真语义模型的问题，提出DSP-SLAM++，采用异步建图流水线和传感器融合，实现多类物体精细重建，降低建图延迟70%。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Visual SLAM methods for camera tracking and mapping",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2606.22051v2",
+      "source": "arxiv",
+      "title": "GeoFlow-SLAM++: A Robust Multi-Camera Visual-Inertial SLAM System with Relocalization",
+      "abstract": "Monocular and RGB-D visual-inertial SLAM systems remain susceptible to limited field of view, sensor-specific failure modes, and unreliable cross-session relocalization. To address these issues, we present GeoFlow-SLAM++, a tightly coupled multi-camera visual-inertial SLAM system that extends GeoFlow-SLAM from a single RGB-D sensor to a calibrated multi-camera rig with a unified body-centric formulation. Within this multi-camera framework, GeoFlow-SLAM++ supports two interchangeable visual front-ends: a conventional ORB front-end and a neural network feature (NN-Feature) front-end built on SuperPoint and LightGlue. The system unifies tracking, mapping, and relocalization on a shared body state, and combines multi-camera reprojection constraints, IMU pre-integration, cross-view place recognition, and dual-stream optical flow/NN-Feature tracking for robust localization. As an optional extension, the system can further incorporate cross-view-consistent pseudo-depth predictions from RGB images as auxiliary geometric constraints. We evaluate GeoFlow-SLAM++ on EuRoC, OpenLORIS, TUM, Hilti, and a self-collected handheld multi-camera dataset. Results show that the NN-Feature front-end improves robustness in appearance-challenging scenarios, the multi-camera formulation achieves competitive localization accuracy on Hilti, and the unified cross-view relocalization design reaches LiDAR-comparable performance on the handheld dataset.",
+      "authors": [
+        "Wei Feng",
+        "Tingyang Xiao",
+        "Liu Liu",
+        "Xiaolin Zhou",
+        "Zhizhong Su"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-06-20T14:08:23+00:00",
+      "link": "https://arxiv.org/pdf/2606.22051v2",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Presents a multi-camera visual-inertial SLAM system for camera tracking and mapping with relocalization.",
+      "llm_evidence_cn": "提出一种用于相机跟踪与建图的多相机视觉惯性SLAM系统，具备重定位能力。",
+      "llm_evidence": "提出一种用于相机跟踪与建图的多相机视觉惯性SLAM系统，具备重定位能力。",
+      "canonical_evidence": "提出一种用于相机跟踪与建图的多相机视觉惯性SLAM系统，具备重定位能力。",
+      "llm_tldr_en": "GeoFlow-SLAM++ extends a monocular/RGB-D SLAM to a calibrated multi-camera rig, supporting both traditional and learned features, and unifies tracking, mapping, and relocalization on a shared body state.",
+      "llm_tldr_cn": "GeoFlow-SLAM++ 针对单目与RGB-D视觉惯性SLAM视野有限和重定位不可靠的问题，扩展为多相机系统，提供ORB和深度特征两种前端，统一体状态进行跟踪、建图与重定位，显著提升了复杂环境下的鲁棒性和准确性。",
+      "llm_tldr": "GeoFlow-SLAM++ 针对单目与RGB-D视觉惯性SLAM视野有限和重定位不可靠的问题，扩展为多相机系统，提供ORB和深度特征两种前端，统一体状态进行跟踪、建图与重定位，显著提升了复杂环境下的鲁棒性和准确性。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Visual SLAM methods for camera tracking and mapping",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.24144v1",
+      "source": "arxiv",
+      "title": "Geometry-Aware Style Transfer in 3D Gaussian Splatting",
+      "abstract": "In this paper, we present a novel geometry-aware style transfer framework for 3D Gaussian splatting (3DGS) that simultaneously transfers appearance attributes and geometric structures. Unlike prior works that primarily focus on color-based stylization and often overlook structural adaptation, our method explicitly incorporates geometry adaptation through a decoupled optimization scheme that alternately updates color and geometry parameters. This strategy alleviates potential interference between color and geometry updates, leading to stable and consistent scene-level geometry transformation. The decoupled optimization is enabled by the proposed geometry-aware contrastive feature matching (GCFM). GCFM integrates RGB, depth, and edge cues into a contrastive objective and is employed in both optimization phases to effectively transfer structural characteristics from style images to Gaussian primitives. Extensive experiments show that our approach achieves superior performance in both qualitative fidelity and quantitative metrics, significantly outperforming existing 3DGS-based stylization methods. Our code is available at \\href{https://github.com/oweixx/gast}{https://github.com/oweixx/gast}.",
+      "authors": [
+        "Min Hyeok Bang",
+        "Jun Hyeong Kim",
+        "Seung-Wook Kim",
+        "Se-Ho Lee"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-23T04:53:56+00:00",
+      "link": "https://arxiv.org/pdf/2606.24144v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "applies geometric style transfer to 3D Gaussian splatting representations",
+      "llm_evidence_cn": "将几何风格迁移应用于3D高斯散场表示",
+      "llm_evidence": "将几何风格迁移应用于3D高斯散场表示",
+      "canonical_evidence": "将几何风格迁移应用于3D高斯散场表示",
+      "llm_tldr_en": "This paper presents a decoupled optimization framework for 3DGS that alternately updates color and geometry to achieve stable geometry-aware style transfer, enabling simultaneous appearance and structure adaptation.",
+      "llm_tldr_cn": "针对现有3DGS风格迁移仅关注颜色而忽略几何结构的问题，该论文提出了几何感知的风格迁移框架。通过解耦优化交替更新颜色和几何参数，并设计几何感知对比特征匹配，实现了场景级几何的稳定变换。该方法扩展了3DGS在视觉内容创作中的应用。",
+      "llm_tldr": "针对现有3DGS风格迁移仅关注颜色而忽略几何结构的问题，该论文提出了几何感知的风格迁移框架。通过解耦优化交替更新颜色和几何参数，并设计几何感知对比特征匹配，实现了场景级几何的稳定变换。该方法扩展了3DGS在视觉内容创作中的应用。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
