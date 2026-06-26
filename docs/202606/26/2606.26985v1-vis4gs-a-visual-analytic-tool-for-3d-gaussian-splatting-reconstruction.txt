@@ -1,0 +1,251 @@
+Title: Vis4GS: A Visual Analytic Tool for 3D Gaussian Splatting Reconstruction
+
+URL Source: https://arxiv.org/pdf/2606.26985v1
+
+Published Time: Fri, 26 Jun 2026 01:12:14 GMT
+
+Number of Pages: 7
+
+Markdown Content:
+# Vis4GS: A Visual Analytic Tool for 3D Gaussian Splatting Reconstruction 
+
+Kai-Yuan Lin * Aryabima Mandala Putra † Jui-Chi Lee ‡ Shih-Hsuan Hung §
+
+National Tsing Hua University 
+
+Figure 1: Vis4GS, our multi-view visual analytics tool for primitive-level 3DGS diagnosis. The Interactive Gaussian Analysis View (A) combines the rendered scene with Gaussian selection and diagnostic overlays; example artifact-to-Gaussian analyses, including Blur Artifact Score, Needle-like Artifact Score, and View Coverage, are shown on the right. The Gaussian Densification Tree View (B) visualizes Gaussian genealogy and densification events, the Log and Control Panel (C) presents selected Gaussian properties and controls, and the Property Timeline View (D) shows training progress and selected property plots. Together, these linked views support tracing visible artifacts to Gaussian properties, View Coverage, training progress, and genealogy. 
+
+ABSTRACT 
+
+3D Gaussian Splatting (3DGS) supports fast training and real-time rendering, but its optimization process remains difficult to inter-pret. Existing viewers mainly expose the final reconstructed scene and offer limited support for explaining how Gaussian properties contribute to visible artifacts or evolve during training. We present Vis4GS, a multi-view visual analytics tool for primitive-level diag-nosis of 3DGS reconstruction artifacts. Built on the original 3DGS viewer and training framework, Vis4GS links rendered artifacts to Gaussian properties, View Coverage, training progress, and Gaus-sian genealogy through four linked views: an interactive Gaussian analysis view, a property timeline view, a Gaussian densification tree view, and a log and control panel. The system supports Gaus-sian selection, blur and needle-like artifact scoring, View Cover-age analysis, and multiscale genealogy exploration of clone, split, prune, and clone-split events. By connecting scene-level artifacts with primitive-level evidence and optimization history, Vis4GS en-ables a structured workflow for diagnosing reconstruction failures beyond final-image inspection and global metrics. A user study also shows that Vis4GS provides stronger support for usability and artifact understanding than the original 3DGS viewer. 
+
+Index Terms: 3D Gaussian Splatting, Visual analytics, Artifact diagnosis, Multiscale visualization 
+
+> *
+
+e-mail: kenlin09250521@gapp.nthu.edu.tw 
+
+> †
+
+e-mail: aryabimamp@gapp.nthu.edu.tw 
+
+> ‡
+
+e-mail: s113065505@m113.nthu.edu.tw 
+
+> §
+
+e-mail: hungsh@cs.nthu.edu.tw 
+
+1 INTRODUCTION 
+
+3D Gaussian Splatting (3DGS) represents a scene with explicit anisotropic Gaussian primitives initialized from sparse Structure-from-Motion points and optimized through interleaved density con-trol and visibility-aware rendering [10]. Although 3DGS supports fast training and real-time rendering, its optimization process re-mains difficult to interpret. Existing platforms provide scene in-spection, editing, and basic statistics [16, 18], but offer limited sup-port to explain how Gaussian properties produce visible artifacts or evolve during training. We introduce a visual analytics approach that links rendered artifacts to Gaussian properties, View Coverage, and genealogy for primitive-level diagnosis. In a preliminary study with the original 3DGS viewer [10], aug-mented with an iteration slider and training logs, participants could detect artifacts but struggled to identify the responsible Gaussians or their evolution. Causes such as insufficient View Coverage, poor Structure-from-Motion initialization, or densification behav-ior were difficult to distinguish, leading to trial-and-error diagnosis. These observations motivate a visual analytics system that explic-itly connects rendered artifacts to Gaussian primitives, quantitative cues, Gaussian properties, View Coverage, and genealogy. From these observations, we derive the following design require-ments. The system should: 
+
+(R1) Artifact-to-Gaussian attribution. Trace visible artifacts in the rendered scene to the Gaussians responsible for them. 
+
+(R2) Multi-view quantitative diagnosis. Provide scores, timeline plots, and linked views for inspecting Gaussian properties and View Coverage, guiding users toward suspicious regions, iterations, and Gaussians. 
+
+> arXiv:2606.26985v1 [cs.GR] 25 Jun 2026
+
+(R3) History-aware genealogy analysis. Expose Gaussian evolu-tion across initialization, densification, cloning, splitting, and prun-ing. To address these requirements, we propose Vis4GS, a multi-view visual analytics tool for primitive-level 3DGS diagnosis. As shown in Fig. 1, Vis4GS integrates four linked components: the Interactive Gaussian Analysis View for artifact inspection, Gaussian selection, property analysis, artifact scoring, and View Coverage visualization (R1, R2); the Property Timeline View for tracking training progress and selected Gaussian properties over iterations, including PSNR, SSIM, LPIPS, and Gaussian count (R2); the Gaussian Densifica-tion Tree View for inspecting Gaussian genealogy and densification events, including clone, split, prune, and clone-split (R3, R1); and the Log and Control Panel for accessing training logs, render con-trols, and selected Gaussian properties (R2). Together, these views support a multi-view diagnosis workflow that links rendered arti-facts to Gaussian properties, View Coverage, training progress, and genealogy. We also conducted a user study that suggested Vis4GS provides stronger support for usability and artifact understanding. 
+
+2 RELATED WORK 
+
+Visual Analytics of 3DGS. Visual analytics for neural scene repre-sentations predates 3DGS; systems such as NeRVis [13] established precedents for interactive inspection. Existing 3DGS tools mainly support scene visualization and manipulation. SuperSplat [16] provides browser-based editing and Gaussian-attribute summaries, LichtFeld Studio [18] integrates training, live inspection, editing, and measurement, and Splatviz [2] offers similar interactive visual-ization capabilities. 
+
+Gaussian Importance and Artifact Analysis. Recent 3DGS re-search has introduced per-Gaussian importance measures for densi-fication, compression, and pruning. Taming3DGS [14] uses score-based sampling for budget-constrained densification, while Light-Gaussian [7], FlexGS [12], and PUP 3D-GS [8] rank primitives by significance, importance, or sensitivity. Complementary stud-ies examine characteristic reconstruction artifacts, including blur or oversplat artifacts [14], needle-like structures associated with highly anisotropic Gaussians [9], and floaters [19]. Visibility-aware methods such as NVGS [21] and VAD-GS [20] further model per-Gaussian view support. Together, these studies motivate jointly an-alyzing Gaussian importance, shape, reconstruction error, and visi-bility when identifying problematic primitives. 
+
+Large-Tree and Multiscale Visualization. Tree visualizations nat-urally encode hierarchies and process histories, making them suit-able for Gaussian genealogy in 3DGS. Prior work improves large-tree readability through focus-and-context methods [5], multiscale aggregation [6], and sparse structured encodings [3]. Aardvark [11] further integrates trees with time series and images. 
+
+3 VIS 4GS 
+
+To support primitive-level diagnosis of 3DGS reconstruction arti-facts, we propose Vis4GS, a multi-view visual analytics tool built on top of the original 3DGS viewer and training framework [10]. A lightweight logging module records training progress, Gaussian properties, iteration states, and densification events for downstream visualization. These records are visualized through four linked components that support the workflow in Fig. 2: 
+
+(A) Interactive Gaussian Analysis View. Users inspect rendered artifacts and select suspicious Gaussians. As the primary scene-level interface, it connects visible artifacts to the underlying Gaus-sian primitives through real-time rendering, property inspection, di-agnostic overlays, and four selection modes: Single, Brush, Frame, and Ray. These modes support framebuffer-based picking, screen-space region selection, and octree-accelerated ray casting. Selected  
+
+> Figure 2: User-centered diagnosis workflow of Vis4GS. Users in-spect artifacts and select suspicious Gaussians in the Interactive Gaussian Analysis View (A1 and A2), trace densification history in the Gaussian Densification Tree View (B), inspect Gaussian proper-ties in the Log and Control Panel (C), analyze training progress in the Property Timeline View (D), and return to the scene to verify their findings. This workflow links rendered artifacts, Gaussian properties, training progress, and genealogy for primitive-level 3DGS diagnosis.
+
+Gaussian IDs are synchronized across views for highlighting, prop-erty inspection, and genealogy lookup. 
+
+(B) Gaussian Densification Tree View. Users trace the genealogy of selected Gaussians. It exposes clone, split, prune, and clone-split events that are hidden in standard 3DGS viewers, helping users de-termine whether an artifact originates from initialization or emerges during densification. The temporal genealogy shows when each Gaussian is created, cloned or split, and pruned during optimiza-tion. 
+
+(C) Log and Control Panel. Users configure selection, camera, it-eration, and artifact-overlay settings, and inspect numerical training logs and scene properties. 
+
+(D) Property Timeline View. Users examine training metrics and temporal plots of selected-Gaussian properties, including artifact scores, opacity, and View Coverage. 
+
+3.1 Artifact-to-Gaussian Analysis 
+
+As shown in Fig. 3, the Interactive Gaussian Analysis View (A) maps per-Gaussian diagnostic signals onto the rendered scene, helping users localize suspicious primitives before inspecting their properties or genealogy. Rather than introducing a new taxon-omy, we focus on three recurring artifact patterns discussed in prior and concurrent 3DGS work: floaters , isolated Gaussians appearing in free spac[19]; blur artifacts , characterized by large, diffuse or oversplat-like Gaussians [14]; and needle-like artifacts , associated with highly anisotropic Gaussians [9]. Accordingly, the Interac-tive Gaussian Analysis View provides three complementary per-Gaussian diagnostics: View Coverage for potential floaters, the 
+
+Blur Artifact Score for large diffuse splats, and the Needle-like Artifact Score for elongated primitives. View Coverage measures how broadly each Gaussian is sup-ported by the training views and serves as a proxy for identifying underconstrained Gaussians and possible floaters. For a Gaussian 
+
+g, we project its screen-space footprint Ωg,v into each training view 
+
+v ∈ V and define a visible training view as a view in which at least one pixel of Ωg,v lies inside the valid image region after basic vis-ibility checks, such as being in front of the camera and within the view frustum. The set of visible training views is denoted as ˜Vg , and the normalized View Coverage is defined as EVC (g) = | ˜Vg |/|V |,where EVC (g) ∈ [0 , 1] . A low EVC (g) indicates that Gaussian g
+
+is supported by only a small fraction of training views. (a) 3DGS Reconstruction (b) Blur Artifact Score (c) Needle-like Artifact Score (d) View Coverage 
+
+> Figure 3: Artifact-to-Gaussian analysis visualizations in the Interactive Gaussian Analysis View. The reconstruction highlights visible artifacts (red circles), while the corresponding diagnostic scores are mapped to the scene to identify problematic primitives: (b) blur artifact score, (c) needle-like artifact score, and (d) view coverage.
+
+Blur Artifact Score measures whether a Gaussian appears large in screen space and overlaps regions with high reconstruction and edge loss. We compute this score by first estimating a Gaussian-view loss and then weighting it by the Gaussian’s normalized pixel coverage. First, for each training view v, we define a pixel loss map by combining the L1 reconstruction error with an edge loss computed using a Laplacian filter [15]: 
+
+L(v) = (1 − λ)L1(v) + λLedge (v). (1) Here, L1(v) is the pixel-wise L1 error map between the rendered image and the training image, and Ledge (v) is the pixel-wise differ-ence between their Laplacian-filtered responses. We set λ = 0 .2,following the weighting coefficient used in 3DGS [10]. For a Gaussian g visible in training view v ∈ ˜Vg , we com-pute its Gaussian-view loss by summing the pixel loss inside its projected footprint Ωg,v , L′(g, v ) = P 
+
+> p∈Ωg,v
+
+L(v)[ p]. We also compute the normalized pixel coverage of g in view v, ω(g, v ) =      
+
+> |Ωg,v |
+> max h∈˜Gv |Ωh,v |
+
+, where ˜Gv denotes the set of Gaussians whose pro-jected footprints overlap the valid image region in view v. Finally, we aggregate the Blur Artifact Score over the visible training views of g:
+
+EB(g) = 1
+
+| ˜Vg |
+
+X 
+
+> v∈˜Vg
+
+ω(g, v )L′(g, v ). (2) A high EB(g) provides evidence for a possible blur or oversplat artifact. Needle-like Artifact Score measures whether an elongated Gaus-sian overlaps regions with high reconstruction and edge loss. We first compute a shape anisotropy term from the Gaussian scale axes, and then weight it by the Gaussian-view loss defined above. Let the scale axes of Gaussian g be σg = ( σg, 1, σ g, 2, σ g, 3). We normalize the squared scales into a distribution: 
+
+qg,k = σ2
+
+> g,k
+
+P3 
+
+> ℓ=1
+
+σ2
+
+> g,ℓ
+
+, k ∈ { 1, 2, 3}. (3) We compute the entropy-based effective rank [9] and map it to a needle-shape score: 
+
+s(g) = 3 − exp  − P3 
+
+> k=1
+
+qg,k log qg,k 
+
+
+
+2 . (4) Here, qg,k log qg,k is defined as 0 when qg,k = 0 . The shape score 
+
+s(g) approaches 1 when one scale axis dominates and approaches 
+
+0 when the three scale axes are similar. Finally, we define the Needle-like Artifact Score by aggregating the loss-weighted anisotropy over the visible training views of g:
+
+EN(g) = s(g)
+
+| ˜Vg |
+
+X 
+
+> v∈˜Vg
+
+L′(g, v ). (5) A high EN(g) provides evidence for a possible needle-like bound-ary artifact. 
+
+3.2 Gaussian Densification Tree Construction 
+
+The Gaussian Densification Tree View represents the densification history of 3DGS as a family-based genealogy. Each node denotes a Gaussian, each edge denotes a parent-child relationship created by densification, the horizontal position encodes the birth iteration, and a lifespan line extends to the death iteration. Node colors encode event types, including root (brown), clone (aquamarine), split (tan), prune (purple), and clone-split (teal), as illustrated in Fig. 4. Back-ground bands group each root Gaussian with all of its descendants into a Gaussian family, indicate the active temporal range of that family, and terminate when the corresponding branch is pruned. We build the tree from exported training records by treating initial Gaussians as roots and inserting descendants according to clone, split, prune, and clone-split events. Clone events add chil-dren while keeping the parent active, split events terminate the par-ent and start child lifespan lines, and prune events terminate a Gaus-sian without descendants. Due to coarse logging intervals, clone and split events within the same interval are represented as clone-split events by inserting the observed descendants while preserving the parent until its recorded death iteration. After constructing the genealogy, we place nodes at their birth iterations and assign unique vertical positions within each family according to branch creation order, reducing overlap among nodes, lifespan lines, and connec-tion lines while preserving readable parent-child relationships. 
+
+3.3 Gaussian Densification Tree Visualization 
+
+3DGS reconstructions may contain many Gaussian families and de-scendants, making the full genealogy difficult to read at all zoom levels. We therefore introduce a multiscale visualization that re-duces clutter when users zoom out and progressively reveals local genealogy when users zoom in, as illustrated in Fig. 5. Each node    
+
+> Figure 4: Anatomy of the Gaussian Densification Tree View using a simplified densification example. The top row shows four sam-pled iterations with creation, cloning, splitting, pruning, and clone-split events. The bottom row shows the corresponding tree repre-sentation, where nodes denote Gaussians, horizontal lines denote lifespans, edges denote parent-child relationships, and background bands denote Gaussian families. Node colors indicate root (brown), clone (aquamarine), split (tan), prune (purple), and clone-split (teal) events. Figure 5: Multiscale visualization of the Gaussian Densification Tree View. The red box and arrow indicate the zoomed region; zooming out reduces clutter, while zooming in reveals local genealogy and densification details.
+
+i is assigned a perception value P (i) based on its descendant count 
+
+D(i) and lifespan T (i) within its family tree, Fi:
+
+P (i) = α · D(i)max j∈Fi D(j) + (1 − α) · T (i)max j∈Fi T (j) , (6) where we set α = 0 .4. If a normalization denominator is zero, the corresponding term is set to zero. The visibility threshold depends on the current zoom level z:
+
+τ (z) = 
+
+
+
+1 − z − zmin 
+
+zmax − zmin 
+
+k
+
+, (7) where we heuristically set zmin = 0 .1, zmax = 2 .0, and k = 1 .2.Let G denote the user-selected node set (i.e., selected Gaussians), and let Γ( G) denote the corresponding highlighted lineage, in-cluding the selected nodes and all their ancestors and descendants. Nodes in Γ( G) remain visible regardless of the current zoom level, while all other nodes are shown only when P (i) ≥ τ (z). This rule preserves the full selected lineage during focused analysis while filtering unrelated nodes according to the current zoom level. As users zoom out, the tree emphasizes long-lived or highly branching Gaussians and makes global pruning patterns easier to observe. As users zoom in, more local clone, split, prune, and clone-split events are revealed, enabling detailed inspection of parent-child relation-ships and densification history. Tree construction dominates startup cost, while rendering remains real-time for around 4 million GS; performance and parameter details are provided in the appendix. 
+
+4 EVALUATION AND DISCUSSION 
+
+User Study. To evaluate the usability and diagnostic value of Vis4GS, we conducted a user study with 13 participants, all of whom had prior experience with 3DGS reconstruction and the orig-inal 3DGS viewer. Participants completed three diagnostic tasks on assigned scenes drawn from Mip-NeRF 360 [1] and our own dataset; additional details are provided in the appendix. After completing the tasks, participants provided System Us-ability Scale (SUS) ratings and 5-point Likert ratings on how well the tool supported their understanding of densification artifacts. Here, μ and σ denote the empirical mean and standard devia-tion within each condition. Vis4GS achieved μ = 74 .38 and 
+
+σ = 9 .24 , whereas the original 3DGS viewer achieved μ = 59 .58 
+
+and σ = 18 .06 . On the artifact-understanding question, Vis4GS users reported higher ratings, with μ = 4 .27 and σ = 0 .79 , than users of the original viewer, with μ = 2 .67 and σ = 1 .86 . Qual-itative feedback was consistent with these results: participants us-ing the original 3DGS viewer often lacked sufficient historical and Gaussian-level context, whereas Vis4GS users explicitly referred to the Gaussian Densification Tree View, artifact score overlays in the Interactive Gaussian Analysis View, and the Property Timeline View to trace suspicious Gaussians, inspect Gaussian properties and View Coverage, and relate local artifacts to genealogy and training progress. Together, these findings suggest that Vis4GS provides stronger support for primitive-level artifact diagnosis.   
+
+> Figure 6: Case study of persistent floaters. Linked views trace a central floater cluster to a weakly constrained ancestor Gaussian in a viewpoint-sparse region.
+
+Case Study. To illustrate how Vis4GS supports root-cause analy-sis, we examine a persistent floater artifact in Fig. 6. A cluster of floaters is visible near the center of the scene, but the linked views reveal that its origin is not local to that region. Using the Gaussian Densification Tree View, the user can trace the artifact lineage back to an ancestor Gaussian in a peripheral area with weak View Cover-age. The genealogy suggests that this poorly constrained Gaussian was repeatedly cloned as optimization progressed, eventually pro-ducing descendants that appear as floaters near the high-gradient center of the scene. This analysis shows that the artifact is not sim-ply caused by nearby geometry, but is related to earlier densifica-tion behavior and limited training-view support. By linking scene inspection, View Coverage, and genealogy, Vis4GS exposes a root cause that would be difficult to identify using the original 3DGS viewer alone. 
+
+5 CONCLUSION 
+
+We presented Vis4GS, a multi-view visual analytics tool for primitive-level diagnosis of 3DGS reconstruction artifacts. Vis4GS links rendered artifacts to Gaussian properties, View Coverage, training progress, and Gaussian genealogy through four views: the Interactive Gaussian Analysis View, Property Timeline View, Gaussian Densification Tree View, and Log and Control Panel. This workflow enables users to trace visible failures to contribut-ing Gaussians, inspect their properties and training-view support, and relate them to densification history, making the 3DGS opti-mization process more interpretable beyond final-scene inspection and global reconstruction metrics. A user study further showed that Vis4GS achieved higher usability and artifact-understanding ratings than the original 3DGS viewer, supporting its effectiveness for primitive-level diagnosis. Vis4GS currently focuses on diagnosis rather than correction. Although users can identify suspicious Gaussians, localized re-optimization, pruning, and re-splatting remain manual. View Cov-erage is only a proxy for training-view support, and the Gaussian Densification Tree View is constrained by the temporal resolution of exported records. Future work will close this loop through di-rect corrective interventions and explore using Gaussian genealogy to guide training-time densification, pruning, and optimization, in-spired by TreeSplat’s tree-structured organization of Gaussian de-formations [17]. We will also improve scalability and modernize the rendering infrastructure. 
+
+ACKNOWLEDGEMENTS 
+
+We thank the anonymous reviewers for their valuable comments and suggestions. This work was funded in part by the National Science and Technology Council of Taiwan (NSTC 114-2221-E-007-115-MY3). REFERENCES 
+
+[1] J. T. Barron, B. Mildenhall, D. Verbin, P. P. Srinivasan, and P. Hedman. Mip-nerf 360: Unbounded anti-aliased neural radiance fields. CVPR ,2022. 4, 6 [2] F. Barthel, A. Beckmann, W. Morgenstern, A. Hilsmann, and P. Eis-ert. Gaussian splatting decoder for 3d-aware generative adversarial networks, 2024. 2 [3] T. Beurskens, S. Van Den Broek, A. Simons, W. Sonke, K. Verbeek, T. Ophelders, M. Hoffmann, and B. Speckmann. Parkview: Visualiz-ing monotone interleavings. In 2025 IEEE 18th Pacific Visualization Conference (PacificVis) , pp. 118–127. IEEE, 2025. 2 [4] J. Brooke. Sus: A quick and dirty usability scale. Usability Eval. Ind. ,189, 11 1995. 6 [5] S. K. Card and D. Nation. Degree-of-interest trees: A component of an attention-reactive user interface. In Proceedings of the Working Conference on Advanced Visual Interfaces , pp. 231–245, 2002. 2 [6] N. Elmqvist and J.-D. Fekete. Hierarchical aggregation for informa-tion visualization: Overview, techniques, and design guidelines. IEEE transactions on visualization and computer graphics , 16(3):439–454, 2009. 2 [7] Z. Fan, K. Wang, K. Wen, Z. Zhu, D. Xu, and Z. Wang. Lightgaussian: Unbounded 3d gaussian compression with 15x reduction and 200+ fps. Advances in neural information processing systems , 37:140138– 140158, 2024. 2 [8] A. Hanson, A. Tu, V. Singla, M. Jayawardhana, M. Zwicker, and T. Goldstein. Pup 3d-gs: Principled uncertainty pruning for 3d gaus-sian splatting. In Proceedings of the Computer Vision and Pattern Recognition Conference , pp. 5949–5958, 2025. 2 [9] J. Hyung, S. Hong, S. Hwang, J. Lee, J. Choo, and J.-H. Kim. Effec-tive rank analysis and regularization for enhanced 3d gaussian splat-ting. In Proceedings of the 38th International Conference on Neural Information Processing Systems , NIPS ’24. Curran Associates Inc., Red Hook, NY, USA, 2024. 2, 3 [10] B. Kerbl, G. Kopanas, T. Leimkuehler, and G. Drettakis. 3d gaussian splatting for real-time radiance field rendering. ACM Trans. Graph. ,42(4), July 2023. doi: 10.1145/3592433 1, 2, 3 [11] D. Lange, R. Judson-Torres, T. A. Zangle, and A. Lex. Aardvark: Composite visualizations of trees, time-series, and images. IEEE transactions on visualization and computer graphics , 31(1):1290– 1300, 2024. 2 [12] H. Liu, Y. Wang, C. Li, R. Cai, K. Wang, W. Li, P. Molchanov, P. Wang, and Z. Wang. Flexgs: Train once, deploy everywhere with many-in-one flexible 3d gaussian splatting. In Proceedings of the Computer Vision and Pattern Recognition Conference , pp. 16336– 16345, 2025. 2 [13] K. W. Maas, T.-W. Chua, D. Ruijters, N. Pezzotti, and A. Vilanova. Nervis: Neural radiance field model-uncertainty visualization. Com-puters & Graphics , p. 104511, 2025. 2 [14] S. S. Mallick, R. Goel, B. Kerbl, F. V. Carrasco, M. Steinberger, and F. De la Torre. Taming 3dgs: High-quality radiance fields with lim-ited resources. In Proceedings of SIGGRAPH Asia 2024 Conference Papers , SA ’24, pp. 2:1–2:11. Association for Computing Machinery, Tokyo, Japan, Dec. 2024. doi: 10.1145/3680528.3687694 2 [15] D. Marr and E. Hildreth. Theory of edge detection. Proceed-ings of the Royal Society of London. Series B, Biological Sciences ,207(1167):187–217, 1980. doi: 10.1098/rspb.1980.0020 3 [16] PlayCanvas. SuperSplat: The 3d gaussian splat platform. https:// playcanvas.com/products/supersplat , 2026. Accessed: 2026-04-18. 1, 2 [17] Q. Shen, X. Yang, and X. Wang. Treesplat: mergeable tree for de-formable gaussian splatting. Advances in Neural Information Pro-cessing Systems , 38:137092–137111, 2026. 4 [18] L. Studio. Lichtfeld studio, 2026. Accessed: 2026-04-18. 1, 2 [19] J. Wang, P. Zhou, C. Li, R. Quan, and J. Qin. Low-frequency first: Eliminating floating artifacts in 3d gaussian splatting, 2025. 2 [20] Y. Zhang and R. Fan. VAD-GS: Visibility-aware densification for 3D Gaussian Splatting in dynamic urban scenes. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , 2026. 2 [21] B. Zoomers, F. Hahlbohm, J. Vanherck, L. Jorissen, M. Magnor, and N. Michiels. NVGS: Neural visibility for occlusion culling in 3D Gaussian Splatting. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , 2026. 2 A TASKS AND QUESTIONS IN USER STUDY 
+
+The user study involved 13 participants, primarily graduate students and researchers with experience in computer graphics, particularly 3DGS. Each session lasted approximately 30–40 minutes. The se-lected scenes were Bicycle and Bonsai from the Mip-NeRF 360 dataset [1] and Figurine from our own dataset. 
+
+Q1. ”A floater is already identified and selected. Using Interac-tive Gaussian Analysis View, and Gaussian Densification Tree View, find the root gaussian responsible for this floater and re-port on the cause of the selected floater.” 
+
+Q2. ”Observe this PSNR drop at iteration 9000 in the Scene Prop-erty. Using Interactive Gaussian Analysis View and Log and Control Panel, determine the cause of this sudden drop.” 
+
+Q3. ”Explore this tool and experiment with any features pro-vided.” Afterwards, participants were asked to answer a system usability scale [4] questionnaire, as well as an artifact-understanding ques-tion is ”The tool helped me understand how the densification pro-cess can cause artifacts.” This is rated on a Likert scale of 1-5. 
+
+B SYSTEM PERFORMANCE AND IMPLEMENTATION DE-
+
+> TAILS
+
+To evaluate the computational efficiency of our visual analytics tool, we benchmark performance metrics across various reconstruc-tion scenes. All experiments are conducted on a workstation with an AMD Ryzen 9950X CPU, NVIDIA 5070 GPU, and 32 GB of RAM. Table 1 summarizes the performance details of our tool across different scenes. The data shows that our tool maintains a real-time rendering and smooth navigation for the user to investi-gate the scene.             
+
+> Table 1: System Performance Metrics across Scenes from Standard Datasets.
+> Scene (Dataset) Gaussian Count Rendering Speed (FPS) Loading Time (s)
+> Bicycle (MipNerf360) 4.89M 30 435 Bonsai (MipNerf360) 1.06M 80 53 Figurine (Our Dataset) 1.07M 85 58
+
+C PARAMETER EXPLANATION OF GAUSSIAN DENSIFICA - 
+
+> TION
+
+TREE VISUALIZATION 
+
+We briefly recap our equations for Gaussian Densification Tree vi-sualization, introduced in section 3.3 of the main text. The percep-tion value P (i) of each node is defined as equation 6, and the visi-bility threshold that depends on the current zoom level z is defined as equation 7. 
+
+P (i) = α · D(i)max j∈Fi D(j) + (1 − α) · T (i)max j∈Fi T (j) (8) 
+
+τ (z) = 
+
+
+
+1 − z − zmin 
+
+zmax − zmin 
+
+k
+
+(9) We examine how the weighting factor α and zoom level interact to shape the Level-of-Detail tree structure. Figure 7 shows the qual-itative results across four α values and three zoom scales with fixed 
+
+k = 1 .2. Higher α values place greater emphasis on the descendant count D(i), leading to broader tree expansions, while lower α val-ues prioritize Gaussian lifetime, yielding more conservative node visibility. We set α = 0 .4 by comparing different α on trees of different sizes and obtained a value that shows appropriate amount of nodes at certain zoom levels. Zoom level further modulates ex-pansion: as zoom increases, the visibility threshold τ (z) decreases, causing more nodes to become visible regardless of α. We tested k value to obtain an acceptable smoothness of the culling from the visibility threshold. Zoom = 0.2 Zoom = 0.3 Zoom = 0.4 
+
+α = 0 .2
+
+α = 0 .4
+
+α = 0 .6
+
+α = 0 .8
+
+Figure 7: Qualitative Level-of-Detail (LoD) tree structure sensitivity across α variations and zoom scales (fixed k = 1 .2). Rows corre-spond to different multi-criteria weighting factors α, while columns show tree expansion behavior across increasing zoom levels.

@@ -1,0 +1,2898 @@
+Title: Non-line-of-sight imaging with arbitrary relay surface geometries via 3D Gaussian Transient Rendering
+
+URL Source: https://arxiv.org/pdf/2606.21270v1
+
+Published Time: Tue, 23 Jun 2026 00:45:18 GMT
+
+Number of Pages: 11
+
+Markdown Content:
+# Non-line-of-sight imaging with arbitrary relay surface geometries via 3D Gaussian Transient Rendering 
+
+## YI WANG ∗, Department of Precise Instrument, Tsinghua University, China 
+
+## ZIYU ZHAN ∗, Department of Precise Instrument, Tsinghua University, China 
+
+## YURAN WANG, Department of Precise Instrument, Tsinghua University, China 
+
+## HAO WANG, Department of Electrical Engineering, City University of Hong Kong, China 
+
+## QIANG LIU, Department of Precise Instrument, Tsinghua University, China 
+
+## ZUOQIANG SHI, Yau Mathematical Science Center, Tsinghua University, China 
+
+## LINGYUN QIU, Yau Mathematical Science Center, Tsinghua University, China 
+
+## XING FU †, Department of Precise Instrument, Tsinghua University, China Relay Objects Hidden Objects 
+
+> Line of Sight
+> None Line of Sight
+
+3D-GTR NeTF CC-SOCR 0 Normalized Intensity  120cm 20 cm 
+
+Fig. 1. Non-line-of-sight (NLOS) imaging with arbitrary relay surface geometries. (Left) A schematic illustration of a “pedestrian dart-out” hazard. In this scenario, NLOS imaging is crucial for detecting the pedestrian emerging from a blind spot to prevent potential accidents. In the absence of a large planar wall, the system utilizes the backs of two visible pedestrians as relay surfaces. These surfaces are non-planar and spatially limited with complex normal distributions, making traditional NLOS imaging methods inapplicable. (Right) Comparison of reconstruction results using NeTF [Shen et al . 2021], CC-SOCR [Liu et al . 2023b], and our proposed 3D Gaussian Transient Rendering (3D-GTR). While other state-of-the-art methods fail to resolve the target under such complex and irregular geometric constraints, our approach robustly recovers the hidden pedestrian geometry. The left scene illustration contains modified 3D assets from Sketchfab: “Suv Car” by appsnation, “Car” by pavan.amalakanti, “Stylized 3D Car Pack” by DevPoly3D, and “Car” by Tech developers, all used under CC BY 4.0. 
+
+Imaging objects hidden outside the direct line of sight expands the effective field of view and is critical for applications such as autonomous driving and 
+
+> ∗
+
+Both authors contributed equally to this research. 
+
+> †
+
+Corresponding author. Authors’ Contact Information: Yi Wang, wangyi24@mails.tsinghua.edu.cn, Department of Precise Instrument, Tsinghua University, Beijing, China; Ziyu Zhan, zhanzy21@mails. tsinghua.edu.cn, Department of Precise Instrument, Tsinghua University, Beijing, China; Yuran Wang, wangyuran21@mails.tsinghua.edu.cn, Department of Precise Instrument, Tsinghua University, Beijing, China; Hao Wang, wh18810520679@163.com, Department of Electrical Engineering, City University of Hong Kong, Hong Kong, China; Qiang Liu, qiangliu@tsinghua.edu.cn, Department of Precise Instrument, Tsinghua University, Beijing, China; Zuoqiang Shi, zqshi@tsinghua.edu.cn, Yau Mathematical Science Center, Tsinghua University, Beijing, China; Lingyun Qiu, Yau Mathematical Science Center, Tsinghua University, Beijing, China, lyqiu@tsinghua.edu.cn; Xing Fu, Department of Precise Instrument, Tsinghua University, Beijing, China, fuxing@tsinghua.edu.cn. 
+
+This work is licensed under a Creative Commons Attribution 4.0 International License. 
+
+SIGGRAPH Conference Papers ’26, Los Angeles, CA, USA 
+
+© 2026 Copyright held by the owner/author(s). ACM ISBN 979-8-4007-2554-8/2026/07 https://doi.org/10.1145/3799902.3811137 
+
+robotic perception. Despite impressive progress in time-of-flight (ToF)-based non-line-of-sight (NLOS) imaging, real-world deployment remains challeng-ing because practical measurements are often collected over spatially limited, arbitrarily shaped relay regions—conditions that violate the planar-wall and dense-sampling assumptions made by most existing methods. To address these limitations, we propose a LOS-guided NLOS imaging pipeline that imposes no geometric assumptions on the relay surface and naturally sup-ports both confocal and non-confocal configurations. Our method represents the hidden scene using 3D Gaussian primitives and couples them with an efficient, differentiable transient rendering model, enabling end-to-end opti-mization directly from measured transients. We validate our approach on real-world measurements from both a public dataset and a custom-built capture system. Across settings, our method achieves state-of-the-art re-construction fidelity under spatially limited, sparsely sampled conditions, and significantly outperforms existing methods on complex, arbitrary relay surface geometries. We release our code and datasets at nlos-3d-gtr. CCS Concepts: • Computing methodologies → Computational photog-raphy ; Rendering .
+
+SIGGRAPH Conference Papers ’26, July 19–23, 2026, Los Angeles, CA, USA.     
+
+> arXiv:2606.21270v1 [physics.optics] 19 Jun 2026 2•Yi Wang, Ziyu Zhan, Yuran Wang, Hao Wang, Qiang Liu, Zuoqiang Shi, Lingyun Qiu, and Xing Fu
+> ACM Reference Format:
+> Yi Wang, Ziyu Zhan, Yuran Wang, Hao Wang, Qiang Liu, Zuoqiang Shi, Lingyun Qiu, and Xing Fu. 2026. Non-line-of-sight imaging with arbitrary relay surface geometries via 3D Gaussian Transient Rendering. In Special Interest Group on Computer Graphics and Interactive Techniques Conference Conference Papers (SIGGRAPH Conference Papers ’26), July 19–23, 2026, Los Angeles, CA, USA. ACM, New York, NY, USA, 11 pages. https://doi.org/10. 1145/3799902.3811137
+
+1 Introduction 
+
+Imaging objects hidden from a sensor’s direct line of sight (LOS) remains a long-standing challenge. Among various non-line-of-sight (NLOS) imaging scenarios, time-of-flight (ToF)-based imaging, which aims to “look around corners” by exploiting a visible relay surface while the target is occluded, has attracted significant in-terest in remote sensing, robotic perception, and public safety. To meet these demands, a wide range of hardware advances [Buttafava et al . 2015; Scheiner et al . 2020] and software algorithms [Liu et al .2019; O’Toole et al . 2018] have been proposed. Furthermore, because transient ToF acquisition shares a similar system architecture with conventional LiDAR, it offers a promising route toward practical integration into automotive sensing systems [Rapp et al . 2020]. De-spite this impressive progress, bringing NLOS imaging to real-world deployment remains difficult. Most existing methods assume a large, continuous, and planar relay wall. In practice, however, transient measurements are often acquired from spatially limited regions with arbitrary geometries. To address these challenges, researchers have explored several directions, including model-based iterative frame-works [Liu et al . 2023b], learning-based approaches [Cui et al . 2025], and rendering-driven neural-field reconstruction pipelines [Shen et al . 2021]. Nevertheless, these methods face significant practical hurdles: they often require prolonged (hours) training or optimiza-tion times and lack robustness in complex environments, especially when the relay surface is unconstrained and non-planar. This high-lights the critical need for a fast, reliable NLOS reconstruction frame-work capable of generalizing across arbitrary relay surface geome-tries. To this end, we propose a LOS-guided NLOS imaging pipeline that imposes no geometric assumptions on the relay surface. By leveraging LOS measurements, we recover not only positions but also the local geometry of the relay surface, which in turn guides the NLOS detection and reconstruction process. Inspired by the success of 3DGS in novel view synthesis (NVS) [Kerbl et al . 2023], and 3D reconstruction [Guédon and Lepetit 2024; Keetha et al . 2024], we represent the hidden scene using 3D Gaussian primitives. We couple the Gaussian primitives with a physically grounded, differentiable transient renderer and optimize them via backpropagation to min-imize the loss between predicted and measured transient signals. Once optimized, the recovered scene representation can be fed into the transient renderer to synthesize dense, physically consistent transient measurements, which can be subsequently coupled with conventional transient solvers to obtain the final reconstruction. Extensive experiments on real-world measurements—from both public datasets and our custom capture system—demonstrate the ro-bustness of our approach across a wide range of settings, including confocal planar, non-confocal planar, and non-confocal scenarios with arbitrarily shaped relay surfaces. The main contributions of our work are as follows: 
+
+• We propose a LOS-guided NLOS imaging pipeline (shown in Fig. 2) that eliminates the need for prior assumptions about relay surface geometry. Consequently, this formulation natu-rally supports both confocal and non-confocal acquisitions, as well as arbitrary illumination-detection pair configura-tions for transient measurements, substantially broadening the practical applicability of NLOS imaging. 
+
+• We develop 3D Gaussian Transient Rendering ( 3D-GTR ), an efficient, fully differentiable, physics-based transient render-ing model built on lightweight 3D Gaussian primitives. By explicitly incorporating physics-aware light transport, our renderer delivers reliable performance across diverse acquisi-tion configurations. 
+
+• We validate our method on real-world measurements from both public datasets and a custom-built capture system in-volving diverse relay surfaces. Our results demonstrate signif-icantly improved robustness compared to existing methods, particularly under complex relay surface geometries. 
+
+2 Related Work 2.1 NLOS Imaging. 
+
+ToF-based NLOS imaging has witnessed rapid progress since the seminal work of Kirmani et al. [Kirmani et al . 2009]. Early reconstruc-tion methods based on filtered back-projection (FBP) [La Manna et al . 2019; Velten et al . 2012] established a practical baseline for real-world NLOS imaging. Subsequently, the light-cone transform (LCT) [O’Toole et al . 2018] introduced a convolutional formula-tion under confocal measurements, significantly reducing compu-tational complexity. In parallel, wave-optics approaches, including f-k migration [Lindell et al . 2019] and RSD [Liu et al . 2020, 2019], model hidden-scene light transport as wave propagation, enabling high-fidelity reconstructions. Recent learning-based methods lever-age deep priors learned from data to improve reconstruction qual-ity [Chen et al . 2020; Yu et al . 2023]. In addition, a number of works focus on accelerating reconstruction [Li et al . 2022; Wei et al . 2025] and further enhancing imaging quality [Zhang et al. 2025]. 
+
+NLOS imaging with arbitrary transients. While most standard approaches rely on dense, uniform sampling over large planar relay surfaces, research on reconstruction from arbitrary transients re-mains limited. To reduce acquisition time via sparse measurements ,model-based optimization methods—ranging from compressed sens-ing [Ye et al . 2021] and probabilistic regularization [Liu et al . 2023a] to the recent convolution-approximation strategy DO-NLOS [Miao et al . 2025]—have been proposed, alongside data-driven approaches using deep priors [Li et al . 2023; Wang et al . 2023] or temporal consis-tency [Li et al . 2024; Ye et al . 2024a,b]. For irregular spatial sampling patterns , CC-SOCR [Liu et al . 2023b] introduces a “virtual confocal” proxy to bridge arbitrary patterns with confocal reconstruction. Virtual Scanning [Cui et al . 2024] adopts a self-supervised strategy for irregularly undersampled data, while TransDiff [Cui et al . 2025] leverages latent diffusion models to “hallucinate” dense measure-ments from aperture-limited inputs; extreme sparsity is explored in   
+
+> SIGGRAPH Conference Papers ’26, July 19–23, 2026, Los Angeles, CA, USA. Non-line-of-sight imaging with arbitrary relay surface geometries via 3D Gaussian Transient Rendering •3
+
+single-path keyhole imaging [Metzler et al . 2021]. To handle non-planar relay geometries , 3D RSD [Gu et al . 2023] extends wave-based solvers via two-stage propagation with a planar proxy, whereas other solutions rely on hardware-aided surface tracking [Manna et al. 2020] or accelerated FBP variants [Sun et al. 2026]. 
+
+NLOS imaging via Transient Rendering. “Analysis-by-synthesis” frameworks reconstruct the scene by optimizing a physical represen-tation to minimize the error between simulated and measured tran-sients. With solid theoretical foundations established for transient light transport [Jarabo et al . 2014; Pediredla et al . 2019; Wu et al . 2021; Yi et al . 2021], early works employed explicit mesh representations optimized via backpropagation, evolving from numerical differenti-ation [Iseringhausen and Hullin 2020; Tsai et al . 2019] to analytical derivatives [Choi et al . 2023; Plack et al . 2023]. Beyond explicit sur-faces, implicit representations were pioneered by Neural Transient Fields (NeTF) [Shen et al . 2021], which model the hidden scene as a continuous volumetric density field optimized via ellipsoid integra-tion. This paradigm further incorporates Signed Distance Functions for precise surface extraction [Fujimura et al . 2023; Grau et al . 2022], and has further been integrated with holistic priors [Huang et al .2023; Shen et al . 2025] or physics-guided encoders [Mu et al . 2025] to enhance generalization, while recent efforts employ domain pruning strategies to accelerate convergence [Shim et al. 2025]. 
+
+2.2 3D Gaussian Splatting and NVS. 
+
+Synthesizing transients under arbitrary configurations mirrors NVS. Following the evolution from NeRF [Mildenhall et al . 2021] to ac-celerated volumetric representations [Fridovich-Keil et al . 2022; Lassner and Zollhofer 2021; Müller et al . 2022], 3D Gaussian Splat-ting (3DGS) [Kerbl et al . 2023] has emerged as a powerful paradigm. Recent works have also explored differentiable 3D representations for LOS transient or active sensing, including LiDAR view synthe-sis [Malik et al . 2023], propagating-light inverse rendering [Malik et al . 2025], diffuse LiDAR-RGB scanning [Behari et al . 2025], low-cost single-photon imaging [Mu et al . 2024], and few-pixel ToF reconstruction [Sifferman et al . 2025]. Gaussian splatting has also been adapted to related sonar and radar imaging models, includ-ing camera-sonar fusion via depth-axis splatting [Qu et al . 2025], imaging-sonar view synthesis [Sethuraman et al . 2025], and radar data synthesis and 3D reconstruction [Kung et al . 2025]. Together, these works indicate that Gaussian splatting can be effective beyond standard perspective rendering when its splatting process is adapted to the sensing physics. Motivated by this observation, we introduce 3D Gaussian primitives to NLOS transient imaging. This represen-tation is well suited to arbitrary transients because it combines the flexibility of continuous fields with the efficiency of discrete points. 
+
+3 Methods 
+
+We consider a standard three-bounce NLOS ToF measurement sce-nario that places no restrictions on the relay surface geometry and supports both confocal and non-confocal acquisition. An ultrashort laser pulse illuminates a point 𝒙 𝑖 on the relay surface, and the scat-tered light propagates into the hidden volume. After interacting with the hidden scene, light returns to the relay surface, where a single-photon avalanche diode (SPAD) records a time-resolved photon-count transient at a detection point 𝒙 𝑑 . As depicted in Fig. 3, we index each transient with an illumination-detection pair and their local outward normals, i.e., 𝝉 (𝒙 𝑖 , 𝒏 𝑖 , 𝒙 𝑑 , 𝒏 𝑑 ). For conciseness, we denote the transient associated with the acquisition pair 𝑝 and its normal 𝑛 𝑝 as 𝝉 𝑝,𝑛 𝑝 in the following. 
+
+3.1 3D Gaussian-Primitive Transient Rendering 
+
+We represent the hidden scene using 3D Gaussian primitives, pa-rameterized as G( 𝒙 𝑔 , 𝚺 , 𝜌 ) ≜ 𝜌 𝑿 , 𝑿 ∼ N ( 𝒙 𝑔 , 𝚺 ), where 𝒙 𝑔 and 𝚺 
+
+denote the mean and covariance of the spatial distribution, and 𝜌 
+
+controls the overall scattering strength. Physically, each primitive can be interpreted as a spatially localized scattering density : a contin-uum of infinitesimal scatterers concentrated around 𝒙 𝑔 , distributed according to 𝚺 , and weighted by 𝜌 . Given an illumination-detection pair and the corresponding NLOS transport geometry, our transient rendering model maps each 3D Gaussian primitive to an induced 
+
+1D temporal Gaussian kernel parameterized by (𝜇 𝑡 , 𝜎 𝑡 , 𝐴 ), which respectively encode the mean ToF, temporal spread, and radiometric amplitude of its contribution. 
+
+˜𝑠 𝑔 (𝑡 ; 𝒙 𝑖 , 𝒏 𝑖 , 𝒙 𝑑 , 𝒏 𝑑 ) ¤ ∝ 𝐴 N  𝑡 ; 𝜇 𝑡 , 𝜎 2
+
+> 𝑡
+
+. (1) For an illumination-detection relay pair (𝒙 𝑖 , 𝒏 𝑖 ) and (𝒙 𝑑 , 𝒏 𝑑 ), we define 
+
+𝑑 𝑖 ≜ ∥𝒙 𝑔 − 𝒙 𝑖 ∥2, 𝑑 𝑑 ≜ ∥𝒙 𝑔 − 𝒙 𝑑 ∥2, ˆ𝒖 𝑖 ≜ 𝒙 𝑔 − 𝒙 𝑖 
+
+𝑑 𝑖 
+
+, ˆ𝒖 𝑑 ≜ 𝒙 𝑔 − 𝒙 𝑑 
+
+𝑑 𝑑 
+
+.
+
+The optical transport length for a point 𝑿 in the hidden scene is 
+
+𝐿 (𝑿 ) ≜ ∥𝑿 − 𝒙 𝑖 ∥2 + ∥ 𝑿 − 𝒙 𝑑 ∥2.
+
+Assuming the primitive’s spatial spread is small compared to the transport distances, we linearize 𝐿 (𝒙 ) around 𝒙 𝑔 :
+
+𝐿 (𝑿 ) ≈ 𝐿 (𝒙 𝑔 ) + ∇ 𝐿 (𝒙 𝑔 )⊤ (𝑿 − 𝒙 𝑔 ),
+
+where 
+
+∇𝐿 (𝒙 𝑔 ) = 𝒙 𝑔 − 𝒙 𝑖 
+
+∥𝒙 𝑔 − 𝒙 𝑖 ∥2
+
++ 𝒙 𝑔 − 𝒙 𝑑 
+
+∥𝒙 𝑔 − 𝒙 𝑑 ∥2
+
+= ˆ𝒖 𝑖 + ˆ𝒖 𝑑 ≜ 𝒗 .
+
+Since 𝑿 ∼ N ( 𝒙 𝑔 , 𝚺 ), the induced path length is (approximately) Gaussian: 𝐿 (𝑿 ) ¤ ∼ N  𝜇 𝐿 , 𝜎 2
+
+> 𝐿
+
+, 𝜇 𝐿 = 𝐿 (𝒙 𝑔 ) = 𝑑 𝑖 + 𝑑 𝑑 , 𝜎 2 
+
+> 𝐿
+
+= 𝒗 ⊤ 𝚺 𝒗 .
+
+Equivalently, the pushforward response: 
+
+˜𝑠 𝑔 (𝐿 ) ∝ 
+
+∫
+
+> R3
+
+𝑝 (𝑿 ) 𝛿  𝐿 − 𝐿 (𝑿 ) 𝑑 𝑿 ≡ 𝑝 𝐿 (𝑿 ) (𝐿 ),
+
+admits the compact approximation: 
+
+˜𝑠 𝑔 (𝐿 ) ¤ ∝ N  𝐿 ; 𝜇 𝐿 , 𝜎 2
+
+> 𝐿
+
+, (2) where 𝜇 𝐿 and 𝜎 𝐿 correspond to the center and width of the resulting 1D Gaussian transient in the path-length domain, respectively. For radiometric weighting (i.e., expected photon counts), we adopt a physically motivated model: the amount of light intercepted by a Gaussian primitive from an illumination point, or collected toward a detector, along direction 𝒖 at distance 𝑑 , is proportional to the corresponding solid angle: 
+
+Ω𝑚 ∝ 𝐴 ⊥ ( ˆ𝒖 )
+
+𝑑 2 , (3) where 𝐴 ⊥ ( ˆ𝒖 ) denotes the primitive’s effective projected area per-pendicular to 𝒖 , computed as 𝐴 ⊥ ( ˆ𝒖 ) ≜√︃ |𝚺 |   ˆ𝒖 ⊤ 𝚺 −1 ˆ𝒖 .
+
+> SIGGRAPH Conference Papers ’26, July 19–23, 2026, Los Angeles, CA, USA.
+
+4 • Yi Wang, Ziyu Zhan, Yuran Wang, Hao Wang, Qiang Liu, Zuoqiang Shi, Lingyun Qiu, and Xing Fu real scene LOS detect 
+
+LOS Point Cloud Postprocess 
+
+Virtual Relay Surface Points with normals 
+
+> 121234
+> SPAD
+> Laser
+> NLOS Space LOS Space Occluder LOS Path NLOS Path
+
+Initialized 3D GP Render Gradient 
+
+Optimized 3D GP 
+
+... 
+
+Optimize Render 
+
+> intensity
+
+Collected Transients 270 
+
+NLOS detect Volume Reconstruction Conventional Solver 2.90 m 
+
+> Depth 2.20 m
+
+Synthesized Transients      
+
+> 0Photon Count
+> 270 00.06 Hidden scene Hidden scene 0Albedo
+> 10Albedo
+> 120cm
+
+xi xd?? ni nd
+
+τ (xi, ni, xd, nd)τp,n p
+
+G(xg , Σ, ρ ) ρ X, X ∼ N (xg , Σ),
+
+xg and ΣΣ ρ. ( μt, σ t, A )˜sg (t; xi, ni, xd, nd) ˙ ∝ A N(t; μt, σ 2
+
+t
+
+). (1) ˜sg (t; x′
+
+i, n′
+
+i, x′
+
+d, n′
+
+d) ˙ ∝ A N(t; μt, σ 2
+
+t
+
+). (2) 
+
+di‖xg − xi‖2, d d‖xg − xd‖2, ˆui
+
+xg − xi
+
+di
+
+, ˆud
+
+xg − xd
+
+dd
+
+.L(x)‖x − xi‖2 + ‖x − xd‖2.L(X) around xg :
+
+L(X) ≈ L(xg ) + ∇L(xg )(X − xg ),
+
+∇L(xg ) = xg − xi
+
+‖xg − xi‖2
+
++ xg − xd
+
+‖xg − xd‖2
+
+= ˆ ui + ˆ ud v.
+
+Since X ∼ N (xg , Σ), the induced path length is (approximately) Gaussian: 
+
+L(X) ˙ ∼ N (μL, σ 2
+
+L
+
+), μ LL(xg ) = di + dd, σ 2
+
+LvΣ v.
+
+˜sg (L) ∝
+
+∫
+
+R3
+
+p(x) δ(L − L(x)) dx ≡ pL(X)(L)˜sg (L) ˙ ∝ N (L; μL, σ 2
+
+L
+
+), (3) 
+
+μL σL
+
+mu d
+
+Ωm ∝ A⊥( ˆ u)
+
+d2 . (4) 
+
+A⊥( ˆ u) u, is calculated as A⊥( ˆ u)
+
+√
+
+|Σ|( ˆuΣ−1 ˆu).
+
+A = g ρ γ iγd
+
+A⊥( ˆ ui) A⊥( ˆ ud)
+
+d2
+
+i d2
+
+d
+
+,
+
+xi xd?? ni nd
+
+τ (xi, ni, xd, nd)τp,n p
+
+G(xg , Σ, ρ ) ρ X, X ∼ N (xg , Σ),
+
+xg and ΣΣ ρ. ( μt, σ t, A )˜sg (t; xi, ni, xd, nd) ˙ ∝ A N(t; μt, σ 2
+
+t
+
+). (1) ˜sg (t; x′
+
+i, n′
+
+i, x′
+
+d, n′
+
+d) ˙ ∝ A N(t; μt, σ 2
+
+t
+
+). (2) 
+
+di‖xg − xi‖2, d d‖xg − xd‖2, ˆui
+
+xg − xi
+
+di
+
+, ˆud
+
+xg − xd
+
+dd
+
+.L(x)‖x − xi‖2 + ‖x − xd‖2.L(X) around xg :
+
+L(X) ≈ L(xg ) + ∇L(xg )(X − xg ),
+
+∇L(xg ) = xg − xi
+
+‖xg − xi‖2
+
++ xg − xd
+
+‖xg − xd‖2
+
+= ˆ ui + ˆ ud v.
+
+Since X ∼ N (xg , Σ), the induced path length is (approximately) Gaussian: 
+
+L(X) ˙ ∼ N (μL, σ 2
+
+L
+
+), μ LL(xg ) = di + dd, σ 2
+
+LvΣ v.
+
+˜sg (L) ∝
+
+∫
+
+R3
+
+p(x) δ(L − L(x)) dx ≡ pL(X)(L)˜sg (L) ˙ ∝ N (L; μL, σ 2
+
+L
+
+), (3) 
+
+μL σL
+
+mu d
+
+Ωm ∝ A⊥( ˆ u)
+
+d2 . (4) 
+
+A⊥( ˆ u) u, is calculated as A⊥( ˆ u)
+
+√
+
+|Σ|( ˆuΣ−1 ˆu).
+
+A = g ρ γ iγd
+
+A⊥( ˆ ui) A⊥( ˆ ud)
+
+d2
+
+i d2
+
+d
+
+,
+
+xi xd?? ni nd
+
+τ (xi, ni, xd, nd)τp,n p
+
+G(xg , Σ, ρ ) ρ X, X ∼ N (xg , Σ),
+
+xg and ΣΣ ρ. ( μt, σ t, A )˜sg (t; xi, ni, xd, nd) ˙ ∝ A N(t; μt, σ 2
+
+t
+
+). (1) ˜sg (t; x′
+
+i, n′
+
+i, x′
+
+d, n′
+
+d) ˙ ∝ A N(t; μt, σ 2
+
+t
+
+). (2) 
+
+di‖xg − xi‖2, d d‖xg − xd‖2, ˆui
+
+xg − xi
+
+di
+
+, ˆud
+
+xg − xd
+
+dd
+
+.L(x)‖x − xi‖2 + ‖x − xd‖2.L(X) around xg :
+
+L(X) ≈ L(xg ) + ∇L(xg )(X − xg ),
+
+∇L(xg ) = xg − xi
+
+‖xg − xi‖2
+
++ xg − xd
+
+‖xg − xd‖2
+
+= ˆ ui + ˆ ud v.
+
+Since X ∼ N (xg , Σ), the induced path length is (approximately) Gaussian: 
+
+L(X) ˙ ∼ N (μL, σ 2
+
+L
+
+), μ LL(xg ) = di + dd, σ 2
+
+LvΣ v.
+
+˜sg (L) ∝
+
+∫
+
+R3
+
+p(x) δ(L − L(x)) dx ≡ pL(X)(L)˜sg (L) ˙ ∝ N (L; μL, σ 2
+
+L
+
+), (3) 
+
+μL σL
+
+mu d
+
+Ωm ∝ A⊥( ˆ u)
+
+d2 . (4) 
+
+A⊥( ˆ u) u, is calculated as A⊥( ˆ u)
+
+√
+
+|Σ|( ˆuΣ−1 ˆu).
+
+A = g ρ γ iγd
+
+A⊥( ˆ ui) A⊥( ˆ ud)
+
+d2
+
+i d2
+
+d
+
+,
+
+xi xd?? ni nd
+
+τ (xi, ni, xd, nd)τp,n p
+
+G(xg , Σ, ρ ) ρ X, X ∼ N (xg , Σ),
+
+xg and ΣΣ ρ. ( μt, σ t, A )˜sg (t; xi, ni, xd, nd) ˙ ∝ A N(t; μt, σ 2
+
+t
+
+). (1) ˜sg (t; x′
+
+i, n′
+
+i, x′
+
+d, n′
+
+d) ˙ ∝ A N(t; μt, σ 2
+
+t
+
+). (2) 
+
+di‖xg − xi‖2, d d‖xg − xd‖2, ˆui
+
+xg − xi
+
+di
+
+, ˆud
+
+xg − xd
+
+dd
+
+.L(x)‖x − xi‖2 + ‖x − xd‖2.L(X) around xg :
+
+L(X) ≈ L(xg ) + ∇L(xg )(X − xg ),
+
+∇L(xg ) = xg − xi
+
+‖xg − xi‖2
+
++ xg − xd
+
+‖xg − xd‖2
+
+= ˆ ui + ˆ ud v.
+
+Since X ∼ N (xg , Σ), the induced path length is (approximately) Gaussian: 
+
+L(X) ˙ ∼ N (μL, σ 2
+
+L
+
+), μ LL(xg ) = di + dd, σ 2
+
+LvΣ v.
+
+˜sg (L) ∝
+
+∫
+
+R3
+
+p(x) δ(L − L(x)) dx ≡ pL(X)(L)˜sg (L) ˙ ∝ N (L; μL, σ 2
+
+L
+
+), (3) 
+
+μL σL
+
+mu d
+
+Ωm ∝ A⊥( ˆ u)
+
+d2 . (4) 
+
+A⊥( ˆ u) u, is calculated as A⊥( ˆ u)
+
+√
+
+|Σ|( ˆuΣ−1 ˆu).
+
+A = g ρ γ iγd
+
+A⊥( ˆ ui) A⊥( ˆ ud)
+
+d2
+
+i d2
+
+d
+
+,
+
+xi xd?? ni nd
+
+τ (xi, ni, xd, nd)τp,n p
+
+G(xg , Σ, ρ ) ρ X, X ∼ N (xg , Σ),
+
+xg and ΣΣ ρ. ( μt, σ t, A )˜sg (t; xi, ni, xd, nd) ˙ ∝ A N(t; μt, σ 2
+
+t
+
+). (1) ˜sg (t; x′
+
+i, n′
+
+i, x′
+
+d, n′
+
+d) ˙ ∝ A N(t; μt, σ 2
+
+t
+
+). (2) 
+
+di‖xg − xi‖2, d d‖xg − xd‖2, ˆui
+
+xg − xi
+
+di
+
+, ˆud
+
+xg − xd
+
+dd
+
+.L(x)‖x − xi‖2 + ‖x − xd‖2.L(X) around xg :
+
+L(X) ≈ L(xg ) + ∇L(xg )(X − xg ),
+
+∇L(xg ) = xg − xi
+
+‖xg − xi‖2
+
++ xg − xd
+
+‖xg − xd‖2
+
+= ˆ ui + ˆ ud v.
+
+Since X ∼ N (xg , Σ), the induced path length is (approximately) Gaussian: 
+
+L(X) ˙ ∼ N (μL, σ 2
+
+L
+
+), μ LL(xg ) = di + dd, σ 2
+
+LvΣ v.
+
+˜sg (L) ∝
+
+∫
+
+R3
+
+p(x) δ(L − L(x)) dx ≡ pL(X)(L)˜sg (L) ˙ ∝ N (L; μL, σ 2
+
+L
+
+), (3) 
+
+μL σL
+
+mu d
+
+Ωm ∝ A⊥( ˆ u)
+
+d2 . (4) 
+
+A⊥( ˆ u) u, is calculated as A⊥( ˆ u)
+
+√
+
+|Σ|( ˆuΣ−1 ˆu).
+
+A = g ρ γ iγd
+
+A⊥( ˆ ui) A⊥( ˆ ud)
+
+d2
+
+i d2
+
+d
+
+,
+
+xi xd?? ni nd
+
+τ (xi, ni, xd, nd)τp,n p
+
+G(xg , Σ, ρ ) ρ X, X ∼ N (xg , Σ),
+
+xg and ΣΣ ρ. ( μt, σ t, A )˜sg (t; xi, ni, xd, nd) ˙ ∝ A N(t; μt, σ 2
+
+t
+
+). (1) ˜sg (t; x′
+
+i, n′
+
+i, x′
+
+d, n′
+
+d) ˙ ∝ A N(t; μt, σ 2
+
+t
+
+). (2) 
+
+di‖xg − xi‖2, d d‖xg − xd‖2, ˆui
+
+xg − xi
+
+di
+
+, ˆud
+
+xg − xd
+
+dd
+
+.L(x)‖x − xi‖2 + ‖x − xd‖2.L(X) around xg :
+
+L(X) ≈ L(xg ) + ∇L(xg )(X − xg ),
+
+∇L(xg ) = xg − xi
+
+‖xg − xi‖2
+
++ xg − xd
+
+‖xg − xd‖2
+
+= ˆ ui + ˆ ud v.
+
+Since X ∼ N (xg , Σ), the induced path length is (approximately) Gaussian: 
+
+L(X) ˙ ∼ N (μL, σ 2
+
+L
+
+), μ LL(xg ) = di + dd, σ 2
+
+LvΣ v.
+
+˜sg (L) ∝
+
+∫
+
+R3
+
+p(x) δ(L − L(x)) dx ≡ pL(X)(L)˜sg (L) ˙ ∝ N (L; μL, σ 2
+
+L
+
+), (3) 
+
+μL σL
+
+mu d
+
+Ωm ∝ A⊥( ˆ u)
+
+d2 . (4) 
+
+A⊥( ˆ u) u, is calculated as A⊥( ˆ u)
+
+√
+
+|Σ|( ˆuΣ−1 ˆu).
+
+A = g ρ γ iγd
+
+A⊥( ˆ ui) A⊥( ˆ ud)
+
+d2
+
+i d2
+
+d
+
+,
+
+xi xd?? ni nd
+
+τ (xi, ni, xd, nd)τp,n p
+
+G(xg , Σ, ρ ) ρ X, X ∼ N (xg , Σ),
+
+xg and ΣΣ ρ. ( μt, σ t, A )˜sg (t; xi, ni, xd, nd) ˙ ∝ A N(t; μt, σ 2
+
+t
+
+). (1) ˜sg (t; x′
+
+i, n′
+
+i, x′
+
+d, n′
+
+d) ˙ ∝ A N(t; μt, σ 2
+
+t
+
+). (2) 
+
+di‖xg − xi‖2, d d‖xg − xd‖2, ˆui
+
+xg − xi
+
+di
+
+, ˆud
+
+xg − xd
+
+dd
+
+.L(x)‖x − xi‖2 + ‖x − xd‖2.L(X) around xg :
+
+L(X) ≈ L(xg ) + ∇L(xg )(X − xg ),
+
+∇L(xg ) = xg − xi
+
+‖xg − xi‖2
+
++ xg − xd
+
+‖xg − xd‖2
+
+= ˆ ui + ˆ ud v.
+
+Since X ∼ N (xg , Σ), the induced path length is (approximately) Gaussian: 
+
+L(X) ˙ ∼ N (μL, σ 2
+
+L
+
+), μ LL(xg ) = di + dd, σ 2
+
+LvΣ v.
+
+˜sg (L) ∝
+
+∫
+
+R3
+
+p(x) δ(L − L(x)) dx ≡ pL(X)(L)˜sg (L) ˙ ∝ N (L; μL, σ 2
+
+L
+
+), (3) 
+
+μL σL
+
+mu d
+
+Ωm ∝ A⊥( ˆ u)
+
+d2 . (4) 
+
+A⊥( ˆ u) u, is calculated as A⊥( ˆ u)
+
+√
+
+|Σ|( ˆuΣ−1 ˆu).
+
+A = g ρ γ iγd
+
+A⊥( ˆ ui) A⊥( ˆ ud)
+
+d2
+
+i d2
+
+d
+
+,
+
+xi xd?? ni nd
+
+τ (xi, ni, xd, nd)τp,n p
+
+G(xg , Σ, ρ ) ρ X, X ∼ N (xg , Σ),
+
+xg and ΣΣ ρ. ( μt, σ t, A )˜sg (t; xi, ni, xd, nd) ˙ ∝ A N(t; μt, σ 2
+
+t
+
+). (1) ˜sg (t; x′
+
+i, n′
+
+i, x′
+
+d, n′
+
+d) ˙ ∝ A N(t; μt, σ 2
+
+t
+
+). (2) 
+
+di‖xg − xi‖2, d d‖xg − xd‖2, ˆui
+
+xg − xi
+
+di
+
+, ˆud
+
+xg − xd
+
+dd
+
+.L(x)‖x − xi‖2 + ‖x − xd‖2.L(X) around xg :
+
+L(X) ≈ L(xg ) + ∇L(xg )(X − xg ),
+
+∇L(xg ) = xg − xi
+
+‖xg − xi‖2
+
++ xg − xd
+
+‖xg − xd‖2
+
+= ˆ ui + ˆ ud v.
+
+Since X ∼ N (xg , Σ), the induced path length is (approximately) Gaussian: 
+
+L(X) ˙ ∼ N (μL, σ 2
+
+L
+
+), μ LL(xg ) = di + dd, σ 2
+
+LvΣ v.
+
+˜sg (L) ∝
+
+∫
+
+R3
+
+p(x) δ(L − L(x)) dx ≡ pL(X)(L)˜sg (L) ˙ ∝ N (L; μL, σ 2
+
+L
+
+), (3) 
+
+μL σL
+
+mu d
+
+Ωm ∝ A⊥( ˆ u)
+
+d2 . (4) 
+
+A⊥( ˆ u) u, is calculated as A⊥( ˆ u)
+
+√
+
+|Σ|( ˆuΣ−1 ˆu).
+
+A = g ρ γ iγd
+
+A⊥( ˆ ui) A⊥( ˆ ud)
+
+d2
+
+i d2
+
+d
+
+, 
+
+> 0Normalized Intensity  120 cm
+
+Fig. 2. Overview of our LOS-guided NLOS imaging pipeline. From the real scene, we acquire LOS ToF measurements (green path) to obtain a relay surface point cloud (colored by depth), and then perform NLOS detection (red path) at these known locations 𝒙 𝑖 , 𝒙 𝑑 to obtain collected transients 𝝉 (colored by photon counts). We then postprocess the LOS point cloud to estimate surface normals and generate a virtual relay surface (yellow). The hidden scene is represented by a set of 3D Gaussian primitives (3D GP). By leveraging our differentiable rendering model with the measured geometry ( 𝒙 𝑖,𝑑 , 𝒏 𝑖,𝑑 ), we iteratively optimize the Gaussian parameters (position, scale, orientation, and albedo) to match the collected transients. The optimized 3D GP are then used to render synthesized transients 𝝉 ′ (colored by signal intensity) on the virtual plane ( 𝒙 ′
+
+𝑖,𝑑 , 𝒏 ′
+
+𝑖,𝑑 ), enabling final volume reconstruction via conventional solvers. 
+
+The relay surface angular response can be written in a general bidirectional reflectance distribution function (BRDF)-dependent form. For the illumination and detection relay points, we denote the corresponding angular weights as 
+
+𝛾 𝑖 = B𝑖 (𝝎 in 
+
+𝑖 , 𝝎 out 
+
+𝑖 ; 𝒏 𝑖 ), 𝛾 𝑑 = B𝑑 (𝝎 in 
+
+𝑑 , 𝝎 out 
+
+𝑑 ; 𝒏 𝑑 ), (4) where 𝝎 in and 𝝎 out denote the incident and outgoing directions at the relay surface, respectively, and B𝑖 and B𝑑 describe the BRDF-related angular dependence at the illumination and detection points. In common NLOS scenarios, the angular weights reduce to non-negative cosine factors under diffuse-relay assumption: 
+
+𝛾 𝑖 = max (0, 𝒏 ⊤
+
+𝑖 ˆ𝒖 𝑖 ), 𝛾 𝑑 = max (0, 𝒏 ⊤
+
+𝑑 ˆ𝒖 𝑑 ). (5) Based on Eq. (3), the primitive radiometric weight is: 
+
+𝐴 = 𝑔 𝜌 𝛾 𝑖 𝛾 𝑑 
+
+𝐴 ⊥ ( ˆ𝒖 𝑖 ) 𝐴 ⊥ ( ˆ𝒖 𝑑 )
+
+𝑑 2
+
+𝑖 𝑑 2
+
+𝑑 
+
+,
+
+where the global gain 𝑔 absorbs configuration-dependent constants (e.g., detection area/efficiency, unit conversions). The overall ra-diometric weight can be factorized into three physically grounded processes: illumination-to-Gaussian transport, Gaussian scattering, and Gaussian-to-detection transport. Notably, this radiometric ex-pression yields the familiar inverse fourth-power distance depen-dence that appears in most NLOS forward models. Equivalently, 
+
+N ( 𝐿 ; 𝜇 𝐿 , 𝜎 2
+
+𝐿 ) in Eq. (2) induces N ( 𝑡 ; 𝜇 𝐿 /𝑐 0, 𝜎 2
+
+𝐿 /𝑐 20) in Eq. (1) under the light-transport condition: 𝑡 = 𝐿 /𝑐 0. After neglecting inter-primitive multiple scattering, for a fixed illumination–detection pair, the syn-thetic transient ˆ𝝉 𝑝 is calculated by the summation of the contribu-tions of all Gaussian primitives. 
+
+3.2 Training Process 
+
+Based on the transient rendering pipeline in Sec. 3.1, we reconstruct the hidden scene by optimizing a set of 3D Gaussian primitives to match the measured transients on the relay surface (Fig. 2). Data Acquisition Illumination Galvo Diffuser Detection Galvo To Laser To SPAD Galvo Driver Time-to-Digital Converter (i) (ii) 
+
+xi xd?? ni nd τ (xi, ni, xd, nd)τp,n p
+
+G(xg , Σ, ρ ) ρ X, X ∼ N (xg , Σ),
+
+xg and ΣΣ ρ. ( μt, σ t, A )˜sg (t; xi, ni, xd, nd) ˙ ∝ A N(t; μt, σ 2
+
+t
+
+). (1) 
+
+di‖xg − xi‖2, d d‖xg − xd‖2, ˆui
+
+xg − xi
+
+di
+
+, ˆud
+
+xg − xd
+
+dd
+
+.L(x)‖x − xi‖2 + ‖x − xd‖2.L(X) around xg :
+
+L(X) ≈ L(xg ) + ∇L(xg )(X − xg ),
+
+∇L(xg ) = xg − xi
+
+‖xg − xi‖2
+
++ xg − xd
+
+‖xg − xd‖2
+
+= ˆ ui + ˆ ud v.
+
+Since X ∼ N (xg , Σ), the induced path length is (approximately) Gaussian: 
+
+L(X) ˙ ∼ N (μL, σ 2
+
+L
+
+), μ LL(xg ) = di + dd, σ 2
+
+LvΣ v .
+
+˜sg (L) ∝
+
+∫
+
+R3
+
+p(x) δ(L − L(x)) dx ≡ pL(X)(L)˜sg (L) ˙ ∝ N (L; μL, σ 2
+
+L
+
+), (2) 
+
+μL σL
+
+mu d
+
+Ωm ∝ A⊥( ˆ u)
+
+d2 . (3) 
+
+A⊥( ˆ u) u, is calculated as A⊥( ˆ u)
+
+√
+
+|Σ|( ˆuΣ−1 ˆu).
+
+A = g ρ γ iγd
+
+A⊥( ˆ ui) A⊥( ˆ ud)
+
+d2
+
+i d2
+
+d
+
+,
+
+xi xd?? ni nd τ (xi, ni, xd, nd)τp,n p
+
+G(xg , Σ, ρ ) ρ X, X ∼ N (xg , Σ),
+
+xg and ΣΣ ρ. ( μt, σ t, A )˜sg (t; xi, ni, xd, nd) ˙ ∝ A N(t; μt, σ 2
+
+> t
+
+). (1) 
+
+di‖xg − xi‖2, d d‖xg − xd‖2, ˆui
+
+xg − xi
+
+di
+
+, ˆud
+
+xg − xd
+
+dd
+
+.L(x)‖x − xi‖2 + ‖x − xd‖2.L(X) around xg :
+
+L(X) ≈ L(xg ) + ∇L(xg )(X − xg ),
+
+∇L(xg ) = xg − xi
+
+‖xg − xi‖2
+
++ xg − xd
+
+‖xg − xd‖2
+
+= ˆ ui + ˆ ud v.
+
+Since X ∼ N (xg , Σ), the induced path length is (approximately) Gaussian: 
+
+L(X) ˙ ∼ N (μL, σ 2
+
+> L
+
+), μ LL(xg ) = di + dd, σ 2
+
+> L
+
+vΣ v .
+
+˜sg (L) ∝
+
+∫
+
+> R3
+
+p(x) δ(L − L(x)) dx ≡ pL(X)(L)˜sg (L) ˙ ∝ N (L; μL, σ 2
+
+> L
+
+), (2) 
+
+μL σL
+
+mu d
+
+Ωm ∝ A⊥( ˆ u)
+
+d2 . (3) 
+
+A⊥( ˆ u) u, is calculated as A⊥( ˆ u)
+
+√
+
+|Σ|( ˆuΣ−1 ˆu).
+
+A = g ρ γ iγd
+
+A⊥( ˆ ui) A⊥( ˆ ud)
+
+d2 
+
+> i
+
+d2
+
+> d
+
+,
+
+Relay Surface 3D Gaussian Primitive 
+
+xi xd?? ni nd τ (xi, ni, xd, nd)τp,n p
+
+G(xg , Σ, ρ ) ρ X, X ∼ N (xg , Σ),
+
+xg and ΣΣ ρ. ( μt, σ t, A )˜sg (t; xi, ni, xd, nd) ˙ ∝ A N(t; μt, σ 2
+
+> t
+
+). (1) 
+
+di‖xg − xi‖2, d d‖xg − xd‖2, ˆui
+
+xg − xi
+
+di
+
+, ˆud
+
+xg − xd
+
+dd
+
+.L(x)‖x − xi‖2 + ‖x − xd‖2.L(X) around xg :
+
+L(X) ≈ L(xg ) + ∇L(xg )(X − xg ),
+
+∇L(xg ) = xg − xi
+
+‖xg − xi‖2
+
++ xg − xd
+
+‖xg − xd‖2
+
+= ˆ ui + ˆ ud v.
+
+Since X ∼ N (xg , Σ), the induced path length is (approximately) Gaussian: 
+
+L(X) ˙ ∼ N (μL, σ 2
+
+> L
+
+), μ LL(xg ) = di + dd, σ 2
+
+> L
+
+vΣ v .
+
+˜sg (L) ∝
+
+∫
+
+> R3
+
+p(x) δ(L − L(x)) dx ≡ pL(X)(L)˜sg (L) ˙ ∝ N (L; μL, σ 2
+
+> L
+
+), (2) 
+
+μL σL
+
+mu d
+
+Ωm ∝ A⊥( ˆ u)
+
+d2 . (3) 
+
+A⊥( ˆ u) u, is calculated as A⊥( ˆ u)
+
+√
+
+|Σ|( ˆuΣ−1 ˆu).
+
+A = g ρ γ iγd
+
+A⊥( ˆ ui) A⊥( ˆ ud)
+
+d2 
+
+> i
+
+d2
+
+> d
+
+,
+
+xi xd?? ni nd τ (xi, ni, xd, nd)τp,n p
+
+G(xg , Σ, ρ ) ρ X, X ∼ N (xg , Σ),
+
+xg and ΣΣ ρ. ( μt, σ t, A )˜sg (t; xi, ni, xd, nd) ˙ ∝ A N(t; μt, σ 2
+
+> t
+
+). (1) 
+
+di‖xg − xi‖2, d d‖xg − xd‖2, ˆui
+
+xg − xi
+
+di
+
+, ˆud
+
+xg − xd
+
+dd
+
+.L(x)‖x − xi‖2 + ‖x − xd‖2.L(X) around xg :
+
+L(X) ≈ L(xg ) + ∇L(xg )(X − xg ),
+
+∇L(xg ) = xg − xi
+
+‖xg − xi‖2
+
++ xg − xd
+
+‖xg − xd‖2
+
+= ˆ ui + ˆ ud v.
+
+Since X ∼ N (xg , Σ), the induced path length is (approximately) Gaussian: 
+
+L(X) ˙ ∼ N (μL, σ 2
+
+> L
+
+), μ LL(xg ) = di + dd, σ 2
+
+> L
+
+vΣ v .
+
+˜sg (L) ∝
+
+∫
+
+> R3
+
+p(x) δ(L − L(x)) dx ≡ pL(X)(L)˜sg (L) ˙ ∝ N (L; μL, σ 2
+
+> L
+
+), (2) 
+
+μL σL
+
+mu d
+
+Ωm ∝ A⊥( ˆ u)
+
+d2 . (3) 
+
+A⊥( ˆ u) u, is calculated as A⊥( ˆ u)
+
+√
+
+|Σ|( ˆuΣ−1 ˆu).
+
+A = g ρ γ iγd
+
+A⊥( ˆ ui) A⊥( ˆ ud)
+
+d2 
+
+> i
+
+d2
+
+> d
+
+,                                                                                                                                                                                                          
+
+> xixd?? nindτ(xi,ni,xd,nd)τp,n p
+> G(xg,Σ, ρ )ρX,X∼ N (xg,Σ),
+> xgand ΣΣ ρ. ( μt, σ t, A )˜sg(t;xi,ni,xd,nd) ˙ ∝AN(t;μt, σ 2
+> t
+> ).(1)
+> di‖xg−xi‖2, d d‖xg−xd‖2,ˆui
+> xg−xi
+> di
+> ,ˆud
+> xg−xd
+> dd
+> .L(x)‖x−xi‖2+‖x−xd‖2.L(X) around xg:
+> L(X)≈L(xg) + ∇L(xg)(X−xg),
+> ∇L(xg) = xg−xi
+> ‖xg−xi‖2
+> +xg−xd
+> ‖xg−xd‖2
+> = ˆ ui+ ˆ udv.
+> Since X∼ N (xg,Σ), the induced path length is (approximately) Gaussian:
+> L(X) ˙ ∼ N (μL, σ 2
+> L
+> ), μ LL(xg) = di+dd, σ 2
+> LvΣ v .
+> ˜sg(L)∝
+> ∫
+> R3
+> p(x)δ(L−L(x))dx≡pL(X)(L)˜sg(L) ˙ ∝ N (L;μL, σ 2
+> L
+> ),(2)
+> μLσL
+> mud
+> Ωm∝A⊥( ˆ u)
+> d2.(3)
+> A⊥( ˆ u)u, is calculated as A⊥( ˆ u)
+> √
+> |Σ|(ˆuΣ−1ˆu).
+> A=g ρ γ iγd
+> A⊥( ˆ ui)A⊥( ˆ ud)
+> d2
+> id2
+> d
+> ,
+> xixd?? nindτ(xi,ni,xd,nd)τp,n p
+> G(xg,Σ, ρ )ρX,X∼ N (xg,Σ),
+> xgand ΣΣ ρ. ( μt, σ t, A )˜sg(t;xi,ni,xd,nd) ˙ ∝AN(t;μt, σ 2
+> t
+> ).(1)
+> di‖xg−xi‖2, d d‖xg−xd‖2,ˆui
+> xg−xi
+> di
+> ,ˆud
+> xg−xd
+> dd
+> .L(x)‖x−xi‖2+‖x−xd‖2.L(X) around xg:
+> L(X)≈L(xg) + ∇L(xg)(X−xg),
+> ∇L(xg) = xg−xi
+> ‖xg−xi‖2
+> +xg−xd
+> ‖xg−xd‖2
+> = ˆ ui+ ˆ udv.
+> Since X∼ N (xg,Σ), the induced path length is (approximately) Gaussian:
+> L(X) ˙ ∼ N (μL, σ 2
+> L
+> ), μ LL(xg) = di+dd, σ 2
+> LvΣ v .
+> ˜sg(L)∝
+> ∫
+> R3
+> p(x)δ(L−L(x))dx≡pL(X)(L)˜sg(L) ˙ ∝ N (L;μL, σ 2
+> L
+> ),(2)
+> μLσL
+> mud
+> Ωm∝A⊥( ˆ u)
+> d2.(3)
+> A⊥( ˆ u)u, is calculated as A⊥( ˆ u)
+> √
+> |Σ|(ˆuΣ−1ˆu).
+> A=g ρ γ iγd
+> A⊥( ˆ ui)A⊥( ˆ ud)
+> d2
+> id2
+> d
+> ,
+
+xi xd?? ni nd τ (xi, ni, xd, nd)τp,n p
+
+G(xg , Σ, ρ ) ρ X, X ∼ N (xg , Σ),
+
+xg and ΣΣ ρ. ( μt, σ t, A )˜sg (t; xi, ni, xd, nd) ˙ ∝ A N(t; μt, σ 2
+
+> t
+
+). (1) 
+
+di‖xg − xi‖2, d d‖xg − xd‖2, ˆui
+
+xg − xi
+
+di
+
+, ˆud
+
+xg − xd
+
+dd
+
+.L(x)‖x − xi‖2 + ‖x − xd‖2.L(X) around xg :
+
+L(X) ≈ L(xg ) + ∇L(xg )(X − xg ),
+
+∇L(xg ) = xg − xi
+
+‖xg − xi‖2
+
++ xg − xd
+
+‖xg − xd‖2
+
+= ˆ ui + ˆ ud v.
+
+Since X ∼ N (xg , Σ), the induced path length is (approximately) Gaussian: 
+
+L(X) ˙ ∼ N (μL, σ 2
+
+> L
+
+), μ LL(xg ) = di + dd, σ 2
+
+> L
+
+vΣ v.
+
+˜sg (L) ∝
+
+∫
+
+> R3
+
+p(x) δ(L − L(x)) dx ≡ pL(X)(L)˜sg (L) ˙ ∝ N (L; μL, σ 2
+
+> L
+
+), (2) 
+
+μL σL
+
+mu d
+
+Ωm ∝ A⊥( ˆ u)
+
+d2 . (3) 
+
+A⊥( ˆ u) u, is calculated as A⊥( ˆ u)
+
+√
+
+|Σ|( ˆuΣ−1 ˆu).
+
+A = g ρ γ iγd
+
+A⊥( ˆ ui) A⊥( ˆ ud)
+
+d2 
+
+> i
+
+d2
+
+> d
+
+,
+
+xi xd?? ni nd τ (xi, ni, xd, nd)τp,n p
+
+G(xg , Σ, ρ ) ρ X, X ∼ N (xg , Σ),
+
+xg and ΣΣ ρ. ( μt, σ t, A )˜sg (t; xi, ni, xd, nd) ˙ ∝ A N(t; μt, σ 2
+
+> t
+
+). (1) 
+
+di‖xg − xi‖2, d d‖xg − xd‖2, ˆui
+
+xg − xi
+
+di
+
+, ˆud
+
+xg − xd
+
+dd
+
+.L(x)‖x − xi‖2 + ‖x − xd‖2.L(X) around xg :
+
+L(X) ≈ L(xg ) + ∇L(xg )(X − xg ),
+
+∇L(xg ) = xg − xi
+
+‖xg − xi‖2
+
++ xg − xd
+
+‖xg − xd‖2
+
+= ˆ ui + ˆ ud v.
+
+Since X ∼ N (xg , Σ), the induced path length is (approximately) Gaussian: 
+
+L(X) ˙ ∼ N (μL, σ 2
+
+> L
+
+), μ LL(xg ) = di + dd, σ 2
+
+> L
+
+vΣ v.
+
+˜sg (L) ∝
+
+∫
+
+> R3
+
+p(x) δ(L − L(x)) dx ≡ pL(X)(L)˜sg (L) ˙ ∝ N (L; μL, σ 2
+
+> L
+
+), (2) 
+
+μL σL
+
+mu d
+
+Ωm ∝ A⊥( ˆ u)
+
+d2 . (3) 
+
+A⊥( ˆ u) u, is calculated as A⊥( ˆ u)
+
+√
+
+|Σ|( ˆuΣ−1 ˆu).
+
+A = g ρ γ iγd
+
+A⊥( ˆ ui) A⊥( ˆ ud)
+
+d2 
+
+> i
+
+d2
+
+> d
+
+,
+
+xi xd?? ni nd τ (xi, ni, xd, nd)τp,n p
+
+G(xg , Σ, ρ ) ρ X, X ∼ N (xg , Σ),
+
+xg and ΣΣ ρ. ( μt, σ t, A )˜sg (t; xi, ni, xd, nd) ˙ ∝ A N(t; μt, σ 2
+
+> t
+
+). (1) 
+
+di‖xg − xi‖2, d d‖xg − xd‖2, ˆui
+
+xg − xi
+
+di
+
+, ˆud
+
+xg − xd
+
+dd
+
+.L(x)‖x − xi‖2 + ‖x − xd‖2.L(X) around xg :
+
+L(X) ≈ L(xg ) + ∇L(xg )(X − xg ),
+
+∇L(xg ) = xg − xi
+
+‖xg − xi‖2
+
++ xg − xd
+
+‖xg − xd‖2
+
+= ˆ ui + ˆ ud v.
+
+Since X ∼ N (xg , Σ), the induced path length is (approximately) Gaussian: 
+
+L(X) ˙ ∼ N (μL, σ 2
+
+> L
+
+), μ LL(xg ) = di + dd, σ 2
+
+> L
+
+vΣ v.
+
+˜sg (L) ∝
+
+∫
+
+> R3
+
+p(x) δ(L − L(x)) dx ≡ pL(X)(L)˜sg (L) ˙ ∝ N (L; μL, σ 2
+
+> L
+
+), (2) 
+
+μL σL
+
+mu d
+
+Ωm ∝ A⊥( ˆ u)
+
+d2 . (3) 
+
+A⊥( ˆ u) u, is calculated as A⊥( ˆ u)
+
+√
+
+|Σ|( ˆuΣ−1 ˆu).
+
+A = g ρ γ iγd
+
+A⊥( ˆ ui) A⊥( ˆ ud)
+
+d2 
+
+> i
+
+d2
+
+> d
+
+,
+
+xi xd?? ni nd τ (xi, ni, xd, nd)τp,n p
+
+G(xg , Σ, ρ ) ρ X, X ∼ N (xg , Σ),
+
+xg and ΣΣ ρ. ( μt, σ t, A )˜sg (t; xi, ni, xd, nd) ˙ ∝ A N(t; μt, σ 2
+
+> t
+
+). (1) 
+
+di‖xg − xi‖2, d d‖xg − xd‖2, ˆui
+
+xg − xi
+
+di
+
+, ˆud
+
+xg − xd
+
+dd
+
+.L(x)‖x − xi‖2 + ‖x − xd‖2.L(X) around xg :
+
+L(X) ≈ L(xg ) + ∇L(xg )(X − xg ),
+
+∇L(xg ) = xg − xi
+
+‖xg − xi‖2
+
++ xg − xd
+
+‖xg − xd‖2
+
+= ˆ ui + ˆ ud v.
+
+Since X ∼ N (xg , Σ), the induced path length is (approximately) Gaussian: 
+
+L(X) ˙ ∼ N (μL, σ 2
+
+> L
+
+), μ LL(xg ) = di + dd, σ 2
+
+> L
+
+vΣ v.
+
+˜sg (L) ∝
+
+∫
+
+> R3
+
+p(x) δ(L − L(x)) dx ≡ pL(X)(L)˜sg (L) ˙ ∝ N (L; μL, σ 2
+
+> L
+
+), (2) 
+
+μL σL
+
+mu d
+
+Ωm ∝ A⊥( ˆ u)
+
+d2 . (3) 
+
+A⊥( ˆ u) u, is calculated as A⊥( ˆ u)
+
+√
+
+|Σ|( ˆuΣ−1 ˆu).
+
+A = g ρ γ iγd
+
+A⊥( ˆ ui) A⊥( ˆ ud)
+
+d2 
+
+> i
+
+d2
+
+> d
+
+,
+
+xi xd?? ni nd τ (xi, ni, xd, nd)τp,n p
+
+G(xg , Σ, ρ ) ρ X, X ∼ N (xg , Σ),
+
+xg and ΣΣ ρ. ( μt, σ t, A )˜sg (t; xi, ni, xd, nd) ˙ ∝ A N(t; μt, σ 2
+
+> t
+
+). (1) 
+
+di‖xg − xi‖2, d d‖xg − xd‖2, ˆui
+
+xg − xi
+
+di
+
+, ˆud
+
+xg − xd
+
+dd
+
+.L(x)‖x − xi‖2 + ‖x − xd‖2.L(X) around xg :
+
+L(X) ≈ L(xg ) + ∇L(xg )(X − xg ),
+
+∇L(xg ) = xg − xi
+
+‖xg − xi‖2
+
++ xg − xd
+
+‖xg − xd‖2
+
+= ˆ ui + ˆ ud v.
+
+Since X ∼ N (xg , Σ), the induced path length is (approximately) Gaussian: 
+
+L(X) ˙ ∼ N (μL, σ 2
+
+> L
+
+), μ LL(xg ) = di + dd, σ 2
+
+> L
+
+vΣ v.
+
+˜sg (L) ∝
+
+∫
+
+> R3
+
+p(x) δ(L − L(x)) dx ≡ pL(X)(L)˜sg (L) ˙ ∝ N (L; μL, σ 2
+
+> L
+
+), (2) 
+
+μL σL
+
+mu d
+
+Ωm ∝ A⊥( ˆ u)
+
+d2 . (3) 
+
+A⊥( ˆ u) u, is calculated as A⊥( ˆ u)
+
+√
+
+|Σ|( ˆuΣ−1 ˆu).
+
+A = g ρ γ iγd
+
+A⊥( ˆ ui) A⊥( ˆ ud)
+
+d2 
+
+> i
+
+d2
+
+> d
+
+,
+
+xi xd?? ni nd τ (xi, ni, xd, nd)τp,n p
+
+G(xg , Σ, ρ ) ρ X, X ∼ N (xg , Σ),
+
+xg and ΣΣ ρ. ( μt, σ t, A )˜sg (t; xi, ni, xd, nd) ˙ ∝ A N(t; μt, σ 2
+
+> t
+
+). (1) 
+
+di‖xg − xi‖2, d d‖xg − xd‖2, ˆui
+
+xg − xi
+
+di
+
+, ˆud
+
+xg − xd
+
+dd
+
+.L(x)‖x − xi‖2 + ‖x − xd‖2.L(X) around xg :
+
+L(X) ≈ L(xg ) + ∇L(xg )(X − xg ),
+
+∇L(xg ) = xg − xi
+
+‖xg − xi‖2
+
++ xg − xd
+
+‖xg − xd‖2
+
+= ˆ ui + ˆ ud v.
+
+Since X ∼ N (xg , Σ), the induced path length is (approximately) Gaussian: 
+
+L(X) ˙ ∼ N (μL, σ 2
+
+> L
+
+), μ LL(xg ) = di + dd, σ 2
+
+> L
+
+vΣ v.
+
+˜sg (L) ∝
+
+∫
+
+> R3
+
+p(x) δ(L − L(x)) dx ≡ pL(X)(L)˜sg (L) ˙ ∝ N (L; μL, σ 2
+
+> L
+
+), (2) 
+
+μL σL
+
+mu d
+
+Ωm ∝ A⊥( ˆ u)
+
+d2 . (3) 
+
+A⊥( ˆ u) u, is calculated as A⊥( ˆ u)
+
+√
+
+|Σ|( ˆuΣ−1 ˆu).
+
+A = g ρ γ iγd
+
+A⊥( ˆ ui) A⊥( ˆ ud)
+
+d2 
+
+> i
+
+d2
+
+> d
+
+,
+
+xi xd?? ni nd τ (xi, ni, xd, nd)τp,n p
+
+G(xg , Σ, ρ ) ρ X, X ∼ N (xg , Σ),
+
+xg and ΣΣ ρ. ( μt, σ t, A )˜sg (t; xi, ni, xd, nd) ˙ ∝ A N(t; μt, σ 2
+
+> t
+
+). (1) 
+
+di‖xg − xi‖2, d d‖xg − xd‖2, ˆui
+
+xg − xi
+
+di
+
+, ˆud
+
+xg − xd
+
+dd
+
+.L(x)‖x − xi‖2 + ‖x − xd‖2.L(X) around xg :
+
+L(X) ≈ L(xg ) + ∇L(xg )(X − xg ),
+
+∇L(xg ) = xg − xi
+
+‖xg − xi‖2
+
++ xg − xd
+
+‖xg − xd‖2
+
+= ˆ ui + ˆ ud v.
+
+Since X ∼ N (xg , Σ), the induced path length is (approximately) Gaussian: 
+
+L(X) ˙ ∼ N (μL, σ 2
+
+> L
+
+), μ LL(xg ) = di + dd, σ 2
+
+> L
+
+vΣ v.
+
+˜sg (L) ∝
+
+∫
+
+> R3
+
+p(x) δ(L − L(x)) dx ≡ pL(X)(L)˜sg (L) ˙ ∝ N (L; μL, σ 2
+
+> L
+
+), (2) 
+
+μL σL
+
+mu d
+
+Ωm ∝ A⊥( ˆ u)
+
+d2 . (3) 
+
+A⊥( ˆ u) u, is calculated as A⊥( ˆ u)
+
+√
+
+|Σ|( ˆuΣ−1 ˆu).
+
+A = g ρ γ iγd
+
+A⊥( ˆ ui) A⊥( ˆ ud)
+
+d2 
+
+> i
+
+d2
+
+> d
+
+,
+
+xi xd?? ni nd τ (xi, ni, xd, nd)τp,n p
+
+G(xg , Σ, ρ ) ρ X, X ∼ N (xg , Σ),
+
+xg and ΣΣ ρ. ( μt, σ t, A )˜sg (t; xi, ni, xd, nd) ˙ ∝ A N(t; μt, σ 2
+
+> t
+
+). (1) 
+
+di‖xg − xi‖2, d d‖xg − xd‖2, ˆui
+
+xg − xi
+
+di
+
+, ˆud
+
+xg − xd
+
+dd
+
+.L(x)‖x − xi‖2 + ‖x − xd‖2.L(X) around xg :
+
+L(X) ≈ L(xg ) + ∇L(xg )(X − xg ),
+
+∇L(xg ) = xg − xi
+
+‖xg − xi‖2
+
++ xg − xd
+
+‖xg − xd‖2
+
+= ˆ ui + ˆ ud v.
+
+Since X ∼ N (xg , Σ), the induced path length is (approximately) Gaussian: 
+
+L(X) ˙ ∼ N (μL, σ 2
+
+> L
+
+), μ LL(xg ) = di + dd, σ 2
+
+> L
+
+vΣ v.
+
+˜sg (L) ∝
+
+∫
+
+> R3
+
+p(x) δ(L − L(x)) dx ≡ pL(X)(L)˜sg (L) ˙ ∝ N (L; μL, σ 2
+
+> L
+
+), (2) 
+
+μL σL
+
+mu d
+
+Ωm ∝ A⊥( ˆ u)
+
+d2 . (3) 
+
+A⊥( ˆ u) u, is calculated as A⊥( ˆ u)
+
+√
+
+|Σ|( ˆuΣ−1 ˆu).
+
+A = g ρ γ iγd
+
+A⊥( ˆ ui) A⊥( ˆ ud)
+
+d2 
+
+> i
+
+d2
+
+> d
+
+,
+
+xi xd?? ni nd τ (xi, ni, xd, nd)τp,n p
+
+G(xg , Σ, ρ ) ρ X, X ∼ N (xg , Σ),
+
+xg and ΣΣ ρ. ( μt, σ t, A )˜sg (t; xi, ni, xd, nd) ˙ ∝ A N(t; μt, σ 2
+
+> t
+
+). (1) 
+
+di‖xg − xi‖2, d d‖xg − xd‖2, ˆui
+
+xg − xi
+
+di
+
+, ˆud
+
+xg − xd
+
+dd
+
+.L(x)‖x − xi‖2 + ‖x − xd‖2.L(X) around xg :
+
+L(X) ≈ L(xg ) + ∇L(xg )(X − xg ),
+
+∇L(xg ) = xg − xi
+
+‖xg − xi‖2
+
++ xg − xd
+
+‖xg − xd‖2
+
+= ˆ ui + ˆ ud v.
+
+Since X ∼ N (xg , Σ), the induced path length is (approximately) Gaussian: 
+
+L(X) ˙ ∼ N (μL, σ 2
+
+> L
+
+), μ LL(xg ) = di + dd, σ 2
+
+> L
+
+vΣ v.
+
+˜sg (L) ∝
+
+∫
+
+> R3
+
+p(x) δ(L − L(x)) dx ≡ pL(X)(L)˜sg (L) ˙ ∝ N (L; μL, σ 2
+
+> L
+
+), (2) 
+
+μL σL
+
+mu d
+
+Ωm ∝ A⊥( ˆ u)
+
+d2 . (3) 
+
+A⊥( ˆ u) u, is calculated as A⊥( ˆ u)
+
+√
+
+|Σ|( ˆuΣ−1 ˆu).
+
+A = g ρ γ iγd
+
+A⊥( ˆ ui) A⊥( ˆ ud)
+
+d2 
+
+> i
+
+d2
+
+> d
+
+,                                                                                                                                                                                                            
+
+> xixd?? nindτ(xi,ni,xd,nd)τp,n p
+> G(xg,Σ, ρ )ρX,X∼ N (xg,Σ),
+> xgand ΣΣ ρ. ( μt, σ t, A )˜sg(t;xi,ni,xd,nd) ˙ ∝AN(t;μt, σ 2
+> t
+> ).(1)
+> di‖xg−xi‖2, d d‖xg−xd‖2,ˆui
+> xg−xi
+> di
+> ,ˆud
+> xg−xd
+> dd
+> .L(x)‖x−xi‖2+‖x−xd‖2.L(X) around xg:
+> L(X)≈L(xg) + ∇L(xg)(X−xg),
+> ∇L(xg) = xg−xi
+> ‖xg−xi‖2
+> +xg−xd
+> ‖xg−xd‖2
+> = ˆ ui+ ˆ udv.
+> Since X∼ N (xg,Σ), the induced path length is (approximately) Gaussian:
+> L(X) ˙ ∼ N (μL, σ 2
+> L
+> ), μ LL(xg) = di+dd, σ 2
+> LvΣv.
+> ˜sg(L)∝
+> ∫
+> R3
+> p(x)δ(L−L(x))dx≡pL(X)(L)˜sg(L) ˙ ∝ N (L;μL, σ 2
+> L
+> ),(2)
+> μLσL
+> mud
+> Ωm∝A⊥( ˆ u)
+> d2.(3)
+> A⊥( ˆ u)u, is calculated as A⊥( ˆ u)
+> √
+> |Σ|(ˆuΣ−1ˆu).
+> A=g ρ γ iγd
+> A⊥( ˆ ui)A⊥( ˆ ud)
+> d2
+> id2
+> d
+> ,
+> xixd?? nindτ(xi,ni,xd,nd)τp,n p
+> G(xg,Σ, ρ )ρX,X∼ N (xg,Σ),
+> xgand ΣΣ ρ. ( μt, σ t, A )˜sg(t;xi,ni,xd,nd) ˙ ∝AN(t;μt, σ 2
+> t
+> ).(1)
+> di‖xg−xi‖2, d d‖xg−xd‖2,ˆui
+> xg−xi
+> di
+> ,ˆud
+> xg−xd
+> dd
+> .L(x)‖x−xi‖2+‖x−xd‖2.L(X) around xg:
+> L(X)≈L(xg) + ∇L(xg)(X−xg),
+> ∇L(xg) = xg−xi
+> ‖xg−xi‖2
+> +xg−xd
+> ‖xg−xd‖2
+> = ˆ ui+ ˆ udv.
+> Since X∼ N (xg,Σ), the induced path length is (approximately) Gaussian:
+> L(X) ˙ ∼ N (μL, σ 2
+> L
+> ), μ LL(xg) = di+dd, σ 2
+> LvΣv.
+> ˜sg(L)∝
+> ∫
+> R3
+> p(x)δ(L−L(x))dx≡pL(X)(L)˜sg(L) ˙ ∝ N (L;μL, σ 2
+> L
+> ),(2)
+> μLσL
+> mud
+> Ωm∝A⊥( ˆ u)
+> d2.(3)
+> A⊥( ˆ u)u, is calculated as A⊥( ˆ u)
+> √
+> |Σ|(ˆuΣ−1ˆu).
+> A=g ρ γ iγd
+> A⊥( ˆ ui)A⊥( ˆ ud)
+> d2
+> id2
+> d
+> ,
+
+Fig. 3. Schematic diagram of 3D Gaussian Transient Rendering & Custom-built experimental setup. (i) The schematic graph of 3D Gauss-ian Transient Rendering. (ii) The custom-built experimental setup. 
+
+We initialize 𝐾 Gaussian primitives parameterized by (𝒙 𝑔,𝑘 , 𝚺 𝑘 , 𝜌 𝑘 )
+
+(Sec. 3.1). In practice, we optimize an unconstrained set of raw vari-ables 
+
+{Θ𝑘 }𝐾 𝑘 =1 ≜ {𝜃 𝑥,𝑘 , 𝜃 Σ,𝑘 , 𝜃 𝜌,𝑘 }𝐾 𝑘 =1
+
+, which are mapped to physically valid parameters (𝒙 𝑔,𝑘 , 𝚺 𝑘 , 𝜌 𝑘 ).The center 𝒙 𝑔,𝑘 is constrained to lie within a user-defined region of interest (ROI), and the albedo 𝜌 𝑘 is non-negative. We enforce both constraints via smooth re-parameterizations (e.g., tanh , soft-plus). To guarantee the positive definiteness of the covariance matrix (𝚺 𝑘 ≻ 0), we parameterize it using a rotation-scaling decomposition: 
+
+𝚺 𝑘 = 𝑹 𝑘 𝑺 𝑘 𝑺 ⊤
+
+𝑘 𝑹 ⊤
+
+𝑘 , where 𝑺 𝑘 = diag (𝒔 𝑘 ) is a diagonal scaling matrix and 𝑹 𝑘 ∈ SO (3) is a rotation matrix comprising learnable parame-ters. This parameterization follows the standard practices in 3DGS, facilitating stable optimization while preserving full differentiability. Unless otherwise specified, all primitives share the same initial isotropic covariance and albedo, while their centers are uniformly randomized within the ROI. The global gain 𝑔 (Sec. 3.1) is kept fixed during training and is set per dataset by scaling the rendered transient to match the overall magnitude of the measured transient at initialization. 
+
+SIGGRAPH Conference Papers ’26, July 19–23, 2026, Los Angeles, CA, USA. Non-line-of-sight imaging with arbitrary relay surface geometries via 3D Gaussian Transient Rendering • 5Relay Surface LCT F-K RSD NeTF CC-SOCR VS Ours Reference 
+
+> “NLOS” Pattern wall size 2.0 m Random 3k points wall size 2.0 m
+> FK-Teaser FK-Teaser
+> 16×16 in 1.0 m wall size 2.0 m Statue Statue 16×16 in 0.5 m wall size 2.0 m
+> Regular 21×21 wall size 0.8 m
+> 2 cm Bar
+> Regular 41×41 wall size 0.8 m
+> 2 cm Bar
+
+Fig. 4. Reconstruction results for confocal configuration. Data: We evaluate three real-world scenes. Teaser and Statue (from [Lindell et al . 2019]) were captured on a 2.0 m × 2.0 m planar relay surface with a dense 128 × 128 confocal scan. The 2 cm Bar scene consists of three 2 cm -wide, 30 cm -long bars ( 2 cm spacing) and was captured by our custom-built system on a 0.8 m × 0.8 m relay surface sampled on an 81 × 81 grid at 16 ps temporal resolution. Full measurements are masked to obtain region-limited, aperture-limited, or resolution-limited transients. Comparison: We compare our reconstructions with model-based methods (LCT [O’Toole et al . 2018], f-k [Lindell et al . 2019], RSD [Liu et al . 2019]), rendering-based methods (NeTF [Shen et al . 2021]), learning-based virtual scanning (VS) method [Cui et al . 2024], and optimization-based methods (CC-SOCR [Liu et al . 2023b]). For fair comparisons, we interpolate any sparse measurements onto a regular grid using scipy.interpolate.griddata for the model-based approaches. For our method, the generated virtual confocal measurements are reconstructed using LCT as the backend conventional solver in Rows 1–4 and RSD in Rows 5–6. 
+
+We estimate a normal field {𝒏 𝑝 }𝑃 𝑝 =1 from the LOS point cloud Q
+
+using a standard point-to-normal procedure. Specifically, for each relay point, we identify its 𝑀 nearest neighbors (k-NN) and compute the local normal via principal component analysis on the local neighborhood. We then associate each measured transient with its corresponding surface normal, yielding the set {𝝉 𝑝, 𝒏 𝑝 }𝑃 𝑝 =1.We optimize the parameters by minimizing the discrepancy be-tween rendered transients ˆ𝝉 𝑝 and the measurements 𝝉 𝑝 :
+
+min  
+
+> {Θ𝑘 }
+> 𝑃
+
+∑︁ 
+
+> 𝑝 =1
+
+ˆ𝝉 𝑝 − 𝝉 𝑝 22 .
+
+In practice, we use mini-batches for training to reduce sensitivity to measurement noise and outliers. We use the AdamW optimizer [Loshchilov and Hutter 2019] and assign separate learning rates to parameter groups (centers, scales, rotations, and albedo), which im-proves training stability by balancing updates across variables with different numerical scales. After 𝑁 iterations, we obtain {G (𝑁 ) 
+
+> 𝑘
+
+}𝐾 𝑘 =1
+
+as the reconstructed hidden-scene representation. To obtain a compact and visually cleaner representation, we apply a lightweight pruning step to produce a refined set {G ★ 
+
+> 𝑘
+
+}𝐾 ★ 
+
+> 𝑘 =1
+
+with 
+
+𝐾 ★ ≤ 𝐾 . Specifically, we discard primitives that (i) lie close to the ROI boundaries, or (ii) make negligible contribution due to low albedo. 
+
+4 Experiments 4.1 Custom-built Transient Measurement Setup 
+
+To validate our approach, we build an NLOS imaging system (shown in Fig. 3) to capture high-quality transient data with different relay surface geometries. The system employs a non-coaxial two-arm configuration featuring a pair of two-axis galvanometers, which un-dergoes careful alignment calibration. A Time-to-Digital Converter (TDC) records the transient histograms based on the time-stamp readout signals from the SPAD. By virtue of completely independent transmit-receive architecture, our setup is well-suited for measuring transients on arbitrary relay surface geometries. To characterize the relay surface, we place a diffuser in front of the laser port and simultaneously scan both the laser and SPAD ports to obtain the first-bounce transient signals. By setting proper thresh-olds to the depth and intensity of these signals, we automatically obtain a valid relay surface for subsequent NLOS measurements. With the obtained point cloud data, we can define arbitrary detection regions. See Supplementary Sec. 1 for details. 
+
+4.2 Confocal Results 
+
+For confocal detection, to mitigate pile-up effect [Heide et al . 2019] arising from SPAD, we add a spatial offset between illumination and detection points. While this offset is straightforward to implement          
+
+> SIGGRAPH Conference Papers ’26, July 19–23, 2026, Los Angeles, CA, USA. 6•Yi Wang, Ziyu Zhan, Yuran Wang, Hao Wang, Qiang Liu, Zuoqiang Shi, Lingyun Qiu, and Xing Fu virtual relay surface 20cm
+> virtual relay surface 20cm
+> (i) (ii)
+> virtual relay surface 20cm
+> (i) (ii)
+> Relay Surface FBP NeTF CC-SOCR Ours Reference
+> Letter “O” Child Mannequin Letter “O” Child Mannequin Letter “O” Child Mannequin Random 3k points on a plane Mannequins (laser fixed) Mannequins (laser scanned)
+
+Fig. 5. Reconstruction results for non-confocal configurations. Data: Hidden targets include a planar letter “O” ( 45 cm × 30 cm , stroke width ∼ 5 cm ) and a child mannequin (shoulder width ∼ 30 cm , height ∼ 70 cm ), positioned ∼ 0.7 m from the relay surface. Measurements were captured using our LOS-guided pipeline. The LOS point cloud is visualized in gray, with illumination points in green and detection points in red. The generated virtual relay surface (yellow) is displayed in both front and top views. We evaluate two relay surface configurations: a planar wall (Rows 1–2) using a fixed illumination point with 3000 random detection points; and a pair of torso mannequins, where illumination and detection points are located on separate mannequins. For the mannequin setup, we consider two regimes: a fixed laser position on each mannequin (Rows 3–4) and a locally scanned laser within a small region (Rows 5–6); see Supplementary Sec. 2 for details. Comparison: We compare against FBP, NeTF, and CC-SOCR, as they are capable of handling arbitrary illumination-detection pairs. All methods reconstruct a 1.5 m × 1.5 m × 1.5 m hidden volume, visualized at 128 × 128 resolution for front views and 128 × 32 for side views. For our method, the generated virtual confocal measurements are synthesized on the 𝑧 = 0 virtual relay surface and reconstructed using LCT as the backend conventional solver. 
+
+for planar walls (e.g., a uniform 10 cm ), it becomes non-trivial for complex non-planar surfaces. Thus, for confocal comparisons, we restrict our evaluation to planar relay surfaces. To evaluate reconstruction performance under challenging sam-pling conditions, we benchmark the methods along three distinct aspects: region-limited , aperture-limited , and resolution-limited mea-surements. The results are shown in Fig. 4. 
+
+Region-limited. We use the FK-Teaser scene—a cluttered multi-object arrangement with varying depths and surface properties—to assess whether reconstruction quality can be maintained under sparse spatial sampling. We consider two challenging sampling patterns: (i) structured sparse sampling , where measurements are restricted to a certain shape (the “NLO” letters), and (ii) ran-dom sparse sampling with 3,000 randomly selected points. Across both settings, our method achieves superior overall performance, simultaneously preserving the geometry of multiple objects and maintaining high reconstruction fidelity. 
+
+Aperture-limited. Unlike the region-limited setting where cap-tured signals are distributed across the relay surface, here we in-vestigate the impact of a severely restricted measurement aper-ture—potentially even smaller than the hidden object itself. We choose the Statue scene for this test, as it contains a single object centered within the measurement region. We progressively reduce the effective wall aperture to 1 m × 1 m and 0.5 m × 0.5 m (using a 
+
+16 × 16 grid). As illustrated, our method consistently outperforms prior methods, reconstructing a clearer statue even when the effec-tive aperture is significantly smaller than the object. 
+
+Resolution-limited. We further evaluate the resolution limits of 3D-GTR under spatial undersampling conditions. Using our custom-built system, we capture transients of a 2 cm -resolution plate and subsample the relay surface measurements to 41 ×41 and 21 ×21 grids, corresponding to 2 cm and 4 cm spacing respectively. Our results demonstrate that 3D-GTR exhibits a clear super-resolution effect: it successfully resolves the 2 cm features even when the sampling pitch exceeds the target resolution. In contrast, competing methods degrade substantially under the same undersampling conditions.   
+
+> SIGGRAPH Conference Papers ’26, July 19–23, 2026, Los Angeles, CA, USA. Non-line-of-sight imaging with arbitrary relay surface geometries via 3D Gaussian Transient Rendering •7
+
+We further quantify this behavior on a simulation study. Figure 7 reports both albedo fidelity and depth accuracy under region-limited, aperture-limited, and resolution-limited confocal measure-ments. The results show that our method consistently achieves the highest depth accuracy and remains competitive in albedo fidelity, supporting the robustness observed on real measurements. 
+
+4.3 Non-confocal Results 
+
+Compared to confocal settings, non-confocal configurations decou-ple the illumination and detection positions. This eliminates the geometry constraint between the illumination and detection paths, making the system more compatible with real-world deployment. The comparison results are illustrated in Fig. 5. In the planar setting, both NeTF and our approach outperform the other methods. How-ever, the finer details of the letter “O” illustrate that NeTF produces slight distortions near the lower-left corner, while our method cor-rectly recovers the rectangular shape matching the ground truth. Regarding the arbitrary relay surface, our approach substantially outperforms all baselines. Under the laser-fixed acquisition con-figuration, the reconstructed mannequin head is partially missing, likely due to insufficient illumination coverage. To capture addi-tional information, we further scan the illumination over a small region to introduce viewpoint diversity. As shown in Fig. 5, this enables recovery of the missing head region, although it introduces mild arm distortions. We attribute the distortions to increased sen-sitivity to measurement errors and temporal fluctuations when the illumination position is variable. We also evaluate our method on a broader set of non-planar relay surfaces, including curved surfaces with horizontal and vertical undulations, as shown in Fig. 8. Our method consistently recovers clearer target shapes than the non-confocal baselines across these geometries. This supports the generalization ability of 3D-GTR under arbitrary relay surface geometries. 
+
+4.4 Runtime Analysis 
+
+We benchmark reconstruction speed on a workstation equipped with an Intel Xeon Platinum 8352V (36 cores, 2.10 GHz) CPU and an NVIDIA RTX A6000 (48 GB) GPU. We focus on methods that can han-dle arbitrary transients, specifically FBP, NeTF, CC-SOCR, and our approach. All reported runtimes are representative values from the experiments in Fig. 5. As shown in Table 1, our method demonstrates a significant efficiency advantage. During the optimization/training stage, our differentiable rendering pipeline converges substantially faster than NeTF. During inference, the highly parallel nature of 3D Gaussian primitives enables extremely rapid evaluation compared to other methods. Notably, the reported inference time for our method also includes the runtime of a conventional transient solver (LCT). Additional analysis is shown in Supplementary Sec. 3. 
+
+4.5 Ablation Study 
+
+One key factor behind our superior performance is the geometry-aware transient rendering formulation in Eq. (5) . To assess the individual impact of these two terms, we conduct an ablation study in the non-confocal setting on mannequin-based (arbitrary) relay surfaces with illumination points fixed and changed, using the child 
+
+Table 1. Reconstruction time of different methods. The values are the aver-age reconstruction time for a 1.5 m × 1.5 m × 1.5 m volume using a training dataset of ∼ 8000 transients. 
+
+FBP CC-SOCR NeTF Ours Training time N/A N/A 0.31 h/epoch 10.9 s/epoch Inference time 25.9 s 1.1 h/loop 4.2 s 0.6 s 3D-GTR W/o W/o W/o &Laser Fixed Laser Scanned 
+
+xi xd?? ni nd τ (xi, ni, xd, nd)τp,n p
+
+G(xg , Σ, ρ ) ρ X, X ∼ N (xg , Σ),
+
+xg and ΣΣ ρ. ( μt, σ t, A )˜sg (t; xi, ni, xd, nd) ˙ ∝ A N(t; μt, σ 2
+
+> t
+
+). (1) 
+
+di‖xg − xi‖2, d d‖xg − xd‖2, ˆui
+
+xg − xi
+
+di
+
+, ˆud
+
+xg − xd
+
+dd
+
+.L(x)‖x − xi‖2 + ‖x − xd‖2.L(X) around xg :
+
+L(X) ≈ L(xg ) + ∇L(xg )(X − xg ),
+
+∇L(xg ) = xg − xi
+
+‖xg − xi‖2
+
++ xg − xd
+
+‖xg − xd‖2
+
+= ˆ ui + ˆ ud v.
+
+Since X ∼ N (xg , Σ), the induced path length is (approximately) Gaussian: 
+
+L(X) ˙ ∼ N (μL, σ 2
+
+> L
+
+), μ LL(xg ) = di + dd, σ 2
+
+> L
+
+vΣ v .
+
+˜sg (L) ∝
+
+∫
+
+> R3
+
+p(x) δ(L − L(x)) dx ≡ pL(X)(L)˜sg (L) ˙ ∝ N (L; μL, σ 2
+
+> L
+
+), (2) 
+
+μL σL
+
+mu d
+
+Ωm ∝ A⊥( ˆ u)
+
+d2 . (3) 
+
+A⊥( ˆ u) u, is calculated as A⊥( ˆ u)
+
+√
+
+|Σ|( ˆuΣ−1 ˆu).
+
+A = g ρ γ iγd
+
+A⊥( ˆ ui) A⊥( ˆ ud)
+
+d2 
+
+> i
+
+d2
+
+> d
+
+,
+
+xi xd?? ni nd τ (xi, ni, xd, nd)τp,n p
+
+G(xg , Σ, ρ ) ρ X, X ∼ N (xg , Σ),
+
+xg and ΣΣ ρ. ( μt, σ t, A )˜sg (t; xi, ni, xd, nd) ˙ ∝ A N(t; μt, σ 2
+
+> t
+
+).
+
+di‖xg − xi‖2, d d‖xg − xd‖2, ˆui
+
+xg − xi
+
+di
+
+, ˆud
+
+xg − xd
+
+dd
+
+.L(x)‖x − xi‖2 + ‖x − xd‖2.L(X) around xg :
+
+L(X) ≈ L(xg ) + ∇L(xg )(X − xg ),
+
+∇L(xg ) = xg − xi
+
+‖xg − xi‖2
+
++ xg − xd
+
+‖xg − xd‖2
+
+= ˆ ui + ˆ ud v.
+
+Since X ∼ N (xg , Σ), the induced path length is (approximately) Gaussian 
+
+L(X) ˙ ∼ N (μL, σ 2
+
+> L
+
+), μ LL(xg ) = di + dd, σ 2
+
+> L
+
+vΣ v .
+
+˜sg (L) ∝
+
+∫
+
+> R3
+
+p(x) δ(L − L(x)) dx ≡ pL(X)(L)˜sg (L) ˙ ∝ N (L; μL, σ 2
+
+> L
+
+),
+
+μL σL
+
+mu d
+
+Ωm ∝ A⊥( ˆ u)
+
+d2 .
+
+A⊥( ˆ u) u, is calculated as A⊥( ˆ u)
+
+√
+
+|Σ|( ˆuΣ−1 ˆu).
+
+A = g ρ γ iγd
+
+A⊥( ˆ ui) A⊥( ˆ ud)
+
+d2 
+
+> i
+
+d2
+
+> d
+
+,
+
+xi xd?? ni nd τ (xi, ni, xd, nd)τp,n p
+
+G(xg , Σ, ρ ) ρ X, X ∼ N (xg ,
+
+xg and ΣΣ ρ. ( μt, σ t, A )˜sg (t; xi, ni, xd, nd) ˙ ∝ A N(t; μt, σ 
+
+di‖xg − xi‖2, d d‖xg − xd‖2, ˆui
+
+xg − xi
+
+di
+
+, ˆu
+
+L(x)‖x − xi‖2 + ‖x − xd‖2.L(X) around xg :
+
+L(X) ≈ L(xg ) + ∇L(xg )(X − x
+
+∇L(xg ) = xg − xi
+
+‖xg − xi‖2
+
++ xg − xd
+
+‖xg − xd‖2
+
+= ˆ u
+
+Since X ∼ N (xg , Σ), the induced path length is (appr 
+
+L(X) ˙ ∼ N (μL, σ 2
+
+> L
+
+), μ LL(xg ) = di + dd, σ 
+
+˜sg (L) ∝
+
+∫
+
+> R3
+
+p(x) δ(L − L(x)) dx ≡ p
+
+˜sg (L) ˙ ∝ N (L; μL, σ 2
+
+> L
+
+),
+
+μL σL
+
+mu d
+
+Ωm ∝ A⊥( ˆ u)
+
+d2 .
+
+A⊥( ˆ u) u, is calculated as A⊥( ˆ u)
+
+√
+
+|Σ|( ˆuΣ−1 ˆu).
+
+A = g ρ γ iγd
+
+A⊥( ˆ ui) A⊥( ˆ ud)
+
+d2 
+
+> i
+
+d2
+
+> d
+
+,
+
+xi xd?? ni nd τ (xi, ni, xd, nd)τp,n p
+
+G(xg , Σ, ρ ) ρ X, X ∼ N (xg , Σ),
+
+xg and ΣΣ ρ. ( μt, σ t, A )˜sg (t; xi, ni, xd, nd) ˙ ∝ A N(t; μt, σ 2
+
+> t
+
+).
+
+di‖xg − xi‖2, d d‖xg − xd‖2, ˆui
+
+xg − xi
+
+di
+
+, ˆud
+
+xg
+
+L(x)‖x − xi‖2 + ‖x − xd‖2.L(X) around xg :
+
+L(X) ≈ L(xg ) + ∇L(xg )(X − xg ),
+
+∇L(xg ) = xg − xi
+
+‖xg − xi‖2
+
++ xg − xd
+
+‖xg − xd‖2
+
+= ˆ ui +
+
+Since X ∼ N (xg , Σ), the induced path length is (approxim 
+
+L(X) ˙ ∼ N (μL, σ 2
+
+> L
+
+), μ LL(xg ) = di + dd, σ 2
+
+> L
+
+v
+
+˜sg (L) ∝
+
+∫
+
+> R3
+
+p(x) δ(L − L(x)) dx ≡ pL(X
+
+˜sg (L) ˙ ∝ N (L; μL, σ 2
+
+> L
+
+),
+
+μL σL
+
+mu d
+
+Ωm ∝ A⊥( ˆ u)
+
+d2 .
+
+A⊥( ˆ u) u, is calculated as A⊥( ˆ u)
+
+√
+
+|Σ|( ˆuΣ−1 ˆu).
+
+A = g ρ γ iγd
+
+A⊥( ˆ ui) A⊥( ˆ ud)
+
+d2 
+
+> i
+
+d2
+
+> d
+
+,
+
+Fig. 6. Ablation study on geometry attributes in rendering model. 
+
+Reconstruction of child mannequin, using full 3D-GTR model, model without 
+
+𝒏 𝑖 , without 𝒏 𝑑 , and without 𝒏 𝑖 and 𝒏 𝑑 .
+
+mannequin as the hidden target (see Fig. 6). In the laser-fixed sce-nario, removing illumination normals 𝒏 𝑖 has only a minor effect, as 𝒏 𝑖 remains constant during detection on a single mannequin. In contrast, in all remaining settings, omitting 𝒏 𝑖 and/or 𝒏 𝑑 induces a pronounced model mismatch, as these normals vary substantially across the sampled points, leading to clearly degraded results. Explic-itly accounting for local surface orientation yields a more faithful approximation to real light-transport physics, which in turn leads to consistently improved reconstruction quality. 
+
+5 Limitations and Conclusions 
+
+Similar to NeTF and CC-SOCR, 3D-GTR is scene-specific and there-fore requires reoptimization when the hidden scene changes. While our method is substantially faster than these baselines, it does not yet achieve real-time performance. Nevertheless, inspired by the original 3DGS formulation, we find that good initialization of Gauss-ian primitives can significantly accelerate convergence. Moreover, because our representation is physically grounded and differen-tiable, it can be naturally integrated with advanced video recon-struction techniques, such as plug-and-play priors [Ye et al . 2024a] or spatiotemporal transformers [Li et al . 2025], offering promising pathways toward real-time NLOS imaging. In summary, we establish a novel NLOS imaging framework with-out assumptions on relay surface geometry. By representing the hidden scene using 3D Gaussian primitives and leveraging the ge-ometry information captured by LOS measurements, we introduce 3D-GTR as a fully differentiable transient rendering model that reformulates hidden scene reconstruction as an end-to-end opti-mization from raw NLOS transients. To enable reconstruction in a user-specified space, we feed the optimized Gaussian representa-tions back into the renderer to synthesize dense, regularly sampled 
+
+> SIGGRAPH Conference Papers ’26, July 19–23, 2026, Los Angeles, CA, USA.
+
+8 • Yi Wang, Ziyu Zhan, Yuran Wang, Hao Wang, Qiang Liu, Zuoqiang Shi, Lingyun Qiu, and Xing Fu 
+
+confocal transients, which can then be processed by standard NLOS solvers. Extensive real-world experiments demonstrate that our approach is substantially more efficient than existing methods while delivering higher fidelity and more reliable reconstructions across confocal and non-confocal settings, and for both planar and non-planar relay sur-faces. We attribute this performance superiority to three key factors. First, because 3D Gaussian primitives are lightweight and sparse, they avoid redundant computation inherent to voxel- or mesh-based representations. Moreover, the highly parallel structure of Gauss-ian rendering makes our pipeline better suited to mainstream GPU architectures than implicit-neural representations. Second, the phys-ically grounded parameterization allows the optimization process to partially mitigate practical imperfections—such as relay surface geometry errors, measurement noise, and detector time jitter—by adjusting the position, orientation, scale, and albedo of the primi-tives. Third, our explicit formulation of light transport, accounting for surface normals, extracts more informative cues from ambigu-ous real-world measurements, leading to marked enhancement on complex, irregular, and arbitrary relay surface geometries. Finally, NLOS imaging holds transformative potential for applica-tions ranging from autonomous navigation to public safety. With rapid advances in single-photon detection and high-performance computing, practical NLOS imaging is increasingly within reach. Our work takes a concrete step toward promoting NLOS imaging from controlled laboratory settings to real-world deployment by shifting geometry-assumed pipelines toward a measurement-driven framework. 
+
+Acknowledgments 
+
+We acknowledge the support of Fundamental and Interdisciplinary Disciplines Breakthrough Plan of the Ministry of Education of China (JYB2025XDXM121). 
+
+References 
+
+Nikhil Behari, Aaron Young, Siddharth Somasundaram, Tzofi Klinghoffer, Akshat Dave, and Ramesh Raskar. 2025. Blurred LiDAR for Sharper 3D: Robust Handheld 3D Scanning with Diffuse LiDAR and RGB. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) . 26954–26964. Mauro Buttafava, Jessica Zeman, Alberto Tosi, Kevin Eliceiri, and Andreas Velten. 2015. Non-line-of-sight imaging using a time-gated single photon avalanche diode. Opt. Express 23, 16 (Aug 2015), 20997–21011. doi:10.1364/OE.23.020997 Wenzheng Chen, Fangyin Wei, Kiriakos N. Kutulakos, Szymon Rusinkiewicz, and Felix Heide. 2020. Learned feature embeddings for non-line-of-sight imaging and recognition. ACM Trans. Graph. 39, 6, Article 230 (Nov. 2020), 18 pages. doi:10.1145/ 3414685.3417825 Kiseok Choi, Inchul Kim, Dongyoung Choi, Julio Marco, Diego Gutierrez, and Min H. Kim. 2023. Self-Calibrating, Fully Differentiable NLOS Inverse Rendering. In 
+
+SIGGRAPH Asia 2023 Conference Papers (Sydney, NSW, Australia) (SA ’23) . As-sociation for Computing Machinery, New York, NY, USA, Article 108, 11 pages. doi:10.1145/3610548.3618140 Xingyu Cui, Huanjing Yue, Song Li, Xiangjun Yin, Yusen Hou, Yun Meng, Kai Zou, Xiao-long Hu, and Jingyu Yang. 2024. Virtual Scanning: Unsupervised Non-line-of-sight Imaging from Irregularly Undersampled Transients. In Advances in Neural Infor-mation Processing Systems , A. Globerson, L. Mackey, D. Belgrave, A. Fan, U. Paquet, J. Tomczak, and C. Zhang (Eds.), Vol. 37. Curran Associates, Inc., 109381–109406. doi:10.52202/079017-3472 Xingyu Cui, Huanjing Yue, Shida Sun, Yue Li, Yusen Hou, Zhiwei Xiong, and Jingyu Yang. 2025. TransDiff: Unsupervised Non-Line-of-Sight Imaging With Aperture-Limited Relay Surfaces. IEEE Transactions on Image Processing 34 (2025), 8018–8031. doi:10.1109/TIP.2025.3637694 Sara Fridovich-Keil, Alex Yu, Matthew Tancik, Qinhong Chen, Benjamin Recht, and Angjoo Kanazawa. 2022. Plenoxels: Radiance Fields Without Neural Networks. In 
+
+Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) . 5501–5510. Yuki Fujimura, Takahiro Kushida, Takuya Funatomi, and Yasuhiro Mukaigawa. 2023. NLOS-NeuS: Non-line-of-sight Neural Implicit Surface. In Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV) . 10532–10541. Miguel Galindo, Julio Marco, Matthew O’Toole, Gordon Wetzstein, Diego Gutierrez, and Adrian Jarabo. 2019. A dataset for benchmarking time-resolved non-line-of-sight imaging. https://graphics.unizar.es/nlos Javier Grau, Markus Plack, Patrick Haehn, Michael Weinmann, and Matthias Hullin. 2022. Occlusion Fields: An Implicit Representation for Non-Line-of-Sight Surface Reconstruction. arXiv:2203.08657 Chaoying Gu, Talha Sultan, Khadijeh Masumnia-Bisheh, Laura Waller, and Andreas Velten. 2023. Fast Non-line-of-sight Imaging with Non-planar Relay Surfaces. In 
+
+2023 IEEE International Conference on Computational Photography (ICCP) . 1–12. doi:10.1109/ICCP56744.2023.10233262 Antoine Guédon and Vincent Lepetit. 2024. SuGaR: Surface-Aligned Gaussian Splat-ting for Efficient 3D Mesh Reconstruction and High-Quality Mesh Rendering. In 
+
+Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) . 5354–5363. Felix Heide, Matthew O’Toole, Kai Zang, David B. Lindell, Steven Diamond, and Gordon Wetzstein. 2019. Non-line-of-sight Imaging with Partial Occluders and Surface Normals. ACM Trans. Graph. 38, 3, Article 22 (May 2019), 10 pages. doi:10.1145/ 3269977 Binbin Huang, Xingyue Peng, Siyuan Shen, Suan Xia, Ruiqian Li, Yanhua Yu, Yuehan Wang, Shenghua Gao, Wenzheng Chen, Shiying Li, and Jingyi Yu. 2023. Omni-Line-of-Sight Imaging for Holistic Shape Reconstruction. arXiv:2304.10780 Julian Iseringhausen and Matthias B. Hullin. 2020. Non-line-of-sight Reconstruction Using Efficient Transient Rendering. ACM Trans. Graph. 39, 1, Article 8 (Jan. 2020), 14 pages. doi:10.1145/3368314 Adrian Jarabo, Julio Marco, Adolfo Muñoz, Raul Buisan, Wojciech Jarosz, and Diego Gutierrez. 2014. A framework for transient rendering. ACM Trans. Graph. 33, 6, Article 177 (Nov. 2014), 10 pages. doi:10.1145/2661229.2661251 Nikhil Keetha, Jay Karhade, Krishna Murthy Jatavallabhula, Gengshan Yang, Sebastian Scherer, Deva Ramanan, and Jonathon Luiten. 2024. SplaTAM: Splat Track & Map 3D Gaussians for Dense RGB-D SLAM. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) . 21357–21366. Bernhard Kerbl, Georgios Kopanas, Thomas Leimkuehler, and George Drettakis. 2023. 3D Gaussian Splatting for Real-Time Radiance Field Rendering. ACM Trans. Graph. 
+
+42, 4, Article 139 (July 2023), 14 pages. doi:10.1145/3592433 Ahmed Kirmani, Tyler Hutchison, James Davis, and Ramesh Raskar. 2009. Looking around the corner using transient imaging. In 2009 IEEE 12th International Conference on Computer Vision . 159–166. doi:10.1109/ICCV.2009.5459160 Pou-Chun Kung, Skanda Harisha, Ram Vasudevan, Aline Eid, and Katherine A. Skinner. 2025. RadarSplat: Radar Gaussian Splatting for High-Fidelity Data Synthesis and 3D Reconstruction of Autonomous Driving Scenes. In Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV) . 27596–27606. Marco La Manna, Fiona Kine, Eric Breitbach, Jonathan Jackson, Talha Sultan, and Andreas Velten. 2019. Error Backprojection Algorithms for Non-Line-of-Sight Imaging. IEEE Transactions on Pattern Analysis and Machine Intelligence 41, 7 (2019), 1615–1626. doi:10.1109/TPAMI.2018.2843363 Christoph Lassner and Michael Zollhofer. 2021. Pulsar: Efficient Sphere-Based Neural Rendering. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) . 1440–1449. Ruiqian Li, Siyuan Shen, Suan Xia, Ziheng Wang, Xingyue Peng, Chengxuan Song, Ying-sheng Zhu, Tao Wu, Shiying Li, and Jingyi Yu. 2025. TransiT: Transient Transformer for Non-line-of-sight Videography. In Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV) . 27542–27551. Yue Li, Yi Sun, Shida Sun, Juntian Ye, Yueyi Zhang, Feihu Xu, and Zhiwei Xiong. 2024. Toward Dynamic Non-Line-of-Sight Imaging with Mamba Enforced Temporal Consistency. In Advances in Neural Information Processing Systems , A. Globerson, L. Mackey, D. Belgrave, A. Fan, U. Paquet, J. Tomczak, and C. Zhang (Eds.), Vol. 37. Curran Associates, Inc., 126452–126473. doi:10.52202/079017-4016 Yue Li, Yueyi Zhang, Juntian Ye, Feihu Xu, and Zhiwei Xiong. 2023. Deep Non-line-of-sight Imaging from Under-scanning Measurements. In Advances in Neural Information Processing Systems , A. Oh, T. Naumann, A. Glober-son, K. Saenko, M. Hardt, and S. Levine (Eds.), Vol. 36. Curran Associates, Inc., 59095–59106. https://proceedings.neurips.cc/paper_files/paper/2023/file/ b91cc0a242e6518ee731f74e82b2eebd-Paper-Conference.pdf Zhupeng Li, Xintong Liu, Jianyu Wang, Zuoqiang Shi, Lingyun Qiu, and Xing Fu. 2022. Fast non-line-of-sight imaging based on first photon event stamping. Opt. Lett. 47, 8 (Apr 2022), 1928–1931. doi:10.1364/OL.446079 David B. Lindell, Gordon Wetzstein, and Matthew O’Toole. 2019. Wave-based non-line-of-sight imaging using fast f-k migration. ACM Trans. Graph. 38, 4, Article 116 (July 2019), 13 pages. doi:10.1145/3306346.3322937 Xiaochun Liu, Sebastian Bauer, and Andreas Velten. 2020. Phasor field diffraction based reconstruction for fast non-line-of-sight imaging systems. Nature Communications 
+
+SIGGRAPH Conference Papers ’26, July 19–23, 2026, Los Angeles, CA, USA. Non-line-of-sight imaging with arbitrary relay surface geometries via 3D Gaussian Transient Rendering • 9
+
+11, 1 (2020), 1645. doi:10.1038/s41467-020-15157-4 Xiaochun Liu, Ibón Guillén, Marco La Manna, Ji Hyun Nam, Syed Azer Reza, Toan Huu Le, Adrian Jarabo, Diego Gutierrez, and Andreas Velten. 2019. Non-line-of-sight imaging using phasor-field virtual wave optics. Nature 572, 7771 (2019), 620–623. doi:10.1038/s41586-019-1461-3 Xintong Liu, Jianyu Wang, Leping Xiao, Xing Fu, Lingyun Qiu, and Zuoqiang Shi. 2023a. Few-Shot Non-Line-of-Sight Imaging With Signal-Surface Collaborative Regularization. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) . 13303–13312. Xintong Liu, Jianyu Wang, Leping Xiao, Zuoqiang Shi, Xing Fu, and Lingyun Qiu. 2023b. Non-line-of-sight imaging with arbitrary illumination and detection pattern. Nature Communications 14, 1 (2023), 3230. doi:10.1038/s41467-023-38898-4 Ilya Loshchilov and Frank Hutter. 2019. Decoupled Weight Decay Regularization. In 7th International Conference on Learning Representations (ICLR), New Orleans, LA, USA, May 6-9, 2019 . OpenReview.net. https://openreview.net/forum?id=Bkg6RiCqY7 Anagh Malik, Benjamin Attal, Andrew Xie, Matthew O’Toole, and David B. Lindell. 2025. Neural Inverse Rendering from Propagating Light. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) . 10534–10544. Anagh Malik, Parsa Mirdehghan, Sotiris Nousias, Kyros Kutulakos, and David Lindell. 2023. Transient Neural Radiance Fields for Lidar View Synthesis and 3D Recon-struction. In Advances in Neural Information Processing Systems , A. Oh, T. Naumann, A. Globerson, K. Saenko, M. Hardt, and S. Levine (Eds.), Vol. 36. Curran Asso-ciates, Inc., 71569–71581. https://proceedings.neurips.cc/paper_files/paper/2023/ file/e261e92e1cfb820da930ad8c38d0aead-Paper-Conference.pdf Marco La Manna, Ji-Hyun Nam, Syed Azer Reza, and Andreas Velten. 2020. Non-line-of-sight-imaging using dynamic relay surfaces. Opt. Express 28, 4 (Feb 2020), 5331–5339. doi:10.1364/OE.383586 Christopher A. Metzler, David B. Lindell, and Gordon Wetzstein. 2021. Keyhole Imaging: Non-Line-of-Sight Imaging and Tracking of Moving Objects Along a Single Optical Path. IEEE Transactions on Computational Imaging 7 (2021), 1–12. doi:10.1109/TCI. 2020.3046472 Jinye Miao, Yingjie Shi, Lingfeng Liu, Yi Wei, Fuyao Cai, Lianfa Bai, Enlai Guo, and Jing Han. 2025. Under-scanning non-line-of-sight imaging based on convolution approximation and optimization. APL Photonics 10, 6 (June 2025), 066110. doi:10. 1063/5.0266391 Ben Mildenhall, Pratul P. Srinivasan, Matthew Tancik, Jonathan T. Barron, Ravi Ra-mamoorthi, and Ren Ng. 2021. NeRF: representing scenes as neural radiance fields for view synthesis. Commun. ACM 65, 1 (Dec. 2021), 99–106. doi:10.1145/3503250 Fangzhou Mu, Sicheng Mo, Jiayong Peng, Xiaochun Liu, Ji Hyun Nam, Siddeshwar Raghavan, Andreas Velten, and Yin Li. 2025. Physics to the Rescue: Deep Non-Line-of-Sight Reconstruction for High-Speed Imaging. IEEE Transactions on Pattern Analysis and Machine Intelligence 47, 8 (2025), 6146–6158. doi:10.1109/TPAMI.2022. 3203383 Fangzhou Mu, Carter Sifferman, Sacha Jungerman, Yiquan Li, Mark Han, Michael Gleicher, Mohit Gupta, and Yin Li. 2024. Towards 3D Vision with Low-Cost Single-Photon Cameras. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) . 5302–5311. Thomas Müller, Alex Evans, Christoph Schied, and Alexander Keller. 2022. Instant neural graphics primitives with a multiresolution hash encoding. ACM Trans. Graph. 
+
+41, 4, Article 102 (July 2022), 15 pages. doi:10.1145/3528223.3530127 Matthew O’Toole, David B. Lindell, and Gordon Wetzstein. 2018. Confocal non-line-of-sight imaging based on the light-cone transform. Nature 555, 7696 (2018), 338–341. doi:10.1038/nature25489 Adithya Pediredla, Ashok Veeraraghavan, and Ioannis Gkioulekas. 2019. Ellipsoidal path connections for time-gated rendering. ACM Trans. Graph. 38, 4, Article 38 (July 2019), 12 pages. doi:10.1145/3306346.3323016 Markus Plack, Clara Callenberg, Monika Schneider, and Matthias B. Hullin. 2023. Fast Differentiable Transient Rendering for Non-Line-of-Sight Reconstruction. In Pro-ceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision (WACV) . 3067–3076. Ziyuan Qu, Omkar Vengurlekar, Mohamad Qadri, Kevin Zhang, Michael Kaess, Christo-pher Metzler, Suren Jayasuriya, and Adithya Pediredla. 2025. Z-Splat: Z-Axis Gauss-ian Splatting for Camera-Sonar Fusion. IEEE Transactions on Pattern Analysis and Machine Intelligence 47, 9 (2025), 7255–7267. doi:10.1109/TPAMI.2024.3462290 Joshua Rapp, Julian Tachella, Yoann Altmann, Stephen McLaughlin, and Vivek K Goyal. 2020. Advances in Single-Photon Lidar for Autonomous Vehicles: Working Princi-ples, Challenges, and Recent Advances. IEEE Signal Processing Magazine 37, 4 (2020), 62–71. doi:10.1109/MSP.2020.2983772 Nicolas Scheiner, Florian Kraus, Fangyin Wei, Buu Phan, Fahim Mannan, Nils Appen-rodt, Werner Ritter, Jurgen Dickmann, Klaus Dietmayer, Bernhard Sick, and Felix Heide. 2020. Seeing Around Street Corners: Non-Line-of-Sight Detection and Track-ing In-the-Wild Using Doppler Radar. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) . 2065–2074. Advaith V. Sethuraman, Max Rucker, Onur Bagoren, Pou-Chun Kung, Nibarkavi N.B. Amutha, and Katherine A. Skinner. 2025. SonarSplat: Novel View Synthesis of Imaging Sonar via Gaussian Splatting. IEEE Robotics and Automation Letters 10, 12 (2025), 13312–13319. doi:10.1109/LRA.2025.3627089 Siyuan Shen, Zi Wang, Ping Liu, Zhengqing Pan, Ruiqian Li, Tian Gao, Shiying Li, and Jingyi Yu. 2021. Non-line-of-Sight Imaging via Neural Transient Fields. IEEE Transactions on Pattern Analysis and Machine Intelligence 43, 7 (2021), 2257–2268. doi:10.1109/TPAMI.2021.3076062 Siyuan Shen, Suan Xia, Xingyue Peng, Ziyu Wang, Yingsheng Zhu, Shiying Li, and Jingyi Yu. 2025. HOLI-1-to-3: Transient-Enhanced Holistic Image-to-3D Generation. 
+
+IEEE Transactions on Pattern Analysis and Machine Intelligence 47, 9 (2025), 7206–7217. doi:10.1109/TPAMI.2024.3463875 Hyunbo Shim, In Cho, Daekyu Kwon, and Seon Joo Kim. 2025. Domain Reduction Strategy for Non-Line-of-Sight Imaging. In Computer Vision – ECCV 2024 , Aleš Leonardis, Elisa Ricci, Stefan Roth, Olga Russakovsky, Torsten Sattler, and Gül Varol (Eds.). Springer Nature Switzerland, Cham, 75–92. Carter Sifferman, Yiquan Li, Yiming Li, Fangzhou Mu, Michael Gleicher, Mohit Gupta, and Yin Li. 2025. Recovering Parametric Scenes from Very Few Time-of-Flight Pixels. In Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV) . 27989–27999. Yi Sun, Yu Hong, Ziheng Qiu, Wei Li, Wenwen Li, Qilin Sun, and Feihu Xu. 2026. CUDA-accelerated Non-line-of-sight imaging with irregular relay surfaces. Optics and Lasers in Engineering 200 (2026), 109591. doi:10.1016/j.optlaseng.2025.109591 Chia-Yin Tsai, Aswin C. Sankaranarayanan, and Ioannis Gkioulekas. 2019. Beyond Volumetric Albedo – A Surface Optimization Framework for Non-Line-Of-Sight Imaging. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) . 1545–1555. Andreas Velten, Thomas Willwacher, Otkrist Gupta, Ashok Veeraraghavan, Moungi G. Bawendi, and Ramesh Raskar. 2012. Recovering three-dimensional shape around a corner using ultrafast time-of-flight imaging. Nature Communications 3, 1 (2012), 745. doi:10.1038/ncomms1747 Jianyu Wang, Xintong Liu, Leping Xiao, Zuoqiang Shi, Lingyun Qiu, and Xing Fu. 2023. Non-Line-of-Sight Imaging With Signal Superresolution Network. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) .17420–17429. Yijun Wei, Jianyu Wang, Leping Xiao, Zuoqiang Shi, Xing Fu, and Lingyun Qiu. 2025. Fast and Memory-efficient Non-line-of-sight Imaging with Quasi-Fresnel Transform. arXiv:2508.02003 Lifan Wu, Guangyan Cai, Ravi Ramamoorthi, and Shuang Zhao. 2021. Differentiable time-gated rendering. ACM Trans. Graph. 40, 6, Article 287 (Dec. 2021), 16 pages. doi:10.1145/3478513.3480489 Juntian Ye, Yu Hong, Xiongfei Su, Xin Yuan, and Feihu Xu. 2024a. Plug-and-Play Algorithms for Dynamic Non-line-of-sight Imaging. ACM Trans. Graph. 43, 5, Article 155 (June 2024), 12 pages. doi:10.1145/3665139 Jun-Tian Ye, Xin Huang, Zheng-Ping Li, and Feihu Xu. 2021. Compressed sensing for active non-line-of-sight imaging. Opt. Express 29, 2 (Jan 2021), 1749–1763. doi:10.1364/OE.413774 Jun-Tian Ye, Yi Sun, Wenwen Li, Jian-Wei Zeng, Yu Hong, Zheng-Ping Li, Xin Huang, Xianghui Xue, Xin Yuan, Feihu Xu, Xiankang Dou, and Jian-Wei Pan. 2024b. Real-time non-line-of-sight computational imaging using spectrum filtering and motion compensation. Nature Computational Science 4, 12 (2024), 920–927. doi:10.1038/ s43588-024-00722-4 Shinyoung Yi, Donggun Kim, Kiseok Choi, Adrian Jarabo, Diego Gutierrez, and Min H. Kim. 2021. Differentiable transient rendering. ACM Trans. Graph. 40, 6, Article 286 (Dec. 2021), 11 pages. doi:10.1145/3478513.3480498 Yanhua Yu, Siyuan Shen, Zi Wang, Binbin Huang, Yuehan Wang, Xingyue Peng, Suan Xia, Ping Liu, Ruiqian Li, and Shiying Li. 2023. Enhancing Non-line-of-sight Imaging via Learnable Inverse Kernel and Attention Mechanisms. In Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV) . 10563–10573. Richard Zhang, Phillip Isola, Alexei A. Efros, Eli Shechtman, and Oliver Wang. 2018. The Unreasonable Effectiveness of Deep Features as a Perceptual Metric. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR) . 586–595. Wenjun Zhang, Shuo Zhu, Lijia Chen, Lingfeng Liu, Lianfa Bai, Edmund Y. Lam, Enlai Guo, and Jing Han. 2025. Sub-pixel resolving modulation for non-line-of-sight imaging. Opt. Express 33, 14 (Jul 2025), 30783–30798. doi:10.1364/OE.569102 SIGGRAPH Conference Papers ’26, July 19–23, 2026, Los Angeles, CA, USA. 10 • Yi Wang, Ziyu Zhan, Yuran Wang, Hao Wang, Qiang Liu, Zuoqiang Shi, Lingyun Qiu, and Xing Fu Relay Surface LCT F-K RSD NeTF CC-SOCR VS Ours 
+
+LPIPS Albedo 
+
+0.5023 0.5243 0.5591 0.4209 0.5846 0.5070 0.4015 
+
+MAE Depth Error 
+
+2.830 cm 3.539 cm 3.913 cm 5.278 cm 5.913 cm 3.013 cm 2.286 cm Hidden Scene Region-limited  
+
+> 0 cm 8 cm
+
+Relay Surface LPIPS Albedo 
+
+0.6365 0.6661 0.7230 0.5211 0.6143 0.5481 0.4252 
+
+MAE Depth Error 
+
+4.257 cm 4.409 cm 4.446 cm 5.582 cm 6.993 cm 4.211 cm 3.110 cm Hidden Scene Aperture-limited  
+
+> 0 cm 8 cm
+
+Relay Surface LPIPS Albedo 
+
+0.6856 0.6411 0.7031 0.4261 0.5832 0.5229 0.4432 
+
+MAE Depth Error 
+
+3.588 cm 5.525 cm 4.773 cm 7.193 cm 8.536 cm 3.367 cm 2.285 cm Hidden Scene Resolution-limited  
+
+> 0 cm 8 cm
+
+Fig. 7. Quantitative simulation results under limited confocal measurements. We conduct a simulation study on the Stanford Bunny from the Zaragoza dataset [Galindo et al . 2019; Jarabo et al . 2014] to quantify reconstruction accuracy under restricted relay-wall measurements. Transient measurements are generated on a 1 m × 1 m planar relay wall with a dense 128 × 128 confocal scan, and the hidden-scene bounding box is centered 0.5 m from the wall. We evaluate three restricted-measurement settings: region-limited measurements using the same “NLOS” shaped sampling mask as in Fig. 4, aperture-limited 
+
+measurements using a centered 16 × 16 sampling region within a 0.5 m × 0.5 m aperture, and resolution-limited measurements obtained by uniformly downsampling the full scan to an 8 × 8 grid. The compared baselines and sparse-to-grid interpolation are the same as in Fig. 4. For each method, we report the reconstructed albedo with Learned Perceptual Image Patch Similarity (LPIPS) [Zhang et al . 2018] and the depth error map with mean absolute error (MAE). LPIPS is computed using the AlexNet-based metric, where grayscale albedo images are replicated to three channels and normalized to [− 1, 1]; depth MAE is computed only over foreground pixels with valid ground-truth depth. For both LPIPS and MAE, lower values indicate better performance. Our method achieves the lowest depth MAE in all three settings, while also producing competitive albedo fidelity, indicating that its robustness under limited measurements is consistent across both real and simulated data. 
+
+> SIGGRAPH Conference Papers ’26, July 19–23, 2026, Los Angeles, CA, USA.
+
+Non-line-of-sight imaging with arbitrary relay surface geometries via 3D Gaussian Transient Rendering • 11 20cm 
+
+Relay Surface FBP NeTF CC-SOCR Ours Reference Letter “O” Letter “E” Letter “O” Letter “E” Letter “O” Letter “E”          
+
+> virtual relay surface 20cm
+> Letter “O” Letter “E”
+> Front view Left view Top view Acquisition strategy xyzyxz
+> 20 cm Top view Front view Top view Acquisition strategy
+> Front view Left view Top view Acquisition strategy
+> -12 cm 12 cm zzy
+> xzFront view Left view Top view Acquisition strategy
+> xy
+> Front view Left view
+> Acquisition strategy
+> Left view
+
+Fig. 8. Non-confocal reconstruction with diverse relay surface geometries. We evaluate NLOS reconstruction on real measurements captured by our custom-built system under four non-planar relay surface geometries: horizontally undulating S-shaped and C-shaped surfaces, and vertically undulating S-shaped and C-shaped surfaces. For each relay surface, we reconstruct two hidden planar targets, the letters “O” and “E”, placed approximately 0.7 m from the relay surface. The left column visualizes each relay surface from front, left, and top views, together with the acquisition strategy used for NLOS detection, where the green point denotes the fixed laser position and the red region denotes the scanned detection positions. We compare against the same non-confocal baselines as in Fig. 5, including FBP, NeTF, and CC-SOCR. All methods reconstruct a hidden volume with a lateral field of view of 1 m × 1 m . For our method, the virtual relay surface is set to be the 𝑧 = 0 plane, and RSD is used as the backend solver. Across these curved relay surfaces, our method preserves the target letter shapes more reliably than the competing methods, supporting its robustness to arbitrary relay surface geometries. 
+
+SIGGRAPH Conference Papers ’26, July 19–23, 2026, Los Angeles, CA, USA.

@@ -1,0 +1,259 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-26T22:11:28.693117+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 5,
+    "deep_cap": 7,
+    "deep_selected": 5,
+    "quick_candidates": 1,
+    "quick_skim_target": 12,
+    "quick_selected": 1
+  },
+  "deep_dive": [
+    {
+      "id": "2606.26046v1",
+      "source": "arxiv",
+      "title": "RoboAtlas: Contextual Active SLAM",
+      "abstract": "We present RoboAtlas, a contextual Active SLAM framework that adaptively balances geometric exploration and semantic reasoning using a scalable 3D semantic mapping system, OpenRoboVox. RoboAtlas integrates frontier exploration, global semantic-map reasoning, and egocentric VLM-based reasoning through a contextual multi-armed bandit that transitions from exploration to semantically guided navigation as scene understanding improves. We evaluate the system in simulation and on a Unitree Go2 robot in large-scale real-world environments exceeding 1800 m2 with approx. 30k mapped semantic instances, achieving a 100% task success rate. On the GOAT-Bench \"Val Unseen\" benchmark, RoboAtlas achieves state-of-the-art performance with highest reported success rate (SR) of 90.6%, using GPT-4o, improving over the strongest prior baseline by 17.8 percentage points in SR. Using the much smaller Qwen2.5-VL-7B model, it still achieves 88.8% SR, outperforming all baselines using GPT-4o in SR, and revealing the importance of the information gained by our semantic mapping framework over simply replacing the underlying foundation model. The results demonstrate that grounding foundation models with large-scale 3D semantic maps enables robust and efficient contextual Active SLAM.",
+      "authors": [
+        "Alexander Schperberg",
+        "Shivam K. Panda",
+        "Abraham P. Vinod",
+        "M. K. Jawed",
+        "Stefano Di Cairano"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.CV"
+      ],
+      "published": "2026-06-24T17:26:07+00:00",
+      "link": "https://arxiv.org/pdf/2606.26046v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Active SLAM system that performs camera tracking and semantic mapping",
+      "llm_evidence_cn": "执行相机跟踪与语义建图的主动SLAM系统",
+      "llm_evidence": "执行相机跟踪与语义建图的主动SLAM系统",
+      "canonical_evidence": "执行相机跟踪与语义建图的主动SLAM系统",
+      "llm_tldr_en": "RoboAtlas presents a contextual active SLAM that integrates exploration and semantic reasoning, achieving state-of-the-art on GOAT-Bench.",
+      "llm_tldr_cn": "RoboAtlas提出一个上下文感知的主动SLAM框架，通过可扩展的3D语义建图和上下文多臂赌博机，自适应平衡几何探索与语义推理。该系统在超1800平方米的真实环境中实现了100%的任务成功率，并在GOAT-Bench上以90.6%的成功率取得最优结果。该工作展示了语义引导在主动SLAM中的有效性，为机器人长期自主导航提供了新思路。",
+      "llm_tldr": "RoboAtlas提出一个上下文感知的主动SLAM框架，通过可扩展的3D语义建图和上下文多臂赌博机，自适应平衡几何探索与语义推理。该系统在超1800平方米的真实环境中实现了100%的任务成功率，并在GOAT-Bench上以90.6%的成功率取得最优结果。该工作展示了语义引导在主动SLAM中的有效性，为机器人长期自主导航提供了新思路。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Visual SLAM methods for camera tracking and mapping",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.26985v1",
+      "source": "arxiv",
+      "title": "Vis4GS: A Visual Analytic Tool for 3D Gaussian Splatting Reconstruction",
+      "abstract": "3D Gaussian Splatting (3DGS) supports fast training and real-time rendering, but its optimization process remains difficult to interpret. Existing viewers mainly expose the final reconstructed scene and offer limited support for explaining how Gaussian properties contribute to visible artifacts or evolve during training. We present Vis4GS, a multi-view visual analytics tool for primitive-level diagnosis of 3DGS reconstruction artifacts. Built on the original 3DGS viewer and training framework, Vis4GS links rendered artifacts to Gaussian properties, View Coverage, training progress, and Gaussian genealogy through four linked views: an interactive Gaussian analysis view, a property timeline view, a Gaussian densification tree view, and a log and control panel. The system supports Gaussian selection, blur and needle-like artifact scoring, View Coverage analysis, and multiscale genealogy exploration of clone, split, prune, and clone-split events. By connecting scene-level artifacts with primitive-level evidence and optimization history, Vis4GS enables a structured workflow for diagnosing reconstruction failures beyond final-image inspection and global metrics. A user study also shows that Vis4GS provides stronger support for usability and artifact understanding than the original 3DGS viewer.",
+      "authors": [
+        "Kai-Yuan Lin",
+        "Aryabima Mandala Putra",
+        "Jui-Chi Lee",
+        "Shih-Hsuan Hung"
+      ],
+      "primary_category": "cs.GR",
+      "categories": [
+        "cs.GR"
+      ],
+      "published": "2026-06-25T12:59:02+00:00",
+      "link": "https://arxiv.org/pdf/2606.26985v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Multi-view visual analytics tool for diagnosing 3D Gaussian Splatting reconstruction artifacts by linking rendered artifacts to Gaussian properties.",
+      "llm_evidence_cn": "多视图可视化分析工具，用于诊断3D高斯泼溅重建伪影，将渲染伪影与高斯属性关联。",
+      "llm_evidence": "多视图可视化分析工具，用于诊断3D高斯泼溅重建伪影，将渲染伪影与高斯属性关联。",
+      "canonical_evidence": "多视图可视化分析工具，用于诊断3D高斯泼溅重建伪影，将渲染伪影与高斯属性关联。",
+      "llm_tldr_en": "Vis4GS is a visual analytics tool that helps interpret 3DGS optimization by linking rendered artifacts to Gaussian properties, training progress, and densification genealogy through four linked views, aiding in debugging and improvement of 3DGS reconstructions.",
+      "llm_tldr_cn": "Vis4GS解决了3D高斯泼溅（3DGS）重建过程中优化过程难以解释的问题，现有工具主要展示最终场景而缺乏对伪影成因的分析。该工具在原始3DGS查看器基础上，通过交互式高斯分析、属性时间线、高斯稠密化树和日志控制四个联动视图，将渲染伪影与高斯属性、视点覆盖、训练进度和生成历史关联起来。实验表明它能够有效定位和诊断重建失败的原因，为3DGS的调试和改进提供了有力支持。",
+      "llm_tldr": "Vis4GS解决了3D高斯泼溅（3DGS）重建过程中优化过程难以解释的问题，现有工具主要展示最终场景而缺乏对伪影成因的分析。该工具在原始3DGS查看器基础上，通过交互式高斯分析、属性时间线、高斯稠密化树和日志控制四个联动视图，将渲染伪影与高斯属性、视点覆盖、训练进度和生成历史关联起来。实验表明它能够有效定位和诊断重建失败的原因，为3DGS的调试和改进提供了有力支持。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.21270v1",
+      "source": "arxiv",
+      "title": "Non-line-of-sight imaging with arbitrary relay surface geometries via 3D Gaussian Transient Rendering",
+      "abstract": "Imaging objects hidden outside the direct line of sight expands the effective field of view and is critical for applications such as autonomous driving and robotic perception. Despite impressive progress in time-of-flight (ToF)-based non-line-of-sight (NLOS) imaging, real-world deployment remains challenging because practical measurements are often collected over spatially limited, arbitrarily shaped relay regions-conditions that violate the planar-wall and dense-sampling assumptions made by most existing methods. To address these limitations, we propose a LOS-guided NLOS imaging pipeline that imposes no geometric assumptions on the relay surface and naturally supports both confocal and non-confocal configurations. Our method represents the hidden scene using 3D Gaussian primitives and couples them with an efficient, differentiable transient rendering model, enabling end-to-end optimization directly from measured transients. We validate our approach on real-world measurements from both a public dataset and a custom-built capture system. Across settings, our method achieves state-of-the-art reconstruction fidelity under spatially limited, sparsely sampled conditions, and significantly outperforms existing methods on complex, arbitrary relay surface geometries.",
+      "authors": [
+        "Yi Wang",
+        "Ziyu Zhan",
+        "Yuran Wang",
+        "Hao Wang",
+        "Qiang Liu",
+        "Zuoqiang Shi",
+        "Lingyun Qiu",
+        "Xing Fu"
+      ],
+      "primary_category": "physics.optics",
+      "categories": [
+        "physics.optics",
+        "cs.CV"
+      ],
+      "published": "2026-06-19T09:47:17+00:00",
+      "link": "https://arxiv.org/pdf/2606.21270v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "uses 3D Gaussian representation for volumetric scene rendering in NLOS imaging",
+      "llm_evidence_cn": "使用三维高斯表示进行非视距场景体积渲染",
+      "llm_evidence": "使用三维高斯表示进行非视距场景体积渲染",
+      "canonical_evidence": "使用三维高斯表示进行非视距场景体积渲染",
+      "llm_tldr_en": "Proposes NLOS imaging using 3D Gaussian transient rendering for arbitrary relay surfaces, enabling volumetric scene representation with anisotropic Gaussians.",
+      "llm_tldr_cn": "现有非视距成像依赖平面墙面假设，本文提出基于三维高斯瞬态渲染的方法，可处理任意形状中继面，利用各向异性高斯表示实现隐藏物体的体积重建与渲染，拓展了高斯洒落的应用场景。",
+      "llm_tldr": "现有非视距成像依赖平面墙面假设，本文提出基于三维高斯瞬态渲染的方法，可处理任意形状中继面，利用各向异性高斯表示实现隐藏物体的体积重建与渲染，拓展了高斯洒落的应用场景。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.24489v1",
+      "source": "arxiv",
+      "title": "Decentralized Pose Graph Riemannian Optimization for Object-based Multi-Robot SLAM",
+      "abstract": "Pose graph optimization (PGO) is a key back-end component for state estimation in networked multi-robot simultaneous localization and mapping (SLAM). In object-based multi-robot SLAM, the problem becomes more tightly coupled because robots must jointly estimate both their trajectories and the poses of persistent objects observed by multiple agents. Existing decentralized solutions often assume that the communication graph closely matches the physical interaction topology, which is restrictive in realistic deployments where communication is sparse, intermittent, or time-varying. This paper presents a fully decentralized Riemannian optimization framework for object-based multi-robot PGO that decouples the coupled estimation problem via a consensus mechanism, enabling flexible communication topologies. To improve convergence under limited communication budgets, we further develop a distributed approximate-Newton scheme that exploits local second-order information while operating directly on the SE(d) manifold to preserve geometric consistency, and we establish the convergence to Riemannian first-order stationary points and provide a local condition-number analysis explaining the benefit of approximate second-order information over first-order Riemannian descent. The resulting method reduces iteration count and communication overhead without sacrificing estimation accuracy. Extensive evaluations on public benchmarks, large-scale simulations, and real-world multi-robot experiments demonstrate improved accuracy, runtime efficiency, scalability across network topologies, and robustness to communication failures.",
+      "authors": [
+        "Yixian Zhao",
+        "Yan Huang",
+        "Yang Xu",
+        "Liang Li",
+        "Jinming Xu"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-06-23T12:21:34+00:00",
+      "link": "https://arxiv.org/pdf/2606.24489v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Decentralized pose graph optimization for multi-robot SLAM with joint trajectory and object pose estimation",
+      "llm_evidence_cn": "多机器人SLAM的分布式位姿图优化，联合估计轨迹与物体位姿",
+      "llm_evidence": "多机器人SLAM的分布式位姿图优化，联合估计轨迹与物体位姿",
+      "canonical_evidence": "多机器人SLAM的分布式位姿图优化，联合估计轨迹与物体位姿",
+      "llm_tldr_en": "Proposes a fully decentralized Riemannian optimization for object-based multi-robot PGO that decouples the estimation for sparse communication.",
+      "llm_tldr_cn": "本文针对基于对象的多机器人SLAM，提出了一种全分布式黎曼优化框架，通过一致性方法解耦耦合估计问题，支持在稀疏、间歇性通信下的位姿图优化。该方法在仅需有限通信轮数的情况下，能联合优化各机器人轨迹与物体位姿，实验证明其收敛性接近集中式方法。这为多机器人协作感知提供了高效的分布式后端解决方案。",
+      "llm_tldr": "本文针对基于对象的多机器人SLAM，提出了一种全分布式黎曼优化框架，通过一致性方法解耦耦合估计问题，支持在稀疏、间歇性通信下的位姿图优化。该方法在仅需有限通信轮数的情况下，能联合优化各机器人轨迹与物体位姿，实验证明其收敛性接近集中式方法。这为多机器人协作感知提供了高效的分布式后端解决方案。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "Visual SLAM methods for camera tracking and mapping",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.27071v1",
+      "source": "arxiv",
+      "title": "PanoImager: Geometry-Guided Novel View Synthesis and Reconstruction from Sparse Panoramic Views",
+      "abstract": "Panoramic sensing offers wide field-of-view coverage, yet 3D reconstruction from sparse panoramas remains challenging under rotation-dominant, weak-parallax motion. In such regimes, SfM/SLAM initialization is often ill-conditioned and unreliable. We present PanoImager, an SfM-free framework that combines feed-forward pose/depth priors, geometry-conditioned diffusion view completion, and depth-guided 3DGS optimization. Given only a few panoramic images, PanoImager decomposes them into local perspective views, synthesizes auxiliary observations to enrich sparse evidence, and stabilizes Gaussian optimization for improved cross-view consistency. Experiments on multiple benchmarks show improved stability under extreme sparsity, suggesting PanoImager as an offline/background component for map refinement when SfM/SLAM fails to initialize.",
+      "authors": [
+        "Zhisong Xu",
+        "Takeshi Oishi"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-25T14:15:09+00:00",
+      "link": "https://arxiv.org/pdf/2606.27071v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "employs depth-guided 3D Gaussian Splatting for scene reconstruction from sparse views",
+      "llm_evidence_cn": "采用深度引导的三维高斯洒落进行稀疏视图场景重建",
+      "llm_evidence": "采用深度引导的三维高斯洒落进行稀疏视图场景重建",
+      "canonical_evidence": "采用深度引导的三维高斯洒落进行稀疏视图场景重建",
+      "llm_tldr_en": "PanoImager combines diffusion view completion and depth-guided 3DGS optimization to reconstruct scenes from few panoramic images, using anisotropic Gaussians for novel view synthesis.",
+      "llm_tldr_cn": "针对稀疏全景图像下三维重建困难的问题，PanoImager融合前馈姿态深度先验、几何条件扩散视图补全和深度引导的3DGS优化，利用各向异性高斯表示实现了稳定的稀疏视角新视角合成，为3DGS在弱视差场景的应用提供了新思路。",
+      "llm_tldr": "针对稀疏全景图像下三维重建困难的问题，PanoImager融合前馈姿态深度先验、几何条件扩散视图补全和深度引导的3DGS优化，利用各向异性高斯表示实现了稳定的稀疏视角新视角合成，为3DGS在弱视差场景的应用提供了新思路。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2606.22481v1",
+      "source": "arxiv",
+      "title": "Lighting-Consistent Object Transfer Across Radiance Fields",
+      "abstract": "3D Gaussian Splatting (3DGS) is widely used to capture and render real scenes. Compositing objects from one capture into another has applications in many domains, such as VFX, architecture and interior design, or marketing. However, extracting an object from a source scene and naively pasting it into a target scene will fail to produce realistic results due to the different lighting conditions between the two scenes. To address this problem, we introduce a diffusion model that harmonizes naively composited images with inconsistent lighting. The model is trained with a heterogeneous dataset of image pairs (inconsistent composite input, consistent output), combining synthetic, generated, and real data. Our complete 3D solution allows a user to extract an object from the source scene and composite it into the target scene. From this, the (inconsistent) views of the target scene with the composite object are rendered. Our diffusion model harmonizes each one of these views, which are finally consolidated in a 3DGS representation with a post-optimization step. Our method provides visually compelling results, making object transfer between 3DGS easy to use and significantly improving quality compared to previous methods.",
+      "authors": [
+        "Nicolás Violante",
+        "George Kopanas",
+        "Linus Franke",
+        "Julien Philip",
+        "George Drettakis"
+      ],
+      "primary_category": "cs.GR",
+      "categories": [
+        "cs.GR",
+        "cs.CV"
+      ],
+      "published": "2026-06-21T12:50:07+00:00",
+      "link": "https://arxiv.org/pdf/2606.22481v1",
+      "tags": [
+        "keyword:GS-SLAM",
+        "keyword:endo-dgs",
+        "query:GS-SLAM",
+        "query:endo-dgs"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "leverages 3D Gaussian Splatting for object transfer across scenes",
+      "llm_evidence_cn": "利用三维高斯洒落实现跨场景物体迁移",
+      "llm_evidence": "利用三维高斯洒落实现跨场景物体迁移",
+      "canonical_evidence": "利用三维高斯洒落实现跨场景物体迁移",
+      "llm_tldr_en": "Proposes a diffusion-based harmonization for 3DGS objects composited across different lighting, enabling realistic scene editing with anisotropic Gaussian representations.",
+      "llm_tldr_cn": "本文解决三维高斯洒落场景中物体迁移的光照不一致问题，提出扩散模型对合成图像进行光照和谐化，实现在不同辐射场之间保持光照一致性的物体迁移，拓展了高斯表示在场景编辑中的应用。",
+      "llm_tldr": "本文解决三维高斯洒落场景中物体迁移的光照不一致问题，提出扩散模型对合成图像进行光照和谐化，实现在不同辐射场之间保持光照一致性的物体迁移，拓展了高斯表示在场景编辑中的应用。",
+      "llm_tags": [
+        "query:gs-slam"
+      ],
+      "matched_query_tag": "query:gs-slam",
+      "matched_query_text": "volumetric scene representation using anisotropic Gaussians for real-time rendering",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}

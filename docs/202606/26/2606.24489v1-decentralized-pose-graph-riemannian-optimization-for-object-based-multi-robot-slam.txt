@@ -1,0 +1,1449 @@
+Title: Decentralized Pose Graph Riemannian Optimization for Object-based Multi-Robot SLAM
+
+URL Source: https://arxiv.org/pdf/2606.24489v1
+
+Published Time: Wed, 24 Jun 2026 01:05:07 GMT
+
+Number of Pages: 15
+
+Markdown Content:
+# Decentralized Pose Graph Riemannian Optimization for Object-based Multi-Robot SLAM 
+
+## Yixian Zhao a, Yan Huang c, Yang Xu b, Liang Li a and Jinming Xu a,∗
+
+> a
+
+College of Control Science and Engineering, Zhejiang University, Hangzhou, 310027, China 
+
+> b
+
+Shanghai Research Institute for Intelligent Autonomous Systems, Tongji University, Shanghai, 201210, China 
+
+> c
+
+Division of Decision and Control Systems, School of EECS, KTH Royal Institute of Technology, Stockholm, SE-100 44, Sweden 
+
+A R T I C L E I N F O 
+
+Keywords :Simultaneous localization and map-ping Distributed optimization Multi-robot systems Pose graph optimization Riemannian manifold 
+
+A B S T R A C T 
+
+Pose graph optimization (PGO) is a key back-end component for state estimation in networked multi-robot simultaneous localization and mapping (SLAM). In object-based multi-robot SLAM, the problem becomes more tightly coupled because robots must jointly estimate both their trajectories and the poses of persistent objects observed by multiple agents. Existing decentralized solutions often assume that the communication graph closely matches the physical interaction topology, which is restrictive in realistic deployments where communication is sparse, intermittent, or time-varying. This paper presents a fully decentralized Riemannian optimization framework for object-based multi-robot PGO that decouples the coupled estimation problem via a consensus mechanism, enabling flexible communication topologies. To improve convergence under limited communication budgets, we further develop a distributed approximate-Newton scheme that exploits local second-order information while operating directly on the SE(d) manifold to preserve geometric consistency, and we establish the convergence to Riemannian first-order stationary points and provide a local condition-number analysis explaining the benefit of approximate second-order information over first-order Riemannian descent. The resulting method reduces iteration count and communication overhead without sacrificing estimation accuracy. Extensive evaluations on public benchmarks, large-scale simulations, and real-world multi-robot experiments demonstrate improved accuracy, runtime efficiency, scalability across network topologies, and robustness to communication failures. 
+
+## 1. Introduction 
+
+Multi-robot systems are increasingly deployed in safety-critical and resource-constrained missions such as search-and-rescue, subterranean exploration, and large-scale in-spection. In these applications, the closed-loop performance of autonomy pipelines (planning, control, and coordina-tion) critically depends on reliable state estimation[25, 23, 34, 16]. Multi-robot simultaneous localization and mapping (SLAM) addresses this need by enabling robots to build a consistent map while estimating their trajectories, and pose graph optimization (PGO) serves as a core back-end module that improves global consistency by fusing relative measurements across time and agents [13, 20]. Recently, object-based SLAM has attracted increasing attention because persistent objects provide compact and se-mantically meaningful landmarks for long-term localization and mapping. In object-based multi-robot SLAM, the back-end must jointly estimate robot trajectories and object poses observed by multiple robots, leading to a tightly coupled pose-graph optimization (PGO) problem [5, 24]. A key feature of this problem is that its variables exhibit two dif-ferent coupling structures: object poses are long-lived public variables shared across robots, whereas robot trajectories are high-dimensional private variables coupled only through sparse inter-robot loop closures. Existing decentralized PGO 
+
+> ∗
+
+Corresponding author. 
+
+Email addresses: 12132038@zju.edu.cn (Y. Zhao); yahuang@kth.se (Y. Huang); xuyang_robot@tongji.edu.cn (Y. Xu); liang.li@zju.edu.cn (L. Li);  
+
+> jimmyxu@zju.edu.cn
+
+(J. Xu) 
+
+> ORCID
+
+(s): 0009-0001-1652-7574 (Y. Zhao) 
+
+methods usually adopt either vertex-based splitting or edge-based splitting for the entire problem [38, 18, 17, 5, 26, 24]. Such a uniform treatment does not fully exploit the variable structure of object-based PGO and may lead to unnecessary communication, especially when the communication graph is sparse, bandwidth-limited, or mismatched with the physi-cal measurement graph. Another challenge lies in the efficiency of decentralized optimization. First-order Riemannian methods preserve the geometry of 𝑆𝐸 (3) but may require many communica-tion rounds in ill-conditioned PGO problems [26, 27]. Approximate Newton methods can exploit local curva-ture information, but directly exchanging Hessians, gra-dients, or full pose graphs is impractical for decentral-ized multi-robot systems. Therefore, an effective object-based multi-robot PGO solver should jointly address three requirements: structure-aware communication reduction, geometry-preserving second-order optimization, and robust-ness under realistic communication constraints. Motivated by these observations, this paper proposes DRAN, a decentralized Riemannian approximate Newton framework for object-based multi-robot PGO. The central insight is that object-based PGO should not be decoupled by a uniform splitting rule: shared objects and robot trajecto-ries induce fundamentally different communication require-ments. Objects are persistent public variables that require cross-robot consistency, whereas robot trajectories are high-dimensional private variables that only need to expose sparse separators at inter-robot loop closures. DRAN exploits this   
+
+> arXiv:2606.24489v1 [cs.RO] 23 Jun 2026 (a) A multiple Dingo robot system
+> (b) Initial poses (c) Optimized poses
+> Figure 1: The real-life experiment system comprises six Dingo robots and nine objects. The colored solid lines and square dots in (b) and (c) refer to the estimated trajectories and object positions of robots, respectively. The colored dashed lines and dark blue square dots refer to the true values of the robot trajectories and the object positions, respectively.
+
+structure to build a communication-lean decentralized for-mulation and solves it using local Riemannian approximate Newton updates, where second-order information is used as a curvature preconditioner rather than being exchanged across the network. The main contributions are summarized as follows. 1) Object-trajectory-aware decentralized formulation: 
+
+We characterize the different coupling structures of shared objects and private robot trajectories in object-based PGO, and derive a communication-efficient decou-pling scheme that applies object-level consensus only to public variables and separator exchange only to trajectory boundary variables. This formulation avoids unnecessary map or trajectory transmission under mismatched physi-cal and communication topologies. 2) Decentralized Riemannian approximate Newton solver: 
+
+We develop a fully decentralized solver on 𝑆𝐸 (3) that constructs local LM/Gauss–Newton curvature models and computes curvature-preconditioned manifold up-dates without exchanging full Hessians, gradients, or pose graphs. We prove the well-posedness of the reduced second-order update, establish convergence to Rieman-nian first-order stationary points, and provide a local condition-number analysis explaining the benefit over first-order Riemannian descent. 3) Communication-oriented evaluation under unreli-able networks: We validate the method on public PGO benchmarks, large-scale object-based simulations, and a real multi-robot system. Beyond accuracy and runtime, we report total transmitted data and evaluate performance under varying communication densities and probabilistic network interruptions, showing near-centralized accu-racy with reduced communication load. 
+
+## 2. Related Works 
+
+2.1. Decentralized PGO in Multi-Robot Systems 
+
+Centralized PGO has matured with highly efficient non-linear least-squares solvers [15, 8] and certifiably correct relaxation-based methods (e.g., SE-Sync and Cartan-Sync), offering strong accuracy and scalability when global data aggregation is feasible [22, 2]. However, in large-scale multi-robot applications, the central processor may become the bottleneck due to limited communication resources. To this end, Choudhary et al. [5] propose a two-stage distributed algorithm based on Jacobi over-relaxation (JOR) and suc-cessive over-relaxation (SOR) to seek approximate solutions for PGO. However, one step of the Gauss-Newton method in most cases cannot lead to sufficient convergence for distributed PGO. In addition, no line search is performed in [5] due to the communication limitation, and thus, the behavior of the single Gauss-Newton step is totally unpre-dictable and might result in bad solutions. Tian et al. [26] develop a distributed certifiably correct PGO method that is guaranteed to converge to a globally optimal solution under moderate measurement noises. However, the communica-tion networks of such localized distributed methods [26, 5, 11] need to align with the physical topology associated with the distributed PGO problem and might need to keep part of the robots in an idle state for estimate updates. In contrast, ADMM-based methods have been used not only for distributed computing[4] but also to relieve the dependence on the communication topology[38, 18] while optimizing in Euclidean space to approximate the solution of the PGO problem. 
+
+2.2. Decentralized (Object-based) PGO on Manifolds 
+
+To account for constraints imposed on the rotation ma-trix in pose estimation, Riemannian optimization methods offer greater efficiency and precision due to their ability to leverage nonlinear properties and complex metric structures [14, 29, 28, 6, 17, 24]. For instance, Knuth et al. [14] op-timized local Lie group variables for each agent using a gradient descent method for PGO. To ensure consistency in public variables across multiple agents, consensus-based Riemannian gradient descent methods were introduced to estimate node poses in a camera network [29, 28], though these methods were found to be sensitive to noises. Likewise, Cristofalo et al. [6] employed gradient descent on manifold spaces to maintain consistency, but this approach requires a high number of iterations due to the inherent limitations of gradient descent. McGann et al. [17] integrated Rieman-nian optimization into an ADMM-based framework, yet the performance was limited by the chosen optimizer. However, in most cases, these methods only estimate robots’ poses and not the global map. Joint pose-and-map estimation is closer to distributed Structure-from-Motion (SfM) and Bun-dle Ajustment(BA), where distributed architectures (e.g., splitting/ADMM-style) have been studied for scalability [32, 10, 36]. Most relevant to our setting, LARPG leverages second-order information and separates public/private vari-ables to reduce communication [24], but it still depends on a parameter-server architecture, motivating fully decentral-ized, communication-flexible, and second-order manifold optimization for collaborative object-based PGO. 
+
+Notations: We let (, ⟨⋅, ⋅⟩) denote a connected Rie-mannian manifold with Riemannian metric ⟨⋅, ⋅⟩ and induced norm ‖⋅‖. We use ℝ𝑛 to denote the 𝑛 -dimensional Euclidean space. The Special Orthogonal group is defined as 𝑆𝑂 (𝑑 ) = {𝑅 ∈ ℝ𝑑 ×𝑑 ∶ 𝑅 ⊤𝑅 = 𝐼, det( 𝑅 ) = 1} , and the Special Euclidean group is denoted as 𝑆𝐸 (𝑑 ) = {( 𝑅, 𝑡 ) ∶ 𝑅 ∈
+
+𝑆𝑂 (𝑑 ), 𝑡 ∈ ℝ𝑑 }. The tangent space at a point 𝑥 ∈ 
+
+is denoted by 𝑇 𝑥 . For a smooth scalar function 𝑓 ∶
+
+ → ℝ, the Riemannian gradient grad 𝑓 (𝑥 ) ∈ 𝑇 𝑥 
+
+represents the direction of steepest ascent. We define the retraction Retr 𝑥 ∶ 𝑇 𝑥  →  as a smooth mapping that generalizes the exponential map, preserving first-order geometry. Conversely, the inverse retraction (or logarithmic map) is denoted by Log 𝑥 (⋅) ∶  → 𝑇 𝑥 , which maps a point on the manifold back to the tangent space. Finally, for a positive definite information matrix Ω, the weighted norm is defined as ‖𝑣 ‖2Ω = ⟨𝑣, Ω𝑣 ⟩. More details on Riemannian optimization can be found in [1]. 
+
+## 3. Problem Formulation 
+
+We consider a collaborative object-based SLAM prob-lem involving 𝑁 robots communicating over a connected graph 𝑐 = ( 𝑐 , 𝑐 ). The system state consists of private robot trajectories 𝒙 ≜ {𝑥 𝑖 }𝑁 𝑖 =1 and shared environmental object poses 𝒚 ≜ {𝑦 𝑙 }𝑀 𝑙 =1 , where 𝑥 𝑖 ∈ 𝑆𝐸 (𝑑 )𝑛 𝑖 and 𝑦 𝑙 ∈
+
+𝑆𝐸 (𝑑 ). The global objective is to estimate these states by minimizing the Riemannian nonlinear least squares cost: 
+
+min 
+
+> 𝒙 ,𝒚
+> 𝐾
+
+∑
+
+> 𝑘 =1
+
+12 ‖𝜑 (𝑇 𝑝 𝑘 , 𝑇 𝑞 𝑘 ,̃ 𝑇 𝑘 )‖2Ω𝑘 , 𝑠.𝑡. 𝑥 ∈ , 𝑦 ∈ , (1) where 𝑇 𝑝 𝑘 , 𝑇 𝑞 𝑘 ∈ { 𝒙 , 𝒚 } denote the estimated poses con-nected by the 𝑘 -th measurement ̃ 𝑇 𝑘 (e.g., odometry, object observation, or inter-robot loop) with precision matrix Ω𝑘 .The residual function 𝜑 (⋅) quantifies the discrepancy be-tween the estimated and measured relative poses. Depending on the requirement for accuracy or computational efficiency, we define 𝜑 (⋅) using either the Riemannian geodesic dis-tance or the chordal distance: 
+
+𝜑 (𝑇 𝑝 𝑘 , 𝑇 𝑞 𝑘 ,̃ 𝑇 𝑘 ) ≜
+
+{ Log 
+
+(̃𝑇 −1  
+
+> 𝑘
+
+𝑇 −1  
+
+> 𝑝 𝑘
+
+𝑇 𝑞 𝑘 
+
+)
+
+, (Geodesic) 
+
+𝑇 𝑝 𝑘 ̃ 𝑇 𝑘 − 𝑇 𝑞 𝑘 , (Chordal) (2) Measurements             
+
+> Objects’ Poses
+> Neighbors’ Pose
+> Robots’ Poses
+> Robots’ Odometry
+> Figure 2: A pose graph illustration of the multi-robot SLAM problem. Robot 𝑖 (blue triangle) and robot 𝑗 (red triangle) collaboratively estimate the poses of shared objects {𝑦 1,…, 𝑦 4}
+> (green circles) and their respective trajectories 𝑥 𝑖 and 𝑥 𝑗 .The graph includes intra-robot odometry (solid gray lines) and relative inter-robot/object measurements (colored dashed lines).
+
+where Log (⋅) maps the error from the manifold 𝑆𝐸 (𝑑 ) to the tangent space 𝔰𝔢 (𝑑 ) for standard Riemannian optimization, while the chordal formulation operates in the embedding space for robust initialization. 
+
+3.1. Fine-Grained Distributed Decoupling 
+
+To enable fully decentralized optimization under band-width constraints, we propose a hybrid decoupling strategy 
+
+that treats map (objects) and trajectory (inter-robot) con-straints differently (see Fig. 2). This formulation decom-poses the global cost (1) into local sub-problems without sacrificing geometric consistency. 
+
+3.1.1. Object Consistency (Vertex-Based Decoupling) 
+
+Since objects 𝒚 are static landmarks observed by mul-tiple agents (e.g., green circles in Fig. 2), we treat them as public variables requiring global consensus. We employ a 
+
+vertex-based approach where each robot 𝑖 maintains a local copy 𝑦 𝑖 ⊆ 𝒚 of the objects it observes. The consistency of the global map is enforced by constraining local copies of connected robots to be identical. The local object-based cost 
+
+𝑓 obj  
+
+> 𝑖
+
+(𝑥 𝑖 , 𝑦 𝑖 ) aggregates measurements between the robot’s trajectory 𝑥 𝑖 and its local object copies 𝑦 𝑖 .
+
+3.1.2. Trajectory Connectivity (Edge-Based Decoupling) 
+
+Inter-robot loop closures create direct coupling between the trajectories of different robots. Sharing full trajecto-ries is communication-prohibitive. Instead, we adopt an 
+
+edge-based strategy using the concept of separators . Let 
+
+𝑖 ⊂ 𝑥 𝑖 denote the subset of poses involved in inter-robot measurements with neighbors 𝑗 ∈ 𝑖 . Robot 𝑖 only exchanges these separator estimates. During each local opti-mization iteration, the neighbors’ separators 𝑥 𝑗 are treated as fixed priors (anchors). This yields the inter-robot cost term 
+
+𝑓 inter  
+
+> 𝑖
+
+(𝑥 𝑖 |𝑥 𝑖 ), which optimizes local consistency relative to neighbors without requiring a full variable copy. 
+
+3.2. Distributed Optimization Objective 
+
+By combining the intra-robot odometry cost 𝑓 intra  
+
+> 𝑖
+
+(𝑥 𝑖 )
+
+with the decoupled terms derived above, we formulate the distributed PGO as a constrained optimization problem on the manifold product space: 
+
+Problem 1 (Distributed Pose Graph optimization) .
+
+min  
+
+> 𝒙 ,𝒚
+
+𝑓 (𝒙 , 𝒚 ) ≜
+
+> 𝑁
+
+∑
+
+> 𝑖 =1
+
+(
+
+𝑓 intra  
+
+> 𝑖
+
+(𝑥 𝑖 ) + 𝑓 inter  
+
+> 𝑖
+
+(𝑥 𝑖 ) + 𝑓 obj  
+
+> 𝑖
+
+(𝑥 𝑖 , 𝑦 𝑖 )
+
+)
+
+⏟⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏟⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏟ 
+
+> ≜𝑓 𝑖 (𝑥 𝑖 ,𝑦 𝑖 )
+
+𝑠.𝑡. 𝑥 𝑖 ∈ 𝑖 , 𝑦 𝑖 ∈ 𝑖 , 𝜑 (𝑦 𝑖 , 𝑦 𝑗 ) = 0 , ∀𝑖, 𝑗 ∈ [ 𝑁 ].
+
+(3) 
+
+where 𝑓 inter  
+
+> 𝑖
+
+(𝑥 𝑖 ) ≜ 𝑓 (𝑥 𝑖 |𝑥 𝑖 ), 𝒙 ∈  and 𝒚 ∈  represent the collective vector of 𝑥 𝑖 , 𝑦 𝑖 for 𝑖 ∈ [ 𝑁 ], respectively. 
+
+Here, 𝑓 𝑖 (𝑥 𝑖 , 𝑦 𝑖 ) represents the total local cost for robot 𝑖 .The constraint 𝜑 (𝑦 𝑖 , 𝑦 𝑗 ) = 0 ensures that the distributed ob-ject maps converge to a consistent global reference frame. To solve this consensus problem over time-varying networks, we utilize a Metropolis-Hastings weight matrix 𝑊 , which robustly balances information fusion based on node connec-tivity [33]. This formulation explicitly decouples the high-dimensional private trajectories from the shared public map, minimizing communication overhead while maintaining the mathematical structure required for precise Riemannian op-timization. 
+
+## 4. Methodology 
+
+In this section, we introduce our decentralized PGO method, which leverages consensus theory and approximate Riemannian Hessian information to solve Problem 1. 
+
+4.1. Algorithm Design 
+
+Similar with the edge-based ADMM framework [31], we define an augmented Lagrangian for the global cost function 
+
+𝑓 (𝒙 , 𝒚 ) as follows: 
+
+𝐿 (𝒙 , 𝒚 , 𝝀 ) = 𝑓 (𝒙 , 𝒚 ) + 
+
+> 𝑛
+
+∑
+
+> 𝑖 =1
+
+∑
+
+> 𝑗 ∈𝑖
+
+⟨𝜆 𝑖𝑗 , 𝑤 𝑖𝑗 𝜑 (𝑦 𝑖 , 𝑦 𝑗 
+
+)⟩ 
+
++
+
+> 𝑛
+
+∑
+
+> 𝑖 =1
+
+∑
+
+> 𝑗 ∈𝑖
+
+𝛽 
+
+2 ‖𝑤 𝑖𝑗 𝜑 (𝑦 𝑖 , 𝑦 𝑗 
+
+)‖2,
+
+(4) where 𝜆 𝑖 = [ 𝜆 𝑖𝑗 ]𝑗 ∈𝑖 denotes the dual variable associated with robot 𝑖 , 𝝀 ∶= [ 𝜆 𝑖 ]𝑖 ∈[ 𝑁 ] is the stack vector of all dual variables and 𝛽 is the penalty coefficient. The weights 𝑤 𝑖𝑗 
+
+are introduced in the augmented Lagrangian function to modulate the influence of the consistency constraint between neighboring robots 𝑖 and 𝑗 . The process of solving the augmented Lagrangian in Eq. (4) can be expressed as: 
+
+𝑦 𝑘 +1  
+
+> 𝑖
+
+, 𝑥 𝑘 +1  
+
+> 𝑖
+
+= arg min 
+
+> 𝑦 𝑖 ,𝑥 𝑖
+
+𝐿 (𝒙 𝑘 , 𝒚 𝑘 , 𝝀 𝑘 ) , (5a) 
+
+𝜆 𝑘 +1  
+
+> 𝑖𝑗
+
+= 𝜆 𝑘 𝑖𝑗 + 𝜂𝛽𝑤 𝑖𝑗 𝜑 
+
+(
+
+𝑦 𝑘 +1  
+
+> 𝑖
+
+, 𝑦 𝑘 +1 
+
+> 𝑗
+
+)
+
+, (5b) where 𝑘 is the iteration index in the optimization process, and 𝜌 > 0 denotes the stepsize of updating dual variables. By rewriting the dual and penalty terms as a ‘Bi-ased Prior’, we can represent the augmented Lagrangian in Eq. (4) using a factor-graph [4]. Specifically, knowing that, when 𝑏 is constant, arg min 𝑎 ⟨𝑏, 𝑎 ⟩ + ( 𝛽 ∕2) ‖𝑎 ‖2 =arg min 𝑎 (𝛽 ∕2) ‖𝑎 + 𝑏 ∕𝛽 ‖2, we define the local Lagrangian function by ̂𝐿 𝑖 
+
+(𝑥 𝑘 𝑖 , 𝑦 𝑘 𝑖 , 𝜆 𝑘 𝑖 
+
+) = 𝑓 𝑖 
+
+(𝑥 𝑘 𝑖 , 𝑦 𝑘 𝑖 
+
+)
+
++ ∑
+
+> 𝑗 ∈𝑖
+
+𝛽 
+
+2 ‖𝑤 𝑖𝑗 𝜑 
+
+(
+
+𝑦 𝑘 𝑖 , 𝑦 𝑘 𝑗 
+
+)
+
++ 𝜆 𝑘 𝑖𝑗 
+
+𝛽 ‖2. (6) However, the minimization steps in Eq. (5a) are still non-trivial, as we can not derive a closed form for 𝑥 𝑘 +1  
+
+> 𝑖
+
+and 𝑦 𝑘 +1  
+
+> 𝑖
+
+,even though ̂ 𝐿 𝑖 is quadratic. Thus, we replace the functions ̂𝐿 𝑖 , 𝑖 ∈ [ 𝑁 ] with their approximate quadratic functions 𝑚 𝑖 
+
+evaluated at 𝑥 𝑘 𝑖 and 𝑦 𝑘 𝑖 as follows. 
+
+𝑚 𝑖 
+
+(𝑢 𝑖 , 𝑣 𝑖 
+
+) =̂𝐿 𝑖 
+
+(𝑥 𝑘 𝑖 , 𝑦 𝑘 𝑖 , 𝜆 𝑘 𝑖 
+
+) +
+
+⟨[ 𝑔 𝑖𝑥 
+
+𝑔 𝑖𝑦 
+
+]
+
+⏟⏟⏟ 
+
+> 𝑔 𝑖
+
+,
+
+[ 𝑢 𝑖 
+
+𝑣 𝑖 
+
+]⟩
+
++ 12
+
+⟨[ 𝑢 𝑖 
+
+𝑣 𝑖 
+
+]
+
+,
+
+[ 𝐴 𝑖 𝐶 𝑖 
+
+𝐶 ⊤𝑖 𝐵 𝑖 
+
+]
+
+⏟⏞⏞⏞⏟⏞⏞⏞⏟ 
+
+> 𝑀 𝑖
+
+[ 𝑢 𝑖 
+
+𝑣 𝑖 
+
+]⟩
+
+,
+
+(7) where (𝑢 𝑖 , 𝑣 𝑖 ) ∈ 𝑇 𝑥 𝑖 𝑖 × 𝑇 𝑦 𝑖 𝑖 are the tangent vectors, 
+
+𝑔 𝑖 ≜ 𝑔𝑟𝑎𝑑 𝑓 𝑖 (𝑥 𝑖 , 𝑦 𝑖 ) is the local Riemannian gradient. The user-specified linear map 𝑀 𝑖 ≻ 0 serves as an approximation of the local Riemannian Hessian and is assumed to be sym-metric and positive definite. In particular, the approximation of Riemannian Hessian can be obtained via the Riemannian Levenberg–Marquardt (LM) method [1, Chapter 8], i.e., 
+
+𝑀 𝑖 = 𝐽 𝑖 ⊤𝐽 𝑖 + 𝜇𝐼 , where 𝐽 𝑖 is the Jacobian of agent 
+
+𝑖 ’s measurement residuals and 𝜇 > 0 is a regularization parameter that ensures 𝑀 𝑖 to be positive definite. Then, we aim to compute an update for all variables by approximately minimizing 𝑚 𝑖 . However, directly applying a Newton-like method to all variables is computationally prohibitive because of the large dimensionality of the Rie-mannian Hessian matrix 𝑀 𝑖 . As a result, we use the Schur complement method [15, 7, 24] to decouple the public and private variables so as to calculate the inverse of the Hessian matrix efficiently. While the Schur complement method can also be computationally expensive, our experimental results demonstrate that it significantly reduces the average compu-tation time while maintaining comparable accuracy. Specifically, we minimize the approximate function 𝑚 𝑖 
+
+in Eq. (7) with 𝑣 𝑖 being fixed to eliminate private vector 
+
+𝑢 𝑖 . Setting the gradient of 𝑚 𝑖 (𝑢 𝑖 , 𝑣 𝑖 ) with respect to 𝑢 to zero yields ∇𝑢 𝑚 𝑖 (𝑢 𝑖 , 𝑣 𝑖 ) = 𝑔 𝑖𝑥 + 𝐴 𝑖 𝑢 + 𝐶𝑣 𝑖 = 0 . Letting 
+
+𝑢 ∗ 
+
+> 𝑖
+
+≜ arg min 𝑢 𝑖 𝑚 𝑖 (𝑢 𝑖 , 𝑣 𝑖 ) denote the optimal private vector conditioned on the public vector, we have 
+
+𝑢 ∗
+
+> 𝑖
+
+(𝑣 𝑖 
+
+) = − 𝐴 −1 
+
+> 𝑖
+
+(𝐶 𝑖 𝑣 𝑖 + 𝑔 𝑖𝑥 
+
+) . (8) Next, we define the reduced second-order approximation as 
+
+ℎ𝑖 (𝑣 𝑖 ) ≜ 𝑚 𝑖 (𝑢 ∗ 
+
+> 𝑖
+
+(𝑣 𝑖 ), 𝑣 𝑖 ), which depends solely on the public vector 𝑣 𝑖 , i.e., 
+
+ℎ𝑖 (𝑣 𝑖 ) = ̂𝐿 𝑖 
+
+(𝑥 𝑖 , 𝑦 𝑖 
+
+) − 12
+
+⟨𝑔 𝑖𝑥 , 𝐴 −1  
+
+> 𝑖
+
+𝑔 𝑖𝑥 
+
+⟩
+
++ ⟨̂𝑔 𝑖 , 𝑣 𝑖 ⟩ + 12
+
+⟨𝑣 𝑖 ,̂ 𝐻 𝑖 𝑣 𝑖 
+
+⟩ ,
+
+(9) where the reduced gradient ̂𝑔 𝑖 and the reduced Hessian ̂ 𝐻 𝑖 
+
+are defined in a similar way, respectively, as follows: ̂𝑔 𝑖 = 𝑔 𝑖𝑦 − 𝐶 ⊤𝑖 𝐴 −1  
+
+> 𝑖
+
+𝑔 𝑖𝑥 , (10) ̂𝐻 𝑖 = 𝐵 𝑖 − 𝐶 ⊤𝑖 𝐴 −1  
+
+> 𝑖
+
+𝐶 𝑖 . (11) Further, we can minimize ℎ𝑖 (𝑣 𝑖 ) by computing 𝑣 𝑖 =̂ 𝐻 −1 
+
+> 𝑖
+
+̂ 𝑔 𝑖 ,and in turn minimize 𝑚 𝑖 by updating private variables 𝑥 with 
+
+𝑢 ∗ 
+
+> 𝑖
+
+(c.f., Line 10-13 in Alg. 1). The behavior of consensus strategies on Riemannian manifolds differs significantly from that in Euclidean spaces due to the effect of curvature. To establish a formal pro-cedure for achieving consensus, We measure consistency error based on the Fréchet Mean as defined in [29], and the Riemannian gradient 𝑔 𝑖𝑦 of ̂ 𝐿 𝑖 on 𝑦 is presented as follows, 
+
+𝑔 𝑖𝑦 = 𝑔𝑟𝑎𝑑 𝑦 𝑓 𝑖 
+
+(𝑥 𝑖 , 𝑦 𝑖 
+
+)
+
++ 𝛽 ∑
+
+> 𝑗 ∈𝑖
+
+𝑤 𝑖𝑗 
+
+(
+
+𝑤 𝑖𝑗 𝜑 2 (𝑦 𝑖 , 𝑦 𝑗 
+
+) + 𝜆 𝑖𝑗 
+
+𝛽 
+
+)
+
+𝑔𝑟𝑎𝑑 𝑦 𝑖 𝜑 2 (𝑦 𝑖 , 𝑦 𝑗 
+
+),
+
+(12) where 𝑔𝑟𝑎𝑑 𝑦 𝑓 𝑖 
+
+(𝑥 𝑖 , 𝑦 𝑖 
+
+) represents the gradient of the lo-cal objective function 𝑓 𝑖 (𝑥 𝑖 , 𝑦 𝑖 ), and the second term cap-tures the gradient of the consistency error. Note that, when geodesic distance is used for 𝜑 (⋅), the term 𝑔𝑟𝑎𝑑 𝑦 𝑖 𝜑 2 (𝑦 𝑖 , 𝑦 𝑗 
+
+)
+
+can be explicitly calculated as 2𝐿𝑜𝑔 𝑦 𝑖 (𝑦 𝑗 ). The value of 𝜆 𝑖𝑗 
+
+> 𝛽
+
+acts as a fixed bias term, which provides a trade-off between consensus of public variables and local updates. The proposed Decentralized Riemannian Approximate Newton (DRAN) method (c.f., Alg. 1) achieves accelerated convergence by gradually aligning local second-order ap-proximations with global Newton directions via Rieman-nian consensus. Specifically, each robot 𝑖 locally solves the equation ̂ 𝐻 𝑖 𝑣 𝑖 =̂ 𝑔 𝑖 . Summing it over all robots yields 
+
+∑𝑁 𝑖 =1 ̂ 𝐻 𝑖 𝑣 𝑖 = ∑𝑁 𝑖 =1 ̂𝑔 𝑖 . Therefore, when 𝑣 𝑖 becomes suffi-ciently consistent across robots, it approximates the global Newton direction ̄𝑣 = ( ∑𝑁 𝑖 =1 ̂ 𝐻 𝑖 )−1 ∑𝑁 𝑖 =1 ̂𝑔 𝑖 , which enables efficient and scalable distributed optimization. 
+
+Algorithm 1 DECENTRALIZED RIEMANNIAN APPROXI - 
+
+> MATE
+
+NEWTON METHOD (DRAN) 
+
+Input: Communication networks 𝑐 = (𝑐 , 𝑐 ), initial state 
+
+𝑥 0, 𝑦 0, 𝜆 0 = 𝟎 , 𝐾 , stopping criteria parameter 𝜖 𝑢 , 𝜖 𝑣 , 𝜖 𝜑 
+
+Output: Globally consistent object-based maps and optimized trajectories  
+
+> 1:
+
+for iteration 𝑘 = 0 , 1, … , 𝐾 do  
+
+> 2:
+
+for each agent 𝑖 in parallel do  
+
+> 3:
+
+Exchange estimated separators, object with neighbors  
+
+> 4:
+
+for object received from neighbors 𝑗 ∈ 𝑖 do  
+
+> 5:
+
+if object is previously unrecognized by robot 𝑖 then  
+
+> 6:
+
+Initialize the object pose 𝑦 𝑘 𝑖 with 𝑦 𝑘 𝑗  
+
+> 7:
+
+end if  
+
+> 8:
+
+end for  
+
+> 9:
+
+Update dual variables 𝜆 𝑘 +1  
+
+> 𝑖
+
+as (5b)  
+
+> 10:
+
+Computes reduced gradient ̂𝑔 𝑖 and reduced Hessian ̂ 𝐻 𝑖  
+
+> 11:
+
+Computes the 𝑣 𝑘 +1  
+
+> 𝑖
+
+as 𝑣 𝑘 +1  
+
+> 𝑖
+
+= − ̂𝐻 −1 
+
+> 𝑖
+
+̂ 𝑔 𝑖  
+
+> 12:
+
+Computes the 𝑢 𝑘 +1  
+
+> 𝑖
+
+as (8)  
+
+> 13:
+
+Update public variables and private variables as 
+
+𝑦 𝑘 +1  
+
+> 𝑖
+
+= 𝑅𝑒𝑡𝑟 𝑦 𝑘 𝑖 (− 𝛼𝑣 𝑘 +1  
+
+> 𝑖
+
+), 𝑥 𝑘 +1  
+
+> 𝑖
+
+= 𝑅𝑒𝑡𝑟 𝑥 𝑘 𝑖 (− 𝛾𝑢 𝑘 +1  
+
+> 𝑖
+
+) 
+
+> 14:
+
+end for  
+
+> 15:
+
+if stopping criteria are satisfied then  
+
+> 16:
+
+break  
+
+> 17:
+
+end if  
+
+> 18:
+
+end for 
+
+Remark 1. Unlike [4], which relies on a generic Gauss-Newton solver, our method explicitly exploits the Rieman-nian geometry of the problem and employs a Newton-like update tailored to the structure of the PGO problem, leading to faster convergence. Additionally, in contrast to [24], the local Hessian matrix and local gradient do not need to be communicated to neighboring robots. Moreover, the consensus scheme used in Lin et al. [35] can not be em-ployed to achieve consistency in Riemannian space, which complicates algorithm design and implementation. Thus, we construct a residual function directly defined on Riemannian space (c.f., Eq. (2) ) to ensure the consistency of public variables of all nodes. 
+
+4.2. Implementation of DRAN 
+
+To ensure robust convergence and adaptability in dy-namic environments, we implement DRAN with a specific focus on high-quality initialization, flexible communication, and rigorous termination criteria. 
+
+4.2.1. Two-Stage Distributed Initialization 
+
+Given the non-convex nature of PGO on the 𝑆𝐸 (𝑑 )
+
+manifold, the quality of initial estimates is critical for conver-gence. We adopt a two-stage distributed initialization strat-egy extending the chordal relaxation approach [3]. First, we relax the rotation synchronization into a linear least-squares problem, solving it distributedly to obtain initial rotations. Second, fixing these rotations, we solve for translations via a distributed Gauss-Seidel method. This decoupled proce-dure efficiently provides a high-quality initial guess (𝑥 0, 𝑦 0)for the subsequent Riemannian optimization, significantly reducing the risk of getting stuck in local minima. 
+
+4.2.2. Dynamic Map Consensus Mechanism 
+
+In decentralized settings, partial observability is in-evitable. To address this, we integrate a dynamic map con-sensus mechanism into each communication round. Robots exchange estimated separators and object poses with neigh-bors. When a robot encounters a previously unobserved object ID, it initializes its local estimate using the neighbor’s data (see Line 3-8 in Alg. 1). Crucially, robots act as infor-mation relays, allowing map estimates to propagate across the network within 𝑑 − 1 rounds (where 𝑑 is the network diameter). This strategy ensures global map consistency even under sparse, topology-varying communication inde-pendent of the physical interaction graph. This framework is versatile; in object-free scenarios, the algorithm seam-lessly degenerates to standard distributed PGO by omitting the object-related cost terms 𝑓 obj , optimizing only private trajectories via separator exchange. 
+
+4.2.3. Termination Criteria 
+
+The optimization terminates when either the optimality 
+
+or feasibility condition is satsfied, i.e., 
+
+• Optimality: The update steps on the manifold become negligible, i.e., ‖𝑢 𝑖 ‖ ≤ 𝜖 𝑢 and ‖𝑣 𝑖 ‖ ≤ 𝜖 𝑣 , indicating convergence to a local minimum. 
+
+• Feasibility: The consensus error of shared variables drops below a tolerance, i.e., 𝜑 2(𝑦 𝑖 , 𝑦 𝑗 ) ≤ 𝜖 𝜑 , ensuring geometric consistency. In our experiments, we set thresholds 𝜖 𝑢 = 10 −2 , 𝜖 𝑣 = 10 −1 ,
+
+𝜖 𝜑 = 10 −1 , and penalty parameters 𝛽 = 1, 𝜂 = 0.1. A safety cap of 𝐾 max = 500 iterations is enforced to bound computation time. 
+
+## 5. Convergence Analysis 
+
+In this section, we analyze the proposed decentral-ized Riemannian approximate Newton method. The pur-pose of the analysis is threefold. First, we show that the Levenberg–Marquardt-type approximate Hessian and the Schur complement reduction are well-defined and pre-serve positive definiteness on the tangent spaces. Second, we prove that the reduced approximate Newton direction provides a curvature-preconditioned descent direction and leads to a non-asymptotic first-order stationarity bound with an explicit curvature-dependent constant. Third, for time-varying communication graphs, we establish a tracking bound showing how the distributed reduced Newton direc-tion approaches the centralized reduced Newton direction as a function of the graph mixing rate and the temporal variation of local curvature information. 
+
+5.1. Notation and Preliminaries 
+
+For the convergence analysis, we collect only the nota-tion needed later. Let 𝑧 𝑖 ≜ (𝑥 𝑖 , 𝑦 𝑖 ) ∈ 𝑖 ≜  𝑖 × 𝑖 denote the local state of robot 𝑖 , and let ̂ 𝐿 𝑖 (𝑧 𝑖 ) be the local aug-mented objective defined in the previous section, with the dual variable omitted for notational simplicity. At iteration 
+
+𝑘 , define the tangent step and the Riemannian gradient as 
+
+𝜉 𝑘 𝑖 ≜
+
+[𝑢 𝑘 𝑖 
+
+𝑣 𝑘 𝑖 
+
+]
+
+∈ 𝑇 𝑧 𝑘 𝑖 
+
+𝑖 , 𝑔 𝑘 𝑖 ≜ grad ̂ 𝐿 𝑖 (𝑧 𝑘 𝑖 ) = 
+
+[𝑔 𝑘 𝑖𝑥 
+
+𝑔 𝑘 𝑖𝑦 
+
+]
+
+.
+
+As introduced in the method section, DRAN builds the local quadratic model 
+
+𝑚 𝑘 𝑖 (𝜉 𝑖 ) = ̂ 𝐿 𝑖 (𝑧 𝑘 𝑖 ) + ⟨𝑔 𝑘 𝑖 , 𝜉 𝑖 ⟩ + 12 ⟨𝜉 𝑖 , 𝑀 𝑘 𝑖 𝜉 𝑖 ⟩, (13) where 
+
+𝑀 𝑘 𝑖 =
+
+[ 𝐴 𝑘 𝑖 𝐶 𝑘 𝑖 
+
+(𝐶 𝑘 𝑖 )⊤ 𝐵 𝑘 𝑖 
+
+]
+
+(14) is the local LM-type Hessian approximation on 𝑇 𝑧 𝑘 𝑖 
+
+𝑖 . In particular, 
+
+𝑀 𝑘 𝑖 = ( 𝐽 𝑘 𝑖 )⊤𝐽 𝑘 𝑖 + 𝜇 𝑘 𝑖 𝐼, 𝜇 𝑘 𝑖 > 0. (15) The reduced approximate Newton direction and the re-covered private direction are 
+
+𝑣 𝑘 𝑖,𝑁 = −( ̂𝐻 𝑘 𝑖 )−1 ̂𝑔 𝑘 𝑖 , 𝑢 𝑘 𝑖,𝑁 = −( 𝐴 𝑘 𝑖 )−1 (𝐶 𝑘 𝑖 𝑣 𝑘 𝑖,𝑁 + 𝑔 𝑘 𝑖𝑥 ).
+
+(16) Equivalently, the full tangent direction satisfies 
+
+𝜉 𝑘 𝑖,𝑁 ≜
+
+[𝑢 𝑘 𝑖,𝑁 
+
+𝑣 𝑘 𝑖,𝑁 
+
+]
+
+= −( 𝑀 𝑘 𝑖 )−1 𝑔 𝑘 𝑖 . (17) The corresponding Riemannian update is written as 
+
+𝑧 𝑘 +1  
+
+> 𝑖
+
+= Retr 𝑧 𝑘 𝑖 
+
+(𝛼𝜉 𝑘 𝑖,𝑁 ), 0 < 𝛼 ≤ 1. (18) Throughout this section, 𝜉 𝑘 𝑖,𝑁 denotes the descent direc-tion. Thus, if one instead defines 𝑑 𝑘 𝑖 = ( 𝑀 𝑘 𝑖 )−1 𝑔 𝑘 𝑖 , the update should equivalently be written as 𝑧 𝑘 +1  
+
+> 𝑖
+
+= Retr 𝑧 𝑘 𝑖 
+
+(− 𝛼𝑑 𝑘 𝑖 ).
+
+5.2. Positive Definiteness of the Reduced Hessian 
+
+We first show that the approximate Hessian used in DRAN remains positive definite even when (𝐽 𝑘 𝑖 )⊤𝐽 𝑘 𝑖 is singular. 
+
+Assumption 1 (Bounded residual Jacobian and LM damp-ing) . For every robot 𝑖 and iteration 𝑘 , the local residual Jacobian satisfies ‖𝐽 𝑘 𝑖 ‖ ≤̄ 𝐽 , and the damping parameter satisfies 
+
+0 < 𝜇 ≤ 𝜇 𝑘 𝑖 ≤̄𝜇 < +∞ .
+
+Lemma 1 (Positive definiteness of the LM approximation) .
+
+Under Assumption 1, the approximate Hessian 
+
+𝑀 𝑘 𝑖 = ( 𝐽 𝑘 𝑖 )⊤𝐽 𝑘 𝑖 + 𝜇 𝑘 𝑖 𝐼 
+
+satisfies 
+
+𝑐 𝑚 𝐼 ⪯ 𝑀 𝑘 𝑖 ⪯ 𝑐 𝑀 𝐼, (19) 
+
+where 𝑐 𝑚 = 𝜇 , 𝑐 𝑀 =̄ 𝐽 2 +̄𝜇. Proof. The proof is provided in Appendix A.1. 
+
+Lemma 2 (Positive definiteness of the Schur complement) .
+
+Suppose 𝑀 𝑘 𝑖 satisfies (19) and is partitioned as in (14) . Then 
+
+𝐴 𝑘 𝑖 ≻ 0, and the reduced Hessian ̂𝐻 𝑘 𝑖 = 𝐵 𝑘 𝑖 − ( 𝐶 𝑘 𝑖 )⊤(𝐴 𝑘 𝑖 )−1 𝐶 𝑘 𝑖 
+
+is symmetric positive definite. Moreover, 
+
+𝑐 𝑚 𝐼 ⪯̂ 𝐻 𝑘 𝑖 ⪯ 𝑐 𝑀 𝐼. (20) 
+
+Proof. The proof is provided in Appendix A.2. 
+
+5.3. Global Descent and First-Order Stationarity 
+
+We now prove that the damped Riemannian approximate Newton step is a descent step. The result is global in the sense of nonconvex Riemannian optimization: it guarantees convergence to a first-order stationary point, but it does not claim quadratic convergence. 
+
+Assumption 2 (Pullback smoothness) . For every robot 𝑖 and iteration 𝑘 , the pullback function ̃𝐿 𝑘 𝑖 (𝜉 ) ≜̂ 𝐿 𝑖 
+
+(Retr 𝑧 𝑘 𝑖 
+
+(𝜉 )), 𝜉 ∈ 𝑇 𝑧 𝑘 𝑖 
+
+𝑖 ,
+
+satisfies ̃𝐿 𝑘 𝑖 (𝜉 ) ≤̂ 𝐿 𝑖 (𝑧 𝑘 𝑖 ) + ⟨𝑔 𝑘 𝑖 , 𝜉 ⟩ + 𝐿 
+
+2 ‖𝜉 ‖2. (21) 
+
+Assumption 3 (Lower bounded local augmented objective) .
+
+For every robot 𝑖 , there exists ̂ 𝐿 ⋆𝑖 > −∞ such that ̂ 𝐿 𝑖 (𝑧 𝑘 𝑖 ) ≥̂𝐿 ⋆𝑖 for all iterations 𝑘 .
+
+Theorem 1 (Curvature-preconditioned descent) . Suppose Assumptions 1–3 hold. Let 𝜉 𝑘 𝑖,𝑁 = −( 𝑀 𝑘 𝑖 )−1 𝑔 𝑘 𝑖 and let the update be 
+
+𝑧 𝑘 +1  
+
+> 𝑖
+
+= Retr 𝑧 𝑘 𝑖 
+
+(𝛼𝜉 𝑘 𝑖,𝑁 ).
+
+If 
+
+0 < 𝛼 < 2𝑐 2
+
+> 𝑚
+
+𝐿𝑐 𝑀 
+
+, (22) 
+
+then ̂𝐿 𝑖 (𝑧 𝑘 +1  
+
+> 𝑖
+
+) ≤̂ 𝐿 𝑖 (𝑧 𝑘 𝑖 ) − 𝜌 AN ‖𝑔 𝑘 𝑖 ‖2, (23) 
+
+where 
+
+𝜌 AN ≜ 𝛼 𝑐 𝑀 
+
+− 𝐿𝛼 2
+
+2𝑐 2
+
+> 𝑚
+
+> 0. (24) 
+
+Proof. The proof is provided in Appendix A.3. 
+
+Corollary 1 (Non-asymptotic first-order stationarity) . Un-der the same conditions of Theorem 1, for every robot 𝑖 and every 𝐾 ≥ 1,
+
+min  
+
+> 0≤𝑘 ≤𝐾 −1
+
+‖ grad ̂ 𝐿 𝑖 (𝑧 𝑘 𝑖 )‖2 ≤̂ 𝐿 𝑖 (𝑧 0 
+
+> 𝑖
+
+) − ̂ 𝐿 ⋆𝑖 
+
+𝜌 AN 𝐾 . (25) 
+
+Proof. The proof is provided in Appendix A.4. 
+
+5.4. Effect of Second-Order Information 
+
+While Corollary 1 establishes a standard worst-case stationarity rate of 𝑂 (1∕ 𝐾 ) due to the nonconvexity of the global problem, the second-order approximation sig-nificantly alters the local geometry. Specifically, in a reg-ular local region, the LM/Gauss–Newton approximation in DRAN acts as a Riemannian preconditioner that improves the effective condition number of the local model. Furthermore, since relative-pose measurements are in-variant to global 𝑆𝐸 (𝑑 ) transformations, the inherent gauge freedom renders the unconstrained PGO Hessian singu-lar. Therefore, our subsequent local conditioning analysis is strictly conducted on the gauge-fixed tangent space, achieved by anchoring a reference pose, adding an equivalent prior, or restricting the analysis to the observable subspace. Let 𝐻 𝑘 𝑖 denote the Riemannian Hessian of the pullback objective at the origin of 𝑇 𝑧 𝑘 𝑖 
+
+𝑖 , restricted to the gauge-fixed tangent space. For nonlinear least-squares PGO, this Hessian can be decomposed as 
+
+𝐻 𝑘 𝑖 = ( 𝐽 𝑘 𝑖 )⊤𝐽 𝑘 𝑖 + 𝑅 𝑘 𝑖 , (26) where 𝐽 𝑘 𝑖 is the Jacobian of the local residuals and 𝑅 𝑘 𝑖 
+
+collects the second-order residual terms. The LM approxi-mation used by DRAN is 
+
+𝑀 𝑘 𝑖 = ( 𝐽 𝑘 𝑖 )⊤𝐽 𝑘 𝑖 + 𝜇 𝑘 𝑖 𝐼, 𝜇 𝑘 𝑖 ≥ 0. (27) 
+
+Assumption 4 (Local regularity on the gauge-fixed tangent space) . In a neighborhood of a nondegenerate local solution to the PGO Problem 1, restricted to the gauge-fixed tangent space, the pullback Hessian satisfies 
+
+𝑚 𝐻 𝐼 ⪯ 𝐻 𝑘 𝑖 ⪯ 𝐿 𝐻 𝐼, 0 < 𝑚 𝐻 ≤ 𝐿 𝐻 < +∞ . (28) 
+
+Assumption 5 (Accuracy of the LM/Gauss–Newton approx-imation) . In the same local neighborhood, restricted to the gauge-fixed tangent space, the second-order residual term and the LM damping satisfy 
+
+‖𝑅 𝑘 𝑖 ‖ = ‖‖‖𝐻 𝑘 𝑖 − ( 𝐽 𝑘 𝑖 )⊤𝐽 𝑘 𝑖 
+
+‖‖‖ ≤ 𝜀 𝑘 𝐻 , (29) 
+
+and 0 ≤ 𝜇 𝑘 𝑖 ≤ 𝜀 𝑘 𝜇 .
+
+Remark 2. The two assumptions above are local and stan-dard for nonlinear least-squares PGO[22, 9, 19]. After an-choring one pose, adding an equivalent prior, or restricting the analysis to the observable tangent space, a nondegen-erate local solution yields a positive definite Hessian with bounded spectrum, 𝑚 𝐻 𝐼 ⪯ 𝐻 𝑘 𝑖 ⪯ 𝐿 𝐻 𝐼 . The lower bound removes unobservable or degenerate directions, while the upper bound follows from residual smoothness in a compact neighborhood[22]. Moreover, for least-squares objectives, 
+
+𝐻 𝑘 𝑖 = ( 𝐽 𝑘 𝑖 )⊤𝐽 𝑘 𝑖 + 𝑅 𝑘 𝑖 . The residual term 𝑅 𝑘 𝑖 is bounded within the neighborhood of the regular solution, and the LM damping is bounded by design. Hence ‖𝑅 𝑘 𝑖 ‖ ≤ 𝜀 𝑘 𝐻 and 
+
+0 ≤ 𝜇 𝑘 𝑖 ≤ 𝜀 𝑘 𝜇 quantify the local accuracy of the LM/Gauss– Newton approximation[9, 19]. Lemma 3 (Local spectral equivalence of the LM approxi-mation) . Suppose Assumptions 4 and 5 hold. If, for some 
+
+0 < 𝛿 < 1,
+
+𝜀 𝑘 𝐻 + 𝜀 𝑘 𝜇 ≤ 𝛿𝑚 𝐻 , (30) 
+
+then 
+
+(1 − 𝛿 )𝐻 𝑘 𝑖 ⪯ 𝑀 𝑘 𝑖 ⪯ (1 + 𝛿 )𝐻 𝑘 𝑖 . (31) 
+
+Proof. The proof is provided in Appendix A.5. 
+
+Theorem 2 (Conditioning effect of approximate Newton preconditioning) . Suppose Assumptions 4 and 5 hold. If, for some 0 < 𝛿 < 1,
+
+𝜀 𝑘 𝐻 + 𝜀 𝑘 𝜇 ≤ 𝛿𝑚 𝐻 ,
+
+then 𝑀 𝑘 𝑖 is spectrally equivalent to 𝐻 𝑘 𝑖 , and the precondi-tioned local Hessian satisfies 
+
+11 + 𝛿 𝐼 ⪯ ( 𝑀 𝑘 𝑖 )−1∕2 𝐻 𝑘 𝑖 (𝑀 𝑘 𝑖 )−1∕2 ⪯ 11 − 𝛿 𝐼. (32) 
+
+Consequently, the condition number of the preconditioned local model is bounded by 
+
+𝜅 AN ≤ 1 + 𝛿 
+
+1 − 𝛿 . (33) 
+
+In contrast, an unpreconditioned Riemannian gradient step is governed by the condition number 
+
+𝜅 GD = 𝐿 𝐻 
+
+𝑚 𝐻 
+
+. (34) 
+
+Proof. The proof is provided in Appendix A.6. 
+
+Remark 3 (Connection to the DRAN update) . The DRAN update is obtained by minimizing the local quadratic model 
+
+𝑚 𝑘 𝑖 (𝜉 𝑖 ) = ̂ 𝐿 𝑖 (𝑧 𝑘 𝑖 ) + ⟨𝑔 𝑘 𝑖 , 𝜉 𝑖 ⟩ + 12 ⟨𝜉 𝑖 , 𝑀 𝑘 𝑖 𝜉 𝑖 ⟩.
+
+Thus, the resulting full-space direction is 
+
+𝜉 𝑘 𝑖 = −( 𝑀 𝑘 𝑖 )−1 𝑔 𝑘 𝑖 ,
+
+which can be interpreted as a Riemannian preconditioned gradient direction with preconditioner (𝑀 𝑘 𝑖 )−1 . The matrix 
+
+(𝑀 𝑘 𝑖 )−1∕2 𝐻 𝑘 𝑖 (𝑀 𝑘 𝑖 )−1∕2 
+
+is the effective Hessian approximation after this precon-ditioning. If 𝑀 𝑘 𝑖 is spectrally close to 𝐻 𝑘 𝑖 , this effective Hessian is close to the identity, meaning that the local cur-vature is approximately normalized. This is the theoretical mechanism by which approximate second-order information can reduce the number of optimization iterations. 
+
+Remark 4 (Interpretation of the Acceleration Effect) . The-orem 1 establishes that the objective strictly decreases by at least 𝜌 AN ‖𝑔 𝑘 𝑖 ‖2. To intuitively understand the acceleration, consider the optimal step size 𝛼 ∗ = 𝑐 2
+
+> 𝑚
+> 𝐿𝑐 𝑀
+
+, which yields a descent factor of: 
+
+𝜌 ∗AN = 12𝐿 
+
+( 𝑐 𝑚 
+
+𝑐 𝑀 
+
+)2
+
+. (35) 
+
+When the iterates enter a regular local region, Lemma 3 and Theorem 2 show that the LM approximation acts as an preconditioner. By transforming the problem into the preconditioned local geometry, the curvature matrix has explicitly bounded eigenvalues from Equation (32) . Thus, the effective local bounds become ̃𝑐 𝑚 = 11+ 𝛿 and ̃𝑐 𝑀 = 11− 𝛿 .Consequently, the condition number of the precondi-tioned update is tightly bounded by 𝜅 AN =̃ 𝑐 𝑀 ∕̃𝑐 𝑚 ≤ 1+ 𝛿  
+
+> 1− 𝛿
+
+.Substituting this localized effective condition number into our descent factor gives: 
+
+𝜌 ∗AN ,local ≈ 12𝐿 
+
+(̃𝑐 𝑚 ̃𝑐 𝑀 
+
+)2
+
+= 12𝐿 
+
+( 1 − 𝛿 
+
+1 + 𝛿 
+
+)2
+
+≈ 12𝐿 , (36) 
+
+because 𝛿 ≪ 1. This means the DRAN update guarantees a large, stable descent step independent of the original problem’s ill-conditioning. In contrast, an unpreconditioned Riemannian gradient step (GD) is bottlenecked by the raw curvature of the problem, where the effective condition num-ber is 𝜅 GD = 𝐿 𝐻 ∕𝑚 𝐻 . The corresponding descent factor is drastically reduced, i.e., 
+
+𝜌 ∗GD ∝ 12𝐿 
+
+( 1
+
+𝜅 GD 
+
+)2
+
+≪ 12𝐿 . (37) 
+
+For ill-conditioned PGO problems, 𝜅 GD can be massive, forcing 𝜌 ∗GD toward zero and causing severe zig-zagging. Therefore, with preconditioning of the local geometry, DRAN improves the descent bound by enlarging the effective descent factor 𝜌 AN to enforce 𝜅 AN ≈ 1 and thus significantly reducing the number of required iterations and communica-tion rounds compared to first-order methods. 
+
+## 6. Experiments 
+
+In this section, we evaluate the performance of our method on PGO problems using (i) benchmark and large-scale simulation datasets and (ii) a real-world multi-robot SLAM dataset. Unless otherwise specified, our optimization algorithms were implemented in Python using the PyPose library [30]. The benchmark and simulation experiments were executed offline on a workstation with an Intel i7-12800HX CPU and 16 GB RAM running Ubuntu 20.04. The real-world experiments were executed on a six-robot testbed composed of differential-drive Clearpath Dingo platforms. Each robot runs ROS 1 on an NVIDIA Jetson Orin Nano (8 GB) with Ubuntu 20.04, and is equipped with an Intel RealSense D435i camera and its built-in BMI055 IMU for VIO, as well as AprilTag-based object identification. Inter-robot communication is realized via a router-based WiFi network using UDP. Ground-truth robot trajectories and object poses are recorded by an OptiTrack motion-capture Table 1                                                                        
+
+> EVALUATION ON PGO BENCHMARK DATASET: Performance comparison of four methods regarding objective values and the Total Transmitted Data (MB), the lower objective and transmitted data volume mean better. Dataset Vertices Edges Objective Total Transmitted Data (MB) F Init. F* DC2-PGO DGS Ours DC2-PGO DGS Ours 3D Parking Garage 1661 6275 1.64 1.263 1.311 1.33 1.289 17.21 5.41 1.23
+> Sphere 2500 4949 1892 1687 1687 1689 1687 4.95 13.73 1.34
+> Torus 5000 9048 24617 24227 24227 24246 24227 17.24 9.14 3.23
+> 2D CSAIL 1045 1171 31.50 31.47 31.47 31.49 31.47 0.52 11.857 0.01
+> Intel 1228 1483 396.6 393.7 393.7 428.89 393.7 4.47 0.06 0.54 Manhattan 3500 5453 369.0 193.9 194.0 242.05 194.0 115.70 152.31 13.47
+
+system, which is used only for evaluation and initial frame alignment. The following section details the datasets and experimental protocols for each setting. 
+
+6.1. Performance on Benchmark Datasets 
+
+To evaluate the accuracy and efficiency of our decentral-ized second-order Riemannian optimization algorithm, we tested it on G2O benchmark pose-graph datasets. Although these datasets contain no objects, they include heteroge-neous SLAM graphs with cross-trajectory constraints that can be used to emulate inter-robot consistency requirements. We simulate a multi-robot setting by splitting each trajec-tory into five segments and assigning each segment to one robot. The physical topology is defined by inter-robot mea-surements, and the communication topology follows it by exchanging separator variables between connected robots. Our method is fully decentralized and does not require any central node to coordinate update ordering. We compared our method with three state-of-the-art baselines: the cen-tralized SE(3) synchronization method SE-Sync [22], the Distributed Gauss–Seidel (DGS) approach [5], and DC2-PGO [26]. All methods optimize the pose graph via convex relaxations of Problem 1: SE-Sync and DC2-PGO solve a semidefinite relaxation of the chordal formulation, while DGS solves a distributed quadratic relaxation. For DGS, the successive overrelaxation parameter is set to 1.0 as suggested in [5]. We report the chordal objective values for all methods and the required local iterations 𝑘 for DGS and DC2-PGO in Table 1, where 𝑘 equals the number of inter-robot communication rounds. All methods share the same distributed chordal initialization, with the Gauss-Seidel iter-ations capped at 50 for both rotation and translation to limit initialization communication. Fig. 3 visualizes the optimization results on the Sphere and Tours datasets obtained by our method. The results show that the five robots successfully reconstruct the over-all pose graph by exchanging only separator variables at inter-robot boundaries. As reported in Table 1, our method attains objective values that are very close to the central-ized optimum while substantially reducing communication. Specifically, our method matches the best objective value on Sphere, Torus, CSAIL, and Intel, and remains within 
+
+2.06% and 0.06% of the best value on Parking Garage         
+
+> Figure 3: Illustration of two pose graphs optimized using our proposed method. Each graph is distinguished by five colored lines representing the poses of five different robots. (a) corresponds to the Sphere2500 dataset, consisting of 2500 poses and 4949 edges; (b) corresponds to the Torus dataset, consisting of 5000 poses and 9048 edges.
+
+and Manhattan, respectively. In terms of transmitted data, our method reduces the total communication volume from 
+
+160 .09 MB to 19 .82 MB compared with DC2-PGO, corre-sponding to an 87 .62% reduction. Compared with DGS, the total transmitted data is reduced from 192 .51 MB to 19 .82 
+
+MB, corresponding to an 89 .70% reduction. On individ-ual datasets, the communication reduction over DC2-PGO ranges from 72 .93% to 98 .08% . These results indicate that DRAN preserves near-centralized estimation accuracy while significantly lowering communication costs in decentralized multi-robot PGO. 
+
+6.2. Performance on Large-scale Simulation Datasets 
+
+6.2.1. Evaluations of diverse communication topology 
+
+To demonstrate the fully distributed characteristics of our algorithm and verify its flexibility to arbitrarily con-nected communication topology in a space containing ob-jects, we designed a simulation experiment involving 21 Unmanned Aerial Vehicles (UAV) in a cluttered space based on platform EGO-Swarm [37], as shown in Fig. 4. The simulation space contains 60 obstacles with randomly as-signed poses, and 21 UAVs passed through obstacles and reached specified locations. Without loss of generality, we assume that the world-to-robot frame transform is known at the initial stage. Each UAV will get the initial pose of Figure 4: Multi-UAV trajectory estimation and object local-ization experiments. Colored lines: the trajectories of different UAVs. Star symbols: goal points of the robot. Colored polyhe-dra: obstacle locations. 
+
+its trajectory using odometry measurements and obtain the corresponding noisy observations when its distance to any obstacle gets below 5𝑚 . All measurements are corrupted by Langevin rotation noise with 1◦ standard deviation and Gaussian translation noise with 0.005 𝑚 standard deviation. Specifically, translations and rotations of the observations are randomly sampled as follows, ̃ 𝑡 𝑖𝑗 = 𝑡 𝑖𝑗 + 𝑡 𝜖 𝑖𝑗 , 𝑡 𝜖 𝑖𝑗 ∼
+
+ (0 , 𝜏 𝑖𝑗 𝐼 𝑑 ),̃ 𝑅 𝑖𝑗 = 𝑅 𝜖 𝑖𝑗 𝑅 𝑖𝑗 , 𝑅 𝜖 𝑖𝑗 ∼ 𝐿𝑎𝑛𝑔𝑒𝑣𝑖𝑛 (𝐼 𝑑 , 𝜅 𝑖𝑗 ),where 𝜅 𝑖𝑗 and 𝜏 𝑖𝑗 denote the root-mean-squared (RMS) error for rotational ( ̃𝑅 𝑖𝑗 ) and translational ( ̃ 𝑡 𝑖𝑗 ) measurements, respectively. The degree of communication connectivity 𝜌 is defined as the probability of generating communication edges be-tween any two robots. To compare the effectiveness of our method under various levels of communication connectivity, we collect the ground truth poses of the UAVs and obstacles in the simulation environment. We use SE-Sync[22] and the Levenberg-Marquardt (LM) method from the G2O library, two centralized methods, as baselines for comparison when solving Problem 1. We use the success ratio of ATE ( 𝑆𝑅 𝐴𝑇 𝐸 ) as a criterion for evaluating the results, which is defined as follows: 
+
+𝑆𝑅 𝐴𝑇 𝐸 = 𝐴𝑇 𝐸 0 − 𝐴𝑇 𝐸 𝑘 
+
+𝐴𝑇 𝐸 0 − 𝐴𝑇 𝐸 ∗ × 100% , (38) where ̄ 𝑇 𝑖 is the ground truth value of pose 𝑖 , 𝐴𝑇 𝐸 =√
+
+> 1
+> 𝑁
+
+∑𝑁 𝑖 =1 1
+
+> 𝑛 𝑖
+
+∑𝑛 𝑖  
+
+> 𝑗 =1
+
+‖Log 𝐼 
+
+(̄𝑥 −1  
+
+> 𝑖 𝑗
+
+𝑥 𝑖 𝑗 
+
+)‖2, 𝐴𝑇 𝐸 0 is the ATE of the initial poses, 𝐴𝑇 𝐸 𝑘 is the ATE of the result poses of our method, and 𝐴𝑇 𝐸 ∗ is the ATE of the result poses of the centralized method. Besides, we defined the success rate of cost in terms of the cost function value as follows, 
+
+𝑆𝑅 𝑐𝑜𝑠𝑡 = 𝐹 𝑖𝑛𝑖𝑡 − 𝐹 𝑘 
+
+𝐹 𝑖𝑛𝑖𝑡 − 𝐹 ∗ × 100% , (39) which characterizes the gap between the cost function value achieved by our decentralized method and the cost function value achieved by a centralized algorithm. To measure the consistency and accuracy of the esti-mation results of all robots regarding the poses of environ-mental obstacles, we define the consistency error (CE) as follows, 
+
+𝐶𝐸 = 1
+
+𝑁 
+
+> 𝑁
+
+∑
+
+> 𝑖 =1
+
+1
+
+𝑚 
+
+> 𝑚
+
+∑
+
+> 𝑗 =1
+
+‖Log 𝐼 
+
+(
+
+𝑦 −1  
+
+> 𝑖 𝑗
+
+𝑦 𝑎𝑣𝑔 j
+
+)‖2, (40) where 𝒚 𝑎𝑣𝑔 = 𝑎𝑟𝑔 min [𝑦 1,⋯,𝑦 𝑚 ]
+
+> 1
+> 𝑁
+
+∑𝑁 𝑖 =1 1
+
+> 𝑚
+
+∑𝑚 𝑗 =1 ‖Log 𝐼 
+
+(
+
+𝑦 −1  
+
+> 𝑖 𝑗
+
+𝑦 𝑗 
+
+)‖2 is the average of all robot estimates of the obstacles’ poses. Moreover, we introduce a metric noted as Bias that reflects the error between the average and ground truth value: 
+
+𝐵𝑖𝑎𝑠 =
+
+√√√√√ 1
+
+𝑁 
+
+> 𝑁
+
+∑
+
+> 𝑖 =1
+
+1
+
+𝑚 
+
+> 𝑚
+
+∑
+
+> 𝑗 =1
+
+‖Log 𝐼 
+
+(̄𝑦 −1  
+
+> 𝑖 𝑗
+
+𝑦 𝑖 𝑗 
+
+)‖2. (41) We evaluated the success rate (defined as the optimality gap of cost) under varying levels of communication con-nectivity. The results presented in Fig. 5 and Fig. 6 show the quantitative results of the large-scale simulation. Our method maintains a high success ratio in scenarios with dif-ferent communication topologies. It demonstrates resilience to the sparseness of communication topology, showcasing its adaptability in unstructured and complex environments. Moreover, we find the estimates of all robots for the shared variables (the poses of environmental obstacles) converge to the consensus rapidly with a few iterations. At the same time, the mean value rapidly approaches the ground truth value. Besides, we found that in a few tests, the results of our decentralized algorithm are closer to the ground truth for different topology degrees than the centralized solution results. This is mainly because the PGO problem is non-convex, and the centralized method cannot find the optimal solution easily. 
+
+6.2.2. Evaluations of diverse measurement noises 
+
+In this experiment, we evaluate the robustness of our distributed PGO method under different levels of noise in measurements. Noise is introduced separately to both trans-lational and rotational measurements with increasing mag-nitudes, with noise levels noted by 𝜏 for translation and 
+
+𝜅 for rotation. The system consists of 21 robots, each ex-changing information within a predefined communication network with 𝜌 = 0 .3. We compare the performance of our distributed approach to two centralized PGO methods, LM and SE-Sync[22]. The success ratio of our method under a multi-level noisy dataset are shown in Fig. 7 and Fig. 8, demonstrating our distributed method achieves performance comparable to the centralized baseline, particularly at lower noise levels. As noise increases, the distributed method maintains robust-ness, showing only a marginal increase in error compared to the centralized approach. This indicates that our method effectively mitigates the impact of noise, maintaining con-sistency in both translational and rotational estimations, making it more suitable for noisy observations in real-world applications. (a) SR-ATE (b) Bias convergence (c) CE convergence 
+
+Figure 5: Performance on large-scale simulation datasets in diverse communication topology. 
+
+Figure 6: The success rate of cost on large-scale simulation datasets in diverse communication topologies.     
+
+> (a) 𝜅 = 0 .01
+> (b) 𝜏 = 0 .001
+
+Figure 7: Success ratio of ATE from the multi-level noisy datasets. 
+
+6.2.3. Evaluations of the effectiveness of Schur complement 
+
+To validate the effectiveness of using the Schur comple-ment in our method, we performed several numerical experi-ments focusing on both computation time and accuracy. The experiment was conducted on a predefined communication network with a network density of 𝜌 = 0 .5, and the results were averaged over 20 trials for each configuration. The     
+
+> (a) 𝜅 = 0 .01
+> (b) 𝜏 = 0 .001
+
+Figure 8: Success ratio of cost from the multi-level noisy datasets. 
+
+Table 2 
+
+DRAN performance comparison with or without Schur com-plement in Ego dataset.           
+
+> DataSet Private/public Method Time ave (ms) Cost
+> Ego 8.735 DRAN w/ SC 31.39 0.0919
+> DRAN w/o SC 53.04 0.0920
+
+comparison was made between our method with the Schur complement (DRAN w/ SC) and without it (DRAN w/o SC). A summary of the results for the large-scale simulation dataset (Ego) is presented in Table 2. The experimental results illustrate that the Schur com-plement significantly reduces the average computation time without compromising the accuracy of the final optimiza-tion. Specifically, the method with the Schur complement demonstrated a reduction in computation time by approx-imately 41% compared to the method without the Schur complement. On the Ego dataset, the average computation time with the Schur complement was 31 .39 𝑚𝑠 , in contrast to 53 .04 𝑚𝑠 for the method without the Schur complement. Figure 9: The success ratio of ATE under different degrees of connectivity for real-world dataset experiments. 
+
+In terms of accuracy, the final optimized pose showed near-identical results: an objective value of 0.0919 with the Schur complement and 0.0920 without it. These results confirm that the application of the Schur complement improves com-putational efficiency without sacrificing optimization qual-ity. 
+
+6.3. Real-World Multi-Robot System Validation 
+
+To validate deployability under real sensing and commu-nication constraints, we collected a real-world multi-robot dataset in an indoor environment at the Yuquan Campus, Zhejiang University, Hangzhou, China (Fig. 1a). We placed 9 AprilTag-tagged boxes in the scene to provide object identities for cross-robot data association. During data col-lection, the robots were teleoperated to execute approxi-mately circular trajectories, producing repeated observations and sufficient inter-robot overlap of observation region. For evaluation, ground-truth robot trajectories and object poses were recorded by an OptiTrack motion-capture system. The motion capture system is used only for evaluation and for initializing the world-to-robot frame transform at the start of each run, and is not involved in the subsequent estimation. Each robot obtains odometry by running VINS-Mono [21] on the onboard camera (RGB stream, 640 ×480P at 30 FPS) stream and BMI055 IMU measurements (100 Hz), while loop closures are detected by DBoW2 [12] and incorpo-rated as relative-pose constraints. To ensure reproducible sparsity, we enforce a predefined random connected sparse communication graph 𝐺 𝑐 at the application layer: although all robots are IP-reachable on the same WLAN, robot 𝑖 only exchanges messages with its neighbor set 𝑖 specified by 
+
+𝐺 𝑐 . Communication is rate-limited to at most 2 Hz, and each message contains only the variables required by Algorithm 1 (separator states and object pose estimates). On average, each robot’s pose graph contains 112 nodes and 165 edges. The initial trajectory and object pose estimates are shown in Fig. 1b. As the optimized trajectories and object poses shown in Fig. 1c, the algorithm can maintain consistent and accurate pose estimates, closely matching the ground truth obtained from the motion capture system. Similar to the simulation experiments, the quantitative metrics specific to the success ratio are reported in Fig. 9. Our distributed PGO method demonstrated a high success ratio across various communi-cation topologies, with performance close to the centralized baseline. Furthermore, the results confirmed the method’s adaptability to different communication structures, showing robustness in communication-poor scenarios. This high-lights the advantage of our approach in practical multi-robot applications, where communication constraints frequently arise. Notably, our method achieved similar accuracy to the centralized approach, even in sparse networks. 
+
+## 7. Conclusion 
+
+This paper presented DRAN, a fully decentralized Rie-mannian approximate Newton framework for object-based multi-robot PGO. The key idea is to exploit the intrinsic variable structure of object-based PGO: shared objects are treated as public variables requiring Riemannian consensus, while robot trajectories remain private and interact only through sparse separator exchange. This object-trajectory-aware formulation reduces unnecessary communication un-der mismatched physical and communication topologies. To solve the resulting decentralized problem, DRAN constructs local Newton approximation curvature models on the 𝑆𝐸 (𝑑 )
+
+manifold and computes curvature-preconditioned updates without exchanging full Hessians, gradients, or pose graphs. We established the positive definiteness of the reduced second-order update, proved convergence to Riemannian first-order stationary points, and provided a local condition-number analysis showing how approximate second-order information improves the effective conditioning compared with first-order Riemannian descent. Extensive experiments on public PGO benchmarks, large-scale object-based simu-lations, and a real multi-robot platform verified the accuracy, efficiency, and deployability of the proposed method. In particular, the communication-centered evaluations demon-strated that DRAN achieves near-centralized estimation performance with lower transmitted data and maintains robustness under sparse communication graphs and prob-abilistic network interruptions. 
+
+## Declaration of Competing Interest 
+
+The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper. 
+
+## Data Availability 
+
+Data and code will be made available on reasonable request. 
+
+## References     
+
+> [1] Absil, P.A., Mahony, R., Sepulchre, R., 2009. Optimization algo-rithms on matrix manifolds, in: Optimization Algorithms on Matrix Manifolds. Princeton University Press. [2] Briales, J., Gonzalez-Jimenez, J., 2017. Cartan-sync: Fast and global se(d)-synchronization. IEEE Robotics and Automation Letters 2, 2127–2134. doi: 10.1109/LRA.2017.2718661 .
+
+[3] Carlone, L., Tron, R., Daniilidis, K., Dellaert, F., 2015. Initialization techniques for 3d slam: A survey on rotation estimation and its use in pose graph optimization, in: 2015 IEEE international conference on robotics and automation (ICRA), IEEE. pp. 4597–4604. [4] Choudhary, S., Carlone, L., Christensen, H.I., Dellaert, F., 2015. Exactly sparse memory efficient slam using the multi-block alternat-ing direction method of multipliers, in: 2015 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS), pp. 1349– 1356. doi: 10.1109/IROS.2015.7353543 .[5] Choudhary, S., Carlone, L., Nieto, C., Rogers, J., Christensen, H.I., Dellaert, F., 2017. Distributed mapping with privacy and communi-cation constraints: Lightweight algorithms and object-based models. The International Journal of Robotics Research 36, 1286–1311. [6] Cristofalo, E., Montijano, E., Schwager, M., 2020. GeoD: Consensus-based Geodesic Distributed Pose Graph Optimization. arXiv e-prints , arXiv:2010.00156 arXiv:2010.00156 .[7] Cunningham, A., Indelman, V., Dellaert, F., 2013. Ddf-sam 2.0: Consistent distributed smoothing and mapping, in: 2013 IEEE In-ternational Conference on Robotics and Automation, pp. 5220–5227. doi: 10.1109/ICRA.2013.6631323 .[8] Dellaert, F., Contributors, G., 2022. borglab/gtsam. URL: https: //github.com/borglab/gtsam) , doi: 10.5281/zenodo.5794541 .[9] Dennis Jr, J.E., Schnabel, R.B., 1996. Numerical methods for uncon-strained optimization and nonlinear equations. SIAM. [10] Eriksson, A., Bastian, J., Chin, T.J., Isaksson, M., 2016. A consensus-based framework for distributed bundle adjustment, in: Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition, pp. 1754–1762. [11] Fan, T., Murphey, T.D., 2024. Majorization minimization methods for distributed pose graph optimization. IEEE Transactions on Robotics 40, 22–42. doi: 10.1109/TRO.2023.3324818 .[12] Gálvez-López, D., Tardós, J.D., 2012. Bags of binary words for fast place recognition in image sequences. IEEE Transactions on Robotics 28, 1188–1197. doi: 10.1109/TRO.2012.2197158 .[13] Halsted, T., Shorinwa, O., Yu, J., Schwager, M., 2021. A survey of distributed optimization methods for multi-robot systems. arXiv preprint arXiv:2103.12840 . [14] Knuth, Joseph and Barooah, Prabir, 2013. Collaborative localization with heterogeneous inter-robot measurements by riemannian opti-mization, in: 2013 IEEE International Conference on Robotics and Automation, IEEE. pp. 1534–1539. [15] Kümmerle, R., Grisetti, G., Strasdat, H., Konolige, K., Burgard, W., 2011. G2o: A general framework for graph optimization, in: 2011 IEEE International Conference on Robotics and Automation, pp. 3607–3613. doi: 10.1109/ICRA.2011.5979949 .[16] Liu, X., Wen, S., Zhao, J., Qiu, T.Z., Zhang, H., 2025. Edge-assisted multi-robot visual-inertial slam with efficient communication. IEEE Transactions on Automation Science and Engineering 22, 2186–2198. doi: 10.1109/TASE.2024.3376427 .[17] McGann, D., Lassak, K., Kaess, M., 2024. Asynchronous distributed smoothing and mapping via on-manifold consensus ADMM, in: Proc. IEEE Intl. Conf. on Robotics and Automation (ICRA), Yokohama, JP. pp. 4577–4583. [18] Nguyen, T.H., Xie, L., 2022. Relative transformation estimation based on fusion of odometry and uwb ranging data. arXiv preprint arXiv:2202.00279 . [19] Nocedal, J., Wright, S.J., 2006. Numerical optimization. Springer. [20] Ott, F., Heublein, L., Rügamer, D., Bischl, B., Mutschler, C., 2023. Fusing structure from motion and simulation-augmented pose regres-sion from optical flow for challenging indoor environments. arXiv preprint arXiv:2304.07250 . [21] Qin, T., Li, P., Shen, S., 2018. Vins-mono: A robust and versatile monocular visual-inertial state estimator. IEEE Transactions on Robotics 34, 1004–1020. doi: 10.1109/TRO.2018.2853729 .[22] Rosen, D.M., Carlone, L., Bandeira, A.S., Leonard, J.J., 2019. SE-Sync: A certifiably correct algorithm for synchronization over the special euclidean group. The International Journal of Robotics Research 38, 95–125. [23] Schmuck, P., Ziegler, T., Karrer, M., Perraudin, J., Chli, M., 2021. Covins: Visual-inertial slam for centralized collaboration, in: 2021 IEEE International Symposium on Mixed and Augmented Reality Adjunct (ISMAR-Adjunct), IEEE. pp. 171–176. [24] Tian, Y., Bedi, A.S., Koppel, A., Calvo-Fullana, M., Rosen, D.M., How, J.P., 2022. Distributed riemannian optimization with lazy communication for collaborative geometric estimation. ArXiv abs/2203.00851. [25] Tian, Y., Chang, Y., Arias, F.H., Nieto-Granda, C., How, J.P., Carlone, L., 2021a. Kimera-multi: Robust, distributed, dense metric-semantic SLAM for multi-robot systems. CoRR abs/2106.14386. URL: https: //arxiv.org/abs/2106.14386 , arXiv:2106.14386 .[26] Tian, Y., Khosoussi, K., Rosen, D.M., How, J.P., 2021b. Distributed certifiably correct pose-graph optimization. IEEE Transactions on Robotics 37, 2137–2156. [27] Tian, Y., Koppel, A., Bedi, A.S., How, J.P., 2020. Asynchronous and parallel distributed pose graph optimization. IEEE Robotics and Automation Letters 5, 5819–5826. doi: 10.1109/LRA.2020.3010216 .[28] Tron, R., Vidal, R., 2014. Distributed 3-d localization of camera sensor networks from 2-d image measurements. IEEE Transactions on Automatic Control 59, 3325–3340. [29] Tron, Roberto and Afsari, Bijan and Vidal, René, 2012. Riemannian consensus for manifolds with bounded curvature. IEEE Transactions on Automatic Control 58, 921–934. [30] Wang, C., Gao, D., Xu, K., Geng, J., Hu, Y., Qiu, Y., Li, B., Yang, F., Moon, B., Pandey, A., et al., 2022. Pypose: A library for robot learning with physics-based optimization. arXiv preprint arXiv:2209.15428 . [31] Wei, E., Ozdaglar, A., 2013. On the o (1= k) convergence of asyn-chronous distributed alternating direction method of multipliers, in: 2013 IEEE Global Conference on Signal and Information Processing, IEEE. pp. 551–554. [32] Wu, C., Agarwal, S., Curless, B., Seitz, S.M., 2011. Multicore bundle adjustment, in: CVPR 2011, IEEE. pp. 3057–3064. [33] Xiao, L., Boyd, S., 2003. Fast linear iterations for distributed averaging, in: 42nd IEEE International Conference on Decision and Control (IEEE Cat. No.03CH37475), pp. 4997–5002 Vol.5. doi: 10. 1109/CDC.2003.1272421 .[34] Xu, Y., Zheng, R., Zhang, S., Liu, M., Yu, J., 2025. Uncertainty-aware autonomous robot exploration using confidence-rich localization and mapping. IEEE Transactions on Automation Science and Engineering 22, 1124–1138. doi: 10.1109/TASE.2024.3360442 .[35] Zhang, J., Ling, Q., So, A.M.C., 2021. A newton tracking algorithm with exact linear convergence for decentralized consensus optimiza-tion. IEEE Transactions on Signal and Information Processing over Networks 7, 346–358. doi: 10.1109/TSIPN.2021.3083975 .[36] Zhang, R., Zhu, S., Fang, T., Quan, L., 2017. Distributed very large scale bundle adjustment by global camera consensus, in: Proceedings of the IEEE International Conference on Computer Vision, pp. 29–38. [37] Zhou, X., Zhu, J., Zhou, H., Xu, C., Gao, F., 2021. Ego-swarm: A fully autonomous and decentralized quadrotor swarm system in cluttered environments, in: 2021 IEEE International Conference on Robotics and Automation (ICRA), pp. 4101–4107. doi: 10.1109/ICRA48506. 2021.9561902 .[38] Ziegler, T., Karrer, M., Schmuck, P., Chli, M., 2021. Distributed formation estimation via pairwise distance measurements. IEEE Robotics and Automation Letters 6, 3017–3024. 
+
+## A. Proofs for the Convergence Analysis 
+
+This appendix collects the detailed proofs omitted from Section 5. 
+
+A.1. Proof of Lemma 1 (Positive definiteness of the LM approximation) 
+
+For any tangent vector 𝜉 ∈ 𝑇 𝑧 𝑘 𝑖 
+
+𝑖 ,
+
+⟨𝜉, 𝑀 𝑘 𝑖 𝜉 ⟩ = ‖(𝐽 𝑘 𝑖 )𝜉 ‖2 + 𝜇 𝑘 𝑖 ‖𝜉 ‖2 ≥ 𝜇 ‖𝜉 ‖2.Thus 𝑀 𝑘 𝑖 ⪰ 𝜇𝐼 . Moreover, 
+
+⟨𝜉, 𝑀 𝑘 𝑖 𝜉 ⟩ = ‖(𝐽 𝑘 𝑖 )𝜉 ‖2 + 𝜇 𝑘 𝑖 ‖𝜉 ‖2 ≤ (̄𝐽 2 +̄𝜇 )‖𝜉 ‖ 2.
+
+Hence 𝑀 𝑘 𝑖 ⪯ ( ̄𝐽 2 +̄𝜇 )𝐼 . The proof is complete. 
+
+A.2. Proof of Lemma 2 (Positive definiteness of the Schur complement) 
+
+Since 𝑀 𝑘 𝑖 ⪰ 𝑐 𝑚 𝐼 ≻ 0, every principal block of 𝑀 𝑘 𝑖 is positive definite. Therefore 𝐴 𝑘 𝑖 ≻ 0.Because 𝑀 𝑘 𝑖 ≻ 0 and 𝐴 𝑘 𝑖 ≻ 0, the Schur complement ̂𝐻 𝑘 𝑖 = 𝐵 𝑘 𝑖 − ( 𝐶 𝑘 𝑖 )⊤(𝐴 𝑘 𝑖 )−1 𝐶 𝑘 𝑖 
+
+is positive definite. It remains to prove the explicit spectral bounds. For the lower bound, use the block inverse identity: the lower-right block of (𝑀 𝑘 𝑖 )−1 is (̂ 𝐻 𝑘 𝑖 )−1 . Since 𝑀 𝑘 𝑖 ⪰ 𝑐 𝑚 𝐼 , we have 
+
+(𝑀 𝑘 𝑖 )−1 ⪯ 1
+
+𝑐 𝑚 
+
+𝐼. 
+
+Therefore, 
+
+(̂𝐻 𝑘 𝑖 )−1 ⪯ 1
+
+𝑐 𝑚 
+
+𝐼, 
+
+which implies ̂ 𝐻 𝑘 𝑖 ⪰ 𝑐 𝑚 𝐼. 
+
+For the upper bound, for any public tangent vector 𝑣 ,
+
+⟨𝑣,̂ 𝐻 𝑘 𝑖 𝑣 ⟩ = min 
+
+> 𝑢
+
+⟨[ 𝑢 𝑣 
+
+]
+
+, 𝑀 𝑘 𝑖 
+
+[𝑢 𝑣 
+
+]⟩ 
+
+≤
+
+⟨[ 0
+
+𝑣 
+
+]
+
+, 𝑀 𝑘 𝑖 
+
+[0
+
+𝑣 
+
+]⟩ 
+
+≤ 𝑐 𝑀 ‖𝑣 ‖2.
+
+Thus ̂ 𝐻 𝑘 𝑖 ⪯ 𝑐 𝑀 𝐼 . The proof is complete. 
+
+A.3. Proof of Theorem 1 (Curvature-preconditioned descent) 
+
+By Assumption 2, with 𝜉 = 𝛼𝜉 𝑘 𝑖,𝑁 , we have ̂𝐿 𝑖 (𝑧 𝑘 +1  
+
+> 𝑖
+
+) = ̂ 𝐿 𝑖 
+
+(Retr 𝑧 𝑘 𝑖 
+
+(𝛼𝜉 𝑘 𝑖,𝑁 ))
+
+≤̂ 𝐿 𝑖 (𝑧 𝑘 𝑖 ) + 𝛼 ⟨𝑔 𝑘 𝑖 , 𝜉 𝑘 𝑖,𝑁 ⟩ + 𝐿𝛼 2
+
+2 ‖𝜉 𝑘 𝑖,𝑁 ‖2.
+
+Since 𝜉 𝑘 𝑖,𝑁 = −( 𝑀 𝑘 𝑖 )−1 𝑔 𝑘 𝑖 ,
+
+⟨𝑔 𝑘 𝑖 , 𝜉 𝑘 𝑖,𝑁 ⟩ = − ⟨𝑔 𝑘 𝑖 , (𝑀 𝑘 𝑖 )−1 𝑔 𝑘 𝑖 ⟩.
+
+Using 𝑀 𝑘 𝑖 ⪯ 𝑐 𝑀 𝐼 , we obtain 
+
+⟨𝑔 𝑘 𝑖 , (𝑀 𝑘 𝑖 )−1 𝑔 𝑘 𝑖 ⟩ ≥ 1
+
+𝑐 𝑀 
+
+‖𝑔 𝑘 𝑖 ‖2.
+
+Using 𝑀 𝑘 𝑖 ⪰ 𝑐 𝑚 𝐼 , we also have 
+
+‖𝜉 𝑘 𝑖,𝑁 ‖ = ‖(𝑀 𝑘 𝑖 )−1 𝑔 𝑘 𝑖 ‖ ≤ 1
+
+𝑐 𝑚 
+
+‖𝑔 𝑘 𝑖 ‖.
+
+Therefore, ̂𝐿 𝑖 (𝑧 𝑘 +1  
+
+> 𝑖
+
+) ≤̂ 𝐿 𝑖 (𝑧 𝑘 𝑖 ) − 𝛼 𝑐 𝑀 
+
+‖𝑔 𝑘 𝑖 ‖2 + 𝐿𝛼 2
+
+2𝑐 2
+
+> 𝑚
+
+‖𝑔 𝑘 𝑖 ‖2
+
+=̂ 𝐿 𝑖 (𝑧 𝑘 𝑖 ) − 
+
+(
+
+𝛼 𝑐 𝑀 
+
+− 𝐿𝛼 2
+
+2𝑐 2
+
+> 𝑚
+
+)‖𝑔 𝑘 𝑖 ‖2.
+
+The stepsize condition (22) guarantees 𝜌 AN > 0. The proof is complete. 
+
+A.4. Proof of Corollary 1 (Non-asymptotic first-order stationarity) 
+
+Summing (23) from 𝑘 = 0 to 𝐾 − 1 gives 
+
+𝜌 AN 
+
+> 𝐾 −1
+
+∑
+
+> 𝑘 =0
+
+‖𝑔 𝑘 𝑖 ‖2 ≤̂ 𝐿 𝑖 (𝑧 0 
+
+> 𝑖
+
+) − ̂ 𝐿 𝑖 (𝑧 𝐾 𝑖 ) ≤̂ 𝐿 𝑖 (𝑧 0 
+
+> 𝑖
+
+) − ̂ 𝐿 ⋆𝑖 .
+
+Therefore, 
+
+min  
+
+> 0≤𝑘 ≤𝐾 −1
+
+‖𝑔 𝑘 𝑖 ‖2 ≤ 1
+
+𝐾 
+
+> 𝐾 −1
+
+∑
+
+> 𝑘 =0
+
+‖𝑔 𝑘 𝑖 ‖2 ≤̂ 𝐿 𝑖 (𝑧 0 
+
+> 𝑖
+
+) − ̂ 𝐿 ⋆𝑖 
+
+𝜌 AN 𝐾 .
+
+The proof is complete. 
+
+A.5. Proof of Lemma 3 (Local spectral equivalence of the LM approximation) 
+
+From (26) and (27), we have 
+
+𝑀 𝑘 𝑖 − 𝐻 𝑘 𝑖 = 𝜇 𝑘 𝑖 𝐼 − 𝑅 𝑘 𝑖 .
+
+Therefore, 
+
+‖𝑀 𝑘 𝑖 − 𝐻 𝑘 𝑖 ‖ ≤ 𝜇 𝑘 𝑖 + ‖𝑅 𝑘 𝑖 ‖ ≤ 𝜀 𝑘 𝜇 + 𝜀 𝑘 𝐻 ≤ 𝛿𝑚 𝐻 .
+
+Hence, 
+
+−𝛿𝑚 𝐻 𝐼 ⪯ 𝑀 𝑘 𝑖 − 𝐻 𝑘 𝑖 ⪯ 𝛿𝑚 𝐻 𝐼. 
+
+Since Assumption 4 gives 𝐻 𝑘 𝑖 ⪰ 𝑚 𝐻 𝐼 , we have 
+
+𝛿𝑚 𝐻 𝐼 ⪯ 𝛿𝐻 𝑘 𝑖 .
+
+Thus, 
+
+−𝛿𝐻 𝑘 𝑖 ⪯ 𝑀 𝑘 𝑖 − 𝐻 𝑘 𝑖 ⪯ 𝛿𝐻 𝑘 𝑖 .
+
+Rearranging the above inequality gives 
+
+(1 − 𝛿 )𝐻 𝑘 𝑖 ⪯ 𝑀 𝑘 𝑖 ⪯ (1 + 𝛿 )𝐻 𝑘 𝑖 .
+
+The proof is complete. 
+
+A.6. Proof of Theorem 2 (Conditioning effect of approximate Newton preconditioning) 
+
+From (31), we have 
+
+𝑀 𝑘 𝑖 ⪯ (1 + 𝛿 )𝐻 𝑘 𝑖 .
+
+Multiplying both sides by (𝑀 𝑘 𝑖 )−1∕2 from the left and right yields 
+
+𝐼 ⪯ (1 + 𝛿 )( 𝑀 𝑘 𝑖 )−1∕2 𝐻 𝑘 𝑖 (𝑀 𝑘 𝑖 )−1∕2 .Therefore, 
+
+11 + 𝛿 𝐼 ⪯ ( 𝑀 𝑘 𝑖 )−1∕2 𝐻 𝑘 𝑖 (𝑀 𝑘 𝑖 )−1∕2 .
+
+Similarly, from 
+
+𝑀 𝑘 𝑖 ⪰ (1 − 𝛿 )𝐻 𝑘 𝑖 ,
+
+we obtain 
+
+𝐼 ⪰ (1 − 𝛿 )( 𝑀 𝑘 𝑖 )−1∕2 𝐻 𝑘 𝑖 (𝑀 𝑘 𝑖 )−1∕2 ,
+
+which gives 
+
+(𝑀 𝑘 𝑖 )−1∕2 𝐻 𝑘 𝑖 (𝑀 𝑘 𝑖 )−1∕2 ⪯ 11 − 𝛿 𝐼. 
+
+Combining the two inequalities proves (32). Thus, all eigen-values of the preconditioned Hessian lie in 
+
+[ 11 + 𝛿 , 11 − 𝛿 
+
+]
+
+,
+
+and its condition number satisfies 
+
+𝜅 AN ≤ 1∕(1 − 𝛿 )1∕(1 + 𝛿 ) = 1 + 𝛿 
+
+1 − 𝛿 .
+
+On the other hand, without preconditioning, the relevant local curvature matrix is 𝐻 𝑘 𝑖 , whose eigenvalues lie in 
+
+[𝑚 𝐻 , 𝐿 𝐻 ]. Hence, the corresponding condition number is 
+
+𝜅 GD = 𝐿 𝐻 ∕𝑚 𝐻 . The proof is complete.

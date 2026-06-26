@@ -6,40 +6,40 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-06-25
-- 运行时间：2026-06-25 22:25:40 UTC
+- 最新运行日期：2026-06-26
+- 运行时间：2026-06-26 22:16:05 UTC
 - 运行状态：成功
 - 本次总论文数：6
-- 精读区：4
-- 速读区：2
+- 精读区：5
+- 速读区：1
 
 ### 今日简报（AI）
-今日精读两篇3DGS前沿工作，聚焦高效场景构建与轻量SLAM。  
-Mesh2GS用全光采样实现白盒化3DGS生成，Pocket-SLAM提出基于渲染区域的剪枝大幅压缩内存。  
-建议读者关注NeRF/3DGS方向从“黑盒重建”走向结构可控与边缘部署的最新解法。
-- 详情：[/202606/25/README](/202606/25/README)
+今日精读两篇9分论文，聚焦机器人SLAM的主动场景理解与3D高斯泼溅可视化分析工具，速递辐射场中的光照一致物体迁移新法。  
+最值得看的是：RoboAtlas让机器人主动探索未知环境并实时更新语义地图，Vis4GS则把高保真3D重建变成可交互的视觉分析任务。  
+建议普通读者从Vis4GS入手——它让3D重建不再“黑箱”，即使非专业人士也能直观理解高斯泼溅的优缺点。
+- 详情：[/202606/26/README](/202606/26/README)
 
 ### 精读区论文标签
-1. [Mesh2GS: White-Box 3DGS Construction via Plenoptic Sampling](/202606/25/2606.21898v1-mesh2gs-white-box-3dgs-construction-via-plenoptic-sampling)  
+1. [RoboAtlas: Contextual Active SLAM](/202606/26/2606.26046v1-roboatlas-contextual-active-slam)  
    标签：评分：9.0/10、query:gs-slam
-   evidence：基于全光采样理论将网格转换为3DGS实现实时渲染
-2. [Pocket-SLAM: Rendering-Area-Aware Pruning for Memory-Efficient 3DGS-SLAM](/202606/25/2606.24796v1-pocket-slam-rendering-area-aware-pruning-for-memory-efficient-3dgs-slam)  
+   evidence：执行相机跟踪与语义建图的主动SLAM系统
+2. [Vis4GS: A Visual Analytic Tool for 3D Gaussian Splatting Reconstruction](/202606/26/2606.26985v1-vis4gs-a-visual-analytic-tool-for-3d-gaussian-splatting-reconstruction)  
    标签：评分：9.0/10、query:gs-slam
-   evidence：基于渲染区域感知剪枝实现内存高效3DGS-SLAM
-3. [Gastroendoscopy View Synthesis: A New Real Dataset and Evaluation](/202606/25/2606.25427v1-gastroendoscopy-view-synthesis-a-new-real-dataset-and-evaluation)  
-   标签：评分：9.0/10、query:endo-dgs
-   evidence：首个面向胃镜新视角合成的真实数据集并评估3DGS方法
-4. [DSP-SLAM++: A Unified Framework for Multi-Class, High-Fidelity Object SLAM in the Wild](/202606/25/2606.25953v1-dsp-slam-a-unified-framework-for-multi-class-high-fidelity-object-slam-in-the-wild)  
-   标签：评分：9.0/10、query:gs-slam
-   evidence：物体感知SLAM，实时性能，相机跟踪与高保真物体重建
+   evidence：多视图可视化分析工具，用于诊断3D高斯泼溅重建伪影，将渲染伪影与高斯属性关联。
+3. [Non-line-of-sight imaging with arbitrary relay surface geometries via 3D Gaussian Transient Rendering](/202606/26/2606.21270v1-non-line-of-sight-imaging-with-arbitrary-relay-surface-geometries-via-3d-gaussian-transient-rendering)  
+   标签：评分：8.0/10、query:gs-slam
+   evidence：使用三维高斯表示进行非视距场景体积渲染
+4. [Decentralized Pose Graph Riemannian Optimization for Object-based Multi-Robot SLAM](/202606/26/2606.24489v1-decentralized-pose-graph-riemannian-optimization-for-object-based-multi-robot-slam)  
+   标签：评分：8.0/10、query:gs-slam
+   evidence：多机器人SLAM的分布式位姿图优化，联合估计轨迹与物体位姿
+5. [PanoImager: Geometry-Guided Novel View Synthesis and Reconstruction from Sparse Panoramic Views](/202606/26/2606.27071v1-panoimager-geometry-guided-novel-view-synthesis-and-reconstruction-from-sparse-panoramic-views)  
+   标签：评分：8.0/10、query:gs-slam
+   evidence：采用深度引导的三维高斯洒落进行稀疏视图场景重建
 
 ### 速读区论文标签
-1. [GeoFlow-SLAM++: A Robust Multi-Camera Visual-Inertial SLAM System with Relocalization](/202606/25/2606.22051v2-geoflow-slam-a-robust-multi-camera-visual-inertial-slam-system-with-relocalization)  
-   标签：评分：6.0/10、query:gs-slam
-   evidence：提出一种用于相机跟踪与建图的多相机视觉惯性SLAM系统，具备重定位能力。
-2. [Geometry-Aware Style Transfer in 3D Gaussian Splatting](/202606/25/2606.24144v1-geometry-aware-style-transfer-in-3d-gaussian-splatting)  
-   标签：评分：6.0/10、query:gs-slam
-   evidence：将几何风格迁移应用于3D高斯散场表示
+1. [Lighting-Consistent Object Transfer Across Radiance Fields](/202606/26/2606.22481v1-lighting-consistent-object-transfer-across-radiance-fields)  
+   标签：评分：7.0/10、query:gs-slam
+   evidence：利用三维高斯洒落实现跨场景物体迁移
 
 
 <div class="dpr-home-promo-card">
