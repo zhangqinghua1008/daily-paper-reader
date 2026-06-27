@@ -6,40 +6,34 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-06-26
-- 运行时间：2026-06-26 22:16:05 UTC
+- 最新运行日期：2026-06-27
+- 运行时间：2026-06-27 21:38:45 UTC
 - 运行状态：成功
-- 本次总论文数：6
-- 精读区：5
+- 本次总论文数：4
+- 精读区：3
 - 速读区：1
 
 ### 今日简报（AI）
-今日精读两篇9分论文，聚焦机器人SLAM的主动场景理解与3D高斯泼溅可视化分析工具，速递辐射场中的光照一致物体迁移新法。  
-最值得看的是：RoboAtlas让机器人主动探索未知环境并实时更新语义地图，Vis4GS则把高保真3D重建变成可交互的视觉分析任务。  
-建议普通读者从Vis4GS入手——它让3D重建不再“黑箱”，即使非专业人士也能直观理解高斯泼溅的优缺点。
-- 详情：[/202606/26/README](/202606/26/README)
+今日精读4篇前沿论文，重点解码术中配准与神经渲染的革新方案  
+《LayersReg》的逐层渐进回归实现高可靠3D/2D配准，《Learning Stable Canonical Worlds》用稳定规范空间提升新视图合成一致性，值得深挖  
+普通读者可先从配准流程的层叠设计入手，再体会几何先验如何约束场景重建
+- 详情：[/202606/27/README](/202606/27/README)
 
 ### 精读区论文标签
-1. [RoboAtlas: Contextual Active SLAM](/202606/26/2606.26046v1-roboatlas-contextual-active-slam)  
-   标签：评分：9.0/10、query:gs-slam
-   evidence：执行相机跟踪与语义建图的主动SLAM系统
-2. [Vis4GS: A Visual Analytic Tool for 3D Gaussian Splatting Reconstruction](/202606/26/2606.26985v1-vis4gs-a-visual-analytic-tool-for-3d-gaussian-splatting-reconstruction)  
-   标签：评分：9.0/10、query:gs-slam
-   evidence：多视图可视化分析工具，用于诊断3D高斯泼溅重建伪影，将渲染伪影与高斯属性关联。
-3. [Non-line-of-sight imaging with arbitrary relay surface geometries via 3D Gaussian Transient Rendering](/202606/26/2606.21270v1-non-line-of-sight-imaging-with-arbitrary-relay-surface-geometries-via-3d-gaussian-transient-rendering)  
+1. [LayersReg: A Layer-by-Layer Progressive Regressor for Reliable Intraoperative 3D/2D Registration](/202606/27/2606.26647v1-layersreg-a-layer-by-layer-progressive-regressor-for-reliable-intraoperative-3d2d-registration)  
+   标签：评分：9.0/10、query:endo-dgs
+   evidence：基于深度学习的术中三维/二维配准方法，用于手术导航，使用三维解剖表示。
+2. [Learning Stable Canonical Worlds for Novel View Synthesis and Beyond](/202606/27/2606.23027v1-learning-stable-canonical-worlds-for-novel-view-synthesis-and-beyond)  
    标签：评分：8.0/10、query:gs-slam
-   evidence：使用三维高斯表示进行非视距场景体积渲染
-4. [Decentralized Pose Graph Riemannian Optimization for Object-based Multi-Robot SLAM](/202606/26/2606.24489v1-decentralized-pose-graph-riemannian-optimization-for-object-based-multi-robot-slam)  
+   evidence：前馈高斯泼溅流水线，将多视角观测融合为稳定规范表示，用于新视角合成。
+3. [Learning Stable Canonical Worlds for Novel View Synthesis and Beyond](/202606/27/2606.23027v2-learning-stable-canonical-worlds-for-novel-view-synthesis-and-beyond)  
    标签：评分：8.0/10、query:gs-slam
-   evidence：多机器人SLAM的分布式位姿图优化，联合估计轨迹与物体位姿
-5. [PanoImager: Geometry-Guided Novel View Synthesis and Reconstruction from Sparse Panoramic Views](/202606/26/2606.27071v1-panoimager-geometry-guided-novel-view-synthesis-and-reconstruction-from-sparse-panoramic-views)  
-   标签：评分：8.0/10、query:gs-slam
-   evidence：采用深度引导的三维高斯洒落进行稀疏视图场景重建
+   evidence：前馈3DGS构建稳定场景中心表示并实时新视角合成
 
 ### 速读区论文标签
-1. [Lighting-Consistent Object Transfer Across Radiance Fields](/202606/26/2606.22481v1-lighting-consistent-object-transfer-across-radiance-fields)  
+1. [Projection-Volume Fidelity Divergence: Diagnosing and Controlling Optimization Drift in Sparse-View 3D Gaussian Tomography](/202606/27/2606.22525v1-projection-volume-fidelity-divergence-diagnosing-and-controlling-optimization-drift-in-sparse-view-3d-gaussian-tomography)  
    标签：评分：7.0/10、query:gs-slam
-   evidence：利用三维高斯洒落实现跨场景物体迁移
+   evidence：诊断了稀疏视角CT中三维高斯泼溅的优化漂移，由各向异性高斯变形引起，与各向异性高斯体场景表示相关。
 
 
 <div class="dpr-home-promo-card">

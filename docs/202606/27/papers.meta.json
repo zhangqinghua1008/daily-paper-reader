@@ -1,0 +1,69 @@
+{
+  "label": "2026-06-27",
+  "date": "2026-06-27",
+  "generated_at": "2026-06-27T21:38:54",
+  "count": 4,
+  "papers": [
+    {
+      "paper_id": "202606/27/2606.26647v1-layersreg-a-layer-by-layer-progressive-regressor-for-reliable-intraoperative-3d2d-registration",
+      "section": "deep",
+      "title_en": "LayersReg: A Layer-by-Layer Progressive Regressor for Reliable Intraoperative 3D/2D Registration",
+      "authors": "Xiyuan Wang, Zhenchao Wang, Xinran Chen, Junkai Liu, Chuan Chen, Feng Yin",
+      "date": "2026-06-25",
+      "pdf": "https://arxiv.org/pdf/2606.26647v1",
+      "score": "9.0",
+      "evidence": "基于深度学习的术中三维/二维配准方法，用于手术导航，使用三维解剖表示。",
+      "tldr": "3D/2D配准是手术导航关键，但传统方法效率低，深度学习方法泛化不足。LayersReg提出逐层渐进回归范式，赋予模型三维解剖感知，通过在特征空间迭代搜索像素流趋势实现姿态对齐。实验在大偏移多模态条件下取得X射线/CT配准0.68°、1.41毫米误差和切片定位0.73°、1.55毫米误差，实时性满足术中要求。该工作为术中配准提供了可靠且高精度的新思路。",
+      "tags": "query:endo-dgs",
+      "abstract_en": "3D/2D registration serves as a cornerstone technique in surgical navigation. Traditional iterative optimization algorithms suffer from low efficiency and high failure rates in intraoperative settings. Deep learning-based methods reformulate registration from iterative optimization to a regression problem that maps image appearance features to spatial pose, typically achieving improved real-time performance and accuracy. However, such learnable methods are confined to memory-driven retrieval of specific pose features rather than understanding the task of image alignment itself, which limits their generalization in complex scenarios. We propose LayersReg, a pioneering regression paradigm that endows the model with 3D anatomical awareness and searches for the correct pose in a progressive, layer-by-layer manner. Inspired by the iterative pose-searching optimization criterion of classical registration, LayersReg searches for correlations between the moving and fixed images in feature space, capturing the trend of pixel flow and thereby converging iteratively toward the correct spatial pose transformation. We further design a coupling of node-wise regression with the progressive registration framework to enhance the model's perception of spatial pose changes. Experimental results demonstrate that under large offsets and multimodality conditions, LayersReg achieves high accuracy on both X-ray/CT registration (0.68°, 1.41 mm) and slice localization (0.73°, 1.55 mm) tasks, outperforming existing state-of-the-art methods while meeting the intraoperative demands for precision and real-time capability.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202606/27/2606.23027v1-learning-stable-canonical-worlds-for-novel-view-synthesis-and-beyond",
+      "section": "deep",
+      "title_en": "Learning Stable Canonical Worlds for Novel View Synthesis and Beyond",
+      "authors": "Xiaoyu Xu, Jian Zou, Sheyang Tang, Zhihua Wang, Jing Liao, Kede Ma",
+      "date": "2026-06-22",
+      "pdf": "https://arxiv.org/pdf/2606.23027v1",
+      "score": "8.0",
+      "evidence": "前馈高斯泼溅流水线，将多视角观测融合为稳定规范表示，用于新视角合成。",
+      "tldr": "CanonicalGS提出一种前馈高斯泼溅方法，通过不确定性感知融合将多视角观测聚合为稳定的规范世界表示，抑制噪声和冗余，提升了新视角合成的稳定性和一致性。",
+      "tags": "query:gs-slam",
+      "abstract_en": "Feed-forward Gaussian splatting (FFGS) facilitates real-time novel view synthesis, yet current methods often remain tied to view-dependent predictions. As more input views are added, they may accumulate noisy or redundant evidence instead of converging to a stable scene representation. In this paper, we introduce CanonicalGS, a feed-forward pipeline that maps cluttered multi-view observations into a stable, scene-centric representation. CanonicalGS first extracts view-centric evidence from depth, semantic features, and uncertainty estimates, and then aggregates this evidence in a canonical latent world using uncertainty-aware fusion. By emphasizing reliable observations while suppressing uncertain or redundant ones, CanonicalGS produces representations that scale more effectively for novel view synthesis and transfer to downstream visual perception tasks. Experiments show up to a $2.5$ dB improvement in peak signal-to-noise ratio for synthesizing novel views and an $11\\%$ gain in semantic segmentation accuracy.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202606/27/2606.23027v2-learning-stable-canonical-worlds-for-novel-view-synthesis-and-beyond",
+      "section": "deep",
+      "title_en": "Learning Stable Canonical Worlds for Novel View Synthesis and Beyond",
+      "authors": "Xiaoyu Xu, Jian Zou, Sheyang Tang, Zhihua Wang, Jing Liao, Kede Ma",
+      "date": "2026-06-22",
+      "pdf": "https://arxiv.org/pdf/2606.23027v2",
+      "score": "8.0",
+      "evidence": "前馈3DGS构建稳定场景中心表示并实时新视角合成",
+      "tldr": "CanonicalGS针对前馈高斯泼溅方法在多视图输入下积累噪声、难以收敛到稳定场景表示的问题，提出不确定性感知融合的规范世界学习框架。通过从深度、语义和不确定性估计中提取视角证据并融合，得到一致的场景潜在表示，支持实时新视角渲染，在多个数据集上展示了比已有方法更稳定的重建质量和泛化能力。",
+      "tags": "query:gs-slam",
+      "abstract_en": "Feed-forward Gaussian splatting (FFGS) facilitates real-time novel view synthesis, yet current methods often remain tied to view-dependent predictions. As more input views are added, they may accumulate noisy or redundant evidence instead of converging to a stable scene representation. In this paper, we introduce CanonicalGS, a feed-forward pipeline that maps cluttered multi-view observations into a stable, scene-centric representation. CanonicalGS first extracts view-centric evidence from depth, semantic features, and uncertainty estimates, and then aggregates this evidence in a canonical latent world using uncertainty-aware fusion. By emphasizing reliable observations while suppressing uncertain or redundant ones, CanonicalGS produces representations that scale more effectively for novel view synthesis and transfer to downstream visual perception tasks. Experiments show up to a $2.5$ dB improvement in peak signal-to-noise ratio for synthesizing novel views and an $11\\%$ gain in semantic segmentation accuracy.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202606/27/2606.22525v1-projection-volume-fidelity-divergence-diagnosing-and-controlling-optimization-drift-in-sparse-view-3d-gaussian-tomography",
+      "section": "quick",
+      "title_en": "Projection-Volume Fidelity Divergence: Diagnosing and Controlling Optimization Drift in Sparse-View 3D Gaussian Tomography",
+      "authors": "Yikuang Yuluo, Ao Wang, Shen Kuan, Yujie Liu, Wang Liao, Ying Chen, Shuangyang Zhong, Yixing Huang, Fuquan Wang",
+      "date": "2026-06-21",
+      "pdf": "https://arxiv.org/pdf/2606.22525v1",
+      "score": "7.0",
+      "evidence": "诊断了稀疏视角CT中三维高斯泼溅的优化漂移，由各向异性高斯变形引起，与各向异性高斯体场景表示相关。",
+      "tldr": "稀疏视图3D高斯断层成像中，仅优化投影拟合会导致投影-体积保真度分歧（PVFD），即渲染投影持续改善而重建体积恶化。针对此漂移，提出无真值优化控制器LADES，采用线性退火丢弃在早期破坏基元共适应，并利用结构感知早停根据高斯种群饱和终止稠密化。在稀疏视图CT上，LADES显著提升体积保真度、抑制结构退化并减少训练时间，表明鲁棒高斯重建需监控体积结构而非仅投影精度。",
+      "tags": "query:gs-slam",
+      "abstract_en": "Sparse-view computed tomography is a severely ill-posed inverse problem, where recent 3D Gaussian Splatting methods offer an efficient explicit representation for tomographic reconstruction. However, we find that projection-domain optimization can be misleading in this setting: the rendered projections may continue to improve while the reconstructed volume deteriorates. We identify this failure mode as Projection-Volume Fidelity Divergence (PVFD), a representation-level optimization drift caused by anisotropic Gaussian deformation and view-specific primitive co-adaptation under sparse Radon constraints. To characterize this behavior, we introduce geometry- and volume-level diagnostics that measure needle-like Gaussian degeneration and the stability of the voxelized density field. Based on these observations, we propose LADES, a ground-truth-free optimization controller for sparse-view Gaussian tomography. LADES combines Linearly Annealed Dropout, which applies strong stochastic masking in early training to disrupt premature primitive co-adaptation and gradually restores full capacity for structural consolidation, with Structure-Aware Early Stopping, which terminates densification according to the saturation of Gaussian population growth rather than validation PSNR. Experiments on sparse-view CT reconstruction show that LADES improves volumetric fidelity, suppresses structural degeneration, and substantially reduces training time while maintaining competitive projection accuracy. These results suggest that robust Gaussian-based tomography requires monitoring and controlling volumetric structure, rather than optimizing projection fit alone.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,404 @@
+Title: LayersReg: A Layer-by-Layer Progressive Regressor for Reliable Intraoperative 3D/2D Registration
+
+URL Source: https://arxiv.org/pdf/2606.26647v1
+
+Published Time: Fri, 26 Jun 2026 00:33:40 GMT
+
+Number of Pages: 16
+
+Markdown Content:
+# LAYERS REG : A L AYER -BY -L AYER PROGRESSIVE REGRESSOR FOR RELIABLE INTRAOPERATIVE 3D/2D R EGISTRATION ∗
+
+Xiyuan Wang, Zhenchao Wang, Xinran Chen 
+
+School of Biological Science and Medical Engineering Southeast University Nanjing 
+
+{230249082, 230238672, 213222326} @seu.edu.cn 
+
+Junkai Liu 
+
+School of Engineering, College of Engineering and Physical Sciences University of Birmingham Birmingham 
+
+jxl1920@student.bham.ac.uk 
+
+Chuan Chen* 
+
+School of Biological Science and Medical Engineering Southeast University Nanjing 
+
+chuanchen@seu.edu.cn 
+
+Feng Yin* 
+
+State Key Laboratory of Digital Medical Engineering Southeast University Nanjing 
+
+yinfeng@seu.edu.cn 
+
+# ABSTRACT 
+
+3D/2D registration serves as a cornerstone technique in surgical navigation. Traditional iterative optimization algorithms suffer from low efficiency and high failure rates in intraoperative settings. Deep learning-based methods reformulate registration from iterative optimization to a regression problem that maps image appearance features to spatial pose, typically achieving improved real-time performance and accuracy. However, such learnable methods are confined to memory-driven retrieval of specific pose features rather than understanding the task of image alignment itself, which limits their generalization in complex scenarios. We propose LayersReg, a pioneering regression paradigm that endows the model with 3D anatomical awareness and searches for the correct pose in a progressive, layer-by-layer manner. Inspired by the iterative pose-searching optimization criterion of classical registration, LayersReg searches for correlations between the moving and fixed images in feature space, capturing the trend of pixel flow and thereby converging iteratively toward the correct spatial pose transformation. We further design a coupling of node-wise regression with the progressive registration framework to enhance the model’s perception of spatial pose changes. Experimental results demonstrate that under large offsets and multimodality conditions, LayersReg achieves high accuracy on both X-ray/CT registration (0.68°, 1.41 mm) and slice localization (0.73°, 1.55 mm) tasks, outperforming existing state-of-the-art methods while meeting the intraoperative demands for precision and real-time capability. 
+
+Keywords 3D/2D registration · Surgical navigation · Progressive refinement · Regressor. 
+
+# 1 Introduction 
+
+3D/2D registration is a core technique in modern surgical navigation, establishing the coordinate transformation between the patient’s physical space and the pre-operative image space [1, 2]. By spatially aligning intra-operative 2D images 
+
+> ∗
+
+*Chuan Chen and Feng Yin are the corresponding authors. 
+
+> arXiv:2606.26647v1 [cs.CV] 25 Jun 2026
+
+LayersReg 
+
+Figure 1: (A) Application scenarios of 3D/2D registration and existing challenges (e.g., occlusion, large misalignment). (B) Comparison of two training pipelines, unsupervised registration (red) and regressor-based (blue). Rg is the registration model. (e.g., X-ray, 2D ultrasound) with pre-operative 3D volumetric data (e.g., MRI, CT), this technique provides real-time localization and guidance for surgical instrument placement. In practice, 3D/2D registration covers two tasks which are X-ray/CT and slice-to-volume (S2V) registration, as illustrated in fig. 1(A). Currently, iterative optimization methods based on image similarity metrics [3 –5] dominate the field due to their high accuracy. However, these methods are prone to local minima, especially under surgical instrument occlusion or large initial misalignment, which can cause severe efficiency degradation or even complete failure. In clinical practice, this often means relying on experts to manually annotate anatomical landmarks for initialization, a time-consuming and laborious process that hinders real-time surgical navigation. In recent years, pose regression [6, 7] has become the dominant paradigm in 2D/3D registration, delivering real-time prediction with greater alignment efficiency and capture range than traditional iterative optimization. These methods employ CNNs to extract features from X-ray images and learn a direct nonlinear mapping to 6-degree-of-freedom (6DoF) rigid poses. However, such regressors exhibit limited generalization in real surgical scenarios (fig. 1(A)), owing to two fundamental issues. First, they generally adopt supervised (or synthetically self-supervised) methods. As shown in fig. 1(B), training relies on large-scale synthetic digitally reconstructed radiographs (DRRs) to model the distribution of image appearance conditioned on annotated poses, thereby indirectly learning the 3D structure of CT to infer X-ray pose. By contrast, unsupervised or differentiable registration methods adjust misalignment parameters via gradient flow, driven by the error between registered images (fig. 1(B)). In essence, existing regressors leverage the memorization of appearance-pose mapping, rather than learning to perceive and correct misalignment through gradient-based optimization as unsupervised methods. Second, the majority of regressors rely solely on a single X-ray image, without access to 3D anatomical priors. Projection discards depth and occlusion information, preventing the network from perceiving discrepancies between the predicted pose and the true anatomy. Later works [8, 9] have introduced back-projection to reconstruct intraoperative pose CT from X-rays. Yet accurate reconstruction from a single X-ray remains an open challenge, typically requiring orthogonal views to recover missing 3D information, a condition seldom met in practice. In this paper, we propose LayersReg, designed to overcome the aforementioned limitations of existing pose regressors. Specifically, to address the lack of 3D anatomical priors, we extract features from the CT volume, enabling cross-dimensional interaction between 2D X-ray and 3D volumetric features. This brings richer spatial depth awareness into pose prediction and substantially expands the capture range. To address the failure to genuinely learn registration via error minimization, LayersReg abandons the conventional one-shot static mapping, and instead reformulates pose prediction as a progressive internal refinement of the predicted pose. Following the core principle of iterative registration, the method starts from an initial misalignment, iteratively measures the feature discrepancy between the moving and fixed images, and leverages this error signal to drive the pose estimate progressively toward the correct relative transformation between the intraoperative 2D image and the preoperative 3D volume. The workflow of LayersReg is divided into feature extraction followed by pose regression. Firstly, we address the brittleness of previous regressors under surgical instrument occlusion. Trained solely with pose labels, they tend to mine regions statistically correlated with pose, a dependency that easily breaks down under occlusion. LayersReg employs hybrid autoencoders to extract compact latent representations from intraoperative images and preoperative volumes, preserving structural integrity while discarding appearance-level noise. We further inject compact 3D geometric cues into the 2D feature stream, achieving adaptive compensation for missing depth information. Secondly, following the energy minimization principle of registration, we construct a cross-correlation volume between the dual-stream features and capture the alignment trend from feature residuals. The regression backbone takes this correlation and trend as dual driving signals, and realizes deep state interaction via a designed Mamba module to aggregate pose cues. Furthermore, 2LayersReg we introduce a node-wise regression strategy that treats the pose output at each stage as an intermediate node converging to the final pose, improving both accuracy and robustness in large-displacement scenarios. We extensively validate LayersReg across seven datasets spanning multiple modalities, anatomical sites, and surgical scenarios, including real X-ray, US volume localization, and multimodal settings, consistently demonstrating high accuracy and strong generalization. Our contributions are threefold: 1. We propose LayersReg, a Mamba-based regression paradigm that embeds iterative refinement into pose prediction via closed-loop feature residual feedback, achieving 3D-aware, registration-driven pose estimation with deep 6-DoF coupling via node-wise regression. 2. We introduce hybrid autoencoders for robust feature extraction and dynamic 3D-to-2D fusion, injecting anatomical depth cues while preventing overfitting to pose-appearance patterns. 3. LayersReg demonstrates reliable and accurate performance across diverse datasets and surgical scenarios, establishing itself as an effective solution for intraoperative 3D/2D registration. 
+
+# 2 Related Work 
+
+2.1 Regression-based 3D/2D Registration 
+
+Pose regression models have emerged as a key focus in recent rigid registration studies for pose estimation. To address adaptability challenges, some methods [10 – 14] enhance performance through pose-supervised pre-training of regressors followed by secondary fine-tuning. This tuning centers on minimizing errors between registered and target images, employing self- or weakly-supervised [15, 16] optimization to refine predictions and bolster model generalization. The process can weigh losses in expert-annotated RoI regions, driving the model to select effective areas and resist interference. However, these methods face two major challenges: first, they require iterative optimization [17 –20], along with registration-specific image error metrics [5]. Otherwise, accuracy will remain insufficient. Second, they heavily depend on expert-labeled intraoperative images and preoperative volumes, making large-scale training impractical despite preoperative planning involving labeled segmentation. To tackle large offsets between target and initial images, some approaches [21 – 24] use CNNs to back-project 2D X-ray images into 3D space. This method abandons planar pose estimation in favor of 3D/3D rigid registration, comparing reconstructed volumes with initial ones to predict rigid transformations (3D regression networks). Back-projection substantially enriches depth information, enabling better adaptation to large offsets and intuitive pose prediction. Yet, limitations remain evident: first, 3D regressor performance relies on reconstructed volume quality, and while studies [25, 26] have advanced high-quality volume generation, additional views are still needed to supplement 3D structures; second, compared to 2D regressors, 3D feature capture incurs higher overhead, and the approach is unsuitable for slice/volume registration due to slices lacking complete 3D information, impeding effective reconstruction. 
+
+2.2 Geometric-based 3D/2D Registration 
+
+Beyond regression tasks, neural networks are also employed to annotate anatomical landmarks in intraopera-tive/preoperative images [27, 28], thereby enhancing the efficiency and accuracy of iterative optimization. Some methods train CNNs to learn anatomical structures in intraoperative images of patients under specific poses and predict keypoints or planar segmentation masks [28 –30]. In the registration pipeline, these approaches utilize fitted CNNs to extract anatomical structures from initial pose images and target images, mapping them into a 3D volume to ensure correct positioning. After obtaining the 2D-3D mapping, an optimizer rapidly solves for the correct pose, achieving exact alignment [31]. This method not only improves accuracy but also applies to both X-ray/CT & S2V scenarios, offering greater generality. However, annotation is time-consuming and must be tailored to specific anatomical sites. Training a unified annotation network for heterogeneous multimodal tasks, integrating different modalities simultaneously, remains highly challenging. 
+
+# 3 Methods 
+
+An overview of our registration network is shown in fig. 2. It consists of 3D and 2D autoencoders ( A2denc , A 3denc ) for stable feature extraction, and a core pose regression module comprising three components: dual correlation gating (DCG), a trend perception module (TPM), and a mamba-based backbone. In the following, we detail each module and review the principles of 3D/2D registration. 3LayersReg 
+
+Figure 2: Implementation flowchart of LayersReg. Latent features are extracted by 2D and 3D encoders ( A2denc , A3denc ). Depth Feature Modulation (DFM) is used to reduce dimensionality and fuse 3D depth cues. The regressor outputs y1
+
+> i
+
+and y2 
+
+> i
+
+at each internal stage and predicts the pose via channel - wise gating. A learnable scalar β controls the step size by which each node advances toward the final pose. We adopt Lpos for deep supervision of the pose. We employ L2drec 
+
+and L3drec as self-supervised reconstruction losses to train A2denc and A3denc .
+
+3.1 Principles of 3D/2D Registration 
+
+Given the preoperative volume Vpre ∈ Rh×w×d and the target intraoperative image Itar ∈ Rh×w, optimization-based registration methods aim to estimate the optimal relative pose transformation ∆Popt by maximizing the similarity S
+
+between Itar and the 2D image rendered from Vpre after applying a candidate relative transformation ∆P on top of the initial pose P0. This process can be formulated as: 
+
+∆Popt = arg max  
+
+> ∆P∈ SE (3)
+
+S (U(Vpre , ∆P ◦ P 0), I tar ) . (1) where U(·) is the differentiable 3D-to-2D forward operator (i.e., DRR projection for X-ray/CT registration and plane slicing for S2V registration). The regressor-based 3D/2D registration directly predicts the relative transformation. Given a known initial pose P0,the initial rendered image is computed as Iini = U(Vpre , P0). The regressor RΘ takes features extracted from the pair 
+
+[Itar , I ini ] and outputs the predicted relative transformation ∆ ˆP. The training method of the regressor is as follows: 
+
+Θ∗ = arg min  
+
+> Θ
+
+δ
+
+
+
+∆ ˆP = RΘ
+
+ f ([ Itar , I ini ]) , ∆Pgt 
+
+
+
+. (2) where f denotes feature extraction, [·, ·] denotes channel - wise concatenation. Θ is model’s weight, ∆Pgt represents the ground-truth pose, and δ is the defined pose loss. LayersReg adopts the regression formulation of eq. (2), yet enhances it by injecting Vpre depth cues and progressively optimizing internal feature correspondences (via DCG and TPM) to bridge residual features and 6-DoF poses. 
+
+3.2 Hybrid Autoencoders for Feature Extraction 
+
+The architectures of A2denc and A3denc are structurally similar, with minor differences in internal components. Their workflows are:  f res , [Irec tar , I rec  
+
+> ini
+
+] = A2denc ([ Itar , I ini ]) , (3) 
+
+ f v , V rec  = A3denc (Vpre ). (4) 
+
+f res , f v are the extracted features of image residual and volume. Irec tar , I rec ini , V rec are self-supervised reconstruction. We adopt a modern network architecture, comprising a Dense Downsampling Layer (DDL), a refine layer, and a Dense Upsampling Layer (DUL). The DDL provides initial contextual priors and expands the channel receptive field: given an input size of (H, W ), it downsamples to ( H 
+
+> 16
+
+, W 
+
+> 16
+
+). The DDL comprises four layers of basic (3D/2D) convolutions (kernel size = 3, stride = 2), followed by group normalization (GN) and SELU activation. The refine layer enhances fundamental features: in A2denc , Vision Mamba’s (ViM) [32] bi-SSM blocks are employed to boost long-sequence modeling, adaptively extracting key information and remove noise. In A3denc , a combination of 3D 4LayersReg 
+
+Figure 3: Depth Feature Modulation structure, we take the planar features as the query ( Q) and the CT features as the key ( K) and value ( V ), and achieve fusion through a cross-attention. depthwise convolution (DwConv) and 3D feed-forward network (FFN) is used, followed by 3D SEblock [33]. The DUL restores the input image, similar to DDL; it additionally incorporates skip connections and transposed convolutions for feature fusion and resolution recovery. 
+
+3.3 Depth Feature Modulation 
+
+X-ray projections from any angle share the same CT, but directly fusing the entire 3D feature is redundant. Although the 
+
+A3denc has already compressed the structural information, it still contains pose-irrelevant features. We design a screening mechanism that extracts pose-relevant components from the full CT features, as illustrated in the fig. 3. We employ a cross-attention mechanism, taking the X-ray features as Q to retrieve K and V from the CT features. To ensure accurate identification of the CT features corresponding to the X-ray projection, we merge the dimension-reduced f Vproj with 
+
+f res via convolution, and feed them into the DUL reconstruction layer, where a self-supervised loss constrains the 3D feature screening process. 
+
+3.4 Registration Network Component Design 
+
+The core idea of image registration is to find correlated regions between the moving and fixed images and to solve for an explicit spatial transformation based on the trend of pixel changes—an ability that regressors generally lack compared to other registration models. We incorporate this idea into our design by using DCG to mine feature correlations and enhance structures, and TPM to capture pixel flow. After filtering and reorganizing the features, they are fed into the backbone for pose prediction. 
+
+Figure 4: DCG implementation. (A) Single-input branch produces Fintra . (B) Dual-input branch produces Finter . In both, Occ computes correlation via sliding windows over features. Concatenation with the input forms the gate GX.5LayersReg 
+
+3.4.1 Dual Correlation Gate 
+
+In recent non-rigid volumetric registration, local inner products are commonly employed to compute feature correlations and construct an explicit cost volume, thereby guiding the model to learn correspondences between moving and fixed images. DCG builds on this yet dispenses with the cost volume, serving as a gating mechanism that strengthens features from a single input and mines correlations between two inputs through correlation operators, as illustrated in fig. 4. Intra - feature gating independently amplifies the salient structures of each view, so that their subsequent subtraction in TPM can better reveal the transformation trend. For a single feature map X, let Xcp,q denote the value at channel 
+
+c and position (p, q ). For each offset (i, j )̸ = (0 , 0) within a 3 × 3 window ( K=8 neighbours), the normalized cross-correlation response is: 
+
+Oi,j cc (X)( p, q ) = (xp,q − μp,q )⊤(xp+i,q +j − μp+i,q +j )
+
+∥xp,q − μp,q ∥ ∥ xp+i,q +j − μp+i,q +j ∥ , (5) where μp,q and μp+i,q +j are the channel - wise means. Stacking the responses over all K offsets yields Occ (X) ∈
+
+RK×H×W . The correlation tensor is compressed and applied as a structural gate: 
+
+GX = act  Norm (Conv 3×3([ Occ (X), X])) , (6) 
+
+Fintra = X + GX ⊙ X, (7) 
+
+⊙ represents the Hadamard product. The gate is applied independently to X1 and X2, producing F1intra , F2intra ∈
+
+RC×H×W , which are then forwarded to TPM. Inter - feature branch (correlation gating). The two maps are first fused into a joint representation Y =Conv 3×3([ X1, X2]) ∈ RC×H×W , and then gated by GY , which is computed with the same gating eq. (7), to yield Finter = Y + GY ⊙ Y. This output explicitly encodes cross - view structural agreement and is fed into regressor backbone. No dense cost volume is built. 
+
+3.4.2 Trend Perception Module 
+
+The TPM measures the most significant differences between two feature maps to capture deep pixel-level motion tendencies, as fig. 2 pink part. Drawing on iterative optimization that models spatial transformations via residuals, we decompose the residual map into directional trend components in a learnable manner to assist pose regression. To obtain a global receptive field, TPM employs a multi-layer MLP. Given two DCG-enhanced feature maps F1intra , F2intra ∈
+
+RC×H×W , we first compute the residual and flatten it: 
+
+r = Flatten( F1intra − F2intra ) ∈ RC×HW . (8) Considering that translation and rotation typically affect the ˆox (horizontal) and ˆoy (vertical) directions anisotropically, we explicitly swap the roles of height and width to obtain a complementary representation: 
+
+s = Linear( Norm (r)) , s′ = Transpose H↔W (s), (9) where s, s′ ∈ RC×HW . This representation is further processed by global response normalization (GRN) and another linear layer, yielding a transposed residual better suited for the subsequent two-branch processing: 
+
+r′ = Linear(GRN( s′)) ∈ RC×HW . (10) To separately enhance the transformation trends along ˆox and ˆoy , we reshape r′ back to RC×H×W and construct a height-width swapped copy. The two representations are passed through independent MLPs with skip connections, producing rx and ry , which are then fused via a depthwise convolution: 
+
+rf = act  Norm (Conv 3×3([ rx, ry ])) . (11) To clarify the direction of the trend, we use F1intra from the target view as a gate to adjust rx and ry and fuse the features to produce the final trend T:
+
+T = Gx ⊙ rx + Gy ⊙ ry + λ · rf + r,
+
+Gx = Norm (DWConv 3×1(F1intra )) ,
+
+Gy = Norm (DWConv 1×3(F1intra )) ,
+
+(12) where λ is a learnable scalar. The resulting T encodes the dominant transformation trend and is fed into the subsequent pose regressor. 6LayersReg 
+
+Figure 5: (A) Regression network backbone, (B) MLS-SSD implementation. Based on visual SSD by introducing mutual latent interaction between dual streams ( h1, h 2). Here, C denotes channel number, L the vector length, and σ
+
+the gating activation function. 
+
+3.4.3 Mamba-based Regression Backbone 
+
+We propose a Mamba-based regression backbone, as shown in fig. 5, to perform deep interaction on two-stream inputs and predict 6DoF pose. It consists of DWConv+FFN followed by mutual latent share state space duality (MLS-SSD). The initial regression feature is obtained by concatenating T and Cinter (R2C×H×W ), processed by DWConv+FFN, and then split channel-wise into dual latent streams X1, X 2 ∈ RB×C×L.MLS-SSD builds upon the convolution-form visual SSD [32, 34] by introducing mutual latent interaction between the two streams. For each stream, input-dependent parameters are projected and refined via a shared DWConv to obtain 
+
+Bi, Ci, ∆i ∈ RB×N ×L (i = 1 , 2; N is the state dimension). A shared learnable state transition vector A ∈ RN is broadcast and combined with ∆i to form the selective matrix: 
+
+Si = softmax  ∆i + 1B A⊤1L
+
+ ∈ RB×N ×L, i = 1 , 2. (13) The hidden state evolution is realized through the global convolution approximation of the selective SSM: 
+
+hi = Xi
+
+ Si ⊙ Bi
+
+⊤ ∈ RB×C×N , i = 1 , 2. (14) Each hi is projected and split into the main representation and gating vector [hi, z i]. A cross-gating mechanism with residual connection enables mutual interaction: 
+
+˜h1 = h′ 
+
+> 1
+
+⊙ Mish( z2) + D · h1, ˜h2 = h′ 
+
+> 2
+
+⊙ Mish( z1) + D · h2, (15) where D ∈ R is a learnable scalar. The final outputs are: 
+
+y1 = ˜h1C⊤ 
+
+> 2
+
+, y2 = ˜h2C⊤ 
+
+> 1
+
+. (16) These outputs y1 and y2 are first concatenated and refined by DWConv+FFN before being reshaped back to RB×C×H×W
+
+and passed to the next registration backbone as mutual gating signals. MLS-SSD employs bidirectional 2D scanning to preserve spatial structure while maintaining linear complexity, in contrast to the quadratic complexity of cross-attention. 
+
+3.5 Nodes Regression and Loss Function 
+
+LayersReg reformulates a single regression mapping as a progressive optimization process. Motivated by cascade registration paradigms [8, 35], we treat the pose output at each stage as an intermediate node whose estimate incre-mentally converges toward the final pose. In this way, the estimation of ∆ ˆP is decomposed into a sequence of small, easy-to-learn steps. Each node predicts an incremental 6-DoF pose parameter ∆ ˆPi, represented in the Lie algebra coordinates of se (3) . Specifically, ∆ ˆPi consists of an axis-angle rotation vector (radians) and a translation vector 7LayersReg (millimeters). The learnable weight is directly applied to this 6-DoF parameter, and the weighted increment is then mapped to SE (3) through the exponential map for group composition: 
+
+∆ ˆP = Log 
+
+> S
+
+Y
+
+> i=1
+
+Exp 
+
+ ˆβi∆ ˆPi
+
+!
+
+, (17) where Exp( ·) : se (3) → SE (3) maps a 6-DoF pose parameter to its rigid transformation, Log( ·) : SE (3) → se (3) 
+
+maps the composed transformation back to the pose-parameter space, and Q denotes sequential composition on SE (3) .The node weights are given by ˆβ = Softmax( β), with learnable β ∈ RS . The pose output ∆ ˆPi at each stage is obtained by fusing dual-stream features y1 
+
+> i
+
+, y 2 
+
+> i
+
+∈ RC×H×W via channel-wise gating. Specifically, the two feature maps interact through a Hadamard product, followed by pooling, normalization, and a linear regression head: 
+
+∆ ˆPi = Linear  Norm  Pool( y1 
+
+> i
+
+⊙ y2 
+
+> i
+
+) . (18) This fusion reduces channel-wise redundancy and enhances pose-relevant features across stages. To mitigate intermedi-ate error accumulation, we apply deep pose supervision to each node: 
+
+Lpos =
+
+> S
+
+X
+
+> i=1
+
+∆Pgt − ∆ ˆPi
+
+> 1
+
+, (19) where ∆ ˆPi denotes the cumulative 6-DoF pose parameter obtained by applying eq. (17) to the first i weighted increments. The 2D self-supervision term is defined as: 
+
+L2Drec = ∥Ires − Irec res ∥1 + 1 − 2σ∇Ires ∇Irec res + ϵσ2 
+
+> ∇Ires
+
++ σ2 
+
+> ∇Irec res
+
++ ϵ (20) where Ires = [ Itar , I ini ] is the concatenation of the target and initial views, and Irec res is its reconstruction from A2denc .Here σ2 
+
+> ∇I
+
+is the variance of the image gradient magnitude map, σ∇Ires ∇Irec res is the covariance between the gradient maps of Ires and Irec res , and ϵ = 0 .01 . The volumetric self-supervision term is: 
+
+L3Drec = ∥Vpre − V rec ∥1, (21) where V rec is the preoperative volume reconstructed from A3denc . Together with the pose supervision loss Lpos , the total training loss of LayersReg combines these three terms: 
+
+L = λ1L2Drec + λ2L3Drec + λ3Lpos (22) 
+
+# 4 Experiments 
+
+4.1 Datasets and Preprocessing 
+
+We evaluate LayersReg on seven public datasets for rigid X-ray/CT and S2V registration. All volumes are resampled to 1.0 mm isotropic spacing, cropped to 224 × 224 × 192 voxels, and intensity-normalized. A canonical initial pose is applied. Training pairs are generated by uniform 6-DoF perturbations, with relative poses as labels. Standard capture ranges are R ∈ [−15 ◦, 15 ◦], T ∈ [−10 mm , 10 mm ]; large-misalignment ranges are R ∈ [−45 ◦, 45 ◦], T ∈
+
+[−20 mm , 20 mm ].For X-ray/CT registration, we use CTSpine1K [36] and VerSE [37] for synthetic spine X-rays, and DeepFluoro [38] and Ljubljana [39] for real clinical evaluation. For each patient CT volume, we generate DRRs from multiple distinct C-arm angles. Each DRR is paired with an X-ray acquired at a different angle, ensuring unique relative 6-DoF poses for all DRR–X-ray pairs within the same patient. We adopt a strict patient-level 8:1:1 split into training, validation, and test sets, with fully disjoint poses to prevent data leakage and anatomical overfitting. Pose labels are obtained directly from the known rigid transformations used in rendering (synthetic DRRs) or from the provided ground-truth registrations (DeepFluoro and Ljubljana). Calibration protocols differ across datasets. For CTSpine1K and VerSE, we follow the ProST [19] protocol to simulate the clinical C-arm environment, and for DeepFluoro and Ljubljana, we use the official clinical C-arm intrinsics and extrinsics for fair comparison. To enable rapid regressor extension, we limit its training on real X-rays to within one hour [20]. For S2V, we use RESECT [40] (MRI-US), a cardiac dataset [41] (MRI-CT, 43 volumes), and CAMUS [42] (real US). In RESECT, expert-annotated landmarks provide cross-modal transforms with TRE ≤ 1 mm. Slices are extracted along probe directions with recorded 6-DoF poses. For dense supervision, 10,000 slices per patient are randomly sampled. All S2V datasets adopt an 8:1:1 patient-level split, with augmentations to mimic clinical conditions. CAMUS preprocessing follows prior works [43–45]. 8LayersReg 
+
+4.2 Implementation Details 
+
+The LayersReg framework is implemented in PyTorch [46] and trained/tested on two NVIDIA A800 GPUs with 160 GB memory. LayersReg has 34.49 M parameters, 58.39 G FLOPs, and an inference time of 101.8 ms. For the S2V task, the single-frame alignment time is 0.21 s, while for X-ray/CT alignment it is 0.14 s, fully meeting real-time requirements. The initial learning rate is set to 1 × 10 −3, and the optimizer is AdamW + GC [47] (weight decay 0.05) with cosine annealing scheduler decaying to 1 × 10 −6. X-ray/CT registration is trained for 100 epochs on a million-scale dataset, while the S2V task requires 50 epochs. A batch size of 128 is employed, with early stopping after 30 epochs of non-decreasing loss. The primary loss Lpos is augmented with scaled auxiliary terms to ensure balanced optimization: the 2D reconstruction loss L2d 
+
+> rec
+
+is scaled by 0.1 and L3d 
+
+> rec
+
+by 0.5. These terms are fused via learnable uncertainty parameters λ1, λ 2, λ 3, yielding the composite loss eq. (22). Ablation studies confirm this approach outperforms grid-search hyperparameter optimization. For 6-DoF pose estimation, we use MAE(R) (mean absolute Euler angles, °) and Dist(T) (Euclidean distance, mm). SSIM, NCC, and RMSE evaluate structural similarity between the warped preoperative volume—generated via DRR projection for X-ray/CT or reslicing for S2V using the predicted pose—and the ground-truth aligned intraoperative image. These metrics are computed in the registered common coordinate system after alignment, measuring structural quality rather than raw inter-modal appearance similarity. Table 1: Performance of LayersReg in Different Complex Challenges                                      
+
+> Task Offset Type MAE (R) Dist (T) Mean Std Mean Std Xray/CT large None 0.64 0.27 1.41 1.68 standard Occluded1 0.58 0.31 1.55 1.66 large Occluded2 0.72 0.44 2.51 1.70 S2V standard US-MRI 0.38 0.25 0.84 0.56 standard CT-MRI 0.31 0.13 0.66 0.48 large FLAIR-T1 0.55 0.20 1.57 1.05
+
+4.3 Adaptability to Complex Challenges 
+
+To evaluate the adaptability of LayersReg, we selected challenging scenarios prevalent in real-world environments for testing, including X-ray images with real surgical instruments occlusions, multi-modal slice alignment, and large offset errors. The results are presented in table 1 and fig. 6. We overlay the boundaries (red and cyan) of the ground-truth and prediction results on Itar , purple is the aligned contour. 
+
+Figure 6: Registration performance of LayersReg across various application scenarios: (a) large displacement, (b) occlusion by pedicle screw, (c) occlusion type 2, (d) FLAIR-T1 brain MRI, (e) MRI-CT ventricle, (f) intraoperative craniotomy ultrasound to preoperative MRI registration. The results demonstrate that LayersReg is adaptable across 3D/2D registration tasks involving diverse modalities, achieving high-precision alignment in terms of predicted poses and registration similarity metrics. To further assess the capture range, we extend the standard-range setting to large-offset scenarios and evaluate the success rate under gradually enlarged perturbation intervals. Large misalignment usually requires back-projection-based registration, whereas LayersReg performs alignment without additional projection reconstruction, benefiting from depth-aware feature compensation and progressive internal refinement. Since landmark-based mTRE is not available for all datasets, failure is defined by pose errors: a case is regarded as failed if the final rotation error exceeds 5◦ or the translation 9LayersReg error exceeds 10 mm. Under this criterion, LayersReg maintains reliable registration up to [−60 ◦, 60 ◦] rotation and 
+
+[−50 , 50] mm translation for X-ray/CT, and up to [−50 ◦, 50 ◦] rotation and [−30 , 30] mm translation for S2V. 
+
+4.4 Ablation Experiments 4.4.1 Regression strategy study 
+
+We conduct ablation studies on regression strategies, comparing our node-based method with three baselines: direct regression, averaging across stages, and uncertainty-based selection. Results in Table 2 show that our approach achieves the lowest errors (MAE (R): 0.37°, Dist (T): 1.71 mm) and highest stability, as it effectively simulates iterative refinement. The alternatives yield higher errors or less stable predictions, confirming the suitability of node-based regression for LayersReg. Table 2: Regression Strategies Models MAE (R) Dist (T) mean std mean std Nodes 0.37 0.25 1.71 1.33 
+
+Mean 0.43 0.27 2.06 1.44 Uncertain 0.42 0.28 1.97 1.35 Direct 0.41 0.28 1.92 1.53 Table 3: Ablation on progressive module integration. Models MAE (R) Dist (T) mean std mean std Baseline 2.79 1.89 5.81 3.28 + A3denc 1.55 1.29 3.50 2.84 + DCG 1.05 0.98 2.46 2.24 + TPM 0.71 0.83 1.94 1.87 + MLS-SSD 0.46 0.32 1.47 1.42 4.4.2 Progressive Module Ablation 
+
+We assess the contribution of each component through a progressive ablation study. The baseline is a standard 3D-2D CNN regressor without any specialized modules (MAE(R)=2.79°, Dist(T)=5.81 mm). As shown in table 3, successively adding each module leads to consistent performance gains. Introducing the 3D encoder ( A3d
+
+> enc
+
+) provides essential depth information. Adding DCG strengthens feature correspondence and correlation. Integrating TPM effectively captures transformation trends from residuals. Finally, MLS-SSD enables global modeling with linear complexity, attaining the full LayersReg performance with MAE(R)=0.46° and Dist(T)=1.47 mm. These results confirm that every proposed module contributes meaningfully and progressively to the overall regression accuracy. 
+
+4.4.3 Loss functions study 
+
+To validate the optimality of our proposed loss combination, we conducted ablation studies by removing individual components: the 2D/3D self-supervised losses and the contrastive geodesic loss Lgeo [10]. Results are shown in Table 4. The dual self-supervised losses combined with Lpos achieve optimal performance, confirming eq. (22) as the most suitable for LayersReg. Ablating the 3D reconstruction loss causes the largest degradation (MAE(R) +0.09, Dist(T) +0.42), highlighting the critical role of depth cues for large-offset robustness in S2V tasks. Removing the 2D loss reduces robustness to X-ray noise and occlusions. Adding Lgeo does not further improve accuracy, suggesting that the direct pose loss is sufficient under our 6-DoF parameterization. Overall, our learnable weighted loss best balances accuracy and adaptability. 10 LayersReg Table 4: Ablation experiments with loss functions Loss Functions MAE (R) Dist (T) 
+
+L3drec L2drec Lpos Lgeo mean std mean std 
+
+✓ ✓ 0.46 0.32 2.13 1.71 
+
+✓ ✓ 0.41 0.27 1.89 1.48 
+
+✓ ✓ ✓ 0.43 0.30 1.92 1.46 
+
+✓ ✓ ✓ 0.39 0.28 1.78 1.34 
+
+✓ ✓ ✓ ✓ 0.40 0.31 1.79 1.47 
+
+Figure 7: Compared with SOTA methods on surgery X-rays. Orange lines indicate landmark offset; the 2nd and 4th rows show error maps (vs. GT). 
+
+4.5 Compare with the SOTA Methods 
+
+In this section, we compare our method with state-of-the-art 3D/2D registration approaches under two experimental settings. The first setting performs alignment on real ultrasound frames and X-ray images, while the second leverages synthetic X-ray projections and ultrasound slices. Considering that spine intervention involving multimodal data represents a practical clinical scenario, yet real datasets remain scarce, evaluation on simulated data serves as a viable alternative. For fairness, all methods were evaluated using identical patient-level splits, capture ranges, and metrics within each experimental group. table 6 reports task-level pooled results, where all held-out test cases from the corresponding datasets are aggregated within each task category. 
+
+4.5.1 Evaluation on Surgical Scenarios 
+
+In this section, we evaluate on intraoperative X-ray images under a strict 1-hour training budget for all methods, simulating the time-critical nature of intraoperative deployment. Methods tailored for these datasets are adopted as baselines, and we report both mTRE [48] and registration success rate (mTRE ≤ 10 mm). The results are shown in fig. 7 and table 5. 11 LayersReg Table 5: Intraoperative SOTA Comparison                            
+
+> Methods Type DeepFluoro [38] Ljubljana [39] mTRE (mm) SR (%) mTRE (mm) SR (%) PSSS [20] Regressor 25.27 23 27.93 19 xvr [49] Regressor 5.25 91 7.16 68 DiffPose [10] Regressor + opt 8.25 62 9.87 46 RayEmb [50] Landmark + opt 6.49 74 8.94 59
+> LayersReg Regressor 4.59 95 5.63 91
+
+Figure 8: Visualization of the comparison with the SOTA 3D/2D registration network. Red, blue, and purple contours represent the ground truth, prediction, and overlap. As shown in table 5, LayersReg outperforms all baseline methods. Specifically, xvr and DiffPose adopt online self-supervised training, yet they still lag behind. On Ljubljana, LayersReg reduces mTRE by 1.53 mm over xvr. Moreover, unlike RayEmb, which requires costly landmark annotations, LayersReg achieves accurate alignment without manual labeling and obtains the best mTRE and success rate. 
+
+4.5.2 Extensive Evaluation on Multiple Scenarios 
+
+In this set of experiments, we evaluate on multi-modality (US-MRI) registration tasks, including US-MRI and CT-MRI, as well as X-ray to CT registration for the spine. The baselines cover standard pose regression networks such as Res-RegNet and PoseNet, orthogonal-view registration networks such as DVAP and PRSCS, and the recent differentiable registration method DiffPose. The results are presented in fig. 8 and table 6. The proposed LayersReg achieves better performance across both S2V and X-ray/CT tasks as a pure regressor. In S2V, it outperforms EUReg by reducing MAE(R) from 1.39° to 0.73° and Dist(T) from 2.78 mm to 1.55 mm, while improving NCC from 0.92 to 0.97 and SSIM from 0.88 to 0.93. In X-ray/CT, LayersReg surpasses PRSCS-Net, lowering MAE(R) from 1.35° to 0.68° and Dist(T) from 1.93 mm to 1.41 mm, with NCC rising from 0.93 to 0.96 and SSIM from 0.71 to 0.79. These consistent gains highlight LayersReg’s superior accuracy and robust structural alignment in heterogeneous multimodal 3D/2D registration. 
+
+Figure 9: Slice localization comparison with ground truth on the CAMUS dataset, red is ground truth, blue is prediction. 12 LayersReg Table 6: Compare with the SOTA 3D/2D registration methods in different tasks                                                                                                        
+
+> Type Methods MAE(R) Dist(T) NCC RMSE SSIM mean std mean std
+> S2V DSVR-net [51] 3.06 3.05 8.66 7.34 0.83 0.12 0.82 Res-RegNet [12] 3.69 3.66 9.96 7.57 0.82 0.13 0.81 SVoRT [52] 3.11 2.97 9.68 7.16 0.84 0.12 0.82 PoseNet [18] 4.52 3.44 13.66 7.59 0.79 0.15 0.78 FVRNet [44] 7.65 4.49 6.67 5.54 0.78 0.17 0.74 CUReg [43] 3.19 3.48 5.96 5.47 0.83 0.11 0.84 EUReg [45] 1.39 1.34 2.78 1.77 0.92 0.09 0.88
+> LayersReg 0.73 0.46 1.55 0.91 0.97 0.05 0.93 Xray/CT DSVR-net [51] 2.75 2.36 4.98 3.18 0.88 0.09 0.52 Res-RegNet [12] 1.31 0.59 7.23 3.44 0.87 0.10 0.50 PoseNet [18] 1.75 0.85 8.14 4.05 0.81 0.11 0.41 ProST [19] 1.71 1.94 3.19 2.27 0.89 0.09 0.61 DiffPose [10] 1.56 1.86 2.99 2.75 0.90 0.08 0.63 DVAP-Reg [9] 1.78 0.96 1.75 1.58 0.91 0.07 0.65 PRSCS-Net [8] 1.35 1.08 1.93 1.16 0.93 0.06 0.71
+> LayersReg 0.68 0.57 1.41 0.98 0.96 0.05 0.79
+
+Notably, we present an additional registration case on the CAMUS dataset with real US frame (fig. 9) to evaluate the accuracy of the S2V task. LayersReg achieves the most complete ventricular contour alignment with the smallest errors. 
+
+# 5 Conclusion 
+
+We propose LayersReg, a novel 3D/2D registration framework. It reinterprets regression as an internal progressive optimization process. By modeling feature correlations and transformation trends, LayersReg captures the regularities of accurate pose correction. It outperforms existing methods on both X-ray/CT and S2V registration tasks. Extensive experiments show that, even in complex intraoperative scenarios, LayersReg does not require physicians to manually delineate RoIs. The framework can be integrated with advanced differentiable rendering and further refined through test-time optimization to achieve pixel-level accuracy. Moreover, it enables rapid adaptation to new patients, with only the regressor fine-tuned while the autoencoders remain frozen, and one hour of training sufficing for deployment. The current model handles rigid transformations only. In the future, we plan to extend its optimization-driven mechanism to deformable 3D/2D registration for soft tissues, a promising direction for further exploration. 
+
+# Acknowledgments 
+
+This work was supported by the State Key Laboratory of Digital Medical Engineering – Jiangsu Province Matching Funding (Grant No. 4207032303) and the Jiangsu Youth Natural Science Foundation (Grant No. BK20241277). 
+
+# References 
+
+[1] Rui Liao, Li Zhang, Ying Sun, Shun Miao, and Christophe Chefd’Hotel. A review of recent advances in registration techniques applied to minimally invasive therapy. IEEE Transactions on Multimedia , 15(5):983–1000, 2013. [2] Primoz Markelj, Dejan Tomaževiˇ c, Bostjan Likar, and Franjo Pernuš. A review of 3D/2D registration methods for image-guided interventions. Medical image analysis , 16(3):642–661, 2012. [3] Jianjun Zhu, Cheng Wang, Yi Zhang, Meixiao Zhan, Wei Zhao, Sitong Teng, Ligong Lu, and Gao-Jun Teng. 3D/2D vessel registration based on monte carlo tree search and manifold regularization. IEEE Transactions on Medical Imaging , 43(5):1727–1739, 2024. [4] Yoshito Otake, Adam S Wang, J Webster Stayman, Ali Uneri, Gerhard Kleinszig, Sebastian Vogt, A Jay Khanna, Ziya L Gokaslan, and Jeffrey H Siewerdsen. Robust 3D–2D image registration: application to spine interventions and vertebral labeling in the presence of anatomical deformation. Physics in Medicine & Biology , 58(23):8535, 2013. 13 LayersReg [5] T De Silva, A Uneri, M D Ketcha, S Reaungamornrat, G Kleinszig, S Vogt, N Aygun, S-F Lo, J-P Wolinsky, and J H Siewerdsen. 3D–2D image registration for target localization in spine surgery: investigation of similarity metrics providing robustness to content mismatch. Physics in Medicine & Biology , 61(8):3009, mar 2016. [6] Shun Miao, Z. Jane Wang, and Rui Liao. A CNN regression approach for real-time 2D/3D registration. IEEE Transactions on Medical Imaging , 35(5):1352–1363, 2016. [7] Shun Miao, Sebastien Piat, Peter Fischer, Ahmet Tuysuzoglu, Philip Mewes, Tommaso Mansi, and Rui Liao. Dilated fcn for multi-agent 2D/3D medical image registration. In Proceedings of the AAAI Conference on Artificial Intelligence , volume 32, 2018. [8] Wencong Zhang, Lei Zhao, Hang Gou, Yanggang Gong, Yujia Zhou, and Qianjin Feng. Prscs-net: Progressive 3d/2d rigid registration network with the guidance of single-view cycle synthesis. Medical Image Analysis ,97:103283, 2024. [9] Zhengyang Wu, Wenjie Zheng, Yingjie Hao, Jing Ling, Maodan Nie, Rui Zuo, Minghan Liu, Zegang Shi, Wen Xia, Fayuan Zhou, Zhuojun Cao, Jingjing Xiao, Weisheng Li, Guifeng Xia, Changqing Li, Yucheng Shu, and Chao Zhang. Dvap-reg: Dual-view anatomical prior-driven cross-dimensional registration for spinal surgery navigation. Medical Image Analysis , 109:103930, 2026. [10] Vivek Gopalakrishnan, Neel Dey, and Polina Golland. Intraoperative 2D/3D image registration via differentiable x-ray rendering. In 2024 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 11662–11672, 2024. [11] Xiyuan Wang, Zhancheng Zhang, Shaokang Xu, Xiaoqing Luo, Baocheng Zhang, and Xiao-Jun Wu. Contrastive learning based method for x-ray and ct registration under surgical equipment occlusion. Computers in Biology and Medicine , 180:108946, 2024. [12] De-Xing Huang, Xiao-Hu Zhou, Xiao-Liang Xie, Shi-Qi Liu, Zhen-Qiu Feng, Zeng-Guang Hou, Ning Ma, and Long Yan. Real-time 2D/3D registration via cnn regression and centroid alignment. IEEE Transactions on Automation Science and Engineering , 22:85–98, 2025. [13] Jiashun Wang, Hao Tang, Zhan Wu, Yikun Zhang, Yan Xi, Yang Chen, Chunfeng Yang, Yixin Zhou, and Hui Tang. Twin-vimreg: Dxr driven synthetic dynamic standing-cbcts through twin vision mamba-based 2D/3D registration. 
+
+Computerized Medical Imaging and Graphics , 125:102648, 2025. [14] Ruoyu Meng, Chunxiao Chen, Ming Lu, Xue Fu, Yueyue Xiao, Kunpeng Wang, Yuan Zou, and Yang Li. Parametric bi-invariant learning for improved precision in 2D/3D image registration. Biomedical Signal Processing and Control , 105:107603, 2025. [15] Cai Meng, Yanggang Li, Yizhou Xu, Ning Li, and Kun Xia. A weakly supervised framework for 2D/3D vascular registration oriented to incomplete 2D blood vessels. IEEE Transactions on Medical Robotics and Bionics ,4(2):381–390, 2022. [16] Shiqiang Zheng, Xin Yang, Yifan Wang, Mingyue Ding, and Wenguang Hou. Unsupervised cross-modality domain adaptation network for x-ray to ct registration. IEEE Journal of Biomedical and Health Informatics ,26(6):2637–2647, 2022. [17] Fujiao Ju, Yuan Li, Jingxin Zhao, and Mingjie Dong. 2D/3D fast fine registration in minimally invasive pelvic surgery. Biomedical Signal Processing and Control , 100:107145, 2025. [18] Xiaolin Fan, Yan Wang, Yingying Zhang, Mingkun Bao, Bosen Jia, Dong Lu, Yifan Gu, Jian Cheng, and Haogang Zhu. Avp-ap: Self-supervised automatic view positioning in 3D cardiac ct via atlas prompting. IEEE Transactions on Medical Imaging , 44(7):2921–2932, 2025. [19] Cong Gao, Anqi Feng, Xingtong Liu, Russell H. Taylor, Mehran Armand, and Mathias Unberath. A fully differentiable framework for 2D/3D registration and the projective spatial transformers. IEEE Transactions on Medical Imaging , 43(1):275–285, 2024. [20] Baochang Zhang, Shahrooz Faghihroohi, Mohammad Farid Azampour, Shuting Liu, Reza Ghotbi, Heribert Schunkert, and Nassir Navab. A patient-specific self-supervised model for automatic X-Ray/CT registration. In Hayit Greenspan, Anant Madabhushi, Parvin Mousavi, Septimiu Salcudean, James Duncan, Tanveer Syeda-Mahmood, and Russell Taylor, editors, Medical Image Computing and Computer Assisted Intervention – MICCAI 2023 , pages 515–524, Cham, 2023. Springer Nature Switzerland. [21] Wencong Zhang, Lei Zhao, Hang Gou, Yanggang Gong, Yujia Zhou, and Qianjin Feng. Prscs-net: Progressive 3D/2D rigid registration network with the guidance of single-view cycle synthesis. Medical Image Analysis ,97:103283, 2024. 14 LayersReg [22] Pejman Hashemibakhtiar, Thierry Cresson, Marie-Lyne Nault, Jacques De Guise, and Carlos Vázquez. 2D/3D reconstruction of the distal tibiofibular joint from biplanar radiographs using deep learning registration and statistical shape and intensity model. In 2024 IEEE International Symposium on Biomedical Imaging (ISBI) ,pages 1–4, 2024. [23] Daeun Kyung, Kyungmin Jo, Jaegul Choo, Joonseok Lee, and Edward Choi. Perspective projection-based 3d ct reconstruction from biplanar x-rays. In ICASSP 2023 - 2023 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP) , pages 1–5, 2023. [24] Yikun Jiang, Yuru Pei, Tianmin Xu, Xiaoru Yuan, and Hongbin Zha. Toward semantically-consistent deformable 2D-3D registration for 3D craniofacial structure estimation from a single-view lateral cephalometric radiograph. 
+
+IEEE Transactions on Medical Imaging , 44(2):685–697, 2025. [25] Yiqun Lin, Zhongjin Luo, Wei Zhao, and Xiaomeng Li. Learning deep intensity field for extremely sparse-view cbct reconstruction. In Hayit Greenspan, Anant Madabhushi, Parvin Mousavi, Septimiu Salcudean, James Duncan, Tanveer Syeda-Mahmood, and Russell Taylor, editors, Medical Image Computing and Computer Assisted Intervention – MICCAI 2023 , pages 13–23, Cham, 2023. Springer Nature Switzerland. [26] Rongjun Ge, Yuting He, Cong Xia, Chenchu Xu, Weiya Sun, Guanyu Yang, Junru Li, Zhihua Wang, Hailing Yu, Daoqiang Zhang, Yang Chen, Limin Luo, Shuo Li, and Yinsu Zhu. X-ctrsnet: 3D cervical vertebra CT reconstruction and segmentation directly from 2D x-ray images. Knowledge-Based Systems , 236:107680, 2022. [27] William S. Burton, Casey A. Myers, Chadd C. Clary, and Paul J. Rullkoetter. Reliable 2D–3D registration in dynamic stereo-radiography with energy barrier constraints. IEEE Transactions on Medical Imaging , 44(4):1969– 1983, 2025. [28] Haofu Liao, Wei-An Lin, Jiarui Zhang, Jingdan Zhang, Jiebo Luo, and S. Kevin Zhou. Multiview 2D/3D rigid registration via a point-of-interest network for tracking and triangulation. In 2019 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 12630–12639, 2019. [29] Matthias Grimm, Javier Esteban, Mathias Unberath, and Nassir Navab. Pose-dependent weights and domain randomization for fully automatic x-ray to CT registration. IEEE Transactions on Medical Imaging , 40(9):2221– 2232, 2021. [30] Cong Gao, Benjamin D Killeen, Yicheng Hu, Robert B Grupp, Russell H Taylor, Mehran Armand, and Mathias Unberath. Synthetic data accelerates the development of generalizable learning-based algorithms for X-ray image analysis. Nature Machine Intelligence , 5(3):294–308, 2023. [31] B. Aubert, T. Cresson, J. A. de Guise, and C. Vazquez. X-ray to drr images translation for efficient multiple objects similarity measures in deformable model 3D/2D registration. IEEE Transactions on Medical Imaging ,42(4):897–909, 2023. [32] Lianghui Zhu, Bencheng Liao, Qian Zhang, Xinlong Wang, Wenyu Liu, and Xinggang Wang. Vision mamba: Efficient visual representation learning with bidirectional state space model, 2024. [33] Jie Hu, Li Shen, and Gang Sun. Squeeze-and-excitation networks. In Proceedings of the IEEE conference on computer vision and pattern recognition , pages 7132–7141, 2018. [34] Sanghyeok Lee, Joonmyung Choi, and Hyunwoo J. Kim. Efficientvim: Efficient vision mamba with hidden state mixer based state space duality. In 2025 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 14923–14933, 2025. [35] Mingyuan Meng, Dagan Feng, Lei Bi, and Jinman Kim. Correlation-aware coarse-to-fine mlps for deformable medical image registration. In 2024 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) ,pages 9645–9654, 2024. [36] Yang Deng, Ce Wang, Yuan Hui, Qian Li, Jun Li, Shiwei Luo, Mengke Sun, Quan Quan, Shuxin Yang, You Hao, Pengbo Liu, Honghu Xiao, Chunpeng Zhao, Xinbao Wu, and S. Kevin Zhou. Ctspine1k: A large-scale dataset for spinal vertebrae segmentation in computed tomography, 2024. [37] Anjany Sekuboyina, Malek E Husseini, Amirhossein Bayat, Maximilian Löffler, Hans Liebl, Hongwei Li, Giles Tetteh, Jan Kukaˇ cka, Christian Payer, Darko Štern, et al. Verse: A vertebrae labelling and segmentation benchmark for multi-detector ct images. Medical image analysis , 71:102166, 2021. [38] Robert B Grupp, Mathias Unberath, Cong Gao, Rachel A Hegeman, Ryan J Murphy, Clayton P Alexander, Yoshito Otake, Benjamin A McArthur, Mehran Armand, and Russell H Taylor. Automatic annotation of hip anatomy in fluoroscopy for robust and efficient 2d/3d registration. International journal of computer assisted radiology and surgery , 15(5):759–769, 2020. 15 LayersReg [39] Uros ˘ Mitrovi´ c, Z ˘iga S ˘piclin, Bos ˘tjan Likar, and Franjo Pernus ˘. 3d-2d registration of cerebral angiograms: A method and evaluation on clinical images. IEEE Transactions on Medical Imaging , 32(8):1550–1563, 2013. [40] Yiming Xiao, Maryse Fortin, Geirmund Unsgård, Hassan Rivaz, and Ingerid Reinertsen. Retrospective evaluation of cerebral tumors (resect): A clinical database of pre-operative mri and intra-operative ultrasound in low-grade glioma surgeries. Medical Physics , 44(7):3875–3882, 2017. [41] Shangqi Gao, Hangqi Zhou, Yibo Gao, and Xiahai Zhuang. Bayeseg: Bayesian modeling for medical image segmentation with interpretable generalizability. Medical Image Analysis , 89:102889, 2023. [42] Sarah Leclerc, Erik Smistad, João Pedrosa, Andreas Østvik, Frederic Cervenansky, Florian Espinosa, Torvald Espeland, Erik Andreas Rye Berg, Pierre-Marc Jodoin, Thomas Grenier, Carole Lartizien, Jan D’hooge, Lasse Lovstakken, and Olivier Bernard. Deep learning for segmentation using an open large-scale dataset in 2d echocardiography. IEEE Transactions on Medical Imaging , 38(9):2198–2210, 2019. [43] Long Lei, Jun Zhou, Jialun Pei, Baoliang Zhao, Yueming Jin, Yuen-Chun Jeremy Teoh, Jing Qin, and Pheng-Ann Heng. Epicardium prompt-guided real-time cardiac ultrasound frame-to-volume registration. In Marius George Linguraru, Qi Dou, Aasa Feragen, Stamatia Giannarou, Ben Glocker, Karim Lekadir, and Julia A. Schnabel, editors, Medical Image Computing and Computer Assisted Intervention – MICCAI 2024 , pages 618–628, Cham, 2024. Springer Nature Switzerland. [44] Hengtao Guo, Xuanang Xu, Sheng Xu, Bradford J. Wood, and Pingkun Yan. End-to-end ultrasound frame to volume registration. In Marleen de Bruijne, Philippe C. Cattin, Stéphane Cotin, Nicolas Padoy, Stefanie Speidel, Yefeng Zheng, and Caroline Essert, editors, Medical Image Computing and Computer Assisted Intervention – MICCAI 2021 , pages 56–65, Cham, 2021. Springer International Publishing. [45] Haiqiao Wang and Yi Wang. Eureg: End-to-end framework for efficient 2d-3d ultrasound registration. In James C. Gee, Daniel C. Alexander, Jaesung Hong, Juan Eugenio Iglesias, Carole H. Sudre, Archana Venkataraman, Polina Golland, Jong Hyo Kim, and Jinah Park, editors, Medical Image Computing and Computer Assisted Intervention – MICCAI 2025 , pages 175–185, Cham, 2026. Springer Nature Switzerland. [46] Adam Paszke, Sam Gross, Francisco Massa, Adam Lerer, James Bradbury, Gregory Chanan, Trevor Killeen, Zeming Lin, Natalia Gimelshein, Luca Antiga, et al. Pytorch: An imperative style, high-performance deep learning library. Advances in neural information processing systems , 32, 2019. [47] Hongwei Yong, Jianqiang Huang, Xiansheng Hua, and Lei Zhang. Gradient centralization: A new optimization technique for deep neural networks. In Computer Vision–ECCV 2020: 16th European Conference, Glasgow, UK, August 23–28, 2020, Proceedings, Part I 16 , pages 635–652. Springer, 2020. [48] Andrew D. Wiles, Alexander Likholyot, Donald D. Frantz, and Terry M. Peters. A statistical model for point-based target registration error with anisotropic fiducial localizer error. IEEE Transactions on Medical Imaging ,27(3):378–390, 2008. [49] Vivek Gopalakrishnan, David-Dimitris Chlorogiannis, Andrew Abumoussa, Anna M. Larson, Nazim Haouchine, Darren B. Orbach, Sarah Frisken, Neel Dey, and Polina Golland. Rapid patient-specific neural networks for intraoperative x-ray to volume registration, 2026. [50] Pragyan Shrestha, Chun Xie, Yuichi Yoshii, and Itaru Kitahara. Rayemb: Arbitrary landmark detection in x-ray images using ray embedding subspace. In Minsu Cho, Ivan Laptev, Du Tran, Angela Yao, and Hongbin Zha, editors, Computer Vision – ACCV 2024 , pages 241–257, Singapore, 2025. Springer Nature Singapore. [51] Shiqiang Zheng, Yifan Wang, Xin Yang, Xianbo Deng, Mingyue Ding, and Wenguang Hou. Deep rigid registration for slice-to-volume in real time. Expert Systems with Applications , 235:121132, 2024. [52] Junshen Xu, Daniel Moyer, P. Ellen Grant, Polina Golland, Juan Eugenio Iglesias, and Elfar Adalsteinsson. Svort: Iterative transformer for slice-to-volume registration in fetal brain mri. In Linwei Wang, Qi Dou, P. Thomas Fletcher, Stefanie Speidel, and Shuo Li, editors, Medical Image Computing and Computer Assisted Intervention – MICCAI 2022 , pages 3–13, Cham, 2022. Springer Nature Switzerland. 16
